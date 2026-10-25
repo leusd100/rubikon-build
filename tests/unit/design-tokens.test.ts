@@ -101,6 +101,9 @@ describe('type scale and labels (W3-02)', () => {
     expect(css['pro-nas/about.css']).toMatch(/\.about-story-copy h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
     expect(css['conversation.css']).toMatch(/\.conversation h2 \{[^}]*font: 400 var\(--type-h2-compact\)/);
     expect(css['configurator-preview/configurator.css']).toMatch(/\.hangar-configurator-embedded \.hc-hero h2 \{ font-size: var\(--type-h2-compact\); \}/);
+    // …and on a short laptop window it steps down to the minor level, not to a size of its own (34 px before)
+    const shortLaptop = css['components/configurator/configurator-sheet.css'].match(/@media \(min-width: 1024px\) and \(max-height: 760px\) \{([\s\S]*?)\n\}/)![1];
+    expect(shortLaptop).toMatch(/\.hangar-configurator-embedded \.hc-hero :is\(h1, h2\) \{ font-size: var\(--type-h2-minor\);/);
     expect(css['components/directions/direction-template.css']).toMatch(/\.related-directions-title \{[^}]*font: 400 var\(--type-h2-minor\)/);
     expect(css['components/directions/direction-template.css']).toMatch(/\.direction-entry-list h3 \{[^}]*font: 400 var\(--type-h3\)/);
     expect(css['home-v2.css']).toMatch(/\.hv2-evidence-lead h3 \{[^}]*font: 400 var\(--type-h3\)/);
@@ -121,6 +124,9 @@ describe('type scale and labels (W3-02)', () => {
     expect(globals).toMatch(/\.inquiry-form-section-title \{[^}]*color: var\(--color-accent-strong\); font: var\(--type-label-ui-weight\)/);
     expect(css['home-v2.css']).toMatch(/\.hv2-kicker \{[^}]*var\(--type-label-ui-size\)\/1\.2 var\(--font-manrope\)/);
     expect(globals).toMatch(/\.inquiry-form label > span, \.inquiry-choice legend \{[^}]*font-size: var\(--type-action-size\)/);
+    // a person's role over the name is the UI label at every width (a phone had its own .09em)
+    expect(globals).toMatch(/\.person-info > span \{[^}]*font-size: var\(--type-label-ui-size\); font-weight: var\(--type-label-ui-weight\);[^}]*letter-spacing: var\(--type-label-ui-track\)/);
+    expect(globals).not.toMatch(/\.person-info > span \{[^}]*letter-spacing: \.09em/);
     // the consent sentence keeps its own sentence case
     expect(globals).toMatch(/\.inquiry-consent > span \{[^}]*text-transform: none !important/);
   });

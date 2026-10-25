@@ -503,7 +503,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .person-story { display: grid; grid-template-columns: minmax(360px, .82fr) minmax(0, 1.18fr); align-items: center; border-top: 1px solid var(--color-border); }
 .person-story-reverse { grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr); }
 .person-info { position: relative; display: flex; flex-direction: column; justify-content: center; min-height: 440px; padding: clamp(44px, 6vw, 88px); }
-.person-info > span { max-width: 440px; color: var(--color-accent-strong); font-size: 12px; font-weight: 800; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; }
+.person-info > span { max-width: 440px; color: var(--color-accent-strong); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); line-height: 1.5; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .person-info h3 { max-width: 620px; margin: 20px 0 24px; font: 600 clamp(34px, 3.25vw, 48px)/1.06 var(--font-condensed), sans-serif; text-transform: none; }
 .person-info p { max-width: 610px; margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.75; }
 .person-info p:first-of-type { color: var(--color-text); font-size: 16px; }
@@ -1249,7 +1249,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .team-home .team-stories { grid-template-columns: 1fr; gap: 48px; }
   .team-about .team-stories { grid-template-columns: 1fr; gap: 48px; }
   .person-info { justify-content: flex-start; padding: 28px 20px 20px; border-bottom: 0; }
-  .person-info > span { max-width: none; font-size: 12px; line-height: 1.45; letter-spacing: .09em; }
+  .person-info > span { max-width: none; line-height: 1.45; } /* the UI label at every width (W3-02: .09em on a phone before) */
   .person-info h3 { margin: 18px 0; font-size: clamp(32px, 8.4vw, 38px); line-height: 1.02; }
   .team-about .person-info h3 { font-size: clamp(30px, 8.2vw, 38px); letter-spacing: normal; white-space: normal; }
   .person-info p, .person-info p:first-of-type { font-size: 16px; line-height: 1.65; }
