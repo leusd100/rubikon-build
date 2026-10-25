@@ -30,7 +30,7 @@
 .related-directions-section .related-directions-text { max-width: 62ch; margin: -12px 0 28px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.6; }
 .related-directions-section.is-closing { padding-block: var(--section-space-compact); }
 .related-directions-section .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0; border-block: 1px solid var(--color-border-strong); }
-.related-directions-section .related-card { min-width: 0; padding: 26px 28px 28px; background: transparent; border: 0; border-left: 1px solid var(--color-border-strong); }
+.related-directions-section .related-card { min-width: 0; padding: 26px var(--card-pad) var(--card-pad); background: transparent; border: 0; border-left: 1px solid var(--color-border-strong); }
 .related-directions-section .related-card:first-child { border-left: 0; padding-left: 0; }
 .related-directions-section .related-card h3 { font-size: 21px; }
 /* Three cards stay one ruled row down to the phone's list: auto-fit wrapped the third under the first two at 761–850 px,
@@ -49,7 +49,7 @@
   /* «Пов’язані напрямки» one step under the phone section titles (28–32 px; PDO-05) */
   .related-directions-section .related-directions-title { font-size: 1.625rem; }
   .related-directions-section .related-grid { grid-template-columns: 1fr; }
-  .related-directions-section .related-card, .related-directions-section .related-card:first-child { padding: 20px 0; border-left: 0; border-top: 1px solid var(--color-border-strong); }
+  .related-directions-section .related-card, .related-directions-section .related-card:first-child { padding: var(--card-pad) 0; border-left: 0; border-top: 1px solid var(--color-border-strong); }
   .related-directions-section .related-card:first-child { border-top: 0; }
 }
 

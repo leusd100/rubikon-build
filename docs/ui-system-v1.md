@@ -159,6 +159,28 @@ Direction hero images already have real per-photo focal-point art direction
 (`directionHeroImageManifest.ts`'s `focalPosition`/`mobileFocalPosition`) — reuse that pattern for
 any new hero image rather than a single generic `object-position`.
 
+## 9. Role tokens (Wave 03, W3-01)
+
+`app/globals.css` `:root` (phones in its `@media (max-width: 760px)` `:root` block) names the roles the
+Wave 03 steps build on. W3-01 declared them with the values already in use, so nothing moved; the
+visible steps change the values in one place. A rule takes a token only where its value is that
+token's today; other literals move onto a token when their file changes for a visible step.
+`tests/unit/design-tokens.test.ts` keeps the names resolvable and the type roles in `rem`.
+
+| Family | Tokens | Who changes the values |
+|---|---|---|
+| Type (rem) | `--type-display-home`, `--type-h1`, `--type-h2`, `--type-h2-compact`, `--type-h2-minor`, `--type-h3`, `--hero-lead` | W3-02 (T4 scale) |
+| Labels | `--type-label-ui-*`, `--type-action-*`, `--type-label-tech-*` (`-weight`, `-size`, `-track` each; letter-spacing has no place in `font`) | W3-02 |
+| Rhythm | `--rhythm-label`, `--rhythm-lead`, `--rhythm-cta`; `--section-space(-compact)` | W3-03 |
+| Spacing | `--space-1` … `--space-10` = 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px; `--card-pad`, `--card-gap` | W3-03, then file by file |
+| Buttons | `--button-h-l` 56 px, `--button-h-m` 48 px | W3-06 |
+| Header | `--header-h` 101 px (the fixed header from 761 px) | PDO-98's next step (short windows, tablets) |
+| Motion | `--motion-micro`, `--motion-reveal`, `--motion-draw`, `--motion-draw-long`, `--motion-media-fade`; `--ease-premium`, `--ease-plot`, `--ease-standard` | W3-10 (Motion v1: the pages' local `--m-*` move onto them) |
+| Colour (theme.css) | `--color-load`, `--color-wind` — the loads on a drawing, one pair for both modes | — |
+
+The type roles are in `rem`: at the default 16 px root the px are the same as before, and a larger
+browser text size now reaches them (the header and the other px rules stay as they were).
+
 ## Accessibility (already in place, keep it that way)
 
 Global `:focus-visible` ring (3px outline, 2px box-shadow gap) on every interactive element;

@@ -46,6 +46,11 @@
   --color-water: #2B6C9A;              /* water on a drawing (the roof node's drops): the one colour that is not copper or graphite */
   --color-grain: #A57F1F;              /* grain on a drawing (/zernoskhovyshcha): its fill, its slope and its pressure */
   --color-air: #2C8580;                /* air on a drawing (the grain store's aeration) */
+  /* The loads on a drawing only — HOME's proof contour, the configurator's frame tour: the snow blue and the wind
+     turquoise, cold and never read as one. The same in both modes (those drawings sit on charcoal), so Dark does not
+     redefine them; on paper the frame tour takes its own darker pair (frame-tour.css). */
+  --color-load: #5AA8FF;
+  --color-wind: #4FD8C8;
 
   /* Status */
   --color-success: #2F6B41;           /* ≥4.93:1 */

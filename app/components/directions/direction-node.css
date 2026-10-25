@@ -91,7 +91,7 @@
   .dn[data-step="1"] .dn-mark-1 .dn-line,
   .dn[data-step="2"] .dn-mark-2 .dn-line,
   .dn[data-step="3"] .dn-mark-3 .dn-line,
-  .dn[data-step="4"] .dn-mark-4 .dn-line { animation: dn-draw 900ms cubic-bezier(.55, 0, .25, 1) 650ms backwards; }
+  .dn[data-step="4"] .dn-mark-4 .dn-line { animation: dn-draw var(--motion-draw) var(--ease-plot) 650ms backwards; }
 }
 
 /* A portrait tablet (PDO-43 S2, owner 22.10): the text and the three steps side by side, the sheet under them the full

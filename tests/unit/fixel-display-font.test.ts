@@ -119,10 +119,12 @@ describe('display sizing tokens', () => {
   it('sizes the direction titles and hero H1s from --display-fit instead of per-breakpoint numbers', () => {
     expect(globals).toMatch(/--display-fit:\s*9\.23;/);
     expect(globals).toMatch(/calc\(\(100cqi \+ var\(--title-overhang\)\) \/ var\(--display-fit\)\)/);
-    expect(globals).toMatch(/\.subhero h1, \.service-subhero h1 \{ font-size: min\(var\(--hero-title\), calc\(100cqi \/ var\(--display-fit\)\)\); \}/);
-    // Section titles (PDO-05): on a phone 28–32 px in rem, never larger than the phone H1; from 761 px a 38 px floor
-    expect(globals).toMatch(/--title-section: clamp\(1\.75rem, 7\.4vw, 2rem\);/);
-    expect(globals).toMatch(/--title-section: clamp\(2\.375rem, 4\.5vw, 4\.5rem\);/);
+    expect(globals).toMatch(/\.subhero h1, \.service-subhero h1 \{ font-size: min\(var\(--type-h1\), calc\(100cqi \/ var\(--display-fit\)\)\); \}/);
+    // Section titles (PDO-05): on a phone 28–32 px in rem, never larger than the phone H1; from 761 px a 38 px floor.
+    // The role tokens took the old names' places in W3-01 (--title-section → --type-h2, --hero-title → --type-h1).
+    expect(globals).toMatch(/--type-h2: clamp\(1\.75rem, 7\.4vw, 2rem\);/);
+    expect(globals).toMatch(/--type-h2: clamp\(2\.375rem, 4\.5vw, 4\.5rem\);/);
+    expect(globals).not.toMatch(/--(title-section|hero-title|hero-title-home|title-page)\b/);
     expect(globals).not.toMatch(/--display-phone-scale/);
     // The Jost-era fixed sizes for 320 px are gone: the token covers them.
     expect(globals).not.toMatch(/\.subhero h1, \.service-subhero h1 \{ font-size: 36px; \}/);

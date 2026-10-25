@@ -48,13 +48,13 @@
 .ht-trace-2 { opacity: .3; }
 .ht-dim { stroke: rgba(245, 242, 235, .28); stroke-width: 1; }
 .ht-node { fill: var(--color-accent-on-dark); opacity: .8; }
-.process-page[data-motion-ready="on"] .proc-hero-trace path { transition: stroke-dashoffset 1400ms var(--m-ease); }
+.process-page[data-motion-ready="on"] .proc-hero-trace path { transition: stroke-dashoffset var(--motion-draw-long) var(--m-ease); }
 .process-page[data-motion-ready="on"] .proc-hero-trace .ht-trace { transition-delay: 250ms; }
 .process-page[data-motion-ready="on"] .proc-hero-trace .ht-dim { transition-delay: 900ms; }
 .process-page[data-motion-ready="on"] .proc-hero-trace .ht-node { transition: opacity var(--m-reveal) ease 1300ms; }
 .process-page[data-motion-ready] .proc-hero-trace:not([data-motion-state="on"]) path { stroke-dashoffset: 1; }
 .process-page[data-motion-ready] .proc-hero-trace:not([data-motion-state="on"]) .ht-node { opacity: 0; }
-.proc-hero h1 { max-width: 900px; margin: 0; font: 400 var(--hero-title)/1.03 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
+.proc-hero h1 { max-width: 900px; margin: 0; font: 400 var(--type-h1)/1.03 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
 .proc-hero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .proc-hero-lead { max-width: 640px; margin: var(--hero-gap-lead) 0 0; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
 .proc-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: var(--hero-gap-actions); }
@@ -153,7 +153,7 @@
    band takes the section's own background (inherited through the shell), whatever the theme. */
 @media (min-width: 1051px) {
   .proc-responsibility > .shell { background-color: inherit; }
-  .proc-resp-switch { top: 101px; padding: 12px 0; background-color: inherit; box-shadow: 0 1px 0 var(--color-border); pointer-events: auto; }
+  .proc-resp-switch { top: var(--header-h); padding: 12px 0; background-color: inherit; box-shadow: 0 1px 0 var(--color-border); pointer-events: auto; }
 }
 .proc-resp-switch legend { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .proc-resp-switch > div { clear: both; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--color-border-control); background: var(--color-surface-elevated); pointer-events: auto; }
@@ -216,7 +216,7 @@
   .proc-start-merge::before { content: ''; position: absolute; bottom: 100%; left: 32px; width: 1px; height: 36px; background: var(--color-accent); }
   .proc-principle { margin: 0 0 20px; text-align: left; }
   /* Narrower: the switcher becomes a full-width band right under the header */
-  .proc-resp-switch { top: 101px; align-items: stretch; margin-bottom: 32px; padding: 10px 0; background: var(--color-surface); box-shadow: 0 1px 0 var(--color-border); pointer-events: auto; }
+  .proc-resp-switch { top: var(--header-h); align-items: stretch; margin-bottom: 32px; padding: 10px 0; background: var(--color-surface); box-shadow: 0 1px 0 var(--color-border); pointer-events: auto; }
   @container scroll-state(stuck: top) {
     .proc-resp-switch > div { box-shadow: none; }
   }
@@ -242,7 +242,7 @@
   .proc-hero-shade { background: linear-gradient(90deg, rgba(9, 10, 12, .92) 0%, rgba(9, 10, 12, .8) 55%, rgba(9, 10, 12, .62) 100%), linear-gradient(0deg, rgba(9, 10, 12, .85) 0%, transparent 55%, rgba(9, 10, 12, .45) 100%); }
   /* Where every phone hero keeps its stamp: top right, under the header (hero standard) */
   .proc-provenance { top: 88px; right: 16px; bottom: auto; }
-  .proc-start-head h2 { font-size: var(--title-section); line-height: 1.02; }
+  .proc-start-head h2 { font-size: var(--type-h2); line-height: 1.02; }
   .proc-start-head > p:last-child { font-size: 16px; }
   .proc-start-list li { grid-template-columns: 44px minmax(0, 1fr); padding: 22px 0; }
   .proc-principle { font-size: clamp(24px, 6.8vw, 28px); }

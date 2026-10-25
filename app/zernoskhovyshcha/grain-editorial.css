@@ -91,7 +91,7 @@
 .grain-page .direction-entry-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grain-page .direction-entry-list li { gap: 12px; padding: 0 26px 26px; }
 .grain-page .direction-entry-list li:first-child { padding-left: 0; }
-.grain-page .direction-entry-list h3 { font-size: clamp(24px, 2vw, 28px); }
+.grain-page .direction-entry-list h3 { font-size: var(--type-h3); }
 .grain-page .direction-entry-list p { font-size: 15px; line-height: 1.6; }
 .grain-page .direction-entry-copy { gap: 12px; }
 @supports (grid-template-rows: subgrid) { @media (min-width: 901px) { .grain-page .direction-entry-list li { row-gap: 12px; } } }
@@ -179,11 +179,11 @@
 @media (max-width: 760px) {
   .grain-page .service-subhero.grain-service-subhero { min-height: 0; }
   /* 04's title: the site's phone section size (PDO-05); its own clamp() kept 34 px over a 29–32 px H1 */
-  .grain-page .grain-implementation-band .direction-editorial-copy h2 { font-size: var(--title-section); }
+  .grain-page .grain-implementation-band .direction-editorial-copy h2 { font-size: var(--type-h2); }
   /* the four situations as a row of cards that scrolls sideways (one and a bit on screen), not four screens of text */
-  .grain-page .direction-entry-list { display: flex; gap: 12px; margin-inline: -16px; padding: 6px 16px 18px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; border-bottom: 0; }
+  .grain-page .direction-entry-list { display: flex; gap: var(--card-gap); margin-inline: -16px; padding: 6px 16px 18px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; border-bottom: 0; }
   .grain-page .direction-entry-list li, .grain-page .direction-entry-list li:first-child { flex: 0 0 82%; padding: 20px 18px; border: 1px solid var(--color-border-strong); background: var(--color-surface-elevated); scroll-snap-align: start; }
-  .grain-page .direction-entry-list h3 { font-size: 24px; }
+  .grain-page .direction-entry-list h3 { font-size: var(--type-h3); }
   .grain-page .cost-list article { padding-block: 14px; }
   .grain-page .cost-list p { margin-top: 4px; font-size: 15px; line-height: 1.55; }
   .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 56%, transparent 67%); mask-image: linear-gradient(#000 56%, transparent 67%); }

@@ -5,7 +5,7 @@
 
 /* --ft-k thickens the lines and enlarges the letters where the sheet is drawn small (configurator-sheet.css .hc-frame);
    the loads' colours are below */
-.ft { --ft-k: 1; --ft-snow: #5aa8ff; --ft-wind: #4fd8c8; }
+.ft { --ft-k: 1; --ft-snow: var(--color-load); --ft-wind: var(--color-wind); }
 .ft-window { position: relative; flex: none; overflow: hidden; aspect-ratio: 720 / 440; }
 .ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
 .ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke .3s ease, opacity .3s ease; }
@@ -157,7 +157,7 @@
 @media (prefers-reduced-motion: no-preference) {
   .ft[data-step="1"] [data-part~="1"] path[pathLength], .ft[data-step="2"] [data-part="2"] path[pathLength],
   .ft[data-step="3"] [data-part~="3"] :is(.ft-brace, .ft-post) { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
-  .ft[data-step="2"] [data-part="2"] path[pathLength] { animation-duration: 1400ms; }
+  .ft[data-step="2"] [data-part="2"] path[pathLength] { animation-duration: var(--motion-draw-long); }
   .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { transition-delay: 1100ms; }
   /* a link every 520 ms, the legend in step with the drawing; each link's drops appear and run as it lights, so the
      load front travels down the frame with the words. The snow keeps falling, the wind gusting and the drops running

@@ -6,8 +6,8 @@
    Motion runs once inside a ProcessMotion root; without it every part stands complete. */
 
 .region-block {
-  --region-draw: cubic-bezier(.55, 0, .25, 1); /* an even pen: no rush at the start, no crawl at the end */
-  --region-ease: var(--m-ease, cubic-bezier(.2, .7, .1, 1));
+  --region-draw: var(--ease-plot); /* an even pen: no rush at the start, no crawl at the end */
+  --region-ease: var(--m-ease, var(--ease-premium));
   --region-reveal: var(--m-reveal, .36s);
 }
 .region-bond { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0; }

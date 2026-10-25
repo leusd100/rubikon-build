@@ -12,13 +12,13 @@
 
    The sheets are set to the header's own lines: their bottom is the note's bottom, their top the top of the title's
    capitals — 48.6 px of eyebrow above the title, then .15 of the title's size down to the capitals (measured; the
-   title's size is --title-section). Between those two lines a sheet comes out upright, about 1 : 1.5. */
+   title's size is --type-h2). Between those two lines a sheet comes out upright, about 1 : 1.5. */
 main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
 main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside { display: none; }
 @media (min-width: 1200px) {
   main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside {
     display: grid; grid-column: 1; grid-row: 1 / span 2; align-self: stretch; justify-self: end; width: 54%; margin: 0;
-    padding-top: calc(48.6px + .15 * var(--title-section)); pointer-events: none;
+    padding-top: calc(48.6px + .15 * var(--type-h2)); pointer-events: none;
   }
   /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
   main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-copy { grid-row: 1; max-width: calc(46% - 36px); }
