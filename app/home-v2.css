@@ -165,6 +165,9 @@ main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-col
   main[data-home="v2"] .hv2-directions .direction-grid,
   main[data-home="v2"] .hv2-directions .hv2-image-note { display: none; }
   main[data-home="v2"] .hv2-directions .hv2-geo-bond { margin-top: 32px; }
+  /* A browser without :has() (Firefox < 121, Safari < 15.4) keeps every header's rule, but this list always follows the
+     header here and opens on its strong line, so the header gives way to it as before W3-03 */
+  @supports not selector(:has(*)) { main[data-home="v2"] .hv2-directions .section-header { padding-bottom: 0; border-bottom: 0; } }
 }
 
 /* ======================= 3 · ENGINEERING SIGNATURE + REAL OBJECT ======================= */

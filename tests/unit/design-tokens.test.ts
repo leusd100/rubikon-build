@@ -185,7 +185,6 @@ describe('section rhythm (W3-03)', () => {
     // HOME's and the grain process band's phone headers
     expect(globals).not.toMatch(/\.section-header \{[^}]*(margin-bottom: 42px|gap: 26px)/);
     expect(globals).not.toMatch(/\.directions-index \.page-heading|\n\.team-heading \{/);
-    expect(css['home-v2.css']).not.toMatch(/\.hv2-directions \.section-header \{/);
     expect(css['zernoskhovyshcha/grain-editorial.css']).not.toMatch(/\.grain-process-band \.section-header \{/);
   });
 
@@ -199,6 +198,11 @@ describe('section rhythm (W3-03)', () => {
     expect(globals).toMatch(/\n@media \(max-width: 760px\) \{ \.section-header:has\(\+ \.gs-list\) \{ padding-bottom: 0; border-bottom: 0; \} \}/);
     expect(globals).toMatch(/\n@media \(max-width: 1050px\) \{ \.section-header:has\(\+ \.proc-factors\) \{ padding-bottom: 0; border-bottom: 0; \} \}/);
     expect(globals.match(/\.section-header:has\([^{]*(gs-list|proc-factors)/g)).toHaveLength(2);
+    // HOME's phone header has no rule of its own over the sheet list but in a browser without :has(), as before W3-03
+    const home = css['home-v2.css'];
+    expect(home.match(/\.hv2-directions \.section-header \{/g)).toHaveLength(1);
+    const phoneHome = [...home.matchAll(/\n@media \(max-width: 760px\) \{([\s\S]*?)\n\}/g)].map(([, block]) => block).join('\n');
+    expect(phoneHome).toMatch(/\n {2}@supports not selector\(:has\(\*\)\) \{ main\[data-home="v2"\] \.hv2-directions \.section-header \{ padding-bottom: 0; border-bottom: 0; \} \}/);
   });
 
   it('has one phone scale, 72 / 56, set in one place', () => {
