@@ -21,7 +21,10 @@
 }
 
 /* ---------- 04 Як RUBIKON реалізує: the building part as a tour of one drawing (GrainStoreDrawing in DirectionNode) ---------- */
-.grain-page .grain-implementation-band { padding-block: var(--section-space-compact); }
+/* The grain bands are compact from 761 px only (the page's height budget, grain-page.spec.ts: a documented exception);
+   on a phone they take the section space, 72, like every page (PDO-22 A, W3-03: the phone's compact 56 for every band
+   would have taken 224 px off this page alone), and two neighbours of one tone meet at the compact seam (globals.css) */
+@media (min-width: 761px) { .grain-page .grain-implementation-band { padding-block: var(--section-space-compact); } }
 .grain-page .grain-implementation-band .direction-editorial-copy > p:not(.eyebrow) { margin-top: 18px; font-size: 15px; line-height: 1.7; }
 .grain-page .grain-implementation-band .dn-steps { margin-top: 22px; }
 /* The whole half-section at every width: the sheet's picture keeps the drawing's own 3 : 2 */
@@ -85,7 +88,7 @@
 }
 
 /* ---------- 02–03 The complex on a drawing and the situations (since 06.10) ---------- */
-.grain-page :is(.gc-band, .direction-entry, .cost-section) { padding-block: var(--section-space-compact); }
+@media (min-width: 761px) { .grain-page :is(.gc-band, .direction-entry, .cost-section) { padding-block: var(--section-space-compact); } }
 /* four situations side by side (the roofing template has three): one row from 1051 px, two below */
 .grain-page .direction-entry-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grain-page .direction-entry-list li { gap: 12px; padding: 0 26px 26px; }
@@ -140,13 +143,14 @@
 .grain-page .cost-list article { padding-block: 16px; }
 
 /* ---------- 05 Після брифу ---------- */
-.grain-page .grain-process-band { padding-block: var(--section-space-compact); }
+@media (min-width: 761px) { .grain-page .grain-process-band { padding-block: var(--section-space-compact); } }
 
 /* ---------- 07–08 FAQ and related directions, as on /angary ---------- */
-.grain-page .faq-section { padding-block: var(--section-space-compact); }
+@media (min-width: 761px) { .grain-page .faq-section { padding-block: var(--section-space-compact); } }
 .grain-page .faq-grid { align-items: start; }
 .grain-page .faq-heading { position: sticky; top: 140px; }
-.grain-page .related-directions-section.is-compact { padding-block: var(--section-space-compact); background: var(--color-surface-alt); }
+.grain-page .related-directions-section.is-compact { background: var(--color-surface-alt); }
+@media (min-width: 761px) { .grain-page .related-directions-section.is-compact { padding-block: var(--section-space-compact); } }
 .grain-page .related-directions-section.is-compact .related-directions-title { margin-bottom: 18px; }
 .grain-page .related-directions-section.is-compact .related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--color-border-strong); }
 .grain-page .related-directions-section.is-compact .related-card { min-width: 0; min-height: 128px; padding: 26px 28px; border: 0; border-left: 1px solid var(--color-border-strong); background: transparent; }

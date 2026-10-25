@@ -1173,7 +1173,11 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 @media (max-width: 760px) {
   :root {
     --container-gutter: 16px;
-    --section-space: 82px;
+    /* One phone scale (PDO-22 A, W3-03, 25.10): 72 for a section, 56 for a compact one (the seam of two neighbours of
+       one tone, /angary's closing band) — no page sets its own; a section never goes under 72 (64 is not offered:
+       KEEP 38). The grain page's all-compact bands are its laptop exception (grain-editorial.css). */
+    --section-space: 72px;
+    --section-space-compact: 56px;
     --grid-gap: 44px;
     --radius-lg: 28px;
     /* 28 / 28 / 28.86 / 31.82 px at 320 / 375 / 390 / 430, never larger than the phone H1 (29–35 px: home-v2.css,
