@@ -3,7 +3,9 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 // W3-06 (owner 25.10, Wave 03 brief variant A: PDO-56, PDO-99, PDO-88, PDO-89).
 // - One arrow link (.link-arrow): the action label (Manrope 800, 13 px, .06em, capitals), a 44 px target with its words
 //   and a copper rule at the foot; hover and keyboard focus answer in copper and nudge the arrow (not under reduced
-//   motion). A copy of a link hidden at one width stays hidden. /pro-nas keeps its work tags, with a 44 px target.
+//   motion; there the colour alone answers, so it always changes). A one-line link is as wide as its words, so its rule
+//   does not run across a column. A copy of a link hidden at one width stays hidden. /pro-nas keeps its work tags, with
+//   a 44 px target.
 // - Copper buttons are 56 px, or 48 px in a sheet or a tool.
 // - Focus is one of two rings — outer 3 px / 4, inner 3 px / -4 for a cell, a segment, a tab or a full-width row.
 // - lucide icons have one stroke, 1.75, and corn is a cob of our own, hidden from assistive tech.
@@ -45,31 +47,53 @@ function arrowLinks(page: Page) {
       let top = box.top + box.height / 2, bottom = top;
       while (top > box.top - 30 && hits(top - 1)) top -= 1;
       while (bottom < box.bottom + 30 && hits(bottom + 1)) bottom += 1;
+      // its words (text and arrow) against its box: how many lines, and the room left beside them in one line
+      let left = Infinity, right = -Infinity;
+      const tops = new Set<number>();
+      const walk = document.createTreeWalker(link, NodeFilter.SHOW_TEXT);
+      for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+        if (!node.textContent?.trim()) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const rect of range.getClientRects()) {
+          if (rect.width === 0) continue;
+          left = Math.min(left, rect.left);
+          right = Math.max(right, rect.right);
+          tops.add(Math.round(rect.top));
+        }
+      }
+      const framed = parseFloat(style.borderLeftWidth) > 0;
+      const room = box.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - (right - left);
       return {
         name: `${link.className} «${(link.textContent ?? '').replace(/\s+/g, ' ').trim()}»`,
         arrowLink: link.classList.contains('link-arrow'),
         type: `${style.fontFamily.split(',')[0].replace(/"/g, '')} ${style.fontWeight} ${style.fontSize} ${style.letterSpacing} ${style.textTransform}`,
         target: Math.round(bottom - top + 1),
+        // a one-line link without a frame of its own: the room beside its words (0 when it is as wide as they are)
+        room: !framed && [...tops].every((value, _, all) => Math.abs(value - all[0]) <= 6) ? Math.round(room) : 0,
       };
     }));
 }
 
-test('every arrow link is one .link-arrow: Manrope 800 13 px, .06em, capitals, a 44 px target', async ({ page }) => {
-  test.setTimeout(120_000);
-  // the pages' final state, and an instant scroll for the targets
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  for (const width of [1440, 390]) {
-    for (const path of PAGES) {
+// One test per page and width (a single test over the 18 could run out of time under load)
+for (const width of [1440, 390]) {
+  for (const path of PAGES) {
+    test(`${width} ${path}: every arrow link is one .link-arrow — Manrope 800 13 px, .06em, capitals, a 44 px target, as wide as its words`, async ({ page }) => {
+      // the pages' final state, and an instant scroll for the targets
+      await page.emulateMedia({ reducedMotion: 'reduce' });
       await open(page, path, width);
       const links = await arrowLinks(page);
       for (const link of links) {
-        expect(link.arrowLink, `${width} ${path} ${link.name}`).toBe(true);
-        expect(link.type, `${width} ${path} ${link.name}`).toBe('Manrope 800 13px 0.78px uppercase');
-        expect(link.target, `${width} ${path} ${link.name}`).toBeGreaterThanOrEqual(44);
+        expect(link.arrowLink, link.name).toBe(true);
+        expect(link.type, link.name).toBe('Manrope 800 13px 0.78px uppercase');
+        expect(link.target, link.name).toBeGreaterThanOrEqual(44);
+        // a column that stretches its children must not draw the link's rule across it (W3-06 review: the /angary
+        // stamp's «Про компанію» and HOME's «Інша задача?» on a phone)
+        expect(link.room, `${link.name}: room beside its words`).toBeLessThanOrEqual(6);
       }
-    }
+    });
   }
-});
+}
 
 test('«Залишити запит» in the FAQ is the arrow link (13 px), the number keeps its own type', async ({ page }) => {
   await open(page, '/metalokonstruktsii', 1440);
@@ -152,6 +176,41 @@ test('hover answers in copper and nudges the arrow; under reduced motion the arr
     await context.close();
   }
 });
+
+// Under reduced motion the arrow stays, so the colour is the only answer: every visible arrow link must change it on hover
+// and on keyboard focus (W3-06 review: «Залишити запит ↓» in the FAQ and /angary's «Сформувати бриф ↑» rested in the
+// hover's copper and did not change). Light at both widths, dark at 1440.
+for (const [width, theme] of [[1440, 'light'], [390, 'light'], [1440, 'dark']] as const) {
+  for (const path of PAGES) {
+    test(`${width} ${theme} ${path}: under reduced motion every arrow link answers hover and focus in colour`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.addInitScript((value) => localStorage.setItem('rubikon-theme', value), theme);
+      await open(page, path, width);
+      const links = page.locator('main .link-arrow');
+      let checked = 0;
+      for (const link of await links.all()) {
+        if (!(await link.isVisible())) continue;
+        const name = `${await link.getAttribute('class')} «${((await link.textContent()) ?? '').replace(/\s+/g, ' ').trim()}»`;
+        const ink = () => link.evaluate((element) => getComputedStyle(element).color);
+        await link.scrollIntoViewIfNeeded();
+        await page.mouse.move(1, 1);
+        const rest = await ink();
+        await link.hover();
+        await expect.poll(ink, `${name}: hover`).not.toBe(rest);
+        await expect(link.locator('[data-arrow]'), `${name}: the arrow stays`).toHaveCSS('transform', 'none');
+        await page.mouse.move(1, 1);
+        await expect.poll(ink, `${name}: back at rest`).toBe(rest);
+        await page.keyboard.press('Shift');
+        await link.focus();
+        expect(await link.evaluate((element) => element.matches(':focus-visible')), `${name}: focus-visible`).toBe(true);
+        await expect.poll(ink, `${name}: keyboard focus`).not.toBe(rest);
+        await link.evaluate((element) => element.blur());
+        checked += 1;
+      }
+      expect(checked, 'visible arrow links').toBeGreaterThan(0);
+    });
+  }
+}
 
 test('copper buttons: 56 px, 48 px in a sheet or a tool', async ({ page }) => {
   for (const width of [1440, 390]) {
