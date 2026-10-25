@@ -29,7 +29,7 @@
    own 3 : 1 */
 .gc-sheet .gc-visual { flex: none; aspect-ratio: 3 / 1; background: var(--color-surface-alt); }
 .gc-scroll { position: absolute; inset: 0; }
-.gc-scroll:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.gc-scroll:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -4px; } /* the drawing's whole frame: the inner ring */
 .gc-drawing { display: block; width: 100%; height: 100%; }
 .gc-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .gc-drawing .gc-ground { stroke: var(--color-text-muted); stroke-width: 2.4; }
@@ -134,7 +134,7 @@
    part on the drawings (owner 24.10, W2-07 · PDO-49). The crop's icon keeps its colour, the drawing's silo colour (A′); it
    is decorative — the chip's words say the crop */
 .gc-chip input:checked + span { color: var(--color-bg); background: var(--color-text); border-color: var(--color-text); }
-.gc-chip input:focus-visible + span { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.gc-chip input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 
 /* Who builds what, and the way on */
 .gc-scope { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(260px, .8fr); gap: 24px 44px; padding-top: 24px; border-top: 1px solid var(--color-border-strong); }

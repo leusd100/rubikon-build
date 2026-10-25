@@ -163,7 +163,7 @@
 .proc-resp-switch span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .proc-resp-switch label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
 .proc-resp-switch input:checked + span { color: var(--color-bg); background: var(--color-text); }
-.proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -6px; }
+.proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -4px; } /* a segment: the inner ring */
 @container scroll-state(stuck: top) {
   .proc-resp-switch > div { box-shadow: 0 10px 28px rgba(20, 18, 15, .16); }
 }

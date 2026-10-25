@@ -144,6 +144,8 @@ img { display: block; }
   outline-offset: 4px;
   box-shadow: 0 0 0 2px var(--focus-gap);
 }
+/* Two rings in all (W3-06, PDO-88): this outer one, and the inner one (outline-offset: -4px) for what fills its row or its
+   frame — a cell, a segment, a tab, a full-width row — set where that component lives. Form fields show a halo instead. */
 .skip-link { position: fixed; z-index: 1000; top: 12px; left: 12px; padding: 12px 16px; color: var(--color-text); background: var(--color-surface-elevated); border: 2px solid var(--color-accent); font-weight: 800; transform: translateY(-160%); transition: transform var(--duration-fast) ease; }
 .skip-link:focus { transform: translateY(0); }
 /* SmoothScroll's shield: over the page, under the header, while the page scrolls under a resting mouse — so what passes
@@ -757,7 +759,6 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-video-control[data-paused] .hero-video-control-icon::before { width: 0; height: 0; background: none; border-block: 8px solid transparent; border-left: 13px solid currentColor; translate: 1.5px 0; }
 .hero-video-control:hover .hero-video-control-label { color: var(--color-dark-text); }
 .hero-video-control:hover .hero-video-control-icon { background: rgba(13, 16, 14, .82); border-color: var(--color-accent-on-dark); }
-.hero-video-control:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 /* Where a hero button reaches under it, the control keeps its circle; the word stays for screen readers
    (useHeroControlPlacement) */
 .hero-video-control[data-compact] { padding-left: 0; }

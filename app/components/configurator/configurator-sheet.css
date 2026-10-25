@@ -73,7 +73,7 @@
 /* 32 px chips with a 1 px border: the target reaches 7 px past the padding box each way, 44 px in all */
 .hc-sheet-expand::after, .hc-sheet-chip::after { position: absolute; inset: -7px 0; content: ''; }
 .hc-sheet-expand:hover, .hc-sheet-chip:hover, .hc-sheet-chip[aria-expanded="true"] { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .4); }
-.hc-sheet-expand:focus-visible, .hc-sheet-chip:focus-visible { outline: 2px solid var(--color-accent-on-dark); outline-offset: 2px; }
+.hc-sheet-expand:focus-visible, .hc-sheet-chip:focus-visible { outline: 3px solid var(--color-accent-on-dark); outline-offset: 4px; } /* the outer ring, on the sheet's charcoal */
 /* the colours, opened from their chip: a note laid on the picture under the chips, on the sheet's paper */
 .hangar-configurator-embedded .hc-preview-sheet .hc-sheet-options {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 3;

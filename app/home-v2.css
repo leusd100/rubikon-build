@@ -517,7 +517,7 @@ main[data-home="v2"] .hv2-contour-stage[data-dragging] .hv2-contour-handle { cur
 }
 main[data-home="v2"] .hv2-contour-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 /* The keyboard's ring only: focus a click or a finger put on the range draws nothing until a key is pressed */
-main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-rail .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-rail .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* «Фото» / «Схема», the keys and the layers glide the seam: the four's --split. A drag follows the pointer as it is, a
@@ -619,7 +619,6 @@ main[data-home="v2"] .hv2-chain-step {
 }
 main[data-home="v2"] .hv2-chain-step:is(:hover, :focus-visible, [aria-pressed="true"]) { text-decoration-color: currentColor; }
 main[data-home="v2"] .hv2-chain-step[aria-pressed="true"] { text-decoration-style: solid; font-weight: 800; }
-main[data-home="v2"] .hv2-chain-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 main[data-home="v2"] .hv2-contour-stage[data-step-on] :is(.hv2-proof-load, .hv2-proof-wind) [data-step] { opacity: .14; transition: opacity 220ms ease; }
 main[data-home="v2"] .hv2-contour-stage[data-step-on] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="flow"] { opacity: .3; }
 main[data-home="v2"] .hv2-contour-stage[data-step-on="0"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="0"],
@@ -683,7 +682,6 @@ main[data-home="v2"] .hv2-contour-brief span { display: inline-flex; align-items
 main[data-home="v2"] .hv2-contour-brief i { font-style: normal; font-size: 16px; transition: transform 200ms ease; }
 main[data-home="v2"] .hv2-contour-brief:hover { background: var(--color-accent-on-dark-hover); }
 main[data-home="v2"] .hv2-contour-brief:hover i { transform: translateX(3px); }
-main[data-home="v2"] .hv2-contour-brief:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 @media (prefers-reduced-motion: no-preference) {
   main[data-home="v2"] .hv2-contour-brief[data-lit] { animation: hv2-brief-ring 1100ms ease-out 2; }
 }
@@ -750,7 +748,6 @@ main[data-home="v2"] .hv2-contour-nodes button {
 }
 main[data-home="v2"] .hv2-contour-nodes button:is(:hover, [aria-expanded="true"]) { color: var(--hv2-node-ink); background: var(--hv2-node-light); }
 main[data-home="v2"] .hv2-contour-nodes button:disabled { cursor: default; opacity: .45; }
-main[data-home="v2"] .hv2-contour-nodes button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-nodes button { width: 40px; height: 40px; } }
 /* On a laptop the row stands over the picture's foot, on the photo's gravel, a bar of its own; the title block's copy is
    a phone's */
@@ -907,6 +904,9 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
      base, its disc smaller than its grip, so it covers no gate and no corner at the resting split */
   main[data-home="v2"] .hv2-contour-handle { top: auto; bottom: 0; margin-top: 0; padding: 5px 0 0; font-size: 20px; }
   main[data-home="v2"] .hv2-contour-handle::before, main[data-home="v2"] .hv2-contour-handle::after { inset: auto 6px 2px; height: 32px; }
+  /* the disc stands 2 px over the frame's bottom edge, which would cut its focus ring: under the keyboard it steps up by
+     the ring's 7 px (W3-06, PDO-88) */
+  main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-rail .hv2-contour-handle { bottom: 7px; }
 }
 /* The narrowest phones: a smaller disc, clear of the gable's base and the gates' feet (review, 05.10) */
 @media (max-width: 389px) {
@@ -954,7 +954,8 @@ main[data-home="v2"] .hv2-scope-cell {
   position: relative; display: grid; gap: 14px; width: 100%; height: 100%; padding: 18px 20px 16px; margin: 0; color: inherit; text-align: left; text-transform: inherit;
   font: inherit; letter-spacing: inherit; background: none; border: 0; border-radius: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-main[data-home="v2"] .hv2-scope-cell:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -4px; }
+/* a cell of the scheme's row: the inner ring (W3-06, PDO-88: the site's two rings — outer 3 px / 4 and this one) */
+main[data-home="v2"] .hv2-scope-cell:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -4px; }
 main[data-home="v2"] .hv2-scope-cell[aria-pressed="true"] { background: color-mix(in srgb, var(--hv2-copper) 12%, transparent); box-shadow: inset 0 -2px 0 var(--hv2-copper); }
 /* «↑ на схемі»: where the part lights up — shown on a cell pointed at, focused or pressed, always on a touch screen */
 main[data-home="v2"] .hv2-scope-hint {
@@ -1122,7 +1123,6 @@ main[data-home="v2"] .hv2-proof-detail-pin::after { content: ''; position: absol
   main[data-home="v2"] .hv2-contour-stage[data-nodes-hint] .hv2-proof-detail-pin[data-detail="purlin"]::after { animation-delay: 150ms; }
   main[data-home="v2"] .hv2-contour-stage[data-nodes-hint] .hv2-proof-detail-pin[data-detail="base"]::after { animation-delay: 300ms; }
 }
-main[data-home="v2"] .hv2-proof-detail-pin:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 main[data-home="v2"] :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 240ms; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"]:not([data-focus]) :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 1; visibility: visible; }
 /* not while the first view's sweep runs: the drawing's names come in when it rests, and a swipe must not catch a letter */
@@ -1149,7 +1149,7 @@ main[data-home="v2"] .hv2-detail-head small { color: var(--hv2-text-2); font: 50
 main[data-home="v2"] .hv2-detail-letter { display: grid; place-items: center; width: 22px; height: 22px; color: var(--hv2-node-ink); background: var(--hv2-node); border-radius: 50%; font: 700 12px/1 var(--font-condensed), sans-serif; }
 main[data-home="v2"] .hv2-detail-close { display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -6px -6px 0; padding: 0; color: var(--hv2-text-2); background: none; border: 0; font: 400 22px/1 var(--font-manrope), sans-serif; cursor: pointer; }
 main[data-home="v2"] .hv2-detail-close:hover { color: var(--hv2-text); }
-main[data-home="v2"] .hv2-detail-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+main[data-home="v2"] .hv2-detail-close:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -4px; } /* its corner of the sheet: the inner ring */
 main[data-home="v2"] .hv2-detail-note { margin: 0; color: var(--hv2-text-3); font: 500 12px/1.3 var(--font-manrope), sans-serif; }
 main[data-home="v2"] .hv2-detail-foot { display: flex; flex-direction: column; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: 6px 12px; }
 main[data-home="v2"] .hv2-detail-again {
@@ -1169,7 +1169,6 @@ main[data-home="v2"] .hv2-detail-step {
   border: 1px solid var(--hv2-line-strong); border-radius: 0; cursor: pointer; font: 700 18px/1 var(--font-condensed), sans-serif;
 }
 main[data-home="v2"] .hv2-detail-step:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-detail-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-detail-step { width: 44px; height: 44px; } }
 main[data-home="v2"] .hv2-detail-flow-words { margin: 0; color: var(--hv2-load, var(--color-load)); font: 600 12px/1.35 var(--font-manrope), sans-serif; opacity: 0; transition: opacity 300ms ease; }
 /* its line kept while the node comes together, the words in once the way shows */
@@ -1188,7 +1187,6 @@ main[data-home="v2"] .hv2-detail-leader circle { fill: var(--hv2-node); }
   main[data-home="v2"] .hv2-detail-leader circle { opacity: 0; animation: hv2-contour-fade 200ms 820ms ease forwards; }
 }
 @keyframes hv2-leader-draw { to { stroke-dashoffset: 0; } }
-main[data-home="v2"] .hv2-detail-again:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-detail-again { min-height: 44px; } }
 /* A phone: the node as a sheet from the screen's foot, over a dimmed page (ProofContour portals it into main) */
 main[data-home="v2"] .hv2-detail[data-sheet] {

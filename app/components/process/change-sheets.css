@@ -92,7 +92,6 @@
 .cs-steps li[data-state="done"] .cs-node { color: var(--color-on-action); background: var(--cs-copper); }
 .cs-steps li[data-state="now"] .cs-node { color: var(--color-on-action); background: var(--color-action); box-shadow: 0 0 0 8px color-mix(in srgb, var(--cs-copper) 22%, transparent); transform: scale(1.08); }
 .cs-steps li[data-state="now"] b { color: var(--cs-copper-ink); }
-.cs-steps button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (hover: hover) {
   .cs-steps button:hover b { color: var(--cs-copper-ink); }
   .cs-steps li:not([data-state="now"]) button:hover .cs-node { background: color-mix(in srgb, var(--cs-copper) 14%, var(--color-surface-elevated)); box-shadow: 0 0 0 6px color-mix(in srgb, var(--cs-copper) 14%, transparent); transform: scale(1.06); }
