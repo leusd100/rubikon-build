@@ -680,7 +680,10 @@ main[data-home="v2"] .hv2-contour-brief {
   background: var(--color-accent-on-dark); border: 1px solid #f0b48a; transition: background-color 200ms ease;
 }
 main[data-home="v2"] .hv2-contour-brief small { font: 600 12px/1.1 var(--font-manrope), sans-serif; letter-spacing: 0; }
-main[data-home="v2"] .hv2-contour-brief span { display: inline-flex; align-items: center; gap: 8px; font: var(--type-action-weight) var(--type-action-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-action-track); text-transform: uppercase; white-space: nowrap; }
+/* The title block's action keeps its condensed 13 px face (already at the action floor): in Manrope the action cell grew
+   4 px, the first cell lost them, and on Linux its line took a 4th row — the block over 120 px at 1440×700 and the brief
+   past the edge of a 1250×613 window (W3-02, CI) */
+main[data-home="v2"] .hv2-contour-brief span { display: inline-flex; align-items: center; gap: 8px; font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 main[data-home="v2"] .hv2-contour-brief i { font-style: normal; font-size: 16px; transition: transform 200ms ease; }
 main[data-home="v2"] .hv2-contour-brief:hover { background: var(--color-accent-on-dark-hover); }
 main[data-home="v2"] .hv2-contour-brief:hover i { transform: translateX(3px); }
