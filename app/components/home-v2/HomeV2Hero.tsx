@@ -36,7 +36,7 @@ export function HomeV2Hero() {
               <Phone aria-hidden="true" />
               <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
             </a>
-            <a className="button button-outline" href="#inquiry" data-open-inquiry="">
+            <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">
               <span className="hv2-inquiry-phone">Обговорити задачу</span>
               <span className="hv2-inquiry-wide">Написати або залишити запит</span>
               <span aria-hidden="true">↓</span>

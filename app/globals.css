@@ -380,9 +380,6 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: var(--button-h-l); padding-inline: 24px; border: 1px solid transparent; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .button-primary { color: var(--color-on-action); background: var(--color-action); }
 .button-primary:hover { background: var(--color-action-hover); transform: translateY(-2px); }
-/* The quieter button on a dark hero: same size as the primary, outline only. */
-.hero .button-outline { color: var(--color-dark-text); border-color: rgba(245, 242, 235, .4); background: transparent; text-align: center; }
-.hero .button-outline:hover { border-color: rgba(255,255,255,.72); background: rgba(255,255,255,.06); }
 /* HOME's primary action is the call, with the number printed on the button: a visitor sees whom
    they are calling before the tap. Same box as every .button; only the content is two lines.
    min-width reserves the box: the number is ~4.5 px wider in Plex Condensed than in its fallback,
@@ -443,6 +440,32 @@ body:has(main:is([data-home="v2"], .about-page)) {
 
 .section-link { display: inline-flex; align-items: center; gap: 22px; margin-top: var(--rhythm-cta); padding-bottom: 8px; border-bottom: 1px solid currentColor; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
 .section-link span { color: var(--color-accent-strong); }
+
+/* Shared controls (W3-06, PDO-99): the pages kept copies of these, so a fix reached one copy only. Each page's class
+   keeps its own place, type and grid; the look of the role lives here. */
+/* The round control in a drawing's title block that pauses or replays its tour (.dn-control — direction nodes, the
+   grain builder, the /angary frame — and /pro-nas practice's .ps-control) */
+.motion-control {
+  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 4px; color: var(--color-text); background: none;
+  border: 0; border-radius: 22px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+}
+.motion-control-label { color: var(--color-text-secondary); }
+.motion-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--color-border-strong); border-radius: 50%; }
+.motion-control-icon::before { content: ''; width: 10px; height: 13px; background: linear-gradient(90deg, currentColor 0 3.5px, transparent 3.5px 6.5px, currentColor 6.5px 10px); }
+.motion-control[data-paused] .motion-control-icon { border-color: var(--color-accent); }
+.motion-control[data-paused] .motion-control-icon::before { width: 0; height: 0; background: none; border-block: 6.5px solid transparent; border-left: 11px solid currentColor; translate: 1.5px 0; }
+.motion-control:hover .motion-control-label { color: var(--color-text); }
+.motion-control:hover .motion-control-icon { border-color: var(--color-accent); }
+/* A row that is the button for its step (a direction node's tour, /pro-nas practice, the /yak formats): the shown one
+   takes a copper bar and a copper tint. --step-tint / --step-hover-tint let the formats keep their lighter tint. */
+.step-option {
+  display: grid; width: 100%; color: inherit; text-align: left; background: none; border: 0; font: inherit; cursor: pointer;
+  transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.step-option[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) var(--step-tint, 10%), transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+@media (hover: hover) {
+  .step-option:hover { background-color: color-mix(in srgb, var(--color-accent) var(--step-hover-tint, 6%), transparent); }
+}
 
 .directions { color: var(--color-dark-text); background: var(--color-dark); }
 .direction-grid { display: grid; grid-template-columns: 1.15fr .85fr; grid-template-rows: 360px 360px 330px; gap: 18px; }
@@ -1699,6 +1722,8 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
    conversation in one tap. (Until Phase 2 this was the phone's rule only; wider screens led with the page's own action
    in copper and the call as a quiet link.) */
 :is(.hero-action-row, .angary-hero-actions, .grain-hero-actions, .directions-hero-actions, .about-hero-actions, .proc-hero-actions) > .hero-call-lead { margin: 0; }
+/* The quieter button on a dark hero: same size as the primary, outline only — HOME's «Написати або залишити запит» too
+   (W3-06, PDO-99: HOME's .hero .button-outline was a copy of this rule) */
 .button-hero-secondary { color: var(--color-dark-text); background: transparent; border-color: rgba(245, 242, 235, .4); text-align: center; }
 .button-hero-secondary:hover { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .72); }
 :is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link {

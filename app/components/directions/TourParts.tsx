@@ -30,7 +30,7 @@ export function TourSteps({
     <ol className="dn-steps">
       {steps.map((item, index) => (
         <li key={item.title} style={{ '--i': index } as CSSProperties}>
-          <button type="button" className="dn-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)} {...hover(index + 1)}>
+          <button type="button" className="step-option dn-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)} {...hover(index + 1)}>
             <span className="dn-step-index" aria-hidden="true">{pad(index + 1)}</span>
             <b>{item.title}</b>
             <span className="dn-step-text">{item.text}</span>
@@ -52,11 +52,11 @@ export function TourControl({ touring, toggle, what, label }: Readonly<{
   label?: { play: string; stop: string };
 }>) {
   return (
-    <button type="button" className="dn-control" data-paused={touring ? undefined : true} onClick={toggle}>
+    <button type="button" className="motion-control dn-control" data-paused={touring ? undefined : true} onClick={toggle}>
       {label
-        ? <span className="dn-control-label">{touring ? label.stop : label.play}</span>
-        : <span className="dn-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ` показу ${what}` : ` показ ${what}`}</span></span>}
-      <span className="dn-control-icon" aria-hidden="true" />
+        ? <span className="motion-control-label dn-control-label">{touring ? label.stop : label.play}</span>
+        : <span className="motion-control-label dn-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ` показу ${what}` : ` показ ${what}`}</span></span>}
+      <span className="motion-control-icon dn-control-icon" aria-hidden="true" />
     </button>
   );
 }

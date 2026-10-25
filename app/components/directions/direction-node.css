@@ -29,18 +29,8 @@
    tour whose steps hold for their own times sets --dn-step-ms to the shown one's (the /angary frame, 03.10) */
 .dn[data-touring] .dn-fill { animation: dn-fill var(--dn-step-ms, 5200ms) linear both; }
 
-/* The round control in the title block: pauses or replays the tour */
-.dn-control {
-  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 4px; color: var(--color-text); background: none;
-  border: 0; border-radius: 22px; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
-}
-.dn-control-label { color: var(--color-text-secondary); }
-.dn-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--color-border-strong); border-radius: 50%; }
-.dn-control-icon::before { content: ''; width: 10px; height: 13px; background: linear-gradient(90deg, currentColor 0 3.5px, transparent 3.5px 6.5px, currentColor 6.5px 10px); }
-.dn-control[data-paused] .dn-control-icon { border-color: var(--color-accent); }
-.dn-control[data-paused] .dn-control-icon::before { width: 0; height: 0; background: none; border-block: 6.5px solid transparent; border-left: 11px solid currentColor; translate: 1.5px 0; }
-.dn-control:hover .dn-control-label { color: var(--color-text); }
-.dn-control:hover .dn-control-icon { border-color: var(--color-accent); }
+/* The round control in the title block: pauses or replays the tour (its look: .motion-control, globals.css) */
+.dn-control { font: 700 11px/1 var(--font-condensed), sans-serif; }
 
 /* The title block keeps its geometry through the tour (as /angary's frame since 04.10, every tour since 07.10): the
    step's cell as wide for «Огляд» as for «Крок 05 / 05», the control as wide for «Пауза» as for «Відтворити», and «Що
@@ -72,18 +62,12 @@
 /* The steps under the text: each is the button that shows its step; the shown one takes the copper bar */
 .dn-steps { max-width: 520px; margin: 26px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
 .dn-steps li { border-bottom: 1px solid var(--color-border); }
-.dn-step {
-  display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 3px 12px; width: 100%; padding: 14px 12px; color: inherit; text-align: left;
-  background: none; border: 0; font: inherit; cursor: pointer; transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
-}
+/* (the row's button and its pressed state: .step-option, globals.css) */
+.dn-step { grid-template-columns: 40px minmax(0, 1fr); gap: 3px 12px; padding: 14px 12px; }
 .dn-step-index { grid-row: span 2; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
 .dn-step b { color: var(--color-text); font: 600 16px/1.3 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: uppercase; }
 .dn-step-text { color: var(--color-text-secondary); font-size: 14px; line-height: 1.55; }
-.dn-step[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
 .dn-step[aria-pressed="true"] b { color: var(--color-accent-strong); }
-@media (hover: hover) {
-  .dn-step:hover { background-color: color-mix(in srgb, var(--color-accent) 6%, transparent); }
-}
 
 @keyframes dn-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: no-preference) {
