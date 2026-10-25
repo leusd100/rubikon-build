@@ -20,8 +20,17 @@
   background: var(--color-bg);
   color: var(--color-text);
   font: 600 15px/1.2 var(--font-manrope), sans-serif;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
-.hc-select:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+/* Its focus is the inquiry form's, a copper border and a 3 px halo (25.10, W3-07 · PDO-24): a 2 px copper outline here
+   and the halo in the form under it were two looks of a field's focus on one page. The outline stays, transparent, for
+   forced colours, which drop the halo */
+.hc-select:focus {
+  border-color: var(--color-focus);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 26%, transparent);
+}
 
 /* The stamp's «Призначення» cell, shown only once chosen: a row of its own at the end, so the cells above keep their
    pairs on every width */
@@ -362,7 +371,8 @@
   background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
   background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
 }
-.hangar-configurator-embedded .hc-select:hover { border-color: var(--color-text-secondary); }
+/* the pointer over a field with focus leaves its copper border */
+.hangar-configurator-embedded .hc-select:hover:not(:focus) { border-color: var(--color-text-secondary); }
 
 /* the sliders: a dimension line */
 .hangar-configurator-embedded .hc-field-controls input[type='range'] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
@@ -394,7 +404,7 @@
 }
 /* …at the value's size on a phone, whose fields are 16 px (globals.css: iOS zooms into smaller ones) */
 @media (max-width: 760px) { .hc-field-unit { font-size: 16px; } }
-.hangar-configurator-embedded .hc-field-controls input[type='text']:hover { border-color: var(--color-text-secondary); }
+.hangar-configurator-embedded .hc-field-controls input[type='text']:hover:not(:focus) { border-color: var(--color-text-secondary); }
 
 /* The boxes as the answers are drawn (10.10, audit F113): an 18 px square, filled when ticked, with the chips' copper
    tick — the browser's own box was rounded (Safari, Chrome) beside square answers, its words 15 px beside their 14.
