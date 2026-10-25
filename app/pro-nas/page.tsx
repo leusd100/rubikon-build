@@ -137,8 +137,8 @@ export default function AboutPage() {
             supporting="Беремо окремі роботи або погоджений комплекс робіт. Хто виконує кожну частину, фіксуємо в договорі до початку робіт."
           />
           <CapabilityFigure columns={capabilityLedger()} />
-          <a className="section-link about-build-all" href={siteRoutes.directions}>
-            Усі напрямки робіт <span aria-hidden="true">↗</span>
+          <a className="link-arrow section-link about-build-all" href={siteRoutes.directions}>
+            Усі напрямки робіт <span aria-hidden="true" data-arrow="up-right">↗</span>
           </a>
           {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people; under the
               line, the oblast's real outline (geoBoundaries / OpenStreetMap, credited) draws itself once, Dnipro — where
@@ -177,7 +177,7 @@ export default function AboutPage() {
                 <PrincipleMark kind={mark} />
                 <h3>{keepHeadingWords(title)}</h3>
                 <p>{text}</p>
-                <a className="about-principle-link" href={href}>{link} <span aria-hidden="true">↗</span></a>
+                <a className="link-arrow about-principle-link" href={href}>{link} <span aria-hidden="true" data-arrow="up-right">↗</span></a>
               </li>
             ))}
           </ol>

@@ -86,8 +86,8 @@ export function HangarEditorialArchitecture({
               <a className="button button-primary" href="#inquiry" data-open-inquiry>
                 Обговорити вартість вашого ангара <span aria-hidden="true">↓</span>
               </a>
-              <a className="angary-text-link" href="/yak-pratsyuiemo#koshtorys">
-                Як формуємо кошторис і графік <span aria-hidden="true">→</span>
+              <a className="link-arrow angary-text-link" href="/yak-pratsyuiemo#koshtorys">
+                Як формуємо кошторис і графік <span aria-hidden="true" data-arrow="right">→</span>
               </a>
             </div>
           </div>
@@ -119,13 +119,13 @@ export function HangarEditorialArchitecture({
                     down to the attached brief in the form once something is */}
                 {/* the form under the configurator's stamp (Phase 4): up to it */}
                 {attached && !sent && (
-                  <a className="angary-route-brief-action" href="#inquiry" onClick={(event) => revealAttachedBrief(event, { takeOver: formAbove })}>
-                    Надіслати бриф <span aria-hidden="true">{formAbove ? '↑' : '↓'}</span>
+                  <a className="link-arrow angary-route-brief-action" href="#inquiry" onClick={(event) => revealAttachedBrief(event, { takeOver: formAbove })}>
+                    Надіслати бриф <span aria-hidden="true" data-arrow={formAbove ? 'up' : 'down'}>{formAbove ? '↑' : '↓'}</span>
                   </a>
                 )}
                 {!attached && (
-                  <a className="angary-route-brief-action" href="#configurator">
-                    Сформувати бриф <span aria-hidden="true">↑</span>
+                  <a className="link-arrow angary-route-brief-action" href="#configurator">
+                    Сформувати бриф <span aria-hidden="true" data-arrow="up">↑</span>
                   </a>
                 )}
               </div>
@@ -146,8 +146,8 @@ export function HangarEditorialArchitecture({
               </li>
             ))}
           </ol>
-          <a className="angary-route-more" href="/yak-pratsyuiemo#etapy">
-            Усі етапи, документи й відповідальність <span aria-hidden="true">→</span>
+          <a className="link-arrow angary-route-more" href="/yak-pratsyuiemo#etapy">
+            Усі етапи, документи й відповідальність <span aria-hidden="true" data-arrow="right">→</span>
           </a>
 
           {/* Who answers for it — the route's title block («штамп»), in place of a separate section. Owner, 03.10: it hands
@@ -168,7 +168,7 @@ export function HangarEditorialArchitecture({
               <a className="angary-stamp-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
                 <Phone aria-hidden="true" /> {company.phone.display}
               </a>
-              <a className="angary-stamp-link" href="/pro-nas">Про компанію <span aria-hidden="true">→</span></a>
+              <a className="link-arrow angary-stamp-link" href="/pro-nas">Про компанію <span aria-hidden="true" data-arrow="right">→</span></a>
             </div>
           </div>
         </div>

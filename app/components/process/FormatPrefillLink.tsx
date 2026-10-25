@@ -18,8 +18,8 @@ export function FormatPrefillLink({ label }: Readonly<{ label: string }>) {
   };
 
   return (
-    <a className="proc-scope-cta" href="#inquiry" onClick={prefill} data-open-inquiry="">
-      Обговорити цей формат <span aria-hidden="true">↗</span>
+    <a className="link-arrow proc-scope-cta" href="#inquiry" onClick={prefill} data-open-inquiry="">
+      Обговорити цей формат <span aria-hidden="true" data-arrow="up-right">↗</span>
     </a>
   );
 }

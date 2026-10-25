@@ -63,8 +63,8 @@
 .direction-entry-list p { margin: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 .direction-entry-list .direction-entry-start { padding-top: 12px; border-top: 1px dashed var(--color-border-strong); color: var(--color-text); font-size: 15px; }
 .direction-entry-start b { display: block; margin-bottom: 4px; color: var(--color-accent-strong); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
-.direction-entry-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 14px; min-height: 44px; margin-top: auto; padding-bottom: 6px; border-bottom: 1px solid currentColor; font: var(--type-action-weight) var(--type-action-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-action-track); text-transform: uppercase; }
-.direction-entry-link:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+/* (an arrow link: .link-arrow) */
+.direction-entry-link { align-self: flex-start; margin-top: auto; }
 /* Side by side (PDO-50, owner 22.10): each card's «Почнемо з» and its link on one line with the others' — a two-line
    situation or a longer text left them stepped 56–110 px apart (88 at 1440). The list gives three rows (the copy,
    «Почнемо з», the link) and every card takes them as its own (subgrid); a browser without subgrid keeps the cards as
@@ -136,8 +136,5 @@
   .cost-list.has-glyphs h3 { grid-column: 3; }
   .cost-glyph { width: 36px; height: 36px; }
 }
-
-/* Whole-pixel line boxes keep the following cost section on its existing pixel grid. */
-.direction-process-link { line-height: 20px; }
 
 /* «Ви · Ми» (.process-split) lives in process-split.css — shared with /yak-pratsyuiemo and /angary. */

@@ -17,8 +17,9 @@
 .angary-cost-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px 40px; align-items: center; margin-top: 36px; padding-top: 26px; border-top: 1px solid var(--color-border-strong); }
 .angary-cost-foot p { max-width: 62ch; margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.65; }
 .angary-cost-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
-.angary-text-link { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-text); border-bottom: 1px solid var(--color-accent); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
-.angary-text-link:hover { color: var(--color-accent-strong); }
+/* (.angary-text-link, .angary-route-more, .angary-stamp-link are arrow links: .link-arrow; beside the button its words
+   take the button's line) */
+.angary-cost-actions .angary-text-link { margin-top: -10px; }
 
 /* ---------- The frame (FrameTour.tsx, frame-tour.css): a direction-node tour on the page's own ground ---------- */
 .angary-structure .direction-editorial-copy > p:not(.eyebrow) { max-width: 520px; }
@@ -48,12 +49,12 @@
 .angary-process .angary-section-heading { margin-bottom: 56px; }
 /* The route is the direction pages' «Ви · Ми» (direction-template.css .process-split), five steps; 01 is the brief */
 /* 01's action follows the brief's state (owner, 03.10): up to the configurator, or down to the attached brief */
-.angary-route-brief-action { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 8px; color: var(--color-accent-on-dark); border-bottom: 1px solid currentColor; font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-.angary-route-brief-action:hover { color: var(--color-dark-text); }
+/* (an arrow link: .link-arrow, in copper as the step's way on) */
+.angary-route-brief-action { --link-ink: var(--color-accent-on-dark); margin-top: 8px; }
 /* in the brief's «Ви», under its sentence */
 .process-split .ps-you .angary-route-brief-action { display: flex; width: fit-content; margin-top: 10px; }
-.angary-route-more { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 40px; color: var(--color-dark-text); border-bottom: 1px solid var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
-.angary-route-more:hover { color: var(--color-accent-on-dark); }
+/* «Усі етапи, документи й відповідальність»: two even lines where it wraps, 390 px and narrower (.link-arrow balances) */
+.angary-route-more { --link-ink: var(--color-dark-text); margin-top: 40px; }
 
 /* ---------- The route's title block: who answers for the agreed scope (it replaced the separate people section) ---------- */
 /* #responsibility is an anchor of its own: it lands under the site header, as the sections do (04.10) */
@@ -73,8 +74,8 @@
 .angary-stamp-phone { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-dark-text); font: 600 19px/1 var(--font-condensed), sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .angary-stamp-phone svg { width: 18px; height: 18px; flex: none; color: var(--color-accent-on-dark); }
 .angary-stamp-phone:hover { color: var(--color-accent-on-dark); }
-.angary-stamp-link { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-left: auto; color: var(--color-dark-text-secondary); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
-.angary-stamp-link:hover { color: var(--color-accent-on-dark); }
+/* the quiet way to the company: secondary ink */
+.angary-stamp-link { --link-ink: var(--color-dark-text-secondary); margin: -10px 0 0 auto; white-space: nowrap; }
 
 /* ---------- FAQ + related directions ---------- */
 .angary-page .faq-grid { align-items: start; }
@@ -119,7 +120,7 @@
   .angary-stamp dl > div + div { border-left: 0; border-top: 1px solid var(--color-dark-line); }
   .angary-stamp-actions { flex-direction: column; align-items: stretch; gap: 6px; }
   .angary-stamp-cta { justify-content: space-between; padding-block: 12px; text-align: left; line-height: 1.35; }
-  .angary-stamp-link { margin-left: 0; }
+  .angary-stamp-link { margin: 0; }
   .angary-structure:has(+ .angary-real) { padding-bottom: 44px; }
   .angary-real-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 36px; }
   /* Two parts, but a sentence: the note takes its own row, as HOME's proof sheet on a phone */

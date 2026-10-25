@@ -150,7 +150,7 @@ const grainComplexDirection: DirectionPageConfig = {
       sectionClassName: 'grain-service-subhero',
       items: [
         { label: 'Скласти комплекс', href: '#kompleks', className: 'button button-hero-secondary', arrow: '↓' },
-        { label: 'Обговорити зерносховище', href: '#inquiry', className: 'text-link', arrow: '↓', openInquiry: true },
+        { label: 'Обговорити зерносховище', href: '#inquiry', className: 'link-arrow text-link', arrow: '↓', openInquiry: true },
       ],
     },
   },

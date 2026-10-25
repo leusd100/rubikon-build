@@ -377,8 +377,8 @@ export function TeamSection({ variant = 'home', id }: { variant?: TeamVariant; i
           {!isHome && <p className="team-bond"><span>Два покоління — одна відповідальність</span></p>}
         </div>
         {isHome && (
-          <a className="section-link team-home-link" href={siteRoutes.about}>
-            Познайомитися з командою <span aria-hidden="true">↗</span>
+          <a className="link-arrow section-link team-home-link" href={siteRoutes.about}>
+            Познайомитися з командою <span aria-hidden="true" data-arrow="up-right">↗</span>
           </a>
         )}
       </div>

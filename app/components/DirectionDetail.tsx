@@ -32,6 +32,9 @@ const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
+/** The way an arrow link's arrow is nudged on hover and focus (.link-arrow, globals.css) */
+const ARROW_DIRECTION = { '↓': 'down', '↗': 'up-right' } as const;
+
 /** The class names that are set, space-separated. */
 function classNames(...names: (string | undefined)[]) {
   return names.filter(Boolean).join(' ');
@@ -140,7 +143,7 @@ function DirectionHero({
             <HeroCallButton phoneOnly={actions.legacyCallLink} />
             {actions.items.map((action) => (
               <a key={action.href} className={action.className} href={action.href} data-open-inquiry={action.openInquiry ? '' : undefined}>
-                {`${action.label} `}<span aria-hidden="true">{action.arrow}</span>
+                {`${action.label} `}<span aria-hidden="true" data-arrow={ARROW_DIRECTION[action.arrow]}>{action.arrow}</span>
               </a>
             ))}
             {actions.legacyCallLink && <HeroCallLink />}
@@ -215,8 +218,8 @@ export function DirectionProcess({
           </ol>
         )}
         {link && (
-          <a className="section-link direction-process-link" href={link.href}>
-            {link.label} <span aria-hidden="true">↗</span>
+          <a className="link-arrow section-link direction-process-link" href={link.href}>
+            {link.label} <span aria-hidden="true" data-arrow="up-right">↗</span>
           </a>
         )}
       </div>
@@ -388,7 +391,7 @@ function FaqAsk({ place }: Readonly<{ place: 'side' | 'end' }>) {
       <p>Не знайшли свого питання? Зателефонуйте або залиште запит — розберемо вашу задачу.</p>
       <div>
         <a className="faq-ask-call" href={companyContactLinks.phone}>{company.phone.display}</a>
-        <a className="faq-ask-write" href="#inquiry" data-open-inquiry="">Залишити запит <span aria-hidden="true">↓</span></a>
+        <a className="link-arrow faq-ask-write" href="#inquiry" data-open-inquiry="">Залишити запит <span aria-hidden="true" data-arrow="down">↓</span></a>
       </div>
     </div>
   );

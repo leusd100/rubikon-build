@@ -182,8 +182,8 @@ export default function DeliveryModelPage() {
               ))}
             </ul>
             {/* Three starting states, one route: the rows join into the four steps below */}
-            <a className="proc-start-merge" href="#etapy">
-              <span>Далі — один зрозумілий процес</span> <span aria-hidden="true">↓</span>
+            <a className="link-arrow proc-start-merge" href="#etapy">
+              <span>Далі — один зрозумілий процес</span> <span aria-hidden="true" data-arrow="down">↓</span>
             </a>
           </div>
         </div>

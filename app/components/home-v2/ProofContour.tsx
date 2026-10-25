@@ -600,8 +600,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // laptop (the action cell's height is the title block's, and the sheet must fit the window), under the brief on a phone
   // (the thumb is there). One shows at a time (home-v2.css, data-place)
   const exitLink = (place: 'line' | 'action') => (
-    <a className="hv2-contour-exit" data-place={place} href="#inquiry" onClick={() => queueProofEvent('exit_click')}>
-      Інша задача? Розкажіть коротко <span aria-hidden="true">↓</span>
+    <a className="link-arrow hv2-contour-exit" data-place={place} href="#inquiry" onClick={() => queueProofEvent('exit_click')}>
+      Інша задача? Розкажіть коротко <span aria-hidden="true" data-arrow="down">↓</span>
     </a>
   );
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
