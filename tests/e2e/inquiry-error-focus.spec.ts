@@ -141,6 +141,55 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// The mark costs a message as little room as it can (review 25.10): a field's mark floats on the first line only, as in the
+// brief's frame, and the consent's mark stands in the checkbox's column. At 367–386 px the direction message of /pro-nas
+// («Оберіть напрям робіт або «Ще не визначено».») runs onto a second line, as it does in the brief's prototype: 375 shows
+// that second line starting under the mark. 470 and 820 are where a mark beside the consent's words had pushed them onto
+// one more line.
+test('the mark takes room on the first line only, no line grows, and the consent\'s words keep their full width', async ({ page }) => {
+  for (const width of [375, 470, 820, 1440]) {
+    const form = await openForm(page, width);
+    await raiseErrors(form);
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    const messages = await form.locator('.inquiry-field-error, .inquiry-consent > small').evaluateAll(async (elements) => {
+      // the reduced-motion reset gives a new message's mark a .01ms transition: measure two frames on, where it has landed
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return elements.map((message) => {
+        const range = document.createRange();
+        range.selectNodeContents(message);
+        const lines = new Map<number, number>();
+        for (const rect of range.getClientRects()) {
+          if (rect.width === 0) continue;
+          const top = Math.round(rect.top);
+          lines.set(top, Math.min(lines.get(top) ?? Infinity, rect.left));
+        }
+        const box = message.getBoundingClientRect();
+        const consentText = message.closest('.inquiry-consent')?.querySelector(':scope > span');
+        return {
+          text: message.textContent,
+          consent: !!consentText,
+          starts: [...lines.entries()].sort(([a], [b]) => a - b).map(([, left]) => left - box.left),
+          textStart: consentText ? consentText.getBoundingClientRect().left - box.left : null,
+          height: box.height,
+          lineHeight: Number.parseFloat(getComputedStyle(message).lineHeight),
+        };
+      });
+    });
+    expect(messages).toHaveLength(4);
+    for (const message of messages) {
+      const where = `${width}px «${message.text}»`;
+      expect(message.height, `${where}: no line grows`).toBeCloseTo(message.starts.length * message.lineHeight, 0);
+      if (message.consent) {
+        for (const start of message.starts) expect(start, `${where}: the words under the consent's text`).toBeCloseTo(message.textStart ?? -1, 1);
+      } else {
+        expect(message.starts[0], `${where}: the first line after the mark`).toBeCloseTo(20, 0);
+        for (const start of message.starts.slice(1)) expect(start, `${where}: a later line under the mark`).toBeCloseTo(0, 1);
+      }
+    }
+    if (width === 375) expect(messages.filter((message) => !message.consent && message.starts.length > 1), 'a field message on two lines').not.toHaveLength(0);
+  }
+});
+
 test('an invalid field keeps the focus halo round its frame — marked by the form or found by the browser', async ({ page }) => {
   let form = await openForm(page, 1440);
   const halo = await formHalo(page);
