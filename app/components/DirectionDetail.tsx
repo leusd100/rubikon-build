@@ -453,7 +453,7 @@ export function DirectionPage({
   editorialArchitecture?: ReactNode;
 }) {
   const direction = getDirection(config.id);
-  // /angary (owner, 03.10): the related directions — its own stages, one at a time — come after the form, not before it
+  // /angary (owner, 03.10) and metal, concrete, roofing (OD-PX-17 A, 25.10): the related directions come after the form
   const relatedClosesPage = config.related?.placement === 'after-inquiry';
   const related = (
     <RelatedDirections

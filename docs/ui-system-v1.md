@@ -171,7 +171,7 @@ token's today; other literals move onto a token when their file changes for a vi
 |---|---|---|
 | Type (rem) | `--type-display-home`, `--type-h1`, `--type-h2`, `--type-h2-compact`, `--type-h2-minor`, `--type-h3`, `--hero-lead` | W3-02 (T4 scale) |
 | Labels | `--type-label-ui-*`, `--type-action-*`, `--type-label-tech-*` (`-weight`, `-size`, `-track` each; letter-spacing has no place in `font`) | W3-02 |
-| Rhythm | `--rhythm-label`, `--rhythm-lead`, `--rhythm-cta`; `--section-space(-compact)` | W3-03 |
+| Rhythm | `--rhythm-label`, `--rhythm-lead`, `--rhythm-header`, `--rhythm-cta`; `--section-space(-compact)` | W3-03 |
 | Spacing | `--space-1` … `--space-10` = 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px; `--card-pad`, `--card-gap` | W3-03, then file by file |
 | Buttons | `--button-h-l` 56 px, `--button-h-m` 48 px | W3-06 |
 | Header | `--header-h` 101 px (the fixed header from 761 px) | PDO-98's next step (short windows, tablets) |
@@ -203,6 +203,27 @@ drawing-like HTML sheet (stamps, the /yak change sheet, HOME's direction strips,
 section callout) 11 px. Form fields are 16 px at every width. H1–H3 glue the short words of set (b)
 and leads those of set (a) at render (`app/lib/typography.ts`: `keepHeadingWords`, `keepShortWords`),
 never in metadata, JSON-LD or aria-labels.
+
+**W3-03 values (rhythm, 25.10, OD-PX-17 A).** A section's entry and its spaces, from 761 px / phone:
+
+| Role | Value | Takes it |
+|---|---|---|
+| `--rhythm-label` | 20 / 16 px | label → H2 in a section header (`.section-header-copy .eyebrow`) |
+| `--rhythm-lead` | 24 / 20 px | H2 → lead in a section header (its `gap`, and its space over its rule), the direction node's and /angary's leads |
+| `--rhythm-header` | 40 / 32 px | section header → its content (`.section-header`, `.page-heading`, the /pro-nas team) |
+| `--section-space` | `clamp(92px, 8vw, 128px)` / **72 px** | every section; no page sets its own on a phone. Never under 72 (KEEP 38: 64 is not offered) |
+| `--section-space-compact` | `clamp(72px, 6vw, 96px)` / **56 px** | the seam of two neighbours of one tone (cost → FAQ, FAQ → «Пов’язані», the grain complex → its situations), /angary's closing «Пов’язані» and every grain band from 761 px (its height budget) |
+
+- **One rule.** When the content under a section header opens with its own top edge (the cost list,
+  the grain sheet and situations, the /pro-nas ledger and principles, the /yak formats, responsibility
+  switch and cost factors, HOME's directions), the header loses its rule and the space above it
+  (`.section-header:has(+ :is(…))`). Without `:has()` the header keeps its rule. A list ruled only
+  between its rows (the /napryamky catalogue) keeps the header's rule as its top.
+- **The tail of a direction page.** On metal, concrete and roofing the FAQ leads straight into the form;
+  «Пов’язані напрямки» close the page after it with the compact space (`related.placement:
+  'after-inquiry'`, as /angary).
+- Not on the tokens yet: the other eyebrows (heroes, FAQ, sticky and editorial headings) keep 24 px;
+  `--rhythm-cta` keeps 34 px; the laptop conversation keeps its 16 / 16.
 
 ## Accessibility (already in place, keep it that way)
 

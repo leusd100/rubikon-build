@@ -806,6 +806,11 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .directions-hero-actions .text-link span { margin-left: 0; color: var(--color-accent-strong); }
 
 .page-section { padding-block: var(--section-space); background: var(--color-bg); }
+/* Neighbours of one tone (PDO-15, W3-03, 25.10): «Вартість» → FAQ, FAQ → «Пов’язані» and the grain complex → its
+   situations share a background, so their seam is the compact space on both sides (112 px on a phone, not 144) — not two
+   full section spaces after a list that already ends on its own rule. Without :has() the upper one keeps its space. */
+.cost-section:has(+ .faq-section), .faq-section:has(+ .related-directions-section), .gc-band:has(+ .direction-entry) { padding-bottom: var(--section-space-compact); }
+.cost-section + .faq-section, .faq-section + .related-directions-section, .gc-band + .direction-entry { padding-top: var(--section-space-compact); }
 .directions-index { scroll-margin-top: 88px; padding-top: clamp(58px, 6vw, 84px); }
 .page-section-dark { color: var(--color-dark-text); background: var(--color-dark); }
 .page-section-dark .eyebrow { color: var(--color-dark-text-secondary); }
