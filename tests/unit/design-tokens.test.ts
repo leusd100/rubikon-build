@@ -133,10 +133,10 @@ describe('type scale and labels (W3-02)', () => {
     for (const [file, text] of Object.entries(css)) {
       if (/r3f-spike|planner|logo/.test(file)) continue;
       // Nothing under 11 px but what is known: an SVG drawing's own text and the sheet field's marks, the configurator
-      // sheet's quiet sizes line (its configurator-3d shots), the matrix's coordinator under 375 px, and the header,
-      // menu and cookie bar (PDO-47, not this step)
+      // sheet's quiet sizes line (its configurator-3d shots), the matrix's coordinator under 375 px, the form error's
+      // «!» (a glyph in its 14 px disc, W3-07), and the header, menu and cookie bar (PDO-47, not this step)
       for (const [rule] of text.matchAll(/[^{}]+\{[^}]*\b(?:9(?:\.\d)?|10)px\b[^}]*\}/g)) {
-        if (/text\b|\.pd-|\.dkey|hv2-detail-(label|part)|sheet-field|hc-preview-sheet \.hc-three-overlay dt|\.rm-coordinator \{ font-size: 10px|header-contact|messenger-link span|logo-lab|cookie|mobile-menu|theme-options/.test(rule)) continue;
+        if (/text\b|\.pd-|\.dkey|hv2-detail-(label|part)|sheet-field|hc-preview-sheet \.hc-three-overlay dt|\.rm-coordinator \{ font-size: 10px|header-contact|messenger-link span|logo-lab|cookie|mobile-menu|theme-options|inquiry-field-error::before/.test(rule)) continue;
         if (!/font(-size)?:[^;]*\b(?:9(?:\.\d)?|10)px/.test(rule)) continue;
         expect(`${file}: ${rule.trim().slice(0, 120)}`).toBe('');
       }
