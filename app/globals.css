@@ -1704,6 +1704,12 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 :is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link {
   display: inline-flex; align-items: center; gap: 18px; align-self: center; margin: 0 0 0 12px; color: var(--color-dark-text); white-space: nowrap;
 }
+/* /angary and the grain store put a third action in the row: at the 13 px action (W3-02, 25.10) the three no longer
+   fitted a tablet's row (/angary 761–771 px, grain 786–821 px: the link went to a second row, 12 px in from its edge).
+   The row's own 12 px gap separates the link, so it has no margin of its own; the link's arrow sits 10 px from its words,
+   as .angary-text-link's, and the outline's 14 px, as the call's icon beside it. */
+:is(.angary-hero-actions, .grain-hero-actions) > .text-link { margin-left: 0; gap: 10px; }
+:is(.angary-hero-actions, .grain-hero-actions) > .button-hero-secondary { gap: 14px; }
 :is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link span { margin-left: 0; color: var(--color-accent-on-dark); }
 :is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link:is(:hover, :focus-visible) { color: var(--color-accent-on-dark-hover); }
 /* /planner-preview keeps its pre-Phase-2 hero while D-04 is open (DirectionPageConfig legacyCallLink): the tool in
