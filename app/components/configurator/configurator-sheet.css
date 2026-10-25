@@ -370,7 +370,7 @@
 .hc-frame.ft[data-step="2"] :is(.ft-footing, .ft-footing-top, .ft-slab, .ft-ground) { opacity: .35; }
 .hc-frame-node-number {
   display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 7px; border: 1px solid currentColor;
-  border-radius: 50%; font: 700 10.5px/1 var(--font-condensed), sans-serif;
+  border-radius: 50%; font: 700 11px/1 var(--font-condensed), sans-serif; /* the drawings' floor (PDO-16, W3-02; 10.5 before) */
 }
 /* The tour's progress bars run the field's width: they stopped short of the «Подивитися в 3D» chip in its corner (07.10),
    and «Каркас» has no chip since 09.10 (HangarPreviewModes) — and are there only while «Показати по черзі» plays (10.10,
