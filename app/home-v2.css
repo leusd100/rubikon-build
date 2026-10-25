@@ -1296,7 +1296,9 @@ main[data-home="v2"] .hv2-contour-exit[data-place="line"]::after { position: abs
 main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
 @media (max-width: 760px) {
   main[data-home="v2"] .hv2-contour-exit[data-place="line"] { display: none; }
-  main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: inline-flex; flex-shrink: 1; align-self: center; } /* 320: two even lines, not past the cell */
+  /* as wide as its words (the phone's controls row grows each child to fill it, and the rule would run to the cell's
+     edge); 320: two even lines, not past the cell */
+  main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: inline-flex; flex: 0 1 auto; align-self: center; }
 }
 
 /* DEC-42 (a), the owner's choice of 13.10 (Phase 5): the arrival's last word — node Г lit and one line saying what a press does; nothing

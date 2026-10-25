@@ -120,7 +120,7 @@
   .angary-stamp dl > div + div { border-left: 0; border-top: 1px solid var(--color-dark-line); }
   .angary-stamp-actions { flex-direction: column; align-items: stretch; gap: 6px; }
   .angary-stamp-cta { justify-content: space-between; padding-block: 12px; text-align: left; line-height: 1.35; }
-  .angary-stamp-link { margin: 0; }
+  .angary-stamp-link { align-self: flex-start; margin: 0; } /* as wide as its words: the column stretches the button, its rule would run across it */
   .angary-structure:has(+ .angary-real) { padding-bottom: 44px; }
   .angary-real-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 36px; }
   /* Two parts, but a sentence: the note takes its own row, as HOME's proof sheet on a phone */
