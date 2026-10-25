@@ -394,6 +394,8 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-call-primary > span { display: grid; gap: 5px; text-align: center; }
 .hero-call-primary small { line-height: 1; font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); }
 .hero-call-primary strong { font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
+/* The press. A link stretched over its card (its ::after covers the card: .gs-card) cancels it in its own file — a
+   transform would make the link the containing block of that ::after and the card would stop taking the press. */
 .button:active, .link-arrow:active, .text-link:active { transform: translateY(0) scale(.985); }
 .hero-actions > a > span[aria-hidden="true"] { width: 20px; height: 20px; display: inline-grid; place-items: center; flex: 0 0 20px; color: var(--color-dark-text); font-size: 16px; font-weight: 500; line-height: 1; }
 

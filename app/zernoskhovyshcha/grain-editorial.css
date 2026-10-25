@@ -107,6 +107,9 @@
 /* Each situation over a drawing of itself (GrainSituations); the whole card is the way into the form */
 .gs-card { position: relative; transition: background-color var(--duration-fast) ease; }
 .gs-card .direction-entry-link::after { position: absolute; inset: 0; content: ''; }
+/* No press scale (.link-arrow:active, W3-06): a transform makes the link the containing block of its own ::after, the
+   overlay shrinks to the link's box under the finger, and a press on the card no longer reaches the link */
+.gs-card .direction-entry-link:active { transform: none; }
 .gs-card .direction-entry-link:focus-visible { outline: none; }
 .gs-card:has(.direction-entry-link:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 .gs-drawing { display: block; width: 100%; height: auto; margin-bottom: 6px; overflow: visible; }
