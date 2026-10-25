@@ -425,7 +425,7 @@
   background: transparent; color: var(--color-text); font: 700 12px/1 var(--font-manrope), sans-serif; cursor: pointer;
 }
 .hc-mini-toggle::after { position: absolute; inset: -6px 0; content: ''; }
-.hc-mini-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.hc-mini-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; } /* the outer ring (W3-06, PDO-88) */
 @media (max-width: 760px) {
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet .sheet-action:has(.hc-mini-toggle) { display: flex; align-items: center; }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet.is-folded :is(.sheet-image, .sheet-ruler) { display: none; }
