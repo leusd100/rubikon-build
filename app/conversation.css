@@ -107,13 +107,14 @@
 @media (max-width: 1180px) { .conversation-no-journey .conversation-grid { grid-template-areas: "intro" "form"; } }
 
 /* Laptop screens (≥ 1181 px wide, ≤ 900 px tall): the compact mode the previous inquiry block had — tighter padding and
-   rhythm, a smaller heading. /zernoskhovyshcha's height budget (tests/e2e/grain-page.spec.ts, 7.3 screens at 1440×900)
-   is measured here. */
+   rhythm. The heading is the compact H2 at every width and the lead keeps its 16 px (W3-02, PDO-60): the block keeps
+   its height by its spacing, not by smaller type. /zernoskhovyshcha's height budget (tests/e2e/grain-page.spec.ts) is
+   measured here. */
 @media (min-width: 1181px) and (max-height: 900px) {
   .conversation.section { padding-block: 48px; }
   .conversation-grid { row-gap: 24px; }
   .conversation h2 { margin-top: 16px; }
-  .conversation-lead { margin-top: 16px; font-size: 15px; line-height: 1.6; }
+  .conversation-lead { margin-top: 16px; line-height: 1.6; }
   .conversation-contact { margin-top: 24px; }
   .conversation-journey { margin-top: 12px; }
   .conversation-journey li { gap: 6px; padding: 12px 18px 14px; }

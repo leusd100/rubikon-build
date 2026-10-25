@@ -375,7 +375,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero .eyebrow { color: rgba(255,255,255,.66); }
 .hero h1 { margin: 0; max-width: 1100px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(56px, 6.2vw, 94px); font-weight: 400; line-height: 1.06; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
 .hero h1 em { color: var(--color-accent-strong); font-style: normal; }
-.hero-lead { max-width: 650px; margin: 34px 0 0; color: color-mix(in srgb, var(--color-dark-text) 90%, transparent); font-size: 17px; line-height: 1.7; }
+.hero-lead { max-width: 650px; margin: 34px 0 0; color: color-mix(in srgb, var(--color-dark-text) 90%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: 40px; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: var(--button-h-l); padding-inline: 24px; border: 1px solid transparent; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .button-primary { color: var(--color-on-action); background: var(--color-action); }
@@ -556,7 +556,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-fields-two { grid-template-columns: 1fr 1fr; }
 .inquiry-form label, .inquiry-select { display: grid; align-content: start; gap: 8px; }
 .inquiry-form label > span, .inquiry-choice legend { color: var(--color-text-secondary); font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
-.inquiry-form input, .inquiry-form select, .inquiry-form textarea { width: 100%; min-width: 0; border: 1px solid var(--color-border-control); border-radius: 0; outline: none; color: var(--color-text); background: var(--color-field); font: 500 14px/1.4 var(--font-manrope), sans-serif; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+.inquiry-form input, .inquiry-form select, .inquiry-form textarea { width: 100%; min-width: 0; border: 1px solid var(--color-border-control); border-radius: 0; outline: none; color: var(--color-text); background: var(--color-field); font: 500 16px/1.4 var(--font-manrope), sans-serif; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
 .inquiry-form input, .inquiry-form select { min-height: 54px; padding: 0 14px; }
 .inquiry-form textarea { resize: vertical; min-height: 108px; padding: 13px 14px; }
 .inquiry-form input:focus, .inquiry-form select:focus, .inquiry-form textarea:focus { border-color: var(--color-focus); background: var(--color-field); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 26%, transparent); }
@@ -1202,7 +1202,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .hero-layout { min-height: 790px; grid-template-columns: 1fr; align-content: end; padding: 128px 0 38px; gap: 0; }
   .hero h1 { font-size: clamp(36px, 10.2vw, 40px); }
   .hero-copy { display: grid; gap: 40px; margin-top: 24px; }
-  .hero-lead { margin-top: 0; font-size: 16px; }
+  .hero-lead { margin-top: 0; font-size: var(--hero-lead); }
   .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 12px; margin-top: 0; }
   .button { width: 100%; }
   .hero-actions .text-link { justify-self: start; }
