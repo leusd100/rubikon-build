@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import type Lenis from 'lenis';
+import { startLenisLoop } from './lenisLoop';
 
 // Large desktop/laptop viewports only. Reuses the same tier this codebase already treats
 // as "roomy desktop" elsewhere (see the 1181px compact-contact-mode boundary in
@@ -29,9 +30,11 @@ const CONTROLS = 'a[href], button, summary, label, input, select, textarea, [rol
  * reduced motion. Renders nothing and touches no layout: no `wrapper`/`content` options are
  * passed, so Lenis smooths the real window/document scroll in place rather than faking
  * position on a wrapper element — sticky positioning, the native scrollbar, keyboard
- * scrolling, and scroll restoration all keep working. No custom rAF loop either (`autoRaf`
- * lets Lenis drive its own single frame loop) — this component is the smoothing foundation
- * only, nothing scroll-triggered. It also keeps a resting mouse from hovering what scrolls under it (second effect).
+ * scrolling, and scroll restoration all keep working. Lenis does not drive its own frame
+ * loop (`autoRaf` is off: it asked for a frame on every display refresh, about 60 calls a
+ * second, for as long as the page was open); lenisLoop.ts asks for frames only while a
+ * wheel or an anchor scroll is being smoothed, so a page at rest requests none — this
+ * component is the smoothing foundation only, nothing scroll-triggered. It also keeps a resting mouse from hovering what scrolls under it (second effect).
  */
 export function SmoothScroll() {
   useEffect(() => {
@@ -40,6 +43,8 @@ export function SmoothScroll() {
     const desktopQuery = window.matchMedia(DESKTOP_QUERY);
     const reducedMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
     let lenis: Lenis | undefined;
+    // Ends the frame loop and takes its wheel and click listeners off, once the instance they belong to is gone
+    let stopLoop: (() => void) | undefined;
     // True from the moment we start importing 'lenis' until sync() next runs — guards
     // against sync() firing again (a media-query change) while the import is still in
     // flight and starting a second one, and against constructing an instance after the
@@ -59,6 +64,12 @@ export function SmoothScroll() {
       // storage blocked: the default stands
     }
     const wanted = () => !forcedOff && desktopQuery.matches && !reducedMotionQuery.matches;
+    const destroyLenis = () => {
+      stopLoop?.();
+      stopLoop = undefined;
+      lenis?.destroy();
+      lenis = undefined;
+    };
 
     const sync = () => {
       const shouldRun = wanted();
@@ -78,7 +89,7 @@ export function SmoothScroll() {
           loading = false;
           if (cancelled || !wanted()) return;
 
-          lenis = new Lenis({
+          const instance = new Lenis({
             // Tuned live against Lenis's own 0.1 default: 0.12 read as fine on Home alone,
             // but felt too floaty once compared side-by-side against snappier values, so
             // settled here — enough inertia to read as smoothed, not enough to add
@@ -92,16 +103,32 @@ export function SmoothScroll() {
             // inertia first so a click never fights residual momentum.
             anchors: true,
             stopInertiaOnNavigate: true,
-            // Let Lenis own its single rAF loop instead of hand-rolling one here.
-            autoRaf: true,
+            // No frame loop of Lenis's own: it asked for a frame on every refresh, scrolling or not.
+            // lenisLoop.ts drives `raf` instead, from a wheel or a click until the smoothing ends.
+            autoRaf: false,
           });
+          lenis = instance;
+          // Nothing here calls this instance's `scrollTo`; the wheel and Lenis's own anchor handler are what start the
+          // smoothing. Any future code that calls it must call `wake()` of this loop too, or the loop stays asleep until
+          // the next wheel or click.
+          const loop = startLenisLoop(instance);
+          // The frame a wake asks for runs after the event has been dispatched, so Lenis has acted on it by then
+          // (`isScrolling` is 'smooth'), whatever the order of the listeners. Capture, so the wake still runs when page
+          // code stops the event's propagation.
+          const wake = () => loop.wake();
+          window.addEventListener('wheel', wake, { capture: true, passive: true });
+          window.addEventListener('click', wake, { capture: true, passive: true });
+          stopLoop = () => {
+            window.removeEventListener('wheel', wake, { capture: true });
+            window.removeEventListener('click', wake, { capture: true });
+            loop.destroy();
+          };
         }).catch(() => {
           // The chunk failed to load: native scrolling stays, and the next viewport or motion change may try again.
           loading = false;
         });
       } else if (!shouldRun && lenis) {
-        lenis.destroy();
-        lenis = undefined;
+        destroyLenis();
       }
     };
 
@@ -113,7 +140,7 @@ export function SmoothScroll() {
       cancelled = true;
       desktopQuery.removeEventListener('change', sync);
       reducedMotionQuery.removeEventListener('change', sync);
-      lenis?.destroy();
+      destroyLenis();
     };
   }, []);
 
