@@ -103,7 +103,7 @@
 
 
 @media (max-width: 760px) {
-  .angary-page { --section-space: 72px; --section-space-compact: 52px; }
+  /* the sections take the phone scale, 72 / 56 (globals.css, PDO-22 A); the compact closing band was 52 */
   .angary-page .service-subhero.angary-service-subhero { min-height: 0; }
   .angary-page .service-subhero-content { padding-top: 126px; padding-bottom: 50px; }
   .angary-page .angary-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 30px; }

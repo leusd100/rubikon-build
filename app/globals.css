@@ -31,9 +31,13 @@
   --space-8: 40px;
   --space-9: 48px;
   --space-10: 64px;
-  /* Rhythm roles (PDO-62), phones in the ≤760 block. W3-03 sets 20 / 16, 24 / 20 and 32 / 24 (from 761 px / phone). */
-  --rhythm-label: var(--space-6);   /* label → heading: .eyebrow */
-  --rhythm-lead: 28px;              /* heading → lead: .direction-editorial-copy, .angary-section-heading (22 on phones) */
+  /* Rhythm roles (PDO-62), phones in the ≤760 block. W3-03 (25.10, OD-PX-17 A): a section's entry is denser — label →
+     H2 20 / 16, H2 → lead 24 / 20, header → content 40 / 32 (from 761 px / phone). The other eyebrows (heroes, FAQ,
+     sticky and editorial headings) keep their 24 for now; the laptop conversation keeps its 16 / 16 (conversation.css);
+     --rhythm-cta (32 / 24 in the register) is not moved yet. */
+  --rhythm-label: var(--space-5);   /* label → section H2: .section-header-copy .eyebrow (16 on phones) */
+  --rhythm-lead: var(--space-6);    /* H2 → lead: .section-header (also its space over its rule), .direction-editorial-copy, .angary-section-heading (20 on phones) */
+  --rhythm-header: var(--space-8);  /* section header → its content: .section-header, .page-heading (32 on phones) */
   --rhythm-cta: 34px;               /* content → its link: .section-link */
   --card-pad: 28px;                 /* a card's inside: the «Пов’язані напрямки» row (20 on phones) */
   --card-gap: 24px;                 /* between cards: the grain entries' phone row (12 on phones) */
@@ -369,7 +373,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-grid { position: absolute; z-index: 1; inset: 0; opacity: .21; background-image: linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px); background-size: 96px 96px; mask-image: linear-gradient(90deg, black, transparent 82%); pointer-events: none; }
 .hero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(292px, 320px); min-height: 100%; align-items: end; gap: var(--grid-gap); padding-top: 180px; padding-bottom: var(--hero-bottom-space); }
 .hero-copy { position: relative; min-width: 0; }
-.eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 var(--rhythm-label); color: var(--color-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
+.eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 var(--space-6); color: var(--color-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .eyebrow span { width: 24px; height: 2px; background: var(--color-accent); }
 .eyebrow.light { color: var(--color-dark-text-secondary); }
 .hero .eyebrow { color: rgba(255,255,255,.66); }
@@ -425,17 +429,29 @@ body:has(main:is([data-home="v2"], .about-page)) {
 /* Title, then its note under it on the left — as the hero's lead (owner, 02.10: the note sat at the far right edge with
    a wide empty gap between the two; a multi-line title's box cannot shrink to its longest line, so a side-by-side note
    always kept that gap). */
-.section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: clamp(16px, 1.5vw, 22px); margin-bottom: 52px; padding-bottom: 32px; border-bottom: 1px solid var(--color-border); }
+.section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--rhythm-lead); margin-bottom: var(--rhythm-header); padding-bottom: var(--rhythm-lead); border-bottom: 1px solid var(--color-border); }
+/* One rule (PDO-21, W3-03, 25.10): when the content opens with its own top edge — the cost list, the grain complex sheet,
+   the /pro-nas ledger and principles, the /yak formats and responsibility switch, HOME's directions (the phone's sheet
+   list .dxi, always the header's neighbour, and from 761 px the image cards after it) — that edge takes the header's
+   place: the header's rule and the space above it go. Two only where they have that edge: the grain situations on a
+   phone (their cards' frames; from 761 px they are open columns with no top rule) and the /yak cost factors up to
+   1050 px (their drawing's frame, under its caption; from 1051 px the columns open with that caption and the factor
+   list, no frame on top). The /napryamky list keeps the header's rule: its rows are ruled only between them, so the
+   rule is the list's top. Without :has() the header keeps its rule, as before. */
+.section-header:has(+ :is(.cost-list, .gc, .about-cap, .about-principles-grid, .dfmt-grid, .proc-resp-switch, .dxi, .direction-grid)) { padding-bottom: 0; border-bottom: 0; }
+@media (max-width: 1050px) { .section-header:has(+ .proc-factors) { padding-bottom: 0; border-bottom: 0; } }
+@media (max-width: 760px) { .section-header:has(+ .gs-list) { padding-bottom: 0; border-bottom: 0; } }
 .section-header-copy { min-width: 0; max-width: 980px; }
 /* A header with a decorative drawing (SectionHeader aside): title and note on the left, the drawing on the right, standing
-   on the header's bottom rule; wide screens only */
+   on the header's bottom rule (on HOME, where the cards' edge replaces that rule, on the header's bottom); wide screens
+   only */
 .section-header-aside { display: none; }
 @media (min-width: 1051px) {
   .section-header.has-aside { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--grid-gap); }
   .section-header.has-aside > :not(.section-header-aside) { grid-column: 1; }
   .section-header.has-aside .section-header-aside { display: block; grid-column: 2; grid-row: 1 / span 2; align-self: end; margin-bottom: -2px; }
 }
-.section-header-copy .eyebrow { margin-bottom: 30px; }
+.section-header-copy .eyebrow { margin-bottom: var(--rhythm-label); }
 .section-header h2 { max-width: 15em; margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(50px, 5.15vw, 76px); font-weight: 400; line-height: .99; letter-spacing: -.035em; }
 .section-header-support { max-width: 640px; margin: 0; padding: 2px 0 2px 26px; color: var(--color-text-muted); border-left: 2px solid var(--color-accent); font-size: 16px; line-height: 1.75; }
 .section-header-inverse { border-bottom-color: rgba(255,255,255,.18); }
@@ -498,7 +514,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .about-planning-visual img { object-position: center; filter: saturate(.9) contrast(1.02); }
 
 .team { background: var(--color-bg); }
-.team-heading { margin-bottom: 60px; }
+/* the team heading → its stories: the section header's 40 / 32 (W3-03; it kept its own 60, and 42 on phones) */
 .team-stories { display: grid; gap: clamp(78px, 8vw, 118px); }
 .person-story { display: grid; grid-template-columns: minmax(360px, .82fr) minmax(0, 1.18fr); align-items: center; border-top: 1px solid var(--color-border); }
 .person-story-reverse { grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr); }
@@ -801,8 +817,13 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .directions-hero-actions .text-link span { margin-left: 0; color: var(--color-accent-strong); }
 
 .page-section { padding-block: var(--section-space); background: var(--color-bg); }
+/* Neighbours of one tone (PDO-15, W3-03, 25.10): «Вартість» → FAQ on metal, concrete and roofing share a background, so
+   their seam is the compact space on both sides (112 px on a phone, not 144) — not two full section spaces after a list
+   that already ends on its own rule. Without :has() the upper one keeps its space. The grain bands keep their own
+   rhythm (grain-editorial.css): compact from 761 px, the section space on a phone, its seams too (OD-PX-17 A). */
+.cost-section:has(+ .faq-section) { padding-bottom: var(--section-space-compact); }
+.cost-section + .faq-section { padding-top: var(--section-space-compact); }
 .directions-index { scroll-margin-top: 88px; padding-top: clamp(58px, 6vw, 84px); }
-.directions-index .page-heading { margin-bottom: clamp(34px, 4vw, 48px); }
 .page-section-dark { color: var(--color-dark-text); background: var(--color-dark); }
 .page-section-dark .eyebrow { color: var(--color-dark-text-secondary); }
 .page-two-col { display: grid; grid-template-columns: .92fr 1.08fr; align-items: center; gap: var(--grid-gap); }
@@ -810,7 +831,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--type-h2); font-weight: 400; line-height: 1.05; letter-spacing: -.035em; text-wrap: balance; }
 .copy-column > p:not(.eyebrow) { margin: 22px 0 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.85; }
 .copy-column .lead-copy { margin-top: 32px; color: var(--color-text-secondary); font-size: 18px; line-height: 1.7; }
-.page-heading { margin-bottom: 54px; }
+.page-heading { margin-bottom: var(--rhythm-header); }
 
 .logo-lab { min-height: 100vh; background: var(--color-surface-alt); }
 .logo-lab-intro { padding: 180px 0 86px; color: white; background: #101214; }
@@ -1169,7 +1190,11 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 @media (max-width: 760px) {
   :root {
     --container-gutter: 16px;
-    --section-space: 82px;
+    /* One phone scale (PDO-22 A, W3-03, 25.10): 72 for a section, 56 for a compact one (the seam of two neighbours of
+       one tone, /angary's closing band) — no page sets its own; a section never goes under 72 (64 is not offered:
+       KEEP 38). The grain page's all-compact bands are its laptop exception (grain-editorial.css). */
+    --section-space: 72px;
+    --section-space-compact: 56px;
     --grid-gap: 44px;
     --radius-lg: 28px;
     /* 28 / 28 / 28.86 / 31.82 px at 320 / 375 / 390 / 430, never larger than the phone H1 (29–35 px: home-v2.css,
@@ -1183,7 +1208,9 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     --type-h3: 1.5rem;
     --type-h1: clamp(2.375rem, 10.6vw, 2.875rem);
     --hero-lead: 1rem;
-    --rhythm-lead: 22px;
+    --rhythm-label: var(--space-4);
+    --rhythm-lead: var(--space-5);
+    --rhythm-header: var(--space-7);
     --card-pad: 20px;
     --card-gap: 12px;
   }
@@ -1229,8 +1256,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .inquiry-consent > span { font-size: 13px !important; }
   .about-hero-media > :is(img, video) { filter: saturate(.58) contrast(1.08) brightness(.84); }
   .about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.86), rgba(10,11,12,.58)), linear-gradient(0deg, rgba(10,11,12,.78), transparent 66%); }
-  .section-header { grid-template-columns: 1fr; gap: 26px; margin-bottom: 42px; padding-bottom: 28px; }
-  .section-header-copy .eyebrow { margin-bottom: 22px; }
+  .section-header { grid-template-columns: 1fr; }
   .section-header h2 { font-size: var(--type-h2); line-height: 1.02; }
   .section-header-support { max-width: 560px; margin-top: 0; padding-left: 20px; font-size: 16px; }
   .direction-grid { grid-template-columns: 1fr; grid-template-rows: none; }
@@ -1302,7 +1328,6 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .page-two-col, .faq-grid { grid-template-columns: 1fr; gap: 44px; }
   .copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { font-size: var(--type-h2); }
   .copy-column .lead-copy { font-size: 16px; }
-  .page-heading { margin-bottom: 42px; }
   .use-case-grid { grid-template-columns: 1fr; }
   .direction-editorial-grid { grid-template-columns: 1fr; gap: 36px; }
   .direction-editorial-grid[data-layout="media-first"] { grid-template-columns: 1fr; }

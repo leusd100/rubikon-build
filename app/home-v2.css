@@ -159,13 +159,15 @@ main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-col
 /* On a phone (≤ 760 px; PDO-42 a, owner 20.10) the five directions are a list of their scheme sheets
    (DirectionsSheetList, directions-sheets.css) instead of the image cards — the sideways rail with «01 / 05», dots and
    «Гортайте →» showed one card of five. The cards are not shown there, so neither is the intro's sentence about their
-   images (its words stay in the page). The header's own hairline gives way to the list's strong line, 30 px under the
-   intro, and the geography line follows 32 px under the last row. */
+   images (its words stay in the page). The header's own hairline gives way to the list's strong line, 32 px under the
+   intro (the shared section-header rule, globals.css, W3-03), and the geography line follows 32 px under the last row. */
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-directions .section-header { margin-bottom: 30px; padding-bottom: 0; border-bottom: 0; }
   main[data-home="v2"] .hv2-directions .direction-grid,
   main[data-home="v2"] .hv2-directions .hv2-image-note { display: none; }
   main[data-home="v2"] .hv2-directions .hv2-geo-bond { margin-top: 32px; }
+  /* A browser without :has() (Firefox < 121, Safari < 15.4) keeps every header's rule, but this list always follows the
+     header here and opens on its strong line, so the header gives way to it as before W3-03 */
+  @supports not selector(:has(*)) { main[data-home="v2"] .hv2-directions .section-header { padding-bottom: 0; border-bottom: 0; } }
 }
 
 /* ======================= 3 · ENGINEERING SIGNATURE + REAL OBJECT ======================= */

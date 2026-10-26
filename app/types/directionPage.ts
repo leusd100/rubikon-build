@@ -71,8 +71,9 @@ export type DirectionPageConfig = {
     compact?: boolean;
     items?: readonly RelatedDirection[];
     /**
-     * 'after-inquiry': the related directions close the page after #inquiry instead of leading into it — for a page
-     * whose related works are its own separate stages (/angary, owner 03.10). Other pages keep them before the form.
+     * 'after-inquiry': the related directions close the page after #inquiry instead of leading into it — /angary (its
+     * own separate stages, owner 03.10), and metal, concrete and roofing (OD-PX-17 A, 25.10: the FAQ leads into the
+     * form). The grain page keeps its compact band before the form.
      */
     placement?: 'after-inquiry';
     /** The band's own heading in place of «Суміжні роботи» / «Пов’язані напрямки», with a supporting line */

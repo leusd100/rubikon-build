@@ -167,3 +167,65 @@ describe('type scale and labels (W3-02)', () => {
     expect(from375).toMatch(/\.rm-coordinator \{ font-size: 11px; \}/);
   });
 });
+
+// W3-03 (25.10, PDO-21, PDO-22 A, PDO-15, PDO-62; OD-PX-17 A): the rhythm of a section's entry and of the sections
+describe('section rhythm (W3-03)', () => {
+  const phoneRoot = globals.match(/@media \(max-width: 760px\) \{\n {2}:root \{([^}]*)\}/)![1];
+  const value = (block: string, name: string) => block.match(new RegExp(`${name}: ([^;]+);`))?.[1];
+  // the rules of a file outside any @media block, and the declarations of every rule that names a selector
+  const rules = (text: string, selector: RegExp) => [...text.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(([, sel]) => selector.test(sel)).map(([, , body]) => body);
+
+  it('enters a section at label → H2 20 / 16, H2 → lead 24 / 20, header → content 40 / 32', () => {
+    expect([value(rootBlock, '--rhythm-label'), value(rootBlock, '--rhythm-lead'), value(rootBlock, '--rhythm-header')]).toEqual(['var(--space-5)', 'var(--space-6)', 'var(--space-8)']);
+    expect([value(phoneRoot, '--rhythm-label'), value(phoneRoot, '--rhythm-lead'), value(phoneRoot, '--rhythm-header')]).toEqual(['var(--space-4)', 'var(--space-5)', 'var(--space-7)']);
+    expect(globals).toMatch(/\n\.section-header \{[^}]*gap: var\(--rhythm-lead\); margin-bottom: var\(--rhythm-header\); padding-bottom: var\(--rhythm-lead\);/);
+    expect(globals).toMatch(/\n\.section-header-copy \.eyebrow \{ margin-bottom: var\(--rhythm-label\); \}/);
+    expect(globals).toMatch(/\n\.page-heading \{ margin-bottom: var\(--rhythm-header\); \}/);
+    // no rule fights the shared values: the old phone header values, the /napryamky list's and the team's own margins,
+    // HOME's and the grain process band's phone headers
+    expect(globals).not.toMatch(/\.section-header \{[^}]*(margin-bottom: 42px|gap: 26px)/);
+    expect(globals).not.toMatch(/\.directions-index \.page-heading|\n\.team-heading \{/);
+    expect(css['zernoskhovyshcha/grain-editorial.css']).not.toMatch(/\.grain-process-band \.section-header \{/);
+  });
+
+  it('drops the header’s rule where the content opens with its own, and only with :has()', () => {
+    const one = globals.match(/\n\.section-header:has\(\+ :is\(([^)]*)\)\) \{ padding-bottom: 0; border-bottom: 0; \}/);
+    expect(one?.[1].split(', ')).toEqual(['.cost-list', '.gc', '.about-cap', '.about-principles-grid', '.dfmt-grid', '.proc-resp-switch', '.dxi', '.direction-grid']);
+    // the /napryamky list is ruled only between its rows: the header's rule is its top
+    expect(one?.[1]).not.toMatch(/dcat/);
+    // two have that edge only up to a width: the grain situations' card frames on a phone (from 761 px they are open
+    // columns) and the /yak cost factors' drawing frame up to 1050 px (wider, the columns open with its caption)
+    expect(globals).toMatch(/\n@media \(max-width: 760px\) \{ \.section-header:has\(\+ \.gs-list\) \{ padding-bottom: 0; border-bottom: 0; \} \}/);
+    expect(globals).toMatch(/\n@media \(max-width: 1050px\) \{ \.section-header:has\(\+ \.proc-factors\) \{ padding-bottom: 0; border-bottom: 0; \} \}/);
+    expect(globals.match(/\.section-header:has\([^{]*(gs-list|proc-factors)/g)).toHaveLength(2);
+    // HOME's phone header has no rule of its own over the sheet list but in a browser without :has(), as before W3-03
+    const home = css['home-v2.css'];
+    expect(home.match(/\.hv2-directions \.section-header \{/g)).toHaveLength(1);
+    const phoneHome = [...home.matchAll(/\n@media \(max-width: 760px\) \{([\s\S]*?)\n\}/g)].map(([, block]) => block).join('\n');
+    expect(phoneHome).toMatch(/\n {2}@supports not selector\(:has\(\*\)\) \{ main\[data-home="v2"\] \.hv2-directions \.section-header \{ padding-bottom: 0; border-bottom: 0; \} \}/);
+  });
+
+  it('has one phone scale, 72 / 56, set in one place', () => {
+    expect([value(phoneRoot, '--section-space'), value(phoneRoot, '--section-space-compact')]).toEqual(['72px', '56px']);
+    for (const [file, text] of Object.entries(css)) {
+      if (file === 'globals.css') continue;
+      // a page may set its tablet values (/angary 761–1023 px), never the phone's
+      for (const block of text.split(/@media \(max-width: 760px\)/).slice(1)) {
+        expect(`${file}: ${/--section-space(-compact)?:/.test(block.slice(0, block.indexOf('\n}')))}`).toBe(`${file}: false`);
+      }
+    }
+    expect(css['yak-pratsyuiemo/delivery.css']).not.toMatch(/--section-space/);
+    // the grain bands are compact from 761 px only: a documented exception for the page's height budget
+    const grain = css['zernoskhovyshcha/grain-editorial.css'];
+    expect(rules(grain.replace(/@media \(min-width: 761px\) \{[^{}]*\{[^{}]*\} \}/g, ''), /\.grain-page/).filter((body) => /--section-space-compact/.test(body))).toEqual([]);
+    expect(grain.match(/@media \(min-width: 761px\) \{ \.grain-page[^{]*\{ padding-block: var\(--section-space-compact\); \} \}/g)).toHaveLength(5);
+  });
+
+  it('joins two neighbours of one tone at the compact space on both sides, and leaves the grain bands their own rhythm', () => {
+    expect(rules(globals, /\.cost-section:has\(\+ \.faq-section\)/)).toEqual([' padding-bottom: var(--section-space-compact); ']);
+    expect(rules(globals, /\.cost-section \+ \.faq-section/)).toEqual([' padding-top: var(--section-space-compact); ']);
+    // the grain complex → its situations and the FAQ → «Пов’язані» are grain's seams only: compact from 761 px with every
+    // grain band, 72 on both sides on a phone («смуги зерна лишаються 72», OD-PX-17 A)
+    expect(globals).not.toMatch(/\.gc-band(:has\(| \+)|\.faq-section(:has\(\+ \.related| \+ \.related)/);
+  });
+});

@@ -21,7 +21,11 @@
 }
 
 /* ---------- 04 Як RUBIKON реалізує: the building part as a tour of one drawing (GrainStoreDrawing in DirectionNode) ---------- */
-.grain-page .grain-implementation-band { padding-block: var(--section-space-compact); }
+/* The grain bands are compact from 761 px only (the page's height budget, grain-page.spec.ts: a documented exception);
+   on a phone they take the section space, 72, like every page, on both sides of every seam — the complex → its
+   situations and the FAQ → «Пов’язані» too (PDO-22 A, OD-PX-17 A: «смуги зерна лишаються 72»; the phone's compact 56
+   for every band would have taken 224 px off this page alone) */
+@media (min-width: 761px) { .grain-page .grain-implementation-band { padding-block: var(--section-space-compact); } }
 .grain-page .grain-implementation-band .direction-editorial-copy > p:not(.eyebrow) { margin-top: 18px; font-size: 15px; line-height: 1.7; }
 .grain-page .grain-implementation-band .dn-steps { margin-top: 22px; }
 /* The whole half-section at every width: the sheet's picture keeps the drawing's own 3 : 2 */
@@ -85,7 +89,7 @@
 }
 
 /* ---------- 02–03 The complex on a drawing and the situations (since 06.10) ---------- */
-.grain-page :is(.gc-band, .direction-entry, .cost-section) { padding-block: var(--section-space-compact); }
+@media (min-width: 761px) { .grain-page :is(.gc-band, .direction-entry, .cost-section) { padding-block: var(--section-space-compact); } }
 /* four situations side by side (the roofing template has three): one row from 1051 px, two below */
 .grain-page .direction-entry-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grain-page .direction-entry-list li { gap: 12px; padding: 0 26px 26px; }
@@ -140,13 +144,14 @@
 .grain-page .cost-list article { padding-block: 16px; }
 
 /* ---------- 05 Після брифу ---------- */
-.grain-page .grain-process-band { padding-block: var(--section-space-compact); }
+@media (min-width: 761px) { .grain-page .grain-process-band { padding-block: var(--section-space-compact); } }
 
 /* ---------- 07–08 FAQ and related directions, as on /angary ---------- */
-.grain-page .faq-section { padding-block: var(--section-space-compact); }
+@media (min-width: 761px) { .grain-page .faq-section { padding-block: var(--section-space-compact); } }
 .grain-page .faq-grid { align-items: start; }
 .grain-page .faq-heading { position: sticky; top: 140px; }
-.grain-page .related-directions-section.is-compact { padding-block: var(--section-space-compact); background: var(--color-surface-alt); }
+.grain-page .related-directions-section.is-compact { background: var(--color-surface-alt); }
+@media (min-width: 761px) { .grain-page .related-directions-section.is-compact { padding-block: var(--section-space-compact); } }
 .grain-page .related-directions-section.is-compact .related-directions-title { margin-bottom: 18px; }
 .grain-page .related-directions-section.is-compact .related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--color-border-strong); }
 .grain-page .related-directions-section.is-compact .related-card { min-width: 0; min-height: 128px; padding: 26px 28px; border: 0; border-left: 1px solid var(--color-border-strong); background: transparent; }
@@ -185,7 +190,6 @@
   /* 126 px like every direction hero, so the crumbs sit under the «Ілюстрація» stamp (UX pass 2026-10) */
   .grain-page .service-subhero-content { padding-top: 126px; padding-bottom: 44px; }
   .grain-page .grain-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 24px; }
-  .grain-page .grain-process-band .section-header { margin-bottom: 28px; padding-bottom: 22px; }
   .grain-page .faq-heading { margin-bottom: 22px; }
   .grain-page .related-directions-section.is-compact .related-grid { grid-template-columns: 1fr; }
   .grain-page .related-directions-section.is-compact .related-card { min-height: 0; padding: 16px 0; border-left: 0; border-bottom: 1px solid var(--color-border-strong); }

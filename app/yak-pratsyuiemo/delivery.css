@@ -226,7 +226,6 @@
 
 /* ---------------------------------------------------------------- Phone */
 @media (max-width: 760px) {
-  .process-page { --section-space: 72px; }
   /* the «Далі — один зрозумілий процес» plate only scrolled to the next block here (PDO-101); the desktop keeps it as the
      diagram's last link */
   .proc-start-merge { display: none; }
