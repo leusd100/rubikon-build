@@ -110,18 +110,23 @@ test('«Залишити запит» in the FAQ is the arrow link (13 px), the 
 });
 
 test('HOME: under the sheet\'s note the link keeps the title block\'s height; in a short window\'s narrow note it drops the capitals and stays one line', async ({ page }) => {
-  // The capitals follow the note's own width (@container ≤ 290 px), not the window: fonts set it a few px apart on macOS
-  // and Linux, so 1280×720 (≈ 298 px on macOS) may fall either side. The wide and the narrow windows are clear of it.
+  // The capitals follow the note's own width (@container ≤ 312 px), not the window: fonts set it a few px apart on macOS
+  // and Linux, so 1280×720 (≈ 304 px on macOS, 291 on Linux) may fall either side. The wide and the narrow windows are
+  // clear of it. Wherever it falls, the link is one line: at 1280×720 on Linux, under the old 290 px, its capitals took
+  // two and the sheet's width never settled (main after #252)
   for (const [width, height, capitals] of [[1440, 900, true], [1280, 720, null], [1440, 700, false], [1250, 613, false]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto('/', { waitUntil: 'load' });
     const link = page.locator('.hv2-contour-exit[data-place="line"]');
     await link.scrollIntoViewIfNeeded();
     const note = await link.evaluate((element) => element.closest('.sheet-cell-note b')!.getBoundingClientRect().width);
-    if (capitals !== null) expect(note > 290, `${width}×${height}: note ${note}`).toBe(capitals);
-    await expect(link, `${width}×${height}`).toHaveCSS('text-transform', note > 290 ? 'uppercase' : 'none');
+    if (capitals !== null) expect(note > 312, `${width}×${height}: note ${note}`).toBe(capitals);
+    await expect(link, `${width}×${height}`).toHaveCSS('text-transform', note > 312 ? 'uppercase' : 'none');
     // one line: its words, 8 px and the rule
-    expect(Math.round((await link.boundingBox())!.height), `${width}×${height}`).toBe(25);
+    const box = (await link.boundingBox())!;
+    expect(Math.round(box.height), `${width}×${height}`).toBe(25);
+    // …and in capitals no wider than the narrowest note that keeps them, so no window between these takes two lines
+    if (note > 312) expect(box.width, `${width}×${height}: the capitals`).toBeLessThanOrEqual(312);
   }
 });
 
