@@ -31,13 +31,7 @@ const sheets: Record<string, string> = Object.fromEntries(
 const names = Object.keys(sheets).sort();
 
 /** The files (relative to app/) that still hold literal times or curves in a transition or an animation */
-const PENDING: readonly string[] = [
-  'components/configurator/general-view.css',
-  'globals.css',
-  'components/configurator/configurator-sheet.css',
-  'configurator-preview/configurator.css',
-  'components/configurator/configurator-controls.css',
-];
+const PENDING: readonly string[] = [];
 
 /** A choreography variable: a file's own time, delay or curve — `--rm-for-row`, `--ft-at-step`, `--fd-curve-draw` */
 const CHOREOGRAPHY = /^--[a-z0-9]+-(?:for|at|curve)-/;
