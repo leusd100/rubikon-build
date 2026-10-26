@@ -168,8 +168,10 @@ stands:
 | Distance | `--motion-rise` | 16 px; 10 px up to 760 px | the lift of a reveal |
 
 `--duration-fast` (= `--motion-micro`) and `--duration-medium` (= `--motion-ui`) stay as aliases, so nothing that reads
-them breaks. `--motion-reveal` (420 ms) had no use and is gone; the pages' own `--m-reveal` / `--m-draw` / `--region-*`
-keep their values until M1-2 moves them onto `--motion-enter`.
+them breaks. `--motion-reveal` (420 ms) had no use and is gone. The pages' own variables keep their values for now: in
+M1-2 only the three `--m-reveal` (`about.css`, `delivery.css`, `direction-template.css`) and `--region-reveal` move onto
+`--motion-enter`; `--m-draw` (the pen: 900 ms on /yak, 1100 ms on the direction pages) and the rest of `--region-*` are
+decided in M1-2, not moved by default.
 
 ### 6.2 Curves
 
@@ -209,8 +211,9 @@ without motion. They arrive with M2-1; the table is the contract.
 5. **Paragraphs** appear as a block, not by line or by word.
 6. **Choreography** (the tours of the drawings, X-Ray, the 3D build-up, `frame-tour.css`): its internal times stay as they
    are, but live in the block of custom properties at the top of the component's file (6.6): `--<prefix>-at-*` for moments,
-   `--<prefix>-for-*` for durations, each with a comment and, where it can be, a `calc()` from the tokens. It is the one
-   place a number is allowed.
+   `--<prefix>-for-*` for durations, a comment over each group saying what the times are for, the values word for word
+   (a `calc()` from the tokens only where a later step makes the time a token's multiple). It is the one place a number is
+   allowed.
 7. **Auto-shows (W4-04, PDO-55):** one hook, `app/hooks/useFirstViewWalk.ts`, for `CostFactorsFigure`, `CapabilityFigure`,
    `ChangeSheets` and the formats walk of `FormatsScope`: it starts when at least 50 % of the block is in the window, runs
    once, a step of at least 2.2 s (OD-PX-34 (a)) or 3 s (OD-PX-34 (b), the owner decides in the M1 brief); any action of a

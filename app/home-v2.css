@@ -2,7 +2,8 @@
 
    Three zones here: hero → directions → engineering signature (the real object and its contour first, people, two
    explanation cards). The closing conversation block is the site-wide one (app/conversation.css).
-   Every rule is keyed to <main data-home="v2">, so nothing leaks to other pages. It sits on top of the
+   Every rule is keyed to <main data-home="v2">, so nothing leaks to other pages; the one exception is the :root block
+   at the top, this file's own motion times and curves (Motion v1). It sits on top of the
    Architectural Copper tokens already on main (#122) and does not change them.
 
    The signature block is ALWAYS dark (a local charcoal/copper treatment) and does not follow the light/dark switch;
