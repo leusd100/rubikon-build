@@ -34,6 +34,7 @@ import './delivery.css';
 import '../components/process/resp-matrix.css';
 import '../components/directions/formats-scope.css';
 import '../components/directions/process-split.css';
+import { Arrow } from '../components/Arrow';
 
 // /yak-pratsyuiemo v2 — what happens with the client's task, in seven zones: where to start, the four steps, how much
 // RUBIKON can take on, who answers for what, what drives cost and time, a short FAQ and the conversation. Every business
@@ -154,7 +155,7 @@ export default function DeliveryModelPage() {
           </p>
           <div className="proc-hero-actions">
             <HeroCallButton />
-            <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">Обговорити задачу <span aria-hidden="true">↓</span></a>
+            <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">Обговорити задачу <Arrow to="down" /></a>
           </div>
           <PhoneHeroScroll href="#proc-start-title" />
         </div>
@@ -183,7 +184,7 @@ export default function DeliveryModelPage() {
             </ul>
             {/* Three starting states, one route: the rows join into the four steps below */}
             <a className="link-arrow proc-start-merge" href="#etapy">
-              <span>Далі — один зрозумілий процес</span> <span aria-hidden="true" data-arrow="down">↓</span>
+              <span>Далі — один зрозумілий процес</span> <Arrow to="down" />
             </a>
           </div>
         </div>

@@ -27,14 +27,15 @@ async function open(page: Page, path: string, width: number) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-/** Every rendered link in main whose words end with an arrow, except the cards, the buttons and the drawing sheets,
- *  which carry an arrow as a sign of their own (probes.js links(), the brief's inventory) */
+/** Every rendered link in main whose words end with an arrow (the drawn one, Arrow.tsx, or a character), except the
+ *  cards, the buttons and the drawing sheets, which carry an arrow as a sign of their own (probes.js links(), the brief's
+ *  inventory) */
 function arrowLinks(page: Page) {
   return page.evaluate(() => [...document.querySelectorAll<HTMLAnchorElement>('main a')]
     .filter((link) => {
       const box = link.getBoundingClientRect();
       if (box.width < 1 || box.height < 1 || getComputedStyle(link).visibility === 'hidden') return false;
-      if (!/[→↗↓↑]\s*$/.test(link.textContent ?? '')) return false;
+      if (!link.lastElementChild?.matches('[data-arrow]') && !/[→↗↓↑]\s*$/.test(link.textContent ?? '')) return false;
       return !link.closest('.button, .direction-card, .route-service, .related-card, .phone-hero-scroll, .dxi-sheet, .dsh-sheet, .hv2-contour-brief, .conversation-call, .about-ledger-col');
     })
     .map((link) => {
@@ -62,6 +63,8 @@ function arrowLinks(page: Page) {
           tops.add(Math.round(rect.top));
         }
       }
+      const arrow = link.querySelector(':scope > [data-arrow]')?.getBoundingClientRect();
+      if (arrow) { left = Math.min(left, arrow.left); right = Math.max(right, arrow.right); }
       const framed = parseFloat(style.borderLeftWidth) > 0;
       const room = box.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - (right - left);
       return {

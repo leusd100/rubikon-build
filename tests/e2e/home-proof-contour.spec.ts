@@ -1435,7 +1435,8 @@ test('the title block switches the right side: the scheme with its names, each l
   await expect(tour).toHaveText('Тур за 20 секунд');
   await expect(tour).toHaveAttribute('aria-pressed', 'false');
   await expect(brief).toHaveAttribute('href', BRIEF_HREF);
-  await expect(brief).toHaveText(/^Такий ангар, але ваш\s*Сформувати бриф\s*→$/);
+  await expect(brief).toHaveText(/^Такий ангар, але ваш\s*Сформувати бриф\s*$/);
+  await expect(brief.locator('[data-arrow="right"] svg')).toHaveCount(1);
   const [tourBox, briefBox] = [(await tour.boundingBox())!, (await brief.boundingBox())!];
   expect(tourBox.y + tourBox.height).toBeLessThanOrEqual(briefBox.y + 0.5);
   // («Фото» / «Схема» went with «Детальніше», 09.10: the handle and the range move the seam)

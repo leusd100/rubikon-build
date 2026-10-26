@@ -59,8 +59,8 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
         className: 'angary-hero-actions',
         sectionClassName: 'angary-service-subhero',
         items: [
-          { label: 'Зібрати конфігурацію', href: '#configurator', className: 'button button-hero-secondary', arrow: '↓' },
-          { label: 'Обговорити задачу', href: '#inquiry', className: 'link-arrow text-link', arrow: '↓', openInquiry: true },
+          { label: 'Зібрати конфігурацію', href: '#configurator', className: 'button button-hero-secondary', arrow: 'down' },
+          { label: 'Обговорити задачу', href: '#inquiry', className: 'link-arrow text-link', arrow: 'down', openInquiry: true },
         ],
       },
     },

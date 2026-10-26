@@ -4,6 +4,7 @@ import { directions } from '../data/directions';
 import { entryPoints, formatCards } from '../lib/deliveryModelPresentation';
 import type { DeliveryFormatId } from '../types/deliveryModel';
 import ResponsiveImage from './ResponsiveImage';
+import { Arrow } from './Arrow';
 
 const formatIcons: Record<DeliveryFormatId, LucideIcon> = {
   comprehensive: Layers3,
@@ -71,7 +72,7 @@ export function DirectionImageCards() {
             <strong>{direction.cardTitle}</strong>
             <small>{direction.cardText}</small>
           </span>
-          <span className="direction-arrow" aria-hidden="true">↗</span>
+          <Arrow to="up-right" className="direction-arrow" />
         </a>
       ))}
     </div>
@@ -88,7 +89,7 @@ export function DirectionRouteList() {
             <h3>{direction.serviceTitle}</h3>
             <p>{direction.routeText}</p>
           </div>
-          <b aria-hidden="true">↗</b>
+          <b aria-hidden="true"><Arrow to="up-right" /></b>
         </a>
       ))}
     </div>

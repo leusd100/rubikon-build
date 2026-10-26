@@ -17,13 +17,13 @@ export const INQUIRY_ATTACHMENT_LABELS: Record<InquiryAttachmentKind, { form: st
   'hangar-configuration': {
     form: 'До заявки додано вашу конфігурацію',
     telegram: 'Конфігурація ангара',
-    edit: 'Змінити у конфігураторі ↑',
+    edit: 'Змінити у конфігураторі',
     review: 'Переглянути параметри',
   },
   'grain-brief': {
     form: 'До заявки додано ваш опис задачі',
     telegram: 'Опис задачі — зерносховище',
-    edit: 'Змінити в планувальнику ↑',
+    edit: 'Змінити в планувальнику',
     review: 'Переглянути опис',
   },
 };

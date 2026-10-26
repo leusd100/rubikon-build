@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
 import { useInquiryFormHost } from './inquiry/InquiryFormHost';
 import { revealAttachedBrief } from './inquiry/revealAttachedBrief';
+import { Arrow } from './Arrow';
 
 /**
  * The conversation block on a phone or tablet (≤ 1180 px, one column): the call and the written channels come first,
@@ -77,7 +78,7 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
         <p className="conversation-form-moved">
           Форма запиту відкрита під вашою конфігурацією.{' '}
           <a href="#hc-inquiry" onClick={(event) => revealAttachedBrief(event, { takeOver: true })}>
-            Перейти до форми <span aria-hidden="true">↑</span>
+            Перейти до форми <Arrow to="up" />
           </a>
         </p>
       </div>
@@ -88,7 +89,7 @@ export function ConversationFormToggle({ children }: Readonly<{ children: ReactN
     <div className="conversation-form-wrap" data-open={shown ? '' : undefined}>
       {!shown && (
         <button type="button" className="conversation-form-toggle" aria-expanded="false" aria-controls={regionId} onClick={open}>
-          Залишити запит <span aria-hidden="true">↓</span>
+          Залишити запит <Arrow to="down" />
         </button>
       )}
       {/* typing here keeps the form here (InquiryFormHost): moved, it would be a new, empty form */}

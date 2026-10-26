@@ -131,7 +131,7 @@
 .grain-planner-root .planner-inline-tension { margin-top: 24px; padding: 20px; border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent); background: var(--planner-tint); }
 .grain-planner-root .planner-inline-tension p { margin: 0; color: var(--color-accent-strong); font: var(--planner-label); letter-spacing: .1em; text-transform: uppercase; }
 .grain-planner-root .planner-inline-tension b { display: block; margin-top: 10px; font-size: 18px; }
-.grain-planner-root .planner-inline-tension i, .grain-planner-root .planner-development-head i { padding: 0 6px; color: var(--color-accent); font-style: normal; }
+.grain-planner-root .planner-inline-tension [data-arrow], .grain-planner-root .planner-development-head [data-arrow] { padding: 0 6px; color: var(--color-accent); }
 .grain-planner-root .planner-inline-tension span { display: block; margin-top: 6px; color: var(--color-text-secondary); font-size: 14px; line-height: 1.55; }
 
 .grain-planner-root .planner-start { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; gap: 18px; padding: clamp(24px, 3vw, 40px); border: 1px solid var(--planner-line-strong); background: var(--planner-surface); }
@@ -328,7 +328,7 @@
 .grain-planner-root .planner-development-head { padding: clamp(24px, 3vw, 40px); color: var(--color-dark-text); background: var(--color-dark); }
 .grain-planner-root .planner-development-head p { margin: 0; color: var(--color-accent-on-dark); font: var(--planner-label); letter-spacing: .1em; text-transform: uppercase; }
 .grain-planner-root .planner-development-head h3 { margin: 14px 0 10px; font-family: var(--planner-display); font-size: clamp(28px, 2.8vw, 38px); font-weight: 400; line-height: 1.1; }
-.grain-planner-root .planner-development-head i { color: var(--color-accent-on-dark); }
+.grain-planner-root .planner-development-head [data-arrow] { color: var(--color-accent-on-dark); }
 .grain-planner-root .planner-development-head span { display: block; max-width: 720px; color: var(--color-dark-text-secondary); font-size: 14px; line-height: 1.6; }
 .grain-planner-root .planner-development-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; border: 1px solid var(--planner-line-strong); border-top: 0; }
 .grain-planner-root .planner-development-grid li { padding: 24px; background: var(--planner-surface); }

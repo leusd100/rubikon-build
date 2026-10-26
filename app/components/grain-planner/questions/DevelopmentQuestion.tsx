@@ -5,6 +5,7 @@ import { CheckOptionGrid } from '../../planner/CheckOptionGrid';
 import { ChoiceGroup } from '../../planner/ChoiceGroup';
 import { Clarifier } from '../../planner/Clarifier';
 import type { GrainQuestionProps } from './types';
+import { Arrow } from '../../Arrow';
 
 export function DevelopmentQuestion({ answers, answer }: GrainQuestionProps) {
   // Verbatim toggle rules from the prototype: «none» and «unknown» are exclusive of everything else.
@@ -34,7 +35,7 @@ export function DevelopmentQuestion({ answers, answer }: GrainQuestionProps) {
       {answers.sitePressure === 'compact' && answers.development.includes('physical') && (
         <div className="planner-inline-tension">
           <p>Виявлено важливий компроміс</p>
-          <b>Компактний майданчик <i aria-hidden="true">↔</i><span className="planner-sr-only">і</span> фізичне розширення</b>
+          <b>Компактний майданчик <Arrow to="left-right" /><span className="planner-sr-only">і</span> фізичне розширення</b>
           <span>Потребу в розширенні підтверджено, але наявність реального резерву території ще потрібно перевірити.</span>
         </div>
       )}

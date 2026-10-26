@@ -1,10 +1,11 @@
+import { Arrow } from '../Arrow';
 /** Compact site today ↔ physical expansion tomorrow: a decision that is not a storage type. Copy from the prototype. */
 export function GrainDevelopmentExplorer() {
   return (
     <div className="planner-development">
       <div className="planner-development-head">
         <p>Окреме рішення, яке не зводиться до типу сховища</p>
-        <h3>Компактний майданчик сьогодні <i aria-hidden="true">↔</i><span className="planner-sr-only">і</span> фізичне розширення завтра</h3>
+        <h3>Компактний майданчик сьогодні <Arrow to="left-right" /><span className="planner-sr-only">і</span> фізичне розширення завтра</h3>
         <span>Потребу в розширенні підтверджено, але можливість резервування території визначається лише після перевірки майданчика.</span>
       </div>
       <ol className="planner-development-grid">

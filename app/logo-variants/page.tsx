@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { brandedTitle, createBasicPageMetadata } from '../lib/seo';
 import { siteRoutes } from '../data/navigation';
+import { Arrow } from '../components/Arrow';
 
 export const metadata = createBasicPageMetadata({
   title: brandedTitle('Фірмовий знак'),
@@ -67,7 +68,7 @@ export default function LogoVariantsPage() {
                 <div className="logo-option-copy">
                   <h2>{title}</h2>
                   <p>{text}</p>
-                  <a className="link-arrow section-link" href={`/brand/${asset}.svg`} download>Завантажити SVG <span aria-hidden="true" data-arrow="down">↓</span></a>
+                  <a className="link-arrow section-link" href={`/brand/${asset}.svg`} download>Завантажити SVG <Arrow to="down" /></a>
                 </div>
               </article>
             ))}

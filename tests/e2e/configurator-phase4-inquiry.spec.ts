@@ -81,7 +81,7 @@ test('the line in the closing block, the route node and the cost CTA take the vi
   for (const link of [
     page.locator('#inquiry .conversation-form-moved a'),
     // its arrow points up now (aria-hidden: the name is the words)
-    page.locator('#process li').first().locator('a.angary-route-brief-action', { hasText: 'Надіслати бриф ↑' }),
+    page.locator('#process li').first().locator('a.angary-route-brief-action', { hasText: 'Надіслати бриф' }),
     page.locator('#vartist a[data-open-inquiry]'),
   ]) {
     await link.scrollIntoViewIfNeeded();
@@ -133,7 +133,7 @@ test('with smooth scrolling every way to the attached brief lands on it under th
 
   for (const link of [
     page.locator('#inquiry .conversation-form-moved a'),
-    page.locator('#process li').first().locator('a.angary-route-brief-action', { hasText: 'Надіслати бриф ↑' }),
+    page.locator('#process li').first().locator('a.angary-route-brief-action', { hasText: 'Надіслати бриф' }),
     // these three go through the form toggle's capture listener (data-open-inquiry), not their own onClick
     page.locator('#vartist a[data-open-inquiry]'),
     page.locator('a.angary-stamp-cta[data-open-inquiry]'),

@@ -103,7 +103,7 @@ test.describe('Grain Planner → inquiry handoff', () => {
     const card = attachmentCard(page);
     await card.getByRole('button', { name: 'Переглянути опис' }).click();
     await expect(card.getByRole('heading', { name: 'Ваша задача' })).toBeVisible();
-    await expect(card.getByRole('link', { name: 'Змінити в планувальнику ↑' })).toHaveAttribute('href', '#planner');
+    await expect(card.getByRole('link', { name: 'Змінити в планувальнику' })).toHaveAttribute('href', '#planner');
     const visibleRows = await card.locator('dl > div').evaluateAll((rows) => rows.map((row) => {
       const label = row.querySelector('dt')?.textContent?.trim() ?? '';
       const value = row.querySelector('dd')?.textContent?.trim() ?? '';

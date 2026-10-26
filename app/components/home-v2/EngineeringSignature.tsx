@@ -4,6 +4,7 @@ import { leadership } from '../../data/people';
 import { ProofContour } from './ProofContour';
 import { ScopeCells } from './ScopeCells';
 import { keepHeadingWords } from '../../lib/typography';
+import { Arrow } from '../Arrow';
 
 // HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
 //
@@ -72,7 +73,7 @@ export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase 
           Ілюстрації та схеми пояснюють підхід і не замінюють проєкт: розрахунки та проєктні рішення — за проєктувальником.
         </p>
         {/* The one way on from the explanation to how the work itself is organised; the band's own link style */}
-        <a className="link-arrow hv2-people-link hv2-process-link" href={siteRoutes.process}>Як працюємо <span aria-hidden="true" data-arrow="up-right">↗</span></a>
+        <a className="link-arrow hv2-people-link hv2-process-link" href={siteRoutes.process}>Як працюємо <Arrow to="up-right" /></a>
       </div>
     </section>
   );

@@ -13,11 +13,11 @@ async function openHangarPage(page: Page) {
 
 const attachmentCard = (page: Page) => page.locator('form.inquiry-form .inquiry-config-brief');
 const stampSizes = (page: Page) => page.locator('.hc-stamp-row .hc-summary-dimensions');
-/** The last step's own jump to the stamp, whatever its words («До зведення ↓», «До підсумку ↓») */
+/** The last step's own jump to the stamp, whatever its words («До зведення», «До підсумку») */
 const toStamp = (page: Page) => page.locator('#hc-step-check a.hc-step-next');
 
 // Audit F161: the jumps inside the block — the last step's to the stamp, «Обговорити цю конфігурацію» to the form,
-// «Змінити у конфігураторі ↑» back to the steps — each added a history entry, and Back scrolled between them before it
+// «Змінити у конфігураторі» back to the steps — each added a history entry, and Back scrolled between them before it
 // left /angary (3 presses at 1440 px, 2 on a phone). Audit F129: the stamp takes the focus the jump brings.
 async function walkTheBlock(page: Page) {
   await openHangarPage(page);
@@ -39,7 +39,7 @@ async function walkTheBlock(page: Page) {
   const card = attachmentCard(page);
   await expect(card).toBeFocused();
   await card.locator('.inquiry-config-brief-toggle').click();
-  await card.getByRole('link', { name: 'Змінити у конфігураторі ↑' }).click();
+  await card.getByRole('link', { name: 'Змінити у конфігураторі' }).click();
   await expect(page).toHaveURL(/#configurator$/);
   await expect(page.locator('#hc-step-check-tab')).toBeFocused();
   expect(await page.evaluate(() => window.history.length)).toBe(entries);

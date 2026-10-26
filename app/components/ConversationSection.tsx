@@ -7,6 +7,7 @@ import { ConversationFormToggle } from './ConversationFormToggle';
 import { DEFAULT_JOURNEY, type JourneyTexts } from '../data/conversation';
 import { cooperationOptions, inquirySuccessMessage } from '../lib/deliveryModelPresentation';
 import { keepHeadingWords, keepShortWords } from '../lib/typography';
+import { Arrow } from './Arrow';
 
 const DEFAULT_LEAD = 'Можна почати з ідеї або з готового проєкту. Найшвидше — зателефонувати; якщо зручніше писати — залиште запит.';
 
@@ -49,7 +50,7 @@ export function ConversationSection({
             <a className="button button-primary hero-call-primary conversation-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
               <span className="conversation-call-icon" aria-hidden="true"><Phone /></span>
               <span className="conversation-call-text"><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
-              <span className="conversation-call-arrow" aria-hidden="true">↗</span>
+              <Arrow to="up-right" className="conversation-call-arrow" />
             </a>
             <div className="conversation-channels">
               <span className="conversation-channels-label">Або напишіть:</span>

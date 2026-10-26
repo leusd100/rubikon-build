@@ -191,7 +191,7 @@ test('/napryamky server HTML takes its formats from the model and leaves the det
   // DEC-45 (PROPOSED, Phase 3): the formats drawing lives on /yak-pratsyuiemo only; this page links to it
   expect(text.drawing).toEqual([]);
   // one link each to the formats, the stages and the responsibility, named as the site names them elsewhere (/pro-nas)
-  expect(text.links.map((link) => link.replace(/\s+/g, ' ').trim())).toEqual(['Формати участі ↗', 'Етапи роботи ↗', 'Хто за що відповідає ↗']);
+  expect(text.links.map((link) => link.replace(/\s+/g, ' ').trim())).toEqual(['Формати участі', 'Етапи роботи', 'Хто за що відповідає']);
   await page.goto('/napryamky', { waitUntil: 'load' });
   expect(await page.locator('.dhow-links a').evaluateAll((links) => links.map((link) => link.getAttribute('href')))).toEqual(['/yak-pratsyuiemo#obsiah', '/yak-pratsyuiemo#etapy', '/yak-pratsyuiemo#vidpovidalnist']);
 });
@@ -346,7 +346,8 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   // are one link away. Then the region.
   const ledger = capabilityLedger();
   await expect(page.locator('.about-ledger-col h3')).toHaveText(ledger.map((column, index) => `${String(index + 1).padStart(2, '0')}${column.title}`));
-  await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => (item.href ? `${item.short} ↗` : item.short))));
+  await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => item.short)));
+  await expect(page.locator('.about-ledger-col li b a > [data-arrow="up-right"] svg')).toHaveCount(ledger.flatMap((column) => column.items.filter((item) => item.href)).length);
   expect(await page.locator('.about-ledger a').evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
     .toEqual(ledger.flatMap((column) => column.items.flatMap((item) => (item.href ? [item.href] : []))));
   await expect(page.locator('.about-build-all')).toHaveAttribute('href', '/napryamky');

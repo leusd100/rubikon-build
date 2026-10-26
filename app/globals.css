@@ -472,6 +472,12 @@ body:has(main:is([data-home="v2"], .about-page)) {
   font: var(--type-action-weight) var(--type-action-size)/1.25 var(--font-manrope), sans-serif; letter-spacing: var(--type-action-track); text-transform: uppercase;
   text-wrap: balance; transition: color var(--duration-fast) ease;
 }
+/* The site's arrow (Arrow.tsx): an icon 1.375 × its holder's type — 18 px beside the 13 px action label, as «Про напрям»
+   on a phone. It takes the room the character did: one line tall, the icon centred on it and standing over it, and as
+   wide as its drawing (Arrow.tsx draws the middle 14 of lucide's 24 units; the round ends stand over), so no line, plate
+   or button grows and a two-line button stays two. */
+[data-arrow] { display: inline-flex; align-items: center; justify-content: center; height: 1lh; vertical-align: top; }
+[data-arrow] > svg { width: calc(1.375em * 14 / 24); height: 1.375em; flex: none; overflow: visible; }
 .link-arrow > [data-arrow] { flex: none; color: var(--color-accent-strong); transition: transform var(--duration-fast) var(--ease-standard); }
 .link-arrow:is(:hover, :focus-visible) { color: var(--link-hover-ink, var(--color-accent-strong)); }
 @media (prefers-reduced-motion: no-preference) {

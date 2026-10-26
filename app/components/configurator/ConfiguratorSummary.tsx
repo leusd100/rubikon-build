@@ -15,6 +15,7 @@ import { revealAttachedBrief } from '../inquiry/revealAttachedBrief';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 import { DISCLAIMER } from './disclaimer';
 import { HangarPrintSheet } from './HangarPrintSheet';
+import { Arrow } from '../Arrow';
 
 function SummaryDisclaimer() {
   return <p className="hc-summary-disclaimer">{DISCLAIMER}</p>;
@@ -297,7 +298,7 @@ export function ConfiguratorSummary({
               revealAttachedBrief(event, { takeOver: here });
             }}
           >
-            Обговорити цю конфігурацію <span aria-hidden="true">↓</span>
+            Обговорити цю конфігурацію <Arrow to="down" />
           </a>
           {/* what happens after the button, in the route's own approved words (10.10, audit F12; «Читаємо бриф і готуємо
               питання до розмови»): the form opens under the stamp */}

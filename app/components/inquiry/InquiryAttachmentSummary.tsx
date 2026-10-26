@@ -3,6 +3,7 @@
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { INQUIRY_ATTACHMENT_LABELS, type InquiryAttachment } from '../../lib/inquiry/attachment';
+import { Arrow } from '../Arrow';
 
 /**
  * The attached brief inside the inquiry form: what it is, its headline, a look at every row the
@@ -95,7 +96,7 @@ export function InquiryAttachmentSummary({
         ))}
         {/* Back to the source's steps, on the step left (09.10): the hangar configurator takes it there (HangarConfigurator);
             a source without steps keeps the plain anchor */}
-        <a className="inquiry-config-edit" href={attachment.editHref} data-open-steps="">{labels.edit}</a>
+        <a className="inquiry-config-edit" href={attachment.editHref} data-open-steps="">{labels.edit} <Arrow to="up" /></a>
       </div>
     </aside>
   );

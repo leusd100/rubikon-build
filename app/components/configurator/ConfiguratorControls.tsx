@@ -71,6 +71,7 @@ import {
 import { keepHeadingWords, keepShortWords } from '../../lib/typography';
 import { formatNumber } from '../../lib/configurator/formatNumber';
 import './configurator-controls.css';
+import { Arrow } from '../Arrow';
 
 type Props = {
   state: ConfiguratorState;
@@ -1145,7 +1146,7 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                     <li key={title}><span className="hc-next-number" aria-hidden="true">{String(number + 1).padStart(2, '0')}</span>{title}</li>
                   ))}
                 </ol>
-                <a className="hc-next-more" href="#process">Увесь шлях і хто відповідає <span aria-hidden="true">↓</span></a>
+                <a className="hc-next-more" href="#process">Увесь шлях і хто відповідає <Arrow to="down" /></a>
               </div>
             )}
             <div className="hc-step-nav">
@@ -1158,18 +1159,18 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
                   title={`Назад: ${previous.title}`}
                   onClick={() => selectStep(index - 1, false, true)}
                 >
-                  <span aria-hidden="true">←</span>
+                  <Arrow to="left" />
                 </button>
               )}
               {next ? (
                 <button type="button" className="hc-step-next" onClick={() => selectStep(index + 1, false, true)}>
-                  Далі: {next.title} <span aria-hidden="true">→</span>
+                  Далі: {next.title} <Arrow to="right" />
                 </button>
               ) : (
                 // «До підсумку», as the stamp is named for screen readers (10.10, audit F10): «До зведення» read as «to
                 // the construction» on a builder's site
                 <a className="hc-step-next" href="#hc-stamp">
-                  До підсумку <span aria-hidden="true">↓</span>
+                  До підсумку <Arrow to="down" />
                 </a>
               )}
             </div>
