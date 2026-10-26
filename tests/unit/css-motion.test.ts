@@ -1,13 +1,13 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
-  customProperties, motionDeclarations, normalizeMotion, resolveVars, stripComments, timeLiterals,
+  customProperties, customPropertyDeclarations, motionDeclarations, normalizeMotion, resolveVars, stripComments, timeLiterals,
 } from '../../scripts/motion/css-motion.mjs';
-import { diffLists, motionKeys } from '../../scripts/motion/motion-diff.mjs';
+import { diffLists, fileDefs, globalCollisions, motionKeys, sharedDefs } from '../../scripts/motion/motion-diff.mjs';
 
 // Motion v1 · M1-1: the tokens move 553 literal times out of the stylesheets without changing a value. These tests pin the
 // parser that proves it: the declarations of transition*/animation*, the custom properties that supply them, and the
@@ -215,6 +215,159 @@ describe('timeLiterals', () => {
   });
 });
 
+describe('customPropertyDeclarations', () => {
+  it('lists every declaration with the selector of its rule and the @media/@supports prelude around it', () => {
+    const css = `
+      :root { --a: 1s; --b: 2s; }
+      @media (max-width: 760px) { :root { --a: 3s; } }
+      .x { --c: 4s; }`;
+
+    expect(customPropertyDeclarations(css)).toEqual([
+      { name: '--a', value: '1s', selector: ':root', atRule: null },
+      { name: '--b', value: '2s', selector: ':root', atRule: null },
+      { name: '--a', value: '3s', selector: ':root', atRule: '@media (max-width: 760px)' },
+      { name: '--c', value: '4s', selector: '.x', atRule: null },
+    ]);
+  });
+});
+
+describe('sharedDefs: what a variable may resolve to', () => {
+  it('keeps a custom property with exactly one value across the sheets and drops one with several', () => {
+    const defs = sharedDefs([':root { --one: 1s; --two: 2s; --twice: 3s; --twice: 4s; }', ':root { --two: 5s; }']);
+
+    expect(defs).toEqual(new Map([['--one', '1s']]));
+  });
+
+  it('takes a choreography name (--<prefix>-for|at|curve-…) only from a top-level :root rule', () => {
+    const defs = sharedDefs([`
+      :root { --rm-for-ok: .3s; --rm-at-ok: 40ms; --rm-curve-ok: cubic-bezier(.3, .7, .2, 1); --rm-for-both: .3s; }
+      .other { --rm-for-scoped: .3s; --rm-for-both: .5s; }
+      @media (min-width: 761px) { :root { --rm-for-media: .3s; } }
+      @supports (selector(:has(*))) { :root { --rm-at-supports: 40ms; } }
+      :root:not([data-x]) { --rm-for-narrowed: .3s; }`]);
+
+    expect([...defs.keys()]).toEqual(['--rm-for-ok', '--rm-at-ok', '--rm-curve-ok']);
+  });
+
+  it('leaves the scope rule to choreography names: any other single-valued name resolves wherever it is declared', () => {
+    const defs = sharedDefs(['.other { --region-reveal: .36s; } @media (min-width: 761px) { :root { --m-draw: 900ms; --ft-k: 1; } }']);
+
+    expect([...defs.keys()]).toEqual(['--region-reveal', '--m-draw', '--ft-k']);
+  });
+
+  it('does not take a name that only looks like a choreography one', () => {
+    const defs = sharedDefs(['.a { --rm-for: .3s; --for-rm-x: .3s; --rm-sub-for-x: .3s; }']);
+
+    expect([...defs.keys()]).toEqual(['--rm-for', '--for-rm-x', '--rm-sub-for-x']);
+  });
+});
+
+describe('fileDefs: the shared definitions as one file sees them', () => {
+  const shared = new Map([['--motion-micro', '200ms'], ['--motion-ui', '360ms']]);
+
+  it('lets the file\'s own single value override a shared one, without touching the shared map', () => {
+    const defs = fileDefs(shared, ':root { --motion-ui: 400ms; --rm-for-x: .3s; }');
+
+    expect(defs.get('--motion-ui')).toBe('400ms');
+    expect(defs.get('--rm-for-x')).toBe('.3s');
+    expect(defs.get('--motion-micro')).toBe('200ms');
+    expect(shared.get('--motion-ui')).toBe('360ms');
+    expect(shared.has('--rm-for-x')).toBe(false);
+  });
+
+  it('drops a name the file declares twice, so it cannot fall back to the shared value', () => {
+    const defs = fileDefs(shared, ':root { --motion-micro: 210ms; } @media (max-width: 760px) { :root { --motion-micro: 500ms; } }');
+
+    expect(defs.has('--motion-micro')).toBe(false);
+    expect(defs.get('--motion-ui')).toBe('360ms');
+  });
+
+  it('applies the scope rule to a shared choreography name, and leaves any other name its single-value rule', () => {
+    expect(fileDefs(new Map([['--rm-for-x', '.3s']]), '.other { --rm-for-x: .5s; }').has('--rm-for-x')).toBe(false);
+    expect(fileDefs(shared, '.other { --motion-ui: 500ms; }').get('--motion-ui')).toBe('500ms');
+  });
+});
+
+describe('motionKeys: a variable that may not resolve keeps its var()', () => {
+  const key = (css: string) => motionKeys(css, fileDefs(new Map(), css));
+  const literal = key('.a { transition: opacity .3s; }');
+
+  it('resolves a choreography name declared once in :root to the same key as its literal', () => {
+    expect(key(':root { --x-for-a: .3s; } .a { transition: opacity var(--x-for-a); }')).toEqual(literal);
+  });
+
+  it.each([
+    ['a rule other than :root', '.other { --x-for-a: .3s; } .a { transition: opacity var(--x-for-a); }'],
+    ['a media query', '@media (min-width: 761px) { :root { --x-for-a: .3s; } } .a { transition: opacity var(--x-for-a); }'],
+    ['a name declared twice', ':root { --x-for-a: .3s; --x-for-a: .5s; } .a { transition: opacity var(--x-for-a); }'],
+    ['a misspelt name', ':root { --x-for-a: .3s; } .a { transition: opacity var(--x-for-b); }'],
+  ])('keeps the var() of %s, so it differs from the literal', (_, css) => {
+    expect(key(css)).not.toEqual(literal);
+    expect(key(css)[0]).toMatch(/var\(--x-for-[ab]\)/);
+  });
+});
+
+describe('globalCollisions: :root is one scope for every stylesheet', () => {
+  const sheet = (name: string, value: string) => `:root { ${name}: ${value}; }`;
+  const uses = (selector: string, name: string) => `${selector} { transition: opacity var(${name}); }`;
+  const files = (...entries: [string, string][]) => new Map(entries.map(([file, css]) => [`app/${file}.css`, css]));
+  const base = files(['a', '.a { transition: opacity .3s; }'], ['b', '.b { transition: opacity .5s; }']);
+
+  it('reports a name two files declare with different values and a motion declaration resolves through', () => {
+    const head = files(
+      ['a', `${sheet('--x-for-a', '.3s')}\n${uses('.a', '--x-for-a')}`],
+      ['b', `${sheet('--x-for-a', '.5s')}\n${uses('.b', '--x-for-a')}`],
+    );
+
+    expect(globalCollisions(base, head)).toEqual([{
+      name: '--x-for-a',
+      declarations: [{ file: 'app/a.css', value: '.3s' }, { file: 'app/b.css', value: '.5s' }],
+    }]);
+  });
+
+  it('is silent when the files declare the same value, however it is spelt', () => {
+    const head = files(
+      ['a', `${sheet('--x-for-a', '.3s')}\n${uses('.a', '--x-for-a')}`],
+      ['b', `${sheet('--x-for-a', '300ms')}\n${uses('.b', '--x-for-a')}`],
+    );
+
+    expect(globalCollisions(base, head)).toEqual([]);
+  });
+
+  it('is silent about a name no motion declaration resolves through', () => {
+    const head = files(['a', `${sheet('--x-for-a', '.3s')}\n.a { color: red; }`], ['b', `${sheet('--x-for-a', '.5s')}\n${uses('.b', '--x-for-b')}`]);
+
+    expect(globalCollisions(base, head)).toEqual([]);
+  });
+
+  it('follows a name through the definitions of other variables', () => {
+    const head = files(
+      ['a', `${sheet('--x-for-a', 'var(--x-for-r)')}${sheet('--x-for-r', '.3s')}\n${uses('.a', '--x-for-a')}`],
+      ['b', `${sheet('--x-for-r', '.5s')}\n.b { color: red; }`],
+    );
+
+    expect(globalCollisions(base, head).map(({ name }) => name)).toEqual(['--x-for-r']);
+  });
+
+  it('reports a shared token another file declares again with another value', () => {
+    const tokens = (css: string, ...more: [string, string][]) => files(['globals', css], ...more);
+    const before = tokens(sheet('--motion-micro', '200ms'), ['a', '.a { transition: opacity 200ms; }']);
+    const after = tokens(sheet('--motion-micro', '200ms'), ['a', `${sheet('--motion-micro', '500ms')}\n${uses('.a', '--motion-micro')}`]);
+
+    expect(globalCollisions(before, after).map(({ name }) => name)).toEqual(['--motion-micro']);
+  });
+
+  it('leaves a collision that is already in the base alone, and reports it when the values change', () => {
+    const colliding = (a: string, b: string) => files(
+      ['a', `${sheet('--ft-k', a)}\n${uses('.a', '--ft-k')}`],
+      ['b', `${sheet('--ft-k', b)}\n${uses('.b', '--ft-k')}`],
+    );
+
+    expect(globalCollisions(colliding('1s', '2s'), colliding('1s', '2s'))).toEqual([]);
+    expect(globalCollisions(colliding('1s', '2s'), colliding('1s', '3s')).map(({ name }) => name)).toEqual(['--ft-k']);
+  });
+});
+
 describe('motionKeys', () => {
   const defs = new Map([['--motion-micro', '200ms'], ['--ease-plot', 'cubic-bezier(.55, 0, .25, 1)']]);
 
@@ -264,50 +417,143 @@ describe('motion-diff CLI', () => {
     expect(run.status, run.stderr).toBe(0);
   };
   const run = (cwd: string, ...args: string[]) => spawnSync('node', [cli, ...args], { cwd, encoding: 'utf8' });
+  const sandboxes: string[] = [];
+  const sandbox = () => {
+    const dir = mkdtempSync(join(tmpdir(), 'motion-diff-'));
+    sandboxes.push(dir);
+    return dir;
+  };
+  const write = (repo: string, files: Record<string, string>) => {
+    for (const [file, css] of Object.entries(files)) {
+      mkdirSync(join(repo, file, '..'), { recursive: true });
+      writeFileSync(join(repo, file), css);
+    }
+  };
+  /** A repository whose first commit holds `base`; `head` is then written over the working tree */
+  const repoOf = (base: Record<string, string>, head: Record<string, string>) => {
+    const repo = sandbox();
+    write(repo, base);
+    git(repo, 'init', '-q', '-b', 'main');
+    git(repo, 'add', '-A');
+    git(repo, 'commit', '-q', '-m', 'base');
+    write(repo, head);
+    return repo;
+  };
+  afterEach(() => {
+    for (const dir of sandboxes.splice(0)) rmSync(dir, { recursive: true, force: true });
+  });
 
   it('says 0 differences for a literal moved into a token, and exits 1 under --expect-none for a changed time', () => {
-    const repo = mkdtempSync(join(tmpdir(), 'motion-diff-'));
-    try {
-      mkdirSync(join(repo, 'app/components'), { recursive: true });
-      writeFileSync(join(repo, 'app/globals.css'), ':root { --motion-micro: 200ms; }\n');
-      writeFileSync(join(repo, 'app/theme.css'), ':root { --bg: #fff; }\n');
-      writeFileSync(join(repo, 'app/components/Ключ.css'), '/* Рух */\n.a { transition: opacity .2s; }\n.b { transition: transform .3s; }\n');
-      writeFileSync(join(repo, 'app/components/still.css'), '.c { color: red; }\n');
-      git(repo, 'init', '-q', '-b', 'main');
-      git(repo, 'add', '-A');
-      git(repo, 'commit', '-q', '-m', 'base');
+    const repo = repoOf({
+      'app/globals.css': ':root { --motion-micro: 200ms; }\n',
+      'app/theme.css': ':root { --bg: #fff; }\n',
+      'app/components/Ключ.css': '/* Рух */\n.a { transition: opacity .2s; }\n.b { transition: transform .3s; }\n',
+      'app/components/still.css': '.c { color: red; }\n',
+    }, {
+      'app/components/Ключ.css': '/* Рух */\n:root { --k-for-b: .3s; }\n.a { transition: opacity var(--motion-micro); }\n.b { transition: transform var(--k-for-b); }\n',
+    });
+    const same = run(repo, '--base', 'HEAD', '--expect-none');
+    expect(same.stderr).toBe('');
+    expect(same.stdout).toMatch(/^0 відмінностей у 4 файлах/m);
+    expect(same.status).toBe(0);
 
-      writeFileSync(join(repo, 'app/components/Ключ.css'),
-        '/* Рух */\n:root { --k-for-b: .3s; }\n.a { transition: opacity var(--motion-micro); }\n.b { transition: transform var(--k-for-b); }\n');
-      const same = run(repo, '--base', 'HEAD', '--expect-none');
-      expect(same.stderr).toBe('');
-      expect(same.stdout).toMatch(/^0 відмінностей у 4 файлах/m);
-      expect(same.status).toBe(0);
-
-      writeFileSync(join(repo, 'app/components/Ключ.css'), '.a { transition: opacity .25s; }\n.b { transition: transform .3s; }\n');
-      writeFileSync(join(repo, 'app/components/new.css'), '.n { animation: x 1s; }\n');
-      const changed = run(repo, '--base', 'HEAD', '--expect-none');
-      expect(changed.status).toBe(1);
-      expect(changed.stdout).toContain('app/components/Ключ.css');
-      expect(changed.stdout).toContain('- .a | transition | opacity 200ms');
-      expect(changed.stdout).toContain('+ .a | transition | opacity 250ms');
-      expect(changed.stdout).toContain('app/components/new.css');
-      expect(changed.stdout).toMatch(/^2 відмінності у 5 файлах/m);
-      expect(run(repo, '--base', 'HEAD').status).toBe(0);
-    } finally {
-      rmSync(repo, { recursive: true, force: true });
-    }
+    write(repo, {
+      'app/components/Ключ.css': '.a { transition: opacity .25s; }\n.b { transition: transform .3s; }\n',
+      'app/components/new.css': '.n { animation: x 1s; }\n',
+    });
+    const changed = run(repo, '--base', 'HEAD', '--expect-none');
+    expect(changed.status).toBe(1);
+    expect(changed.stdout).toContain('app/components/Ключ.css');
+    expect(changed.stdout).toContain('- .a | transition | opacity 200ms');
+    expect(changed.stdout).toContain('+ .a | transition | opacity 250ms');
+    expect(changed.stdout).toContain('app/components/new.css');
+    expect(changed.stdout).toMatch(/^2 відмінності у 5 файлах/m);
+    expect(run(repo, '--base', 'HEAD').status).toBe(0);
   });
 
   it('exits 2 and names the problem when the base ref does not exist', () => {
-    const repo = mkdtempSync(join(tmpdir(), 'motion-diff-'));
-    try {
-      git(repo, 'init', '-q', '-b', 'main');
-      const result = run(repo, '--base', 'no-such-ref');
-      expect(result.status).toBe(2);
-      expect(result.stderr).toContain('no-such-ref');
-    } finally {
-      rmSync(repo, { recursive: true, force: true });
-    }
+    const repo = sandbox();
+    git(repo, 'init', '-q', '-b', 'main');
+    const result = run(repo, '--base', 'no-such-ref');
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain('no-such-ref');
+  });
+
+  it('runs main when it is started through a symlinked path', () => {
+    const repo = sandbox();
+    git(repo, 'init', '-q', '-b', 'main');
+    const link = join(sandbox(), 'scripts');
+    symlinkSync(fileURLToPath(new URL('../../scripts/', import.meta.url)), link);
+    const result = spawnSync('node', [join(link, 'motion/motion-diff.mjs'), '--base', 'no-such-ref', '--expect-none'], { cwd: repo, encoding: 'utf8' });
+
+    expect(result.stderr).toContain('no-such-ref');
+    expect(result.status).toBe(2);
+  });
+
+  it('reports a name two files declare in :root with different values, though each file alone resolves it to its literal', () => {
+    const repo = repoOf({
+      'app/a.css': '.a { transition: opacity .3s; }\n',
+      'app/b.css': '.b { transition: opacity .5s; }\n',
+    }, {
+      'app/a.css': ':root { --x-for-a: .3s; }\n.a { transition: opacity var(--x-for-a); }\n',
+      'app/b.css': ':root { --x-for-a: .5s; }\n.b { transition: opacity var(--x-for-a); }\n',
+    });
+    const result = run(repo, '--base', 'HEAD', '--expect-none');
+
+    expect(result.stdout).toContain('--x-for-a: app/a.css = .3s, app/b.css = .5s');
+    expect(result.stdout).toMatch(/^1 відмінність у 2 файлах/m);
+    expect(result.status).toBe(1);
+    expect(run(repo, '--base', 'HEAD').status).toBe(0);
+  });
+
+  it('does not report a collision the base already has', () => {
+    const colliding = (a: string, b: string) => ({
+      'app/a.css': `:root { --ft-k: ${a}; }\n.a { transition: opacity var(--ft-k); }\n`,
+      'app/b.css': `:root { --ft-k: ${b}; }\n.b { transition: opacity var(--ft-k); }\n`,
+    });
+    const repo = repoOf(colliding('1s', '2s'), colliding('1s', '2s'));
+    const result = run(repo, '--base', 'HEAD', '--expect-none');
+
+    expect(result.stdout).toMatch(/^0 відмінностей у 2 файлах/m);
+    expect(result.status).toBe(0);
+  });
+
+  it.each([
+    ['a rule other than :root', '.other { --x-for-a: .3s; }'],
+    ['a media query', '@media (min-width: 761px) { :root { --x-for-a: .3s; } }'],
+  ])('does not resolve a choreography name declared in %s', (_, declaration) => {
+    const repo = repoOf(
+      { 'app/a.css': '.a { transition: opacity .3s; }\n' },
+      { 'app/a.css': `${declaration}\n.a { transition: opacity var(--x-for-a); }\n` },
+    );
+    const result = run(repo, '--base', 'HEAD', '--expect-none');
+
+    expect(result.stdout).toContain('- .a | transition | opacity 300ms');
+    expect(result.stdout).toContain('+ .a | transition | opacity var(--x-for-a)');
+    expect(result.status).toBe(1);
+  });
+
+  it('does not let a name a file declares twice fall back to the shared value', () => {
+    const repo = repoOf({
+      'app/globals.css': ':root { --motion-micro: 200ms; }\n',
+      'app/a.css': '.a { transition: opacity 200ms; }\n',
+    }, {
+      'app/a.css': ':root { --motion-micro: 210ms; }\n@media (max-width: 760px) { :root { --motion-micro: 500ms; } }\n.a { transition: opacity var(--motion-micro); }\n',
+    });
+    const result = run(repo, '--base', 'HEAD', '--expect-none');
+
+    expect(result.stdout).toContain('+ .a | transition | opacity var(--motion-micro)');
+    expect(result.status).toBe(1);
+  });
+
+  it('reports a misspelt variable name', () => {
+    const repo = repoOf(
+      { 'app/a.css': '.a { transition: opacity .3s; }\n' },
+      { 'app/a.css': ':root { --x-for-row: .3s; }\n.a { transition: opacity var(--x-for-rwo); }\n' },
+    );
+    const result = run(repo, '--base', 'HEAD', '--expect-none');
+
+    expect(result.stdout).toContain('+ .a | transition | opacity var(--x-for-rwo)');
+    expect(result.status).toBe(1);
   });
 });

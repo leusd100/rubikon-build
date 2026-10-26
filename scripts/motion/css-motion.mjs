@@ -233,6 +233,19 @@ export function motionDeclarations(css) {
 }
 
 /**
+ * Every declaration of a custom property (`--*`), in the order of the file, with the selector of its rule and the
+ * enclosing @media/@supports preludes (the same `atRule` as motionDeclarations): where a variable is declared decides
+ * where it applies, so a caller that resolves variables needs the scope, not only the value.
+ * @param {string} css
+ * @returns {{ name: string, value: string, selector: string, atRule: string | null }[]}
+ */
+export function customPropertyDeclarations(css) {
+  return declarations(css)
+    .filter(({ property }) => property.startsWith('--'))
+    .map(({ property, value, selector, atRule }) => ({ name: property, value, selector, atRule }));
+}
+
+/**
  * Every value of every custom property (`--*`) in the file, in the order of the file.
  * @param {string} css
  * @returns {Map<string, string[]>}
@@ -240,11 +253,10 @@ export function motionDeclarations(css) {
 export function customProperties(css) {
   /** @type {Map<string, string[]>} */
   const props = new Map();
-  for (const { property, value } of declarations(css)) {
-    if (!property.startsWith('--')) continue;
-    const values = props.get(property);
+  for (const { name, value } of customPropertyDeclarations(css)) {
+    const values = props.get(name);
     if (values) values.push(value);
-    else props.set(property, [value]);
+    else props.set(name, [value]);
   }
   return props;
 }
