@@ -26,6 +26,7 @@ import {
 import { SHEET_ROOF_COLOR, SHEET_ROOF_SANDWICH_COLOR, SHEET_WALL_COLOR, SHEET_WALL_SANDWICH_COLOR } from './three/materials';
 import { useConfiguratorMobile } from './three/useConfiguratorMobile';
 import { useWebglSupport } from './three/useWebglSupport';
+import { Arrow } from '../Arrow';
 
 // Technical ↔ 3D mode switch.
 //
@@ -476,7 +477,7 @@ export function HangarPreviewModes({
                   setViewNote(showThree ? GENERAL_SHOWN : THREE_SHOWN);
                 }}
               >
-                {showThree ? <><span aria-hidden="true">←</span> Креслення</> : 'Подивитися в 3D'}
+                {showThree ? <><Arrow to="left" /> Креслення</> : 'Подивитися в 3D'}
               </button>
               {showThree && expand}
             </div>

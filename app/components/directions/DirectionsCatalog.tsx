@@ -1,6 +1,7 @@
 import type { DirectionId } from '../../data/directions';
 import { CatalogDrawing } from './CatalogDrawing';
 import { keepHeadingWords } from '../../lib/typography';
+import { Arrow } from '../Arrow';
 
 // /napryamky — the five directions as a catalogue of drawing sheets. Each row is the link to its page (the route
 // list's markup, so the shared tests keep holding) and carries its own small sheet: a line scheme of what the
@@ -45,7 +46,7 @@ export function DirectionsCatalog({ items }: Readonly<{ items: readonly CatalogI
                 {item.kinds.map((kind) => <li key={kind}>{kind}</li>)}
               </ul>
             </div>
-            <b aria-hidden="true">↗</b>
+            <b aria-hidden="true"><Arrow to="up-right" /></b>
           </a>
         ))}
       </div>

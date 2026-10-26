@@ -3,6 +3,7 @@ import type { DirectionPageConfig } from '../../types/directionPage';
 import { SectionHeader } from '../SiteChrome';
 import { PrefillInquiryLink } from '../directions/PrefillInquiryLink';
 import { keepHeadingWords } from '../../lib/typography';
+import { Arrow } from '../Arrow';
 
 // «Яка у вас ситуація?» on /zernoskhovyshcha (owner, 06.10: «можна поцікавіше зробити цей блок»): the four situations of
 // DirectionEntry, each over a small drawing of itself in the page's key — copper for the building part RUBIKON does,
@@ -83,7 +84,7 @@ export function GrainSituations({ entry }: Readonly<{ entry: NonNullable<Directi
               </div>
               <p className="direction-entry-start"><b>Почнемо з</b> {item.start}</p>
               <PrefillInquiryLink className="link-arrow direction-entry-link" text={`${item.situation}. `}>
-                Обговорити <span aria-hidden="true" data-arrow="down">↓</span>
+                Обговорити <Arrow to="down" />
               </PrefillInquiryLink>
             </li>
           ))}

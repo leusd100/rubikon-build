@@ -4,6 +4,7 @@ import { ScopeKey } from '../directions/ScopeKey';
 import { ApproachCard } from '../planner/ApproachCard';
 import { ResultHeading } from '../planner/ResultHeading';
 import { GrainCandidateVisual } from './GrainCandidateVisual';
+import { Arrow } from '../Arrow';
 
 const ORDER: CandidateKey[] = ['silo', 'framed', 'arch'];
 
@@ -34,7 +35,7 @@ export function GrainApproachesOverview() {
         ))}
       </section>
       <ScopeKey items={GRAIN_SCOPE_KEY} className="planner-overview-key" />
-      <a className="planner-overview-link" href="#planner">Сформувати задачу <span aria-hidden="true">↑</span></a>
+      <a className="planner-overview-link" href="#planner">Сформувати задачу <Arrow to="up" /></a>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type FocusEvent, type PointerEvent } from 'react';
 import type { CapabilityLedgerColumn } from '../../lib/deliveryModelPresentation';
 import { keepHeadingWords } from '../../lib/typography';
+import { Arrow } from '../Arrow';
 
 // /pro-nas «Що робимо самі, а що організовуємо». Owner, 04.10: the see-through hangar on its site read as overloaded
 // — the spoil heap and the depth mark had to go, and with them everything that is not a work of the list. Owner, 05.10:
@@ -116,7 +117,7 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
             onBlur={() => setPointed(null)}
           >
             {item.href
-              ? <b><a href={item.href}>{item.short} <span aria-hidden="true">↗</span></a></b>
+              ? <b><a href={item.href}>{item.short} <Arrow to="up-right" /></a></b>
               : <b className="is-plain">{item.short}</b>}
           </li>
         ))}

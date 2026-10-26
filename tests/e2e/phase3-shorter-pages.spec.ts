@@ -32,7 +32,8 @@ test.describe('/napryamky leaves formats, stages and responsibility to /yak-prat
     await expect(band.locator('.dhow-formats h3')).toHaveText(deliveryModel.formats.map((format) => format.label));
     await expect(band.locator('.dhow-formats p')).toHaveText(deliveryModel.formats.map((format) => format.summary));
     await expect(band.locator('.dhow-start')).toContainText('Звертайтеся і з початковою ідеєю, і з готовим проєктом.');
-    await expect(band.locator('.dhow-links a')).toHaveText(LINKS.map(([, name]) => `${name} ↗`));
+    await expect(band.locator('.dhow-links a')).toHaveText(LINKS.map(([, name]) => name));
+    await expect(band.locator('.dhow-links a > [data-arrow="up-right"] svg')).toHaveCount(LINKS.length);
     expect(await band.locator('.dhow-links a').evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
       .toEqual(LINKS.map(([target]) => `${yak}${target}`));
     await expect(page.locator('#inquiry .conversation-journey h3')).toHaveText([...JOURNEY_TITLES]);

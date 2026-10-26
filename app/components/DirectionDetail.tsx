@@ -24,6 +24,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import './directions/direction-template.css';
 import './directions/process-split.css';
 import './faq.css';
+import { Arrow } from './Arrow';
 
 const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
   'zernoskhovyshcha',
@@ -31,9 +32,6 @@ const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
 ]);
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
-
-/** The way an arrow link's arrow is nudged on hover and focus (.link-arrow, globals.css) */
-const ARROW_DIRECTION = { '↓': 'down', '↗': 'up-right' } as const;
 
 /** The class names that are set, space-separated. */
 function classNames(...names: (string | undefined)[]) {
@@ -143,7 +141,7 @@ function DirectionHero({
             <HeroCallButton phoneOnly={actions.legacyCallLink} />
             {actions.items.map((action) => (
               <a key={action.href} className={action.className} href={action.href} data-open-inquiry={action.openInquiry ? '' : undefined}>
-                {`${action.label} `}<span aria-hidden="true" data-arrow={ARROW_DIRECTION[action.arrow]}>{action.arrow}</span>
+                {`${action.label} `}<Arrow to={action.arrow} />
               </a>
             ))}
             {actions.legacyCallLink && <HeroCallLink />}
@@ -153,7 +151,7 @@ function DirectionHero({
             <HeroCallButton />
             {/* The written request opens the folded form on a phone or tablet, as HOME's «Написати або залишити запит» */}
             <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">
-              Обговорити задачу <span aria-hidden="true">↓</span>
+              Обговорити задачу <Arrow to="down" />
             </a>
           </div>
         )}
@@ -219,7 +217,7 @@ export function DirectionProcess({
         )}
         {link && (
           <a className="link-arrow section-link direction-process-link" href={link.href}>
-            {link.label} <span aria-hidden="true" data-arrow="up-right">↗</span>
+            {link.label} <Arrow to="up-right" />
           </a>
         )}
       </div>
@@ -391,7 +389,7 @@ function FaqAsk({ place }: Readonly<{ place: 'side' | 'end' }>) {
       <p>Не знайшли свого питання? Зателефонуйте або залиште запит — розберемо вашу задачу.</p>
       <div>
         <a className="faq-ask-call" href={companyContactLinks.phone}>{company.phone.display}</a>
-        <a className="link-arrow faq-ask-write" href="#inquiry" data-open-inquiry="">Залишити запит <span aria-hidden="true" data-arrow="down">↓</span></a>
+        <a className="link-arrow faq-ask-write" href="#inquiry" data-open-inquiry="">Залишити запит <Arrow to="down" /></a>
       </div>
     </div>
   );
@@ -435,7 +433,7 @@ function RelatedDirections({
             return (
               <a className="related-card" href={direction.href} key={relatedId}>
                 <h3>{keepHeadingWords(direction.title)}</h3>
-                <span aria-hidden="true">↗</span>
+                <Arrow to="up-right" />
                 <p>{relation}</p>
               </a>
             );

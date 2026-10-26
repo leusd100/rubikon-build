@@ -16,6 +16,7 @@ import { company } from '../data/company';
 import '../components/about/region.css';
 import '../components/about/capability.css';
 import './about.css';
+import { Arrow } from '../components/Arrow';
 
 // /pro-nas — who stands behind the company, in five zones: the two people and what each answers for, what we do
 // ourselves and what we organise, and where (the Delivery Model's capability layers and the region), how Serhii's practice shows before work
@@ -115,7 +116,7 @@ export default function AboutPage() {
             <div className="about-hero-actions" data-hero-actions>
               <HeroCallButton />
               <a className="button button-hero-secondary about-hero-cta" href="#inquiry" data-open-inquiry="">
-                Обговорити задачу <span aria-hidden="true">↓</span>
+                Обговорити задачу <Arrow to="down" />
               </a>
             </div>
           </div>
@@ -138,7 +139,7 @@ export default function AboutPage() {
           />
           <CapabilityFigure columns={capabilityLedger()} />
           <a className="link-arrow section-link about-build-all" href={siteRoutes.directions}>
-            Усі напрямки робіт <span aria-hidden="true" data-arrow="up-right">↗</span>
+            Усі напрямки робіт <Arrow to="up-right" />
           </a>
           {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people; under the
               line, the oblast's real outline (geoBoundaries / OpenStreetMap, credited) draws itself once, Dnipro — where
@@ -177,7 +178,7 @@ export default function AboutPage() {
                 <PrincipleMark kind={mark} />
                 <h3>{keepHeadingWords(title)}</h3>
                 <p>{text}</p>
-                <a className="link-arrow about-principle-link" href={href}>{link} <span aria-hidden="true" data-arrow="up-right">↗</span></a>
+                <a className="link-arrow about-principle-link" href={href}>{link} <Arrow to="up-right" /></a>
               </li>
             ))}
           </ol>

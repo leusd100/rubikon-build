@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { ArrowWay } from '../components/Arrow';
 import type { DirectionId } from '../data/directions';
 import type { RelatedDirection } from '../data/relatedDirections';
 
@@ -26,8 +27,8 @@ export type DirectionHeroAction = {
   label: string;
   href: string;
   className: string;
-  /** ↓ for a tool further down this page, ↗ for the conversation. */
-  arrow: '↓' | '↗';
+  /** down for a tool further down this page, up-right for the conversation. */
+  arrow: Extract<ArrowWay, 'down' | 'up-right'>;
   /** The written request: opens the folded form on a phone or tablet (ConversationFormToggle), as HOME's does */
   openInquiry?: true;
 };

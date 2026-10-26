@@ -132,7 +132,7 @@ test('a brief sent with a saved lead says so, stops asking to be sent, and goes 
   await expect(brief(page).locator('.inquiry-config-brief-title')).toHaveText('До заявки додано вашу конфігурацію');
   await expect(brief(page).getByRole('button', { name: 'Не додавати', exact: true })).toBeVisible();
   // «Обговорити» opened the form under the configurator's stamp (Phase 4): the route's link points up to it
-  await expect(routeBrief(page).getByRole('link')).toHaveText('Надіслати бриф ↑');
+  await expect(routeBrief(page).getByRole('link')).toHaveText('Надіслати бриф');
   await submit.click();
   await expect.poll(() => leads.length).toBe(3);
   expect(leads[2].details.configuration?.replaceAll(NBSP, ' ')).toContain('Ширина: 30 м');

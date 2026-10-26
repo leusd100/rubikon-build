@@ -15,6 +15,7 @@ import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { ProcessDrawing } from '../directions/ProcessDrawing';
 import type { ProcessSplit } from '../../types/directionPage';
 import { keepHeadingWords } from '../../lib/typography';
+import { Arrow } from '../Arrow';
 
 // /angary below the configurator (UX review 2026-10, report «/angary по блоках»): the visitor's frame from roof to
 // footing, a real hangar built that way, what drives the cost, and the route from the brief to handed-over works with
@@ -84,10 +85,10 @@ export function HangarEditorialArchitecture({
             <p>{content.cost.customerScope}</p>
             <div className="angary-cost-actions">
               <a className="button button-primary" href="#inquiry" data-open-inquiry>
-                Обговорити вартість вашого ангара <span aria-hidden="true">↓</span>
+                Обговорити вартість вашого ангара <Arrow to="down" />
               </a>
               <a className="link-arrow angary-text-link" href="/yak-pratsyuiemo#koshtorys">
-                Як формуємо кошторис і графік <span aria-hidden="true" data-arrow="right">→</span>
+                Як формуємо кошторис і графік <Arrow to="right" />
               </a>
             </div>
           </div>
@@ -120,12 +121,12 @@ export function HangarEditorialArchitecture({
                 {/* the form under the configurator's stamp (Phase 4): up to it */}
                 {attached && !sent && (
                   <a className="link-arrow angary-route-brief-action" href="#inquiry" onClick={(event) => revealAttachedBrief(event, { takeOver: formAbove })}>
-                    Надіслати бриф <span aria-hidden="true" data-arrow={formAbove ? 'up' : 'down'}>{formAbove ? '↑' : '↓'}</span>
+                    Надіслати бриф <Arrow to={formAbove ? 'up' : 'down'} />
                   </a>
                 )}
                 {!attached && (
                   <a className="link-arrow angary-route-brief-action" href="#configurator">
-                    Сформувати бриф <span aria-hidden="true" data-arrow="up">↑</span>
+                    Сформувати бриф <Arrow to="up" />
                   </a>
                 )}
               </div>
@@ -147,7 +148,7 @@ export function HangarEditorialArchitecture({
             ))}
           </ol>
           <a className="link-arrow angary-route-more" href="/yak-pratsyuiemo#etapy">
-            Усі етапи, документи й відповідальність <span aria-hidden="true" data-arrow="right">→</span>
+            Усі етапи, документи й відповідальність <Arrow to="right" />
           </a>
 
           {/* Who answers for it — the route's title block («штамп»), in place of a separate section. Owner, 03.10: it hands
@@ -163,12 +164,12 @@ export function HangarEditorialArchitecture({
             </dl>
             <div className="angary-stamp-actions">
               <a className="button button-primary angary-stamp-cta" href="#inquiry" data-open-inquiry>
-                {content.route.leadCta} <span aria-hidden="true">↓</span>
+                {content.route.leadCta} <Arrow to="down" />
               </a>
               <a className="angary-stamp-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
                 <Phone aria-hidden="true" /> {company.phone.display}
               </a>
-              <a className="link-arrow angary-stamp-link" href="/pro-nas">Про компанію <span aria-hidden="true" data-arrow="right">→</span></a>
+              <a className="link-arrow angary-stamp-link" href="/pro-nas">Про компанію <Arrow to="right" /></a>
             </div>
           </div>
         </div>

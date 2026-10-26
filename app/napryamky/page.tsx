@@ -17,6 +17,7 @@ import { directions, undecidedDirection } from '../data/directions';
 import { directionPages } from '../data/directionPages';
 import '../components/about/region.css';
 import './directions.css';
+import { Arrow } from '../components/Arrow';
 
 // /napryamky — the hub: choose a direction or describe a mixed task. Hero in the /yak-pratsyuiemo composition, its
 // slides naming the direction they show; the five directions as a catalogue (a key plan over five rows, each with its scheme sheet);
@@ -77,10 +78,10 @@ export default function DirectionsPage() {
             <div className="directions-hero-actions" data-hero-actions>
               <HeroCallButton />
               <a className="button button-hero-secondary subhero-side-cta" href="#directions-list">
-                Обрати напрям <span aria-hidden="true">↓</span>
+                Обрати напрям <Arrow to="down" />
               </a>
               <a className="link-arrow text-link" href="#inquiry" data-open-inquiry="">
-                Обговорити задачу <span aria-hidden="true" data-arrow="down">↓</span>
+                Обговорити задачу <Arrow to="down" />
               </a>
             </div>
           </div>
@@ -131,7 +132,7 @@ export default function DirectionsPage() {
                 (/pro-nas: «Етапи роботи», «Хто за що відповідає»; this band's own «Формати участі») */}
             <div className="dhow-links">
               {HOW_LINKS.map(({ hash, label }) => (
-                <a key={hash} className="link-arrow section-link" href={`${siteRoutes.process}#${hash}`}>{label} <span aria-hidden="true" data-arrow="up-right">↗</span></a>
+                <a key={hash} className="link-arrow section-link" href={`${siteRoutes.process}#${hash}`}>{label} <Arrow to="up-right" /></a>
               ))}
             </div>
           </div>

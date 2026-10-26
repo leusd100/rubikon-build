@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } 
 import { useInquiryAttachment } from './InquiryAttachmentProvider';
 import { useInquiryFormHost } from './InquiryFormHost';
 import { revealAttachedBrief } from './revealAttachedBrief';
+import { Arrow } from '../Arrow';
 
 /** Only typing hides the shortcut. A tapped option card or a dragged slider keeps focus on its radio or range input
  *  (Android does not blur on scroll), and used to hide «До заявки» for the rest of the page (UX review 2026-10). */
@@ -156,7 +157,7 @@ export function AttachedBriefCta({ gate: sourceGate, className, label = 'До з
       onClick={(event) => revealAttachedBrief(event, { takeOver: atSource })}
       hidden={!summaryPassed || inquiryVisible || uiBlocked}
     >
-      {`${label} `}<span aria-hidden="true">{atSource ? '↑' : '↓'}</span>
+      {`${label} `}<Arrow to={atSource ? 'up' : 'down'} />
     </a>
   );
 }

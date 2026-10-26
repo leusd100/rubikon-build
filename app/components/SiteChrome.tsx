@@ -12,6 +12,7 @@ import { directions } from '../data/directions';
 import { messengerContacts } from '../data/contactMethods';
 import { primaryNavigation, siteRoutes } from '../data/navigation';
 import { keepHeadingWords, keepShortWords } from '../lib/typography';
+import { Arrow } from './Arrow';
 
 /** The direction pages, which the navigation marks as the «Напрямки» section (PDO-57) */
 const directionPaths = directions.map((direction) => direction.href);
@@ -378,7 +379,7 @@ export function TeamSection({ variant = 'home', id }: { variant?: TeamVariant; i
         </div>
         {isHome && (
           <a className="link-arrow section-link team-home-link" href={siteRoutes.about}>
-            Познайомитися з командою <span aria-hidden="true" data-arrow="up-right">↗</span>
+            Познайомитися з командою <Arrow to="up-right" />
           </a>
         )}
       </div>

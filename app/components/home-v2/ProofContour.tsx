@@ -15,6 +15,7 @@ import { useNodeDetail } from './proof-contour/useNodeDetail';
 import { bringIntoView, FOCUS_SPLIT, FOCUS_SPLIT_PHONE, useScopeFocus } from './proof-contour/useScopeFocus';
 import { clamp, DEFAULT_SPLIT, phoneNow, useSeam } from './proof-contour/useSeam';
 import { TOUR, useTour } from './proof-contour/useTour';
+import { Arrow } from '../Arrow';
 
 // HOME's proof (owner, 04.10): ONE «Креслення» sheet with the real photo, and right of a seam the visitor moves the same
 // frame as a tracing — grey, dark, on a fine grid — with one of three layers over it, chosen in the title block:
@@ -601,7 +602,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // (the thumb is there). One shows at a time (home-v2.css, data-place)
   const exitLink = (place: 'line' | 'action') => (
     <a className="link-arrow hv2-contour-exit" data-place={place} href="#inquiry" onClick={() => queueProofEvent('exit_click')}>
-      Інша задача? Розкажіть коротко <span aria-hidden="true" data-arrow="down">↓</span>
+      Інша задача? Розкажіть коротко <Arrow to="down" />
     </a>
   );
   // Once the visitor has watched a load go down or the frame go up, the way on to their own hangar lights up
@@ -679,7 +680,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               to be seen) */}
           <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={engaged ? '' : undefined} data-call={calling ? '' : undefined} onClick={() => queueProofEvent('brief_click')}>
             <small>Такий ангар, але ваш</small>
-            <span>Сформувати бриф <i aria-hidden="true">→</i></span>
+            <span>Сформувати бриф <Arrow to="right" /></span>
           </a>
           {exitLink('action')}
         </span>

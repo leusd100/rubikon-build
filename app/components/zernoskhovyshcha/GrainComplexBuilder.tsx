@@ -21,6 +21,7 @@ import { keepHeadingWords } from '../../lib/typography';
 import { GrainComplexDrawing, grainModuleCentre } from './GrainComplexDrawing';
 import { CornCobIcon } from '../CornCobIcon';
 import './grain-complex.css';
+import { Arrow } from '../Arrow';
 
 /** Each crop's icon on its chip — the planner's own (StorageQuestion), rapeseed's added — drawn in the crop's colour */
 const CROP_ICONS: Record<GrainCrop, ReactNode> = {
@@ -263,7 +264,7 @@ export function GrainComplexBuilder() {
   const pause = motion && <TourControl touring={running} toggle={() => setRunning(!running)} what="руху зерна" />;
   const cta = (className: string) => (
     <PrefillInquiryLink className={`button button-primary ${className}`} text={touched ? model.inquiryText : ''}>
-      Обговорити такий комплекс <span aria-hidden="true">↓</span>
+      Обговорити такий комплекс <Arrow to="down" />
     </PrefillInquiryLink>
   );
 

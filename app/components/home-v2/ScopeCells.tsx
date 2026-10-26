@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { SCOPE_PART_OF, type ScopePart } from '../../data/homeProofFrame';
+import { Arrow } from '../Arrow';
 
 /** The scope's cells light their part on the proof's scheme above (owner, 05.10: «плитки оживляють схему»): pointed at
  *  or focused, for as long; pressed, until pressed again. ProofContour listens — the two are siblings, so a window
@@ -114,7 +115,7 @@ export function ScopeCells({ items, linked = false }: Readonly<{ items: readonly
               >
                 {glyph}
                 <span className="hv2-scope-name">{item}</span>
-                <span className="hv2-scope-hint" aria-hidden="true">↑ на схемі</span>
+                <span className="hv2-scope-hint" aria-hidden="true"><Arrow to="up" /> на схемі</span>
                 <span className="sr-only"> — показати на схемі вище</span>
               </button>
             ) : (

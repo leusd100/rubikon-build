@@ -1057,7 +1057,7 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
     const card = attachmentCard(page);
     await expect(card).toBeVisible();
     await card.locator('.inquiry-config-brief-toggle').click();
-    await card.getByRole('link', { name: 'Змінити у конфігураторі ↑' }).click();
+    await card.getByRole('link', { name: 'Змінити у конфігураторі' }).click();
     await expect(page).toHaveURL(/#configurator$/);
     const tab = page.locator('#hc-step-shell-tab');
     await expect(tab).toHaveAttribute('aria-selected', 'true');

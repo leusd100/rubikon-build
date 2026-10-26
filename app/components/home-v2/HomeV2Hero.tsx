@@ -2,6 +2,7 @@ import { Phone } from 'lucide-react';
 import { HomeV2HeroMedia } from './HomeV2HeroMedia';
 import { keepShortWords } from '../../lib/typography';
 import { company, companyContactLinks } from '../../data/company';
+import { Arrow } from '../Arrow';
 
 const NBSP = '\u00A0';
 
@@ -39,11 +40,11 @@ export function HomeV2Hero() {
             <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">
               <span className="hv2-inquiry-phone">Обговорити задачу</span>
               <span className="hv2-inquiry-wide">Написати або залишити запит</span>
-              <span aria-hidden="true">↓</span>
+              <Arrow to="down" />
             </a>
           </div>
         </div>
-        <a className="phone-hero-scroll" href="#directions" aria-label="До наступного розділу">↓</a>
+        <a className="phone-hero-scroll" href="#directions" aria-label="До наступного розділу"><Arrow to="down" /></a>
       </div>
       {/* Only the ≤760 still is a concept image; the desktop footage is process footage, not an object. */}
       <span className="hv2-hero-provenance">Ілюстрація</span>

@@ -9,7 +9,8 @@
  * Each weight is split into IBM's subsets, and a browser downloads a subset only when the page renders a
  * character in its unicode-range. Latin1 and Cyrillic use the ranges from IBM's own split CSS (each equals
  * its file's cmap). Pi is narrowed to the characters the Google latin file used to render in Plex
- * (′ ″ ↑ ↓ ∕ — in practice the ↓ of the attached-brief CTA), so every other arrow renders as before.
+ * (′ ″ ↑ ↓ ∕ — in practice the ↓ of HOME's «Навантаження» toggle; the site's other arrows are drawn, Arrow.tsx), so
+ * every other arrow renders as before.
  *
  * Only 500/600/700 ship: the 400 and 800 used in CSS resolve to 500 and 700, as they did with Google.
  */

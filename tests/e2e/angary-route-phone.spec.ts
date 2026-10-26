@@ -63,7 +63,7 @@ test.describe('/angary · «Ви · Ми» on a phone (PDO-11 A)', () => {
   test('01\'s brief action stays in «Ви», at least 44 px tall and clear of the drawing, before and after the brief is attached', async ({ page }) => {
     await open(page, 390);
     const first = steps(page).first();
-    await expect(first.getByRole('link')).toHaveText('Сформувати бриф ↑');
+    await expect(first.getByRole('link')).toHaveText('Сформувати бриф');
     let action = await briefAction(page);
     expect(action.height).toBeGreaterThanOrEqual(44);
     expect(action).toMatchObject({ inYou: true, clear: true });

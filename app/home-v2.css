@@ -684,9 +684,11 @@ main[data-home="v2"] .hv2-contour-brief small { font: 600 12px/1.1 var(--font-ma
    4 px, the first cell lost them, and on Linux its line took a 4th row — the block over 120 px at 1440×700 and the brief
    past the edge of a 1250×613 window (W3-02, CI) */
 main[data-home="v2"] .hv2-contour-brief span { display: inline-flex; align-items: center; gap: 8px; font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-main[data-home="v2"] .hv2-contour-brief i { font-style: normal; font-size: 16px; transition: transform 200ms ease; }
+main[data-home="v2"] .hv2-contour-brief [data-arrow] { transition: transform 200ms ease; }
+/* 16 px, the → glyph's height: the plate keeps its 48 px */
+main[data-home="v2"] .hv2-contour-brief [data-arrow] > svg { width: calc(16px * 14 / 24); height: 16px; }
 main[data-home="v2"] .hv2-contour-brief:hover { background: var(--color-accent-on-dark-hover); }
-main[data-home="v2"] .hv2-contour-brief:hover i { transform: translateX(3px); }
+main[data-home="v2"] .hv2-contour-brief:hover [data-arrow] { transform: translateX(3px); }
 @media (prefers-reduced-motion: no-preference) {
   main[data-home="v2"] .hv2-contour-brief[data-lit] { animation: hv2-brief-ring 1100ms ease-out 2; }
 }

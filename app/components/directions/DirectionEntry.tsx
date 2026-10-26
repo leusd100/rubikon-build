@@ -3,6 +3,7 @@ import type { DirectionPageConfig } from '../../types/directionPage';
 import { SectionHeader } from '../SiteChrome';
 import { PrefillInquiryLink } from './PrefillInquiryLink';
 import { keepHeadingWords } from '../../lib/typography';
+import { Arrow } from '../Arrow';
 
 // «З чим звертаються» (roofing): the situations a call starts from, each with what happens first and a link that
 // opens the form with the situation already written. The words are the page's own (process, FAQ, and the former
@@ -21,7 +22,7 @@ export function DirectionEntry({ entry }: Readonly<{ entry: NonNullable<Directio
               </div>
               <p className="direction-entry-start"><b>Почнемо з</b> {item.start}</p>
               <PrefillInquiryLink className="link-arrow direction-entry-link" text={`${item.situation}. `}>
-                Обговорити <span aria-hidden="true" data-arrow="down">↓</span>
+                Обговорити <Arrow to="down" />
               </PrefillInquiryLink>
             </li>
           ))}

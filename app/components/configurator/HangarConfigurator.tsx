@@ -13,6 +13,7 @@ import { HangarPreviewModes } from './HangarPreviewModes';
 import { keepHeadingWords, keepShortWords } from '../../lib/typography';
 import { sheetObjectLabel } from './sheetLabels';
 import './configurator-sheet.css';
+import { Arrow } from '../Arrow';
 
 /** Fallback for an absent site header; the live compact/safe-area edge is measured below. */
 const PHONE_HEADER_PX = 77;
@@ -363,7 +364,7 @@ export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ e
                   <li key={title}><span className="hc-next-number" aria-hidden="true">{String(number + 1).padStart(2, '0')}</span>{title}</li>
                 ))}
               </ol>
-              <a className="hc-next-more" href="#process">Увесь шлях і хто відповідає <span aria-hidden="true">↓</span></a>
+              <a className="hc-next-more" href="#process">Увесь шлях і хто відповідає <Arrow to="down" /></a>
             </div>
           )}
         />

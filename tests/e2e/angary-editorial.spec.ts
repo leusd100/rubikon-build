@@ -222,7 +222,7 @@ test('/angary process stage follows the authoritative attachment state', async (
   await expect(firstStage.locator('.ps-result')).toHaveText('Результат: Бриф до заявки');
   await expect(rail).toHaveAttribute('data-brief', 'idle');
   // Owner, 03.10: 01 acts on its state — up to the configurator while nothing is attached
-  await expect(firstStage.getByRole('link')).toHaveText('Сформувати бриф ↑');
+  await expect(firstStage.getByRole('link')).toHaveText('Сформувати бриф');
   await expect(firstStage.getByRole('link')).toHaveAttribute('href', '#configurator');
 
   // the untouched example goes as what it is (08.10): «Приклад з креслення · …», never as the visitor's sizes
@@ -233,7 +233,8 @@ test('/angary process stage follows the authoritative attachment state', async (
   // …and to the attached brief in the form once something is: it lands on the brief, which says so once. «Обговорити»
   // opened the form under the configurator's stamp (Phase 4): up to it
   const send = firstStage.getByRole('link');
-  await expect(send).toHaveText('Надіслати бриф ↑');
+  await expect(send).toHaveText('Надіслати бриф');
+  await expect(send.locator('[data-arrow]')).toHaveAttribute('data-arrow', 'up');
   await expect(send).toHaveAttribute('href', '#inquiry');
   await page.locator('#inquiry-brief-status').evaluate((status) => { status.textContent = ''; });
   await send.click();
