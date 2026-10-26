@@ -265,7 +265,7 @@ property is the properties of its `@keyframes`.
 The same number on another property (a `.2s` on `transform`, a `.9s` on `opacity`) is **not** the token: it is the file's own
 time, and stays a choreography variable until a visible step (M1-2) decides it.
 
-**Choreography** — a block at the top of the file (after the header comment), in a top-level `:root`:
+**Choreography** — a block at the top of the file (after the header comment), in a top-level `:root` (`globals.css` has one `:root` only, so its `--site-*` variables sit at the end of it, after the tokens):
 
 ```css
 /* Choreography (Motion v1, ui-system §6): this file's own times and curves */
