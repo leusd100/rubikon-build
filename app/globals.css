@@ -105,18 +105,24 @@
   --hero-gap-lead: clamp(16px, 3.2svh, 30px);
   --hero-gap-actions: clamp(20px, 4.2svh, 38px);
 
-  /* Motion (PDO-64): the durations and curves of Motion v1, declared. The pages' own --m-reveal / --m-draw (about.css,
+  /* Motion v1 (docs/ui-system-v1.md §6 «Motion v1»): the durations, curves and travel a transition or an animation takes from
+     here, never as a number. What no token covers (a file's own times, delays and curves) is that file's choreography block:
+     `--<prefix>-for|at|curve-*` in a top-level :root at the top of the file. The pages' own --m-reveal / --m-draw (about.css,
      delivery.css, direction-template.css) keep their values: moving them onto these changes their pace (W3-10). */
   --motion-micro: 200ms;
-  --motion-reveal: 420ms;
+  --motion-ui: 360ms;
+  --motion-enter: 700ms;
   --motion-draw: 900ms;
   --motion-draw-long: 1400ms;
   --motion-media-fade: 800ms;
+  --motion-stagger: 80ms;
+  --motion-rise: 16px;
   --ease-premium: cubic-bezier(.2, .7, .1, 1);
   --ease-plot: cubic-bezier(.55, 0, .25, 1);      /* an even pen: the sheets' plotter, the region map, the node lines */
   --ease-standard: cubic-bezier(.4, 0, .2, 1);    /* media fades and crossfades, the HOME chips' glint */
+  --ease-signature: cubic-bezier(.3, 1.5, .5, 1);
   --duration-fast: var(--motion-micro);
-  --duration-medium: 360ms;
+  --duration-medium: var(--motion-ui);
 }
 
 * { box-sizing: border-box; }
@@ -1265,6 +1271,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     --rhythm-header: var(--space-7);
     --card-pad: 20px;
     --card-gap: 12px;
+    --motion-rise: 10px;
   }
   .shell { width: min(100% - 32px, 620px); }
   .section { padding-block: var(--section-space); }

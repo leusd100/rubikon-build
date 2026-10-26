@@ -30,8 +30,9 @@ describe('design tokens (W3-01)', () => {
   it('declares the role tokens the visible steps build on', () => {
     for (const name of ['--header-h', '--type-h1', '--type-display-home', '--type-h2', '--type-h2-compact', '--type-h2-minor',
       '--type-h3', '--type-label-ui-size', '--type-action-size', '--type-label-tech-size', '--rhythm-label', '--rhythm-lead',
-      '--rhythm-cta', '--card-pad', '--card-gap', '--button-h-l', '--button-h-m', '--space-1', '--space-10', '--motion-micro', '--motion-reveal',
-      '--motion-draw', '--motion-draw-long', '--motion-media-fade', '--ease-plot', '--ease-standard']) {
+      '--rhythm-cta', '--card-pad', '--card-gap', '--button-h-l', '--button-h-m', '--space-1', '--space-10', '--motion-micro', '--motion-ui',
+      '--motion-enter', '--motion-stagger', '--motion-rise', '--ease-signature', '--motion-draw', '--motion-draw-long', '--motion-media-fade',
+      '--ease-plot', '--ease-standard']) {
       expect(rootBlock, name).toMatch(new RegExp(`${name}:`));
     }
     expect(rootBlock).toMatch(/--header-h: 101px;/);
