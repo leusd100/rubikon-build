@@ -4,6 +4,30 @@
    only its mark, drawn once the camera has arrived. Without motion the camera jumps and nothing draws. The pictures
    are light concept drawings, so the marks are copper with a white-ringed number. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the camera and the marks */
+  --dn-for-camera: 1100ms;
+  --dn-curve-camera: cubic-bezier(.65, 0, .25, 1);
+  --dn-for-mark-fade: 400ms;
+  /* the progress bar, as long as its step when the tour sets none (--dn-step-ms) */
+  --dn-for-step-bar: 5200ms;
+  /* a step's mark, drawn once the camera has arrived */
+  --dn-at-mark-draw: 650ms;
+  /* the node drawing: a step lights its parts and words, then draws what it names */
+  --dn-for-step-light: .3s;
+  --dn-at-part-draw: 700ms;
+  /* the roof's build-up, laid bottom-up: deck, barrier, insulation, sheet */
+  --dn-for-roof-layer: 650ms;
+  --dn-at-roof-deck: 600ms;
+  --dn-at-roof-barrier: 1050ms;
+  --dn-at-roof-insulation: 1500ms;
+  --dn-at-roof-sheet: 1950ms;
+  /* the water running down the roof, then the sheet */
+  --dn-for-rain-flow: 480ms;
+  --dn-at-rain-flow: 1200ms;
+}
+
 .dn-sheet .dn-visual { background: var(--color-surface-alt); }
 .dn-stage { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
 .dn-overlay { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
@@ -14,7 +38,7 @@
 .dn-badge { transform-box: fill-box; transform-origin: center; }
 .dn-badge circle { fill: var(--color-accent); stroke: #fff; stroke-width: 4; }
 .dn-badge text { fill: #fff; font: 700 32px var(--font-condensed), sans-serif; letter-spacing: .04em; text-anchor: middle; }
-.dn-mark, .dn-badge { transition: opacity 400ms ease; }
+.dn-mark, .dn-badge { transition: opacity var(--dn-for-mark-fade) ease; }
 .dn[data-step] .dn-mark { opacity: 0; }
 .dn[data-step="1"] .dn-mark-1, .dn[data-step="2"] .dn-mark-2, .dn[data-step="3"] .dn-mark-3, .dn[data-step="4"] .dn-mark-4 { opacity: 1; }
 .dn[data-step] .dn-badge { opacity: 0; }
@@ -27,7 +51,7 @@
 @keyframes dn-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 /* as long as the step (STEP_MS in useDrawingTour): at 4500 ms every bar sat full for 0.7 s before anything happened. A
    tour whose steps hold for their own times sets --dn-step-ms to the shown one's (the /angary frame, 03.10) */
-.dn[data-touring] .dn-fill { animation: dn-fill var(--dn-step-ms, 5200ms) linear both; }
+.dn[data-touring] .dn-fill { animation: dn-fill var(--dn-step-ms, var(--dn-for-step-bar)) linear both; }
 
 /* The round control in the title block: pauses or replays the tour (its look: .motion-control, globals.css) */
 .dn-control { font: 700 11px/1 var(--font-condensed), sans-serif; }
@@ -71,11 +95,11 @@
 
 @keyframes dn-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: no-preference) {
-  .dn-stage { transition: transform 1100ms cubic-bezier(.65, 0, .25, 1); }
+  .dn-stage { transition: transform var(--dn-for-camera) var(--dn-curve-camera); }
   .dn[data-step="1"] .dn-mark-1 .dn-line,
   .dn[data-step="2"] .dn-mark-2 .dn-line,
   .dn[data-step="3"] .dn-mark-3 .dn-line,
-  .dn[data-step="4"] .dn-mark-4 .dn-line { animation: dn-draw var(--motion-draw) var(--ease-plot) 650ms backwards; }
+  .dn[data-step="4"] .dn-mark-4 .dn-line { animation: dn-draw var(--motion-draw) var(--ease-plot) var(--dn-at-mark-draw) backwards; }
 }
 
 /* A portrait tablet (PDO-43 S2, owner 22.10): the text and the three steps side by side, the sheet under them the full
@@ -137,7 +161,7 @@
 .node-drawing .nd-hatch-fill { fill: color-mix(in srgb, var(--color-text) 8%, transparent); stroke: var(--color-text-muted); stroke-width: 1.6; }
 .node-drawing .nd-text { fill: var(--color-text-muted); font: italic 500 40px var(--font-manrope), sans-serif; }
 .node-drawing .nd-title { fill: var(--color-text-secondary); font: 700 34px var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-.node-drawing .nd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke .3s ease, opacity .3s ease; }
+.node-drawing .nd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke var(--dn-for-step-light) ease, opacity var(--dn-for-step-light) ease; }
 .node-drawing .nd-part circle { fill: color-mix(in srgb, var(--color-text) 10%, transparent); }
 .node-drawing .nd-weld path { fill: color-mix(in srgb, var(--color-text) 30%, transparent); }
 .node-drawing .nd-weld .nd-leader { fill: none; stroke-width: 2.4; }
@@ -150,7 +174,7 @@
    steel) and another view's title («Вигляд з торця», doubled on a phone) came into the frame at its edge, cut or under
    the bars. Its own: its parts' flags and its view's words (data-view). */
 .dn[data-step] .node-drawing :is(.nd-note, [data-view]) { opacity: 0; }
-@media (prefers-reduced-motion: no-preference) { .node-drawing :is(.nd-note, [data-view]) { transition: opacity .3s ease; } }
+@media (prefers-reduced-motion: no-preference) { .node-drawing :is(.nd-note, [data-view]) { transition: opacity var(--dn-for-step-light) ease; } }
 .dn[data-step="1"] .node-drawing :is([data-part="1"] .nd-note, [data-view="1"]),
 .dn[data-step="2"] .node-drawing :is([data-part="2"] .nd-note, [data-view="2"]),
 .dn[data-step="3"] .node-drawing :is([data-part="3"] .nd-note, [data-view="3"]) { opacity: 1; }
@@ -163,19 +187,19 @@
    into the gutter. Reduced motion: the parts simply light, the water stands still. */
 /* Water as drops along its path: shown on the step that follows it (2: the wall and the flashing; 3: sheet, gutter, pipe).
    Blue (owner, 05.10): beside the copper gutter and pipe the copper drops read as one more part, not as water. */
-.node-drawing .nd-rain { fill: none; stroke: var(--color-water); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 1 23; opacity: 0; transition: opacity .3s ease; }
+.node-drawing .nd-rain { fill: none; stroke: var(--color-water); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 1 23; opacity: 0; transition: opacity var(--dn-for-step-light) ease; }
 .dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { opacity: .9; }
 @media (prefers-reduced-motion: no-preference) {
   .dn[data-step="1"] .node-drawing [data-part="1"] :is(path, circle):not(.nd-dashed),
   .dn[data-step="2"] .node-drawing [data-part="2"] :is(path, circle):not(.nd-dashed),
-  .dn[data-step="3"] .node-drawing [data-part="3"] :is(path, circle):not(.nd-leader, .nd-dashed) { stroke-dasharray: 1; animation: nd-draw 900ms var(--ease-premium) 700ms both; }
+  .dn[data-step="3"] .node-drawing [data-part="3"] :is(path, circle):not(.nd-leader, .nd-dashed) { stroke-dasharray: 1; animation: nd-draw var(--motion-draw) var(--ease-premium) var(--dn-at-part-draw) both; }
   /* the roof's build-up is laid bottom-up: deck, barrier, insulation, sheet */
-  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq] { animation-duration: 650ms; }
-  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="1"] { animation-delay: 600ms; }
-  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="2"] { animation-delay: 1050ms; }
-  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="3"] { animation-delay: 1500ms; }
-  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="4"] { animation-delay: 1950ms; }
-  .dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { animation: nd-flow 480ms linear 1200ms infinite; }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq] { animation-duration: var(--dn-for-roof-layer); }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="1"] { animation-delay: var(--dn-at-roof-deck); }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="2"] { animation-delay: var(--dn-at-roof-barrier); }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="3"] { animation-delay: var(--dn-at-roof-insulation); }
+  .dn[data-step="1"] .node-drawing [data-part="1"] path[data-seq="4"] { animation-delay: var(--dn-at-roof-sheet); }
+  .dn[data-step="2"] .node-drawing [data-rain="2"], .dn[data-step="3"] .node-drawing [data-rain="3"] { animation: nd-flow var(--dn-for-rain-flow) linear var(--dn-at-rain-flow) infinite; }
 }
 @keyframes nd-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes nd-flow { to { stroke-dashoffset: -24; } }
