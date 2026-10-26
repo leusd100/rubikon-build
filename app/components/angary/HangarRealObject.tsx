@@ -1,6 +1,7 @@
 import type { HomeProofCase } from '../../data/homeProof';
 import { DrawingSheet } from '../DrawingSheet';
 import { ScopeCells } from '../home-v2/ScopeCells';
+import { keepHeadingWords } from '../../lib/typography';
 
 // /angary right after «Каркас вашого ангара» (owner, 03.10): the drawing above is the visitor's frame as a scheme, this
 // is a built one as a photo — the one real hangar the site may show, HOME's proof record (app/data/homeProof.ts). Only
@@ -45,7 +46,7 @@ export function HangarRealObject({ proof }: Readonly<{ proof: HomeProofCase }>) 
         </DrawingSheet>
         <div className="angary-real-facts">
           <p className="eyebrow"><span /> {EYEBROW[proof.provenance]}</p>
-          <h2 id="angary-real-title">{title}</h2>
+          <h2 id="angary-real-title">{keepHeadingWords(title)}</h2>
           <p>{proof.attribution}</p>
           <ScopeCells items={scope.subject} />
         </div>

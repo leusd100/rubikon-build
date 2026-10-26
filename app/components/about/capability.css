@@ -54,7 +54,7 @@
 .cap-tag circle { fill: var(--color-text-muted); stroke: none; }
 .cap-tag text { fill: var(--color-text-muted); font: 600 calc(13px * var(--cap-k)) var(--font-condensed), sans-serif; letter-spacing: .1em; dominant-baseline: central; transition: fill .25s ease; }
 /* The title strip, as under «Переріз» on the direction pages (.dsd figcaption): provenance, the view in bold, the subject */
-.cap-fig figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--color-border-strong); color: var(--color-text-muted); font: 600 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.cap-fig figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--color-border-strong); color: var(--color-text-muted); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.3 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .cap-fig figcaption b { color: var(--color-text); font-size: 14px; letter-spacing: .04em; }
 
 /* Pointed (a mouse over a group or a work, or the keyboard on a linked work): the root carries data-tier (the group)

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { FRAME_TOUR_DURATIONS, FrameTourStage, frameNodes, useFrameTourModel } from '../angary/FrameTour';
 import { TourControl } from '../directions/TourParts';
 import { useDrawingTour } from '../useDrawingTour';
+import { keepHeadingWords } from '../../lib/typography';
 
 // The configurator's «Каркас» step (07.10): the frame drawing that was its own section under the configurator —
 // «Каркас вашого ангара — від покрівлі до основи» — on the configurator's own sheet, so the visitor sees the frame of
@@ -109,7 +110,7 @@ export function ConfiguratorFrameView({ onCaption }: Readonly<{ onCaption: (capt
               control in the heading's row, over the list, where nothing under it moves it (10.10, audit F118); the words
               are the button's own (09.10, audit F44), and say what it does: play the five, or stop */}
           <div className="hc-frame-head">
-            <h3 className="hc-frame-heading">Як працює ваш каркас</h3>
+            <h3 className="hc-frame-heading">{keepHeadingWords('Як працює ваш каркас')}</h3>
             {motion && (
               <div className="hc-frame-play">
                 <TourControl touring={touring} toggle={toggle} what="каркаса" label={{ play: 'Показати по черзі', stop: 'Зупинити показ' }} />

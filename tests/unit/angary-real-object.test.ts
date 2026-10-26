@@ -43,16 +43,18 @@ describe('HangarRealObject', () => {
 });
 
 describe('related directions after the form', () => {
-  it('is /angary’s alone; every other direction keeps them before #inquiry with the default heading', () => {
+  it('close /angary, metal, concrete and roofing after #inquiry; the grain page keeps them before it; one default heading', () => {
     expect(directionPages.angary.related).toMatchObject({
       placement: 'after-inquiry',
       eyebrow: 'Окремим етапом',
       title: 'Потрібен лише один етап?',
       text: 'Фундамент, металокаркас чи покрівлю можна замовити окремо.',
     });
+    // OD-PX-17 A (owner, 25.10): the FAQ of a direction page leads straight into the form
+    const afterInquiry = ['angary', 'metalokonstruktsii', 'betonni-roboty', 'pokrivelni-roboty'];
     for (const [id, config] of Object.entries(directionPages)) {
+      expect(config.related?.placement, id).toBe(afterInquiry.includes(id) ? 'after-inquiry' : undefined);
       if (id === 'angary') continue;
-      expect(config.related?.placement, id).toBeUndefined();
       expect(config.related?.title, id).toBeUndefined();
     }
   });

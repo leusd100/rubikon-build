@@ -25,7 +25,7 @@
 /* top: under the switcher's band on a wide screen (101 + 72 px, delivery.css) */
 .rm-head { position: sticky; z-index: 3; top: 173px; padding: 14px 0 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border-strong); }
 .rm-head > span { display: grid; gap: 6px; min-width: 0; padding: 0 12px; }
-.rm-work-head { padding-left: 0 !important; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.rm-work-head { padding-left: 0 !important; color: var(--color-text-muted); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .rm-col { justify-items: start; padding-left: 16px !important; }
 .rm-col > b { color: var(--color-text); font: 600 20px/1.1 var(--font-condensed), sans-serif; letter-spacing: .02em; }
 .rm-col-rubikon > b { color: var(--color-accent-strong); }
@@ -37,7 +37,7 @@
 
 /* The three groups: Підготовка · Будівництво · Нагляд, дозволи й здача. On a wide screen the title; on a phone, once the
    head script has run, a button that folds the group (MatrixGroupToggle, Phase 3 PROPOSED; below) */
-.rm-group > span { display: block; padding: 26px 0 10px; color: var(--color-accent-strong); border-bottom: 1px solid var(--color-border-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.rm-group > span { display: block; padding: 26px 0 10px; color: var(--color-accent-strong); border-bottom: 1px solid var(--color-border-strong); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .rm-group-toggle { display: none; }
 .rm-row { position: relative; min-height: 46px; border-bottom: 1px solid var(--color-border); transition: background-color var(--duration-fast) ease; }
 @media (hover: hover) { .rm-row:hover { background: color-mix(in srgb, var(--color-accent) 5%, transparent); } }
@@ -111,6 +111,14 @@
   .rm-mark { padding: 8px 0 0; }
   .rm-mark::before { padding: 5px 7px 4px; font-size: 10.5px; letter-spacing: .04em; }
   .rm-group > span { padding-top: 22px; }
+}
+/* From 375 px the marks and the coordinator line have the room for the floor of a drawing-like table (PDO-16, W3-02): 12 and
+   11 px, +14 % without a new line. The narrowest phones keep 10.5 and 10 px: in 12 px «Координуємо» (the comprehensive
+   format, in a group folded at first) runs up to 9 px into the next column's mark at 320–346 px and leaves it 0–4 px
+   at 347–359 (9 px at 375) */
+@media (min-width: 375px) and (max-width: 860px) {
+  .rm-mark::before { font-size: 12px; }
+  .rm-coordinator { font-size: 11px; }
 }
 
 /* Phone (Phase 3, PROPOSED): each group folds under its title, the first open, so the table is three short headings

@@ -1,6 +1,6 @@
 'use client';
 
-import { Bean, Flower, Flower2, Sprout, Vegan, Wheat } from 'lucide-react';
+import { Bean, Flower, Flower2, Sprout, Wheat } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import {
   GRAIN_COMPLEX_DEFAULT,
@@ -17,13 +17,15 @@ import {
 import { DrawingSheet } from '../DrawingSheet';
 import { PrefillInquiryLink } from '../directions/PrefillInquiryLink';
 import { TourControl } from '../directions/TourParts';
+import { keepHeadingWords } from '../../lib/typography';
 import { GrainComplexDrawing, grainModuleCentre } from './GrainComplexDrawing';
+import { CornCobIcon } from '../CornCobIcon';
 import './grain-complex.css';
 
 /** Each crop's icon on its chip — the planner's own (StorageQuestion), rapeseed's added — drawn in the crop's colour */
 const CROP_ICONS: Record<GrainCrop, ReactNode> = {
   wheat: <Wheat />,
-  corn: <Vegan />,
+  corn: <CornCobIcon />,
   sunflower: <Flower2 />,
   barley: <Sprout />,
   rapeseed: <Flower />,
@@ -373,7 +375,7 @@ export function GrainComplexBuilder() {
           <ul>{model.own.map((item) => { const { key, className } = lit(item); return <li key={key} className={className}>{item}</li>; })}</ul>
         </div>
         <div className="gc-scope-col" data-tone="partner">
-          <h3>Постачають і монтують профільні спеціалісти</h3>
+          <h3>{keepHeadingWords('Постачають і монтують профільні спеціалісти')}</h3>
           <ul>{model.partners.map((item) => { const { key, className } = lit(item); return <li key={key} className={className}>{item}</li>; })}</ul>
         </div>
         <p className="gc-next">

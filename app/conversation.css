@@ -12,7 +12,7 @@
   position: relative; overflow: clip; isolation: isolate; color: var(--color-text); background: var(--color-bg);
   --conv-tg: .57; --conv-wa: .51; --conv-vb: .77; /* messenger-icon greys, see the channels below */
 }
-.conversation-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.conversation-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--color-accent-strong); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .conversation-kicker > span { width: 26px; height: 2px; flex: none; background: var(--color-accent); }
 /* Desktop: the steps sit under the call as a 2 × 2 title block, so the left column ends with the form. Tablet: the
    same block under the form. Phone: intro (call + channels) → form → steps. */
@@ -28,15 +28,15 @@
 .conversation-journey-wrap { grid-area: journey; min-width: 0; max-width: 520px; } /* the call's column: shared edges */
 .conversation-journey-title {
   display: flex; align-items: center; gap: 14px; margin: 0; color: var(--color-text-muted);
-  font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase;
+  font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase;
 }
 .conversation-journey-title::after { content: ''; flex: 1; height: 1px; background: var(--color-border); }
-.conversation h2 { margin: 22px 0 0; font: 400 clamp(44px, 4.4vw, 66px)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
+.conversation h2 { margin: 22px 0 0; font: 400 var(--type-h2-compact)/1.02 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 .conversation-lead { max-width: 500px; margin: 22px 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 /* The closing contact block: one column of fixed width — the call, and under it one quiet line of written channels. */
 .conversation-contact { display: grid; gap: 12px; width: min(100%, 520px); margin-top: 32px; }
 /* The call: a segmented button — icon cell | label + number | arrow. Colours stay the theme's action role. */
-.conversation-call { width: 100%; min-width: 0; min-height: 62px; justify-content: flex-start; gap: 0; padding: 0; }
+.conversation-call { width: 100%; min-width: 0; min-height: var(--button-h-l); justify-content: flex-start; gap: 0; padding: 0; } /* L, as every page button (W3-06, PDO-99: 62 → 56) */
 .conversation-call > span { display: flex; align-items: center; }
 .conversation-call .conversation-call-icon {
   align-self: stretch; width: 66px; flex: none; justify-content: center;
@@ -44,9 +44,9 @@
   border-right: 1px solid color-mix(in srgb, var(--color-on-action) 26%, transparent);
   transition: background var(--duration-fast) ease;
 }
-.conversation-call .conversation-call-icon svg { width: 22px; height: 22px; flex: none; stroke-width: 1.7; }
+.conversation-call .conversation-call-icon svg { width: 22px; height: 22px; flex: none; }
 .conversation-call .conversation-call-text { flex: 1 1 auto; display: grid; gap: 7px; padding: 0 20px; text-align: center; }
-.conversation-call small { font-size: 11px; letter-spacing: .12em; }
+.conversation-call small { font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); }
 .conversation-call strong { font-size: 20px; letter-spacing: .025em; }
 .conversation-call .conversation-call-arrow { flex: none; padding: 0 24px 0 8px; font-size: 18px; font-weight: 500; transition: transform var(--duration-fast) ease; }
 .conversation-call:is(:hover, :focus-visible) .conversation-call-icon { background: color-mix(in srgb, var(--color-on-action) 15%, transparent); }
@@ -78,7 +78,7 @@
 .conversation-channels .messenger-whatsapp .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--conv-wa)); }
 .conversation-channels .messenger-viber .messenger-brand-icon { filter: grayscale(1) sepia(.3) brightness(var(--conv-vb)); }
 .conversation-channels .messenger-link:is(:hover, :focus-visible) .messenger-brand-icon { filter: none; transform: none; }
-.conversation-channels .conversation-email svg { width: 18px; height: 18px; flex: none; color: var(--color-text-secondary); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
+.conversation-channels .conversation-email svg { width: 18px; height: 18px; flex: none; color: var(--color-text-secondary); transition: color var(--duration-fast) ease; }
 .conversation-channels .conversation-email:is(:hover, :focus-visible) svg { color: var(--color-accent-strong); }
 /* The four steps as the title block of a drawing sheet: one outlined strip, hairline cells, the number in the corner. */
 .conversation-journey {
@@ -100,24 +100,21 @@
 .conversation-grid > .conversation-form-wrap { grid-area: form; min-width: 0; }
 .conversation-form-wrap .inquiry-form { grid-area: auto; }
 .conversation-form-toggle { display: none; }
-/* Form labels were 10–11 px: raised for reading at arm's length */
-.conversation :is(.inquiry-form label > span, .inquiry-choice legend) { font-size: 12.5px; letter-spacing: .06em; }
-.conversation .inquiry-choice label > span { font-size: 12px; }
-.conversation .inquiry-form-section-title { font-size: 12.5px; }
-.conversation :is(.inquiry-form-kicker, .inquiry-required-note) { font-size: 13px; }
-.conversation .inquiry-field-hint { font-size: 13px; }
+/* The form's labels, kicker and group titles take the label roles of globals.css at every width (W3-02, PDO-63): the
+   12–13 px overrides this block had are the roles' own sizes now. */
 /* A page that already shows its steps (/yak-pratsyuiemo) closes with intro + form only. */
 .conversation-no-journey .conversation-grid { grid-template-areas: "intro form"; grid-template-rows: auto; }
 @media (max-width: 1180px) { .conversation-no-journey .conversation-grid { grid-template-areas: "intro" "form"; } }
 
 /* Laptop screens (≥ 1181 px wide, ≤ 900 px tall): the compact mode the previous inquiry block had — tighter padding and
-   rhythm, a smaller heading. /zernoskhovyshcha's height budget (tests/e2e/grain-page.spec.ts, 7.3 screens at 1440×900)
-   is measured here. */
+   rhythm. The heading is the compact H2 at every width and the lead keeps its 16 px (W3-02, PDO-60): the block keeps
+   its height by its spacing, not by smaller type. /zernoskhovyshcha's height budget (tests/e2e/grain-page.spec.ts) is
+   measured here. */
 @media (min-width: 1181px) and (max-height: 900px) {
   .conversation.section { padding-block: 48px; }
   .conversation-grid { row-gap: 24px; }
-  .conversation h2 { margin-top: 16px; font-size: var(--type-h2-compact); }
-  .conversation-lead { margin-top: 16px; font-size: 15px; line-height: 1.6; }
+  .conversation h2 { margin-top: 16px; }
+  .conversation-lead { margin-top: 16px; line-height: 1.6; }
   .conversation-contact { margin-top: 24px; }
   .conversation-journey { margin-top: 12px; }
   .conversation-journey li { gap: 6px; padding: 12px 18px 14px; }
@@ -129,7 +126,6 @@
   .conversation-journey-wrap { max-width: none; }
 }
 @media (max-width: 760px) {
-  .conversation h2 { font-size: var(--type-h2); }
   .conversation-lead { margin-top: 16px; }
   .conversation-contact { width: 100%; margin-top: 24px; }
   .conversation-call .conversation-call-icon { width: 58px; }
@@ -151,8 +147,8 @@
   :root[data-theme] .conversation-journey-wrap:not([data-expanded]) .conversation-journey p { display: none; }
   :root[data-theme] .conversation-journey-toggle {
     display: inline-flex; align-items: center; min-height: 44px; margin-top: 4px; padding: 0; color: var(--color-accent-strong);
-    background: none; border: 0; border-bottom: 1px solid currentColor; font: 700 12px/1 var(--font-manrope), sans-serif;
-    letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+    background: none; border: 0; border-bottom: 1px solid currentColor; font: var(--type-action-weight) var(--type-action-size)/1 var(--font-manrope), sans-serif;
+    letter-spacing: var(--type-action-track); text-transform: uppercase; cursor: pointer;
   }
 }
 @media (max-width: 340px) {
@@ -169,7 +165,7 @@
     width: min(100%, 520px); min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
     padding: 0 20px; color: var(--color-text); background: color-mix(in srgb, var(--color-surface-elevated) 80%, transparent);
     border: 1px solid var(--color-border-strong); cursor: pointer;
-    font: 800 13px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase;
+    font: var(--type-action-weight) var(--type-action-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-action-track); text-transform: uppercase;
     transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
   }
   :root[data-theme] .conversation-form-toggle:is(:hover, :focus-visible) { border-color: var(--color-accent-strong); background: var(--color-surface-elevated); }

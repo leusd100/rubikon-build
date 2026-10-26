@@ -107,6 +107,25 @@ mechanics, each tied to a context — pick the one that matches, don't invent a 
 - **Corner mark** — `.related-card > span`, `.route-service > b`: plain accent-colored glyph,
   grid-positioned or right-aligned, no border.
 
+**The arrow link (W3-06, PDO-56).** Every «words + arrow» way on that is not a button or a card is one
+`.link-arrow` (`globals.css`): the action label (Manrope 800, 13 px, .06em, capitals), a 44 px target with
+its words and a 1 px `--color-accent` rule at its foot, the arrow in `--color-accent-strong`. Hover and
+keyboard focus change its colour — to `--color-accent-strong`, or to `--link-hover-ink` where the link
+already rests in copper (`.faq-ask-write` → `--color-text`, `.angary-route-brief-action` on graphite →
+`--color-dark-text`) — and nudge the arrow the way its span's `data-arrow` says (`up-right` 3 / −3 px,
+`down`, `up`, `right` 3 px). Under reduced motion the arrow stays and the colour is the only answer, so
+every arrow link's hover and focus colour differs from its rest colour (`links-buttons-focus.spec.ts`).
+The page's class (`.section-link`, `.text-link`, `.faq-ask-write`, …) keeps only its place and, where the
+link is quieter or louder than its text, its ink through `--link-ink`. `display` is in `:where()`, so a rule
+that hides one copy of a link always wins. A one-line link is as wide as its words: in a column that
+stretches its children it takes `align-self: flex-start` (or no `flex-grow`), or its rule runs across the
+column. A link stretched over its card (`.gs-card`: its `::after` covers the card) takes no press transform
+(`transform: none` on `:active`) — a transform would make the link the containing block of that `::after`
+and the card would stop taking the press. In a row centred on a button or a number the link takes
+`margin-top: -10px`, so its words meet theirs on one line; after a block's content `.section-link` takes
+`calc(var(--rhythm-cta) - 16px)`, so its words and rule stay where the 29 px link had them. A phone
+number (`.faq-ask-call`, `.angary-stamp-phone`) is not an arrow link.
+
 **Adjacent CTAs must agree on geometry.** If two CTA boxes sit next to or stacked on each other
 (like `.hero-actions`'s button + text-link pair), their arrows must use the *same* mechanic —
 mixing in-flow and pinned-absolute in the same row/stack is what produced the mobile hero arrow
@@ -171,9 +190,9 @@ token's today; other literals move onto a token when their file changes for a vi
 |---|---|---|
 | Type (rem) | `--type-display-home`, `--type-h1`, `--type-h2`, `--type-h2-compact`, `--type-h2-minor`, `--type-h3`, `--hero-lead` | W3-02 (T4 scale) |
 | Labels | `--type-label-ui-*`, `--type-action-*`, `--type-label-tech-*` (`-weight`, `-size`, `-track` each; letter-spacing has no place in `font`) | W3-02 |
-| Rhythm | `--rhythm-label`, `--rhythm-lead`, `--rhythm-cta`; `--section-space(-compact)` | W3-03 |
+| Rhythm | `--rhythm-label`, `--rhythm-lead`, `--rhythm-header`, `--rhythm-cta`; `--section-space(-compact)` | W3-03 |
 | Spacing | `--space-1` … `--space-10` = 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px; `--card-pad`, `--card-gap` | W3-03, then file by file |
-| Buttons | `--button-h-l` 56 px, `--button-h-m` 48 px | W3-06 |
+| Buttons | `--button-h-l` 56 px (page buttons, the conversation's call), `--button-h-m` 48 px (a button in a sheet or a tool: the grain sheet, the configurator's summary, HOME's brief); the 50 / 46 px of short laptop windows stay as compact modes | W3-06 |
 | Header | `--header-h` 101 px (the fixed header from 761 px) | PDO-98's next step (short windows, tablets) |
 | Motion | `--motion-micro`, `--motion-reveal`, `--motion-draw`, `--motion-draw-long`, `--motion-media-fade`; `--ease-premium`, `--ease-plot`, `--ease-standard` | W3-10 (Motion v1: the pages' local `--m-*` move onto them) |
 | Colour (theme.css) | `--color-load`, `--color-wind` — the loads on a drawing, one pair for both modes | — |
@@ -181,9 +200,71 @@ token's today; other literals move onto a token when their file changes for a vi
 The type roles are in `rem`: at the default 16 px root the px are the same as before, and a larger
 browser text size now reaches them (the header and the other px rules stay as they were).
 
+**W3-02 values (T4, 25.10).** Three H2 levels and one display H3 per width:
+
+| Role | Value | 1440 / 768 / 390 | Takes it |
+|---|---|---|---|
+| `--type-h2` | `clamp(2.375rem, 4.5vw, 4.5rem)` | 64.8 / 38 / 28.86 | section headers, FAQ, /angary sections |
+| `--type-h2-compact` | `clamp(2.25rem, 3.6vw, 3.25rem)`; phone `var(--type-h2)` | 51.84 / 36 / 28.86 | a title beside a figure or a form: direction node, grain band, /pro-nas story, /angary configurator (but see the minor level), the inquiry block |
+| `--type-h2-minor` | `clamp(1.75rem, 2.5vw, 2.25rem)`; phone `clamp(1.625rem, 7vw, 1.75rem)` | 36 / 28 / 27.3 | «Пов’язані напрямки», /angary's real object; the /angary configurator's title on a short laptop window (from 1024 px wide, up to 760 px tall), where it gives its room to the step |
+| `--type-h3` (Fixel) | `clamp(1.5rem, 1.95vw, 1.75rem)`; phone `1.5rem` | 28 / 24 / 24 | HOME evidence, direction entries, /napryamky formats, the /yak formats switch from 1051 px |
+
+Labels, three roles (each rule keeps its own family and line-height):
+
+| Role | Weight / size / tracking | Family | Takes it |
+|---|---|---|---|
+| UI | 800 / 12 px / .10em | Manrope | eyebrows, crumbs, kickers (conversation, form, HOME, configurator), the form's group titles, the footer's group titles, «Зателефонувати» over a number, table and builder group titles, a person's role over the name |
+| action | 800 / 13 px / .06em | Manrope | `.button`, `.text-link`, `.section-link`, the form toggle, field labels and legends, reply-method choices, entry and principle links |
+| technical | 700 / 12 px / .08em | IBM Plex Sans Condensed | «Ілюстрація» stamps (box reserved at 8.75em against the late swap), «Ви / Ми», the process key, a step's result, drawing captions, sheet heads, the /angary stamp |
+
+The floor (PDO-16): no text outside a drawing under 12 px; actions and field labels 13 px; inside a
+drawing-like HTML sheet (stamps, the /yak change sheet, HOME's direction strips, the configurator's
+section callout) 11 px. Form fields are 16 px at every width. H1–H3 glue the short words of set (b)
+and leads those of set (a) at render (`app/lib/typography.ts`: `keepHeadingWords`, `keepShortWords`),
+never in metadata, JSON-LD or aria-labels.
+
+**W3-03 values (rhythm, 25.10, OD-PX-17 A).** A section's entry and its spaces, from 761 px / phone:
+
+| Role | Value | Takes it |
+|---|---|---|
+| `--rhythm-label` | 20 / 16 px | label → H2 in a section header (`.section-header-copy .eyebrow`) |
+| `--rhythm-lead` | 24 / 20 px | H2 → lead in a section header (its `gap`, and its space over its rule), the direction node's and /angary's leads |
+| `--rhythm-header` | 40 / 32 px | section header → its content (`.section-header`, `.page-heading`, the /pro-nas team) |
+| `--section-space` | `clamp(92px, 8vw, 128px)` / **72 px** | every section; no page sets its own on a phone. Never under 72 (KEEP 38: 64 is not offered) |
+| `--section-space-compact` | `clamp(72px, 6vw, 96px)` / **56 px** | the seam of two neighbours of one tone (cost → FAQ on metal, concrete and roofing), /angary's closing «Пов’язані» and every grain band from 761 px (its height budget); on a phone the grain bands keep 72 on both sides of every seam |
+
+- **One rule.** When the content under a section header opens with its own top edge (the cost list,
+  the grain complex sheet, the /pro-nas ledger and principles, the /yak formats and responsibility
+  switch, HOME's directions), the header loses its rule and the space above it
+  (`.section-header:has(+ :is(…))`). Content with that edge only up to a width is named with its
+  width: the grain situations up to 760 px (card frames; wider they are open columns) and the /yak
+  cost factors up to 1050 px (the drawing's frame; wider the columns open with its caption and the
+  list). Without `:has()` the header keeps its rule (HOME's phone directions drop it in that case too,
+  as before: `@supports not selector(:has(*))`). A list ruled only between its rows (the /napryamky
+  catalogue) keeps the header's rule as its top. Content that opens with a label or an open column
+  keeps it as well.
+- **The tail of a direction page.** On metal, concrete and roofing the FAQ leads straight into the form;
+  «Пов’язані напрямки» close the page after it with the compact space (`related.placement:
+  'after-inquiry'`, as /angary).
+- **Not a section seam (documented exceptions).** The /angary configurator's phone padding, 48 / 82 px
+  (`angary-editorial.css`): a composed join, not a section's space — the stage opens right under the
+  hero, and under it the real object follows with no top padding and its own rule, so the 82 is the
+  configurator's bottom margin to that rule. The /pro-nas team's bottom (64 px and the stories' own
+  64) is the same kind of join. Neither moves onto `--section-space`.
+- Not on the tokens yet: the other eyebrows (heroes, FAQ, sticky and editorial headings) keep 24 px;
+  `--rhythm-cta` keeps 34 px; the laptop conversation keeps its 16 / 16.
+
 ## Accessibility (already in place, keep it that way)
 
-Global `:focus-visible` ring (3px outline, 2px box-shadow gap) on every interactive element;
+Global `:focus-visible` ring (3px outline at 4px, 2px box-shadow gap) on every interactive element,
+and one other form of it: the inner ring (3px at -4px) for what fills its row or frame — a cell, a
+segment, a tab, a full-width row or a fixed full-width bar (W3-06, PDO-88); form fields show a copper halo
+instead (W3-07). A ring next to an `overflow: hidden` edge takes the inner form rather than being cut; a frame
+with positioned children takes the outer one, as they paint over an inner ring (the planner's tab panel).
+lucide icons share
+one stroke, `svg.lucide { stroke-width: 1.75 }` (PDO-89); a crop lucide lacks is drawn on its 24 grid
+(`CornCobIcon`). The tour controls (`.motion-control`) and the step rows (`.step-option`) are shared
+rules in `globals.css` (PDO-99);
 `--control-min-height: 44px` for touch targets (spot-checked on form choice inputs and messenger
 links); the single reduced-motion block above; a `forced-colors:active` block that hides
 decorative-only grid textures. New interactive elements should inherit these automatically through

@@ -100,7 +100,7 @@
 .grain-planner-root .planner-check-option input { width: 18px; height: 18px; margin: 0; accent-color: var(--color-accent); }
 .grain-planner-root .planner-check-grid.is-cards .planner-check-option input { margin-top: 2px; }
 .grain-planner-root .planner-check-icon { display: grid; place-items: center; color: var(--color-text-secondary); }
-.grain-planner-root .planner-check-icon svg { width: 28px; height: 28px; stroke-width: 1.4; }
+.grain-planner-root .planner-check-icon svg { width: 28px; height: 28px; }
 .grain-planner-root .planner-check-option.is-selected .planner-check-icon { color: var(--color-accent); }
 .grain-planner-root .planner-check-option, .grain-planner-root .planner-check-text { min-width: 0; }
 .grain-planner-root .planner-check-text b { display: block; font-size: 15px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
@@ -249,7 +249,7 @@
 
 .grain-planner-root .planner-approach-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 26px; }
 .grain-planner-root .planner-approach-grid.is-count-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.grain-planner-root .planner-approach-grid:focus-visible, .grain-planner-root .planner-clarification-grid:focus-visible { outline: 2px solid var(--color-focus, var(--color-accent)); outline-offset: 4px; }
+.grain-planner-root .planner-approach-grid:focus-visible, .grain-planner-root .planner-clarification-grid:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; } /* the outer ring (2 px in --color-focus before W3-06) */
 .grain-planner-root .planner-approach { display: flex; flex-direction: column; padding: 20px 22px 22px; border: 1px solid var(--planner-line-strong); border-top: 3px solid var(--color-text); background: var(--planner-surface); }
 .grain-planner-root .planner-approach-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--color-text-muted); font: var(--planner-label); letter-spacing: .08em; text-transform: uppercase; }
 .grain-planner-root .planner-approach-top b { color: var(--color-text-secondary); font-weight: 700; text-align: right; }
@@ -296,7 +296,9 @@
 .grain-planner-root .planner-tablist [role='tab'] { min-height: 56px; padding: 0 14px; border: 0; border-right: 1px solid rgba(255, 255, 255, .12); color: var(--color-dark-text-secondary); background: transparent; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
 .grain-planner-root .planner-tablist [role='tab'][aria-selected='true'] { color: var(--color-dark-text); background: var(--color-dark-surface); box-shadow: inset 0 -3px 0 var(--color-accent-on-dark); }
 .grain-planner-root .planner-tablist [role='tab']:focus-visible { outline-color: var(--color-accent-on-dark); outline-offset: -4px; }
-.grain-planner-root .planner-tabs [role='tabpanel']:focus-visible { outline-offset: 2px; }
+/* The panel is a div, outside the site's :where(a, button…) ring: it had the browser's own (1 px, 2 px out). The outer
+   ring, though it crosses the tabs' foot: inside, the positioned drawing would cover the inner one on its half */
+.grain-planner-root .planner-tabs [role='tabpanel']:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; box-shadow: 0 0 0 2px var(--focus-gap); }
 
 .grain-planner-root .planner-concept { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border: 1px solid var(--planner-line-strong); background: var(--planner-surface); }
 .grain-planner-root .planner-tabs .planner-concept { border-top: 0; }
@@ -485,7 +487,7 @@
 
 @media (max-width: 760px) {
   .grain-handoff-cta:not([hidden]) { position: fixed; z-index: 90; left: 0; right: 0; bottom: var(--cookie-banner-clearance, 0px); display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 58px; padding: 15px 24px calc(15px + env(safe-area-inset-bottom)); color: var(--color-on-action); background: var(--color-accent-strong); border-top: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 -10px 36px rgba(0, 0, 0, .24); font: 800 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-  .grain-handoff-cta:focus-visible { outline: 3px solid var(--color-on-action); outline-offset: -6px; }
+  .grain-handoff-cta:focus-visible { outline: 3px solid var(--color-on-action); outline-offset: -4px; } /* a full-width bar: the inner ring */
 }
 
 /* UX pass 2026-10: the result fits about one screen — scenario, approaches, handoff — and the rest folds under one
@@ -496,7 +498,7 @@
 .grain-planner-root .planner-more-toggle svg { flex: none; width: 18px; height: 18px; margin-left: auto; transition: transform var(--duration-fast) ease; }
 .grain-planner-root .planner-more-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 .grain-planner-root .planner-more-toggle:hover { color: var(--color-accent-strong); }
-.grain-planner-root .planner-more-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.grain-planner-root .planner-more-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; } /* the outer ring: its words start at its edge */
 .grain-planner-root .planner-more { padding-top: clamp(32px, 4vw, 56px); }
 .grain-planner-root .planner-more[hidden] { display: none; }
 @media (max-width: 760px) {

@@ -171,3 +171,45 @@ test.describe('HOME H1 on a phone: the pairs change none of its line breaks', ()
     }
   });
 });
+
+// W3-02 (25.10, PDO-60 T4): on a short laptop window (from 1024 px wide, up to 760 px tall) the configurator's title
+// steps down to make room for the step. It kept 34 px of its own there: a fourth H2 size on /angary, and under the
+// minor level at 1536 px. Now it takes the minor level, in one line beside the lede, so the band keeps its height.
+test.describe('/angary on a short laptop window: the configurator title stays on the H2 scale', () => {
+  test.skip(({ isMobile }) => isMobile, 'viewports are set explicitly; one project is enough');
+
+  test('1280×720, 1366×650, 1536×730: three H2 sizes, the configurator title on the minor level, in one line', async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.route(/\.mp4(?:\?|$)/, (r) => r.abort());
+    await consent(page);
+    for (const viewport of [{ width: 1280, height: 720 }, { width: 1366, height: 650 }, { width: 1536, height: 730 }]) {
+      await page.setViewportSize(viewport);
+      await open(page, '/angary');
+      const scale = await page.evaluate(() => {
+        const visible = (el: Element) => {
+          for (let a: Element | null = el; a; a = a.parentElement) {
+            const cs = getComputedStyle(a);
+            if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+          }
+          return el.getBoundingClientRect().width >= 3;
+        };
+        const size = (selector: string) => parseFloat(getComputedStyle(document.querySelector(selector)!).fontSize);
+        const title = document.querySelector('#hangar-configurator-title')!;
+        const range = document.createRange();
+        range.selectNodeContents(title);
+        return {
+          sizes: [...new Set([...document.querySelectorAll('main h2')].filter(visible).map((h2) => parseFloat(getComputedStyle(h2).fontSize).toFixed(2)))],
+          configurator: size('#hangar-configurator-title'),
+          compact: size('#conversation-title'),
+          minor: size('.related-directions-title'),
+          lines: new Set([...range.getClientRects()].filter((r) => r.width > 0.5).map((r) => Math.round(r.top))).size,
+        };
+      });
+      const label = `${viewport.width}×${viewport.height}`;
+      expect(scale.sizes.length, `${label}: ${scale.sizes.join(' / ')}`).toBeLessThanOrEqual(3);
+      expect(scale.configurator, label).toBeCloseTo(scale.minor, 1);
+      expect(scale.compact, label).toBeGreaterThanOrEqual(scale.configurator);
+      expect(scale.lines, label).toBe(1);
+    }
+  });
+});

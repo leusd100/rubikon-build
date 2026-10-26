@@ -14,11 +14,15 @@
 
 /* ---------- Cost (UX review 2026-10): the /yak cost-factor drawing, the customer's side, the way on ---------- */
 .angary-cost { background: var(--color-surface-alt); }
-.angary-cost-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px 40px; align-items: center; margin-top: 36px; padding-top: 26px; border-top: 1px solid var(--color-border-strong); }
+/* the text keeps a readable column (≥ 420 px; the 13 px actions are wider than they were) — the actions wrap first */
+.angary-cost-foot { display: grid; grid-template-columns: minmax(min(26.25rem, 100%), 1fr) auto; gap: 20px 40px; align-items: center; margin-top: 36px; padding-top: 26px; border-top: 1px solid var(--color-border-strong); }
 .angary-cost-foot p { max-width: 62ch; margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.65; }
 .angary-cost-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
-.angary-text-link { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-text); border-bottom: 1px solid var(--color-accent); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
-.angary-text-link:hover { color: var(--color-accent-strong); }
+/* (.angary-text-link, .angary-route-more, .angary-stamp-link are arrow links: .link-arrow; beside the button its words
+   take the button's line) */
+/* the button's words and arrow 16 px apart here, as the form's submit (W3-02): the row stays one line on Linux at 1280 */
+.angary-cost-actions .button { gap: 16px; }
+.angary-cost-actions .angary-text-link { margin-top: -10px; }
 
 /* ---------- The frame (FrameTour.tsx, frame-tour.css): a direction-node tour on the page's own ground ---------- */
 .angary-structure .direction-editorial-copy > p:not(.eyebrow) { max-width: 520px; }
@@ -36,7 +40,7 @@
 /* HOME's scope cells (ScopeCells.tsx; HOME's styles stay on HOME): the building, and in copper the part each confirmed
    work names. Drawn complete here — the frame tour above is the page's one moving drawing. */
 .angary-real .hv2-scope-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 26px 0 0; padding: 0; list-style: none; border: 1px solid var(--color-border-strong); }
-.angary-real .hv2-scope-chips li { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 16px 18px 14px; color: var(--color-text); font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.angary-real .hv2-scope-chips li { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 16px 18px 14px; color: var(--color-text); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .angary-real .hv2-scope-chips li + li { border-left: 1px solid var(--color-border-strong); }
 .angary-real .hv2-scope-glyph { display: block; width: 100%; max-width: 132px; height: auto; overflow: visible; }
 .angary-real .hv2-scope-glyph path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -48,12 +52,12 @@
 .angary-process .angary-section-heading { margin-bottom: 56px; }
 /* The route is the direction pages' «Ви · Ми» (direction-template.css .process-split), five steps; 01 is the brief */
 /* 01's action follows the brief's state (owner, 03.10): up to the configurator, or down to the attached brief */
-.angary-route-brief-action { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 8px; color: var(--color-accent-on-dark); border-bottom: 1px solid currentColor; font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-.angary-route-brief-action:hover { color: var(--color-dark-text); }
+/* (an arrow link: .link-arrow, in copper as the step's way on) */
+.angary-route-brief-action { --link-ink: var(--color-accent-on-dark); --link-hover-ink: var(--color-dark-text); margin-top: 8px; } /* copper at rest, light on hover and focus */
 /* in the brief's «Ви», under its sentence */
 .process-split .ps-you .angary-route-brief-action { display: flex; width: fit-content; margin-top: 10px; }
-.angary-route-more { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 40px; color: var(--color-dark-text); border-bottom: 1px solid var(--color-accent-on-dark); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .07em; text-transform: uppercase; }
-.angary-route-more:hover { color: var(--color-accent-on-dark); }
+/* «Усі етапи, документи й відповідальність»: two even lines where it wraps, 390 px and narrower (.link-arrow balances) */
+.angary-route-more { --link-ink: var(--color-dark-text); margin-top: 40px; }
 
 /* ---------- The route's title block: who answers for the agreed scope (it replaced the separate people section) ---------- */
 /* #responsibility is an anchor of its own: it lands under the site header, as the sections do (04.10) */
@@ -73,8 +77,8 @@
 .angary-stamp-phone { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-dark-text); font: 600 19px/1 var(--font-condensed), sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .angary-stamp-phone svg { width: 18px; height: 18px; flex: none; color: var(--color-accent-on-dark); }
 .angary-stamp-phone:hover { color: var(--color-accent-on-dark); }
-.angary-stamp-link { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-left: auto; color: var(--color-dark-text-secondary); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
-.angary-stamp-link:hover { color: var(--color-accent-on-dark); }
+/* the quiet way to the company: secondary ink */
+.angary-stamp-link { --link-ink: var(--color-dark-text-secondary); margin: -10px 0 0 auto; white-space: nowrap; }
 
 /* ---------- FAQ + related directions ---------- */
 .angary-page .faq-grid { align-items: start; }
@@ -103,7 +107,7 @@
 
 
 @media (max-width: 760px) {
-  .angary-page { --section-space: 72px; --section-space-compact: 52px; }
+  /* the sections take the phone scale, 72 / 56 (globals.css, PDO-22 A); the compact closing band was 52 */
   .angary-page .service-subhero.angary-service-subhero { min-height: 0; }
   .angary-page .service-subhero-content { padding-top: 126px; padding-bottom: 50px; }
   .angary-page .angary-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 30px; }
@@ -119,7 +123,7 @@
   .angary-stamp dl > div + div { border-left: 0; border-top: 1px solid var(--color-dark-line); }
   .angary-stamp-actions { flex-direction: column; align-items: stretch; gap: 6px; }
   .angary-stamp-cta { justify-content: space-between; padding-block: 12px; text-align: left; line-height: 1.35; }
-  .angary-stamp-link { margin-left: 0; }
+  .angary-stamp-link { align-self: flex-start; margin: 0; } /* as wide as its words: the column stretches the button, its rule would run across it */
   .angary-structure:has(+ .angary-real) { padding-bottom: 44px; }
   .angary-real-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 36px; }
   /* Two parts, but a sentence: the note takes its own row, as HOME's proof sheet on a phone */
@@ -132,14 +136,14 @@
   .angary-real-media img { object-position: 86% 55%; }
   .angary-real-facts h2 { font-size: var(--type-h2-minor); }
   .angary-real .hv2-scope-chips { margin-top: 22px; }
-  .angary-real .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
+  .angary-real .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; }
   .angary-page .faq-heading { position: static; margin-bottom: 36px; }
   .angary-stamp { scroll-margin-top: 88px; }
   /* While «До заявки» is fixed over the bottom of the screen, what takes the focus scrolls clear of it (04.10: a focused
      FAQ question sat 85 % under it) */
   html:has(.angary-mobile-inquiry-cta:not([hidden])) { scroll-padding-bottom: 70px; }
   .angary-mobile-inquiry-cta:not([hidden]) { position: fixed; z-index: 90; left: 0; right: 0; bottom: var(--cookie-banner-clearance, 0px); display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 58px; padding: 15px 24px calc(15px + env(safe-area-inset-bottom)); color: var(--color-on-action); background: var(--color-accent-strong); border-top: 1px solid rgba(255, 255, 255, .22); box-shadow: 0 -10px 36px rgba(0, 0, 0, .24); font: 800 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-  .angary-mobile-inquiry-cta:focus-visible { outline: 3px solid var(--color-on-action); outline-offset: -6px; }
+  .angary-mobile-inquiry-cta:focus-visible { outline: 3px solid var(--color-on-action); outline-offset: -4px; } /* a full-width bar: the inner ring */
 }
 
 /* Phone: the related directions as one ruled list of names — their one-line relations repeat the FAQ (UX review 2026-10) */

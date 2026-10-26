@@ -31,9 +31,13 @@
   --space-8: 40px;
   --space-9: 48px;
   --space-10: 64px;
-  /* Rhythm roles (PDO-62), phones in the ≤760 block. W3-03 sets 20 / 16, 24 / 20 and 32 / 24 (from 761 px / phone). */
-  --rhythm-label: var(--space-6);   /* label → heading: .eyebrow */
-  --rhythm-lead: 28px;              /* heading → lead: .direction-editorial-copy, .angary-section-heading (22 on phones) */
+  /* Rhythm roles (PDO-62), phones in the ≤760 block. W3-03 (25.10, OD-PX-17 A): a section's entry is denser — label →
+     H2 20 / 16, H2 → lead 24 / 20, header → content 40 / 32 (from 761 px / phone). The other eyebrows (heroes, FAQ,
+     sticky and editorial headings) keep their 24 for now; the laptop conversation keeps its 16 / 16 (conversation.css);
+     --rhythm-cta (32 / 24 in the register) is not moved yet. */
+  --rhythm-label: var(--space-5);   /* label → section H2: .section-header-copy .eyebrow (16 on phones) */
+  --rhythm-lead: var(--space-6);    /* H2 → lead: .section-header (also its space over its rule), .direction-editorial-copy, .angary-section-heading (20 on phones) */
+  --rhythm-header: var(--space-8);  /* section header → its content: .section-header, .page-heading (32 on phones) */
   --rhythm-cta: 34px;               /* content → its link: .section-link */
   --card-pad: 28px;                 /* a card's inside: the «Пов’язані напрямки» row (20 on phones) */
   --card-gap: 24px;                 /* between cards: the grain entries' phone row (12 on phones) */
@@ -54,12 +58,15 @@
   /* Section titles (H2). The floor is 38 px (it was 46): on a 768 px tablet an H2 is never larger than the page's H1
      (HOME 44 px, a direction 44.54 px; PDO-05, OD-PX-14). From ≈1022 px 4.5vw is above 46 px and nothing changes. */
   --type-h2: clamp(2.375rem, 4.5vw, 4.5rem);
-  /* The smaller H2 levels and the display H3, each at the value of the rule that holds the role today: the laptop
-     inquiry block (44–52 px from 1181 px wide), /angary's real object (28–38) and the grain entries (24–28). W3-02 sets
-     36–52 (51.84 at 1440), 28–36 (36 at 1440) and 24–28 and moves the other H2 / H3 sizes onto them. */
-  --type-h2-compact: clamp(2.75rem, 3.6vw, 3.25rem);
-  --type-h2-minor: clamp(1.75rem, 2.5vw, 2.375rem);
-  --type-h3: clamp(1.5rem, 2vw, 1.75rem);
+  /* T4 (W3-02, 25.10): three H2 levels and one display H3 per width — at 1440 64.8 / 51.84 / 36 and 28 px, at 768
+     38 / 36 / 28 and 24. The compact H2 (36–52 px) titles a block beside a figure or a form: the direction node, the
+     grain band, the /pro-nas story, the /angary configurator and the inquiry block. The minor (28–36 px) closes a page
+     or names a fact: «Пов’язані напрямки», /angary's real object (/yak's responsibility H3 is that size at 1440 and
+     keeps its own clamp). The display H3 (24–28 px, Fixel) titles a card or an entry: HOME's evidence, the direction
+     entries, /napryamky's formats, the /yak formats switch from 1051 px (below it the switch's label form). */
+  --type-h2-compact: clamp(2.25rem, 3.6vw, 3.25rem);
+  --type-h2-minor: clamp(1.75rem, 2.5vw, 2.25rem);
+  --type-h3: clamp(1.5rem, 1.95vw, 1.75rem);
   /* Hero standard (UX pass 2026-10; the owner's model is /yak-pratsyuiemo): one title, lead and rhythm for every page's
      first block. The sizes follow the window's height as well as its width, so the whole block — crumbs to actions —
      fits a short laptop window (1280×720, 1600×760) instead of running past its bottom edge. HOME's longer statement
@@ -68,19 +75,24 @@
   --type-display-home: clamp(2.75rem, min(5.2vw, 9.4svh), 4.875rem);
   /* Labels (PDO-63): three roles, each a weight, a size and a tracking — letter-spacing has no place in the font
      shorthand, and a rule that takes them keeps its own line-height and family (--font-manrope is set on <body>, not
-     on :root, so a token here cannot name it). The UI label is the eyebrow (Manrope 800 12 / .13em), the action
-     .button and .section-link (Manrope 800 12 / .06em), the technical label a drawing's: the sheets' heads and the
-     /angary stamp (Plex 700 12 / .14em). W3-02 sets 12 / .10em, 13 / .06em and 12 / .08em and moves the other labels
-     onto them — the conversation and form kickers (Plex 700 12 / .14em today) onto the UI label, in Manrope. */
+     on :root, so a token here cannot name it). Values of W3-02 (PDO-63, OD-PX-16 a):
+     - UI, Manrope 800 12 / .10em: eyebrows, crumbs, the conversation, form and HOME kickers, the form's group titles
+       (in copper), the footer's group titles, the small «Зателефонувати» over a number;
+     - action, Manrope 800 13 / .06em: buttons, text and section links, the form toggle, field labels and legends, the
+       reply-method choices (never the consent sentence);
+     - technical, Plex 700 12 / .08em: the «Ілюстрація» stamps, «Ви / Ми» and the process key, a step's result, the
+       sheets' heads and the /angary stamp.
+     The floor beside them (PDO-16): no text outside a drawing under 12 px, actions and field labels 13 px; inside a
+     drawing-like HTML sheet (stamps, the /yak change sheet, HOME's direction strips) 11 px. */
   --type-label-ui-weight: 800;
   --type-label-ui-size: .75rem;
-  --type-label-ui-track: .13em;
+  --type-label-ui-track: .1em;
   --type-action-weight: 800;
-  --type-action-size: .75rem;
+  --type-action-size: .8125rem;
   --type-action-track: .06em;
   --type-label-tech-weight: 700;
   --type-label-tech-size: .75rem;
-  --type-label-tech-track: .14em;
+  --type-label-tech-track: .08em;
   /* Display fit (Typography v1.1, Fixel Display): the em width of the longest single word a display heading carries —
      «Металоконструкції», 8.876 em at -.03em — × 1.04 (Linux renders it ≈ 1.7 % wider than macOS, plus 2 % spare). A
      direction title or a hero H1 is never larger than its box / this, so that word fits whole at every width without a
@@ -136,6 +148,11 @@ img { display: block; }
   outline-offset: 4px;
   box-shadow: 0 0 0 2px var(--focus-gap);
 }
+/* Two rings in all (W3-06, PDO-88): this outer one, and the inner one (outline-offset: -4px) for what fills its row or its
+   frame — a cell, a segment, a tab, a full-width row — set where that component lives. Form fields show a halo instead. */
+/* One stroke for the interface's icons (W3-06, PDO-89): lucide's 2 thinned to 1.75 at every size, as the 1.7–1.9 the
+   components had set one by one; the drawings, the logo and the role icons keep their own lines */
+svg.lucide { stroke-width: 1.75; }
 .skip-link { position: fixed; z-index: 1000; top: 12px; left: 12px; padding: 12px 16px; color: var(--color-text); background: var(--color-surface-elevated); border: 2px solid var(--color-accent); font-weight: 800; transform: translateY(-160%); transition: transform var(--duration-fast) ease; }
 .skip-link:focus { transform: translateY(0); }
 /* SmoothScroll's shield: over the page, under the header, while the page scrolls under a resting mouse — so what passes
@@ -229,7 +246,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .header-contacts { display: flex; align-items: center; font-style: normal; }
 .header-contact { min-width: 132px; display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 10px; padding: 11px 14px; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .header-contact + .header-contact { border-left: 1px solid rgba(255,255,255,.18); }
-.header-contact svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.7; }
+.header-contact svg { width: 18px; height: 18px; color: var(--color-accent); }
 .header-contact span { display: grid; gap: 3px; }
 .header-contact small { color: rgba(255,255,255,.78); font-size: 9px; font-weight: 800; line-height: 1; letter-spacing: .09em; text-transform: uppercase; }
 .header-contact strong { color: var(--color-dark-text-muted); font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: .07em; text-transform: uppercase; }
@@ -251,7 +268,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .header-email { width: 44px; height: 44px; }
 /* the mail icon is copper, as it was before PDO-19 (owner 21.10), in the same light copper as the number's icon; lighter on
    hover / focus */
-.header-email svg { width: 18px; height: 18px; color: var(--color-accent-on-dark); stroke-width: 1.7; transition: color var(--duration-fast) ease; }
+.header-email svg { width: 18px; height: 18px; color: var(--color-accent-on-dark); transition: color var(--duration-fast) ease; }
 .header-email:is(:hover, :focus-visible) svg { color: var(--color-accent-on-dark-hover); }
 .messenger-link:hover, .messenger-link:focus-visible { color: var(--color-dark-text); background: rgba(255,255,255,.08); }
 .messenger-link:hover .messenger-brand-icon, .messenger-link:focus-visible .messenger-brand-icon { transform: translateY(-1px) scale(1.08); filter: saturate(1.15) brightness(1.08); }
@@ -292,13 +309,13 @@ body:has(main:is([data-home="v2"], .about-page)) {
 /* The messengers by their own icons alone (owner 21.10): the name stays in each link's aria-label and title */
 .mobile-menu nav .mobile-messengers .messenger-link span { display: none; }
 .mobile-menu nav .mobile-email { border-top: 1px solid rgba(255,255,255,.12); font-size: 14px; font-weight: 600; letter-spacing: .01em; }
-.mobile-menu nav .mobile-email svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.7; }
+.mobile-menu nav .mobile-email svg { width: 18px; height: 18px; color: var(--color-accent); }
 /* The phone in the menu, as text, just above the messengers; the messengers' own top rule separates them. */
 .mobile-menu nav .mobile-phone { border-bottom: 0; font-size: 16px; font-weight: 700; letter-spacing: .01em; }
-.mobile-menu nav .mobile-phone svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.7; }
+.mobile-menu nav .mobile-phone svg { width: 18px; height: 18px; color: var(--color-accent); }
 /* One-tap call in the phone header: a quiet square beside «Меню», only where the desktop contacts are hidden. */
 .mobile-call { display: none; width: 46px; height: 46px; flex: 0 0 auto; align-items: center; justify-content: center; margin-left: auto; color: var(--color-dark-text); border: 1px solid rgba(255,255,255,.3); transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
-.mobile-call svg { width: 19px; height: 19px; color: var(--color-accent); stroke-width: 1.8; }
+.mobile-call svg { width: 19px; height: 19px; color: var(--color-accent); }
 .mobile-call:hover, .mobile-call:focus-visible { border-color: var(--color-accent); background: rgba(255,255,255,.06); }
 /* Theme switch (ThemeControl.tsx) — its own pill beside the contacts, not a cell among them: a sun|moon track with a
    knob reads as a switch, never as one more contact. A quiet utility (PDO-19): a faint track and a grey knob, no copper,
@@ -308,7 +325,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .theme-switch { --ts-w: 52px; --ts-h: 28px; position: relative; width: var(--ts-w); height: 44px; display: grid; place-items: center; flex: none; padding: 0; color: var(--color-dark-text-secondary); border: 0; background: transparent; cursor: pointer; }
 .theme-switch-track { position: relative; width: var(--ts-w); height: var(--ts-h); display: block; border: 1px solid rgba(245, 242, 235, .2); border-radius: 999px; background: transparent; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .theme-switch-knob { position: absolute; top: 2px; left: 2px; width: calc(var(--ts-h) - 6px); height: calc(var(--ts-h) - 6px); border-radius: 50%; background: var(--color-dark-text-muted); transition: transform .28s cubic-bezier(.3, .7, .2, 1); }
-.theme-switch-track svg { position: absolute; top: 50%; width: calc(var(--ts-h) - 14px); height: calc(var(--ts-h) - 14px); stroke-width: 1.9; transform: translateY(-50%); transition: color .28s ease; }
+.theme-switch-track svg { position: absolute; top: 50%; width: calc(var(--ts-h) - 14px); height: calc(var(--ts-h) - 14px); transform: translateY(-50%); transition: color .28s ease; }
 .theme-switch-sun { left: 6px; }
 .theme-switch-moon { right: 6px; }
 :root[data-theme="dark"] .theme-switch-knob { transform: translateX(calc(var(--ts-w) - var(--ts-h))); }
@@ -361,35 +378,30 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-grid { position: absolute; z-index: 1; inset: 0; opacity: .21; background-image: linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px); background-size: 96px 96px; mask-image: linear-gradient(90deg, black, transparent 82%); pointer-events: none; }
 .hero-layout { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(292px, 320px); min-height: 100%; align-items: end; gap: var(--grid-gap); padding-top: 180px; padding-bottom: var(--hero-bottom-space); }
 .hero-copy { position: relative; min-width: 0; }
-.eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 var(--rhythm-label); color: var(--color-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
+.eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 var(--space-6); color: var(--color-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .eyebrow span { width: 24px; height: 2px; background: var(--color-accent); }
 .eyebrow.light { color: var(--color-dark-text-secondary); }
 .hero .eyebrow { color: rgba(255,255,255,.66); }
 .hero h1 { margin: 0; max-width: 1100px; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(56px, 6.2vw, 94px); font-weight: 400; line-height: 1.06; letter-spacing: -.035em; text-transform: none; text-wrap: balance; }
 .hero h1 em { color: var(--color-accent-strong); font-style: normal; }
-.hero-lead { max-width: 650px; margin: 34px 0 0; color: color-mix(in srgb, var(--color-dark-text) 90%, transparent); font-size: 17px; line-height: 1.7; }
+.hero-lead { max-width: 650px; margin: 34px 0 0; color: color-mix(in srgb, var(--color-dark-text) 90%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: 40px; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: var(--button-h-l); padding-inline: 24px; border: 1px solid transparent; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .button-primary { color: var(--color-on-action); background: var(--color-action); }
 .button-primary:hover { background: var(--color-action-hover); transform: translateY(-2px); }
-/* The quieter button on a dark hero: same size as the primary, outline only. */
-.hero .button-outline { color: var(--color-dark-text); border-color: rgba(245, 242, 235, .4); background: transparent; text-align: center; }
-.hero .button-outline:hover { border-color: rgba(255,255,255,.72); background: rgba(255,255,255,.06); }
 /* HOME's primary action is the call, with the number printed on the button: a visitor sees whom
    they are calling before the tap. Same box as every .button; only the content is two lines.
    min-width reserves the box: the number is ~4.5 px wider in Plex Condensed than in its fallback,
    and without it the font swap nudged the two actions beside it (a measured layout shift). */
 .hero-call-primary { min-width: 236px; justify-content: center; gap: 14px; padding-inline: 24px; }
-.hero-call-primary svg { width: 20px; height: 20px; flex: 0 0 20px; stroke-width: 1.8; }
+.hero-call-primary svg { width: 20px; height: 20px; flex: 0 0 20px; }
 .hero-call-primary > span { display: grid; gap: 5px; text-align: center; }
-.hero-call-primary small { font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .08em; }
+.hero-call-primary small { line-height: 1; font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); }
 .hero-call-primary strong { font: 600 17px/1 var(--font-condensed), sans-serif; letter-spacing: .03em; text-transform: none; white-space: nowrap; }
-.button:active, .text-link:active, .section-link:active { transform: translateY(0) scale(.985); }
-.text-link { padding-block: 10px; border-bottom: 1px solid currentColor; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
-.text-link span { margin-left: 18px; color: var(--color-accent-strong); }
-.hero-actions .text-link { display: inline-flex; align-items: center; justify-content: space-between; gap: 18px; white-space: nowrap; }
+/* The press. A link stretched over its card (its ::after covers the card: .gs-card) cancels it in its own file — a
+   transform would make the link the containing block of that ::after and the card would stop taking the press. */
+.button:active, .link-arrow:active, .text-link:active { transform: translateY(0) scale(.985); }
 .hero-actions > a > span[aria-hidden="true"] { width: 20px; height: 20px; display: inline-grid; place-items: center; flex: 0 0 20px; color: var(--color-dark-text); font-size: 16px; font-weight: 500; line-height: 1; }
-.hero-actions .text-link span { margin-left: 0; }
 
 .services { background: var(--color-surface-alt); }
 .ghost-section { position: relative; overflow: clip; isolation: isolate; }
@@ -417,24 +429,86 @@ body:has(main:is([data-home="v2"], .about-page)) {
 /* Title, then its note under it on the left — as the hero's lead (owner, 02.10: the note sat at the far right edge with
    a wide empty gap between the two; a multi-line title's box cannot shrink to its longest line, so a side-by-side note
    always kept that gap). */
-.section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: clamp(16px, 1.5vw, 22px); margin-bottom: 52px; padding-bottom: 32px; border-bottom: 1px solid var(--color-border); }
+.section-header { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--rhythm-lead); margin-bottom: var(--rhythm-header); padding-bottom: var(--rhythm-lead); border-bottom: 1px solid var(--color-border); }
+/* One rule (PDO-21, W3-03, 25.10): when the content opens with its own top edge — the cost list, the grain complex sheet,
+   the /pro-nas ledger and principles, the /yak formats and responsibility switch, HOME's directions (the phone's sheet
+   list .dxi, always the header's neighbour, and from 761 px the image cards after it) — that edge takes the header's
+   place: the header's rule and the space above it go. Two only where they have that edge: the grain situations on a
+   phone (their cards' frames; from 761 px they are open columns with no top rule) and the /yak cost factors up to
+   1050 px (their drawing's frame, under its caption; from 1051 px the columns open with that caption and the factor
+   list, no frame on top). The /napryamky list keeps the header's rule: its rows are ruled only between them, so the
+   rule is the list's top. Without :has() the header keeps its rule, as before. */
+.section-header:has(+ :is(.cost-list, .gc, .about-cap, .about-principles-grid, .dfmt-grid, .proc-resp-switch, .dxi, .direction-grid)) { padding-bottom: 0; border-bottom: 0; }
+@media (max-width: 1050px) { .section-header:has(+ .proc-factors) { padding-bottom: 0; border-bottom: 0; } }
+@media (max-width: 760px) { .section-header:has(+ .gs-list) { padding-bottom: 0; border-bottom: 0; } }
 .section-header-copy { min-width: 0; max-width: 980px; }
 /* A header with a decorative drawing (SectionHeader aside): title and note on the left, the drawing on the right, standing
-   on the header's bottom rule; wide screens only */
+   on the header's bottom rule (on HOME, where the cards' edge replaces that rule, on the header's bottom); wide screens
+   only */
 .section-header-aside { display: none; }
 @media (min-width: 1051px) {
   .section-header.has-aside { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--grid-gap); }
   .section-header.has-aside > :not(.section-header-aside) { grid-column: 1; }
   .section-header.has-aside .section-header-aside { display: block; grid-column: 2; grid-row: 1 / span 2; align-self: end; margin-bottom: -2px; }
 }
-.section-header-copy .eyebrow { margin-bottom: 30px; }
+.section-header-copy .eyebrow { margin-bottom: var(--rhythm-label); }
 .section-header h2 { max-width: 15em; margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(50px, 5.15vw, 76px); font-weight: 400; line-height: .99; letter-spacing: -.035em; }
 .section-header-support { max-width: 640px; margin: 0; padding: 2px 0 2px 26px; color: var(--color-text-muted); border-left: 2px solid var(--color-accent); font-size: 16px; line-height: 1.75; }
 .section-header-inverse { border-bottom-color: rgba(255,255,255,.18); }
 .section-header-inverse .section-header-support { color: var(--color-dark-text-secondary); }
 
-.section-link { display: inline-flex; align-items: center; gap: 22px; margin-top: var(--rhythm-cta); padding-bottom: 8px; border-bottom: 1px solid currentColor; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
-.section-link span { color: var(--color-accent-strong); }
+/* The arrow link (W3-06, PDO-56, OD-PX-46 A): one look for every «words + arrow» way on — the action label (Manrope 800,
+   13 px, .06em, capitals: the buttons' voice), a 44 px target with its words and a copper rule at the foot, and a copper
+   arrow. Hover and keyboard focus answer in copper and nudge the arrow the way it points (its span's data-arrow); under
+   reduced motion only the colour changes. The page's own class keeps its place: margins, alignment in its row, and the
+   ink (--link-ink) where the link is quieter or louder than its text, and a hover ink of its own (--link-hover-ink)
+   where it already rests in copper: under reduced motion the colour is the only answer, so it must change. Its words
+   sit 5 px under the box's middle, so in a row centred on buttons or a number the link takes margin-top: -10px and its
+   words meet theirs on one line. display sits in :where(), so a rule that hides a link (one copy per width) always
+   outranks it. */
+:where(.link-arrow) { display: inline-flex; }
+.link-arrow {
+  align-items: flex-end; gap: 14px; min-height: 44px; padding: 0 0 8px; color: var(--link-ink, currentColor); border-bottom: 1px solid var(--color-accent);
+  font: var(--type-action-weight) var(--type-action-size)/1.25 var(--font-manrope), sans-serif; letter-spacing: var(--type-action-track); text-transform: uppercase;
+  text-wrap: balance; transition: color var(--duration-fast) ease;
+}
+.link-arrow > [data-arrow] { flex: none; color: var(--color-accent-strong); transition: transform var(--duration-fast) var(--ease-standard); }
+.link-arrow:is(:hover, :focus-visible) { color: var(--link-hover-ink, var(--color-accent-strong)); }
+@media (prefers-reduced-motion: no-preference) {
+  .link-arrow:is(:hover, :focus-visible) > [data-arrow="up-right"] { transform: translate(3px, -3px); }
+  .link-arrow:is(:hover, :focus-visible) > [data-arrow="down"] { transform: translateY(3px); }
+  .link-arrow:is(:hover, :focus-visible) > [data-arrow="up"] { transform: translateY(-3px); }
+  .link-arrow:is(:hover, :focus-visible) > [data-arrow="right"] { transform: translateX(3px); }
+}
+/* After a block's content. The 44 px box grows upwards over the gap, so the words and the rule stay where the 29 px link
+   had them (--rhythm-cta is the space to the link's words) */
+.section-link { margin-top: calc(var(--rhythm-cta) - 16px); }
+
+/* Shared controls (W3-06, PDO-99): the pages kept copies of these, so a fix reached one copy only. Each page's class
+   keeps its own place, type and grid; the look of the role lives here. */
+/* The round control in a drawing's title block that pauses or replays its tour (.dn-control — direction nodes, the
+   grain builder, the /angary frame — and /pro-nas practice's .ps-control) */
+.motion-control {
+  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 4px; color: var(--color-text); background: none;
+  border: 0; border-radius: 22px; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+}
+.motion-control-label { color: var(--color-text-secondary); }
+.motion-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--color-border-strong); border-radius: 50%; }
+.motion-control-icon::before { content: ''; width: 10px; height: 13px; background: linear-gradient(90deg, currentColor 0 3.5px, transparent 3.5px 6.5px, currentColor 6.5px 10px); }
+.motion-control[data-paused] .motion-control-icon { border-color: var(--color-accent); }
+.motion-control[data-paused] .motion-control-icon::before { width: 0; height: 0; background: none; border-block: 6.5px solid transparent; border-left: 11px solid currentColor; translate: 1.5px 0; }
+.motion-control:hover .motion-control-label { color: var(--color-text); }
+.motion-control:hover .motion-control-icon { border-color: var(--color-accent); }
+/* A row that is the button for its step (a direction node's tour, /pro-nas practice, the /yak formats): the shown one
+   takes a copper bar and a copper tint. --step-tint / --step-hover-tint let the formats keep their lighter tint. */
+.step-option {
+  display: grid; width: 100%; color: inherit; text-align: left; background: none; border: 0; font: inherit; cursor: pointer;
+  transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.step-option[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) var(--step-tint, 10%), transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+@media (hover: hover) {
+  .step-option:hover { background-color: color-mix(in srgb, var(--color-accent) var(--step-hover-tint, 6%), transparent); }
+}
 
 .directions { color: var(--color-dark-text); background: var(--color-dark); }
 .direction-grid { display: grid; grid-template-columns: 1.15fr .85fr; grid-template-rows: 360px 360px 330px; gap: 18px; }
@@ -486,16 +560,16 @@ body:has(main:is([data-home="v2"], .about-page)) {
   font-size: clamp(82px, 9vw, 144px);
   transform: none;
 }
-.about-story-copy h2 { max-width: 900px; font-size: clamp(48px, 4.35vw, 66px); }
+.about-story-copy h2 { max-width: 900px; font-size: var(--type-h2-compact); }
 .about-planning-visual img { object-position: center; filter: saturate(.9) contrast(1.02); }
 
 .team { background: var(--color-bg); }
-.team-heading { margin-bottom: 60px; }
+/* the team heading → its stories: the section header's 40 / 32 (W3-03; it kept its own 60, and 42 on phones) */
 .team-stories { display: grid; gap: clamp(78px, 8vw, 118px); }
 .person-story { display: grid; grid-template-columns: minmax(360px, .82fr) minmax(0, 1.18fr); align-items: center; border-top: 1px solid var(--color-border); }
 .person-story-reverse { grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr); }
 .person-info { position: relative; display: flex; flex-direction: column; justify-content: center; min-height: 440px; padding: clamp(44px, 6vw, 88px); }
-.person-info > span { max-width: 440px; color: var(--color-accent-strong); font-size: 12px; font-weight: 800; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; }
+.person-info > span { max-width: 440px; color: var(--color-accent-strong); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); line-height: 1.5; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .person-info h3 { max-width: 620px; margin: 20px 0 24px; font: 600 clamp(34px, 3.25vw, 48px)/1.06 var(--font-condensed), sans-serif; text-transform: none; }
 .person-info p { max-width: 610px; margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.75; }
 .person-info p:first-of-type { color: var(--color-text); font-size: 16px; }
@@ -509,7 +583,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .team-home .person-info h3 { margin: 16px 0 18px; font-size: clamp(32px, 3vw, 44px); }
 .team-home .person-info p,
 .team-home .person-info p:first-of-type { font-size: 15px; line-height: 1.7; }
-.team-home-link { margin-top: 42px; }
+.team-home-link { margin-top: 26px; } /* 42 to the words, as before the 44 px box (W3-06) */
 
 /* Until real portraits are available, the people section carries identity through names and roles. */
 .team-text-only .team-stories { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--color-border); }
@@ -537,18 +611,18 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-form { overflow: hidden; color: var(--color-text); background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); border-top: 2px solid var(--color-accent); border-radius: 0; box-shadow: none; }
 .inquiry-form-heading { min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px clamp(24px, 2.5vw, 36px); }
 .inquiry-form-heading p { margin: 0; }
-.inquiry-form-kicker { display: flex; align-items: center; gap: 10px; color: var(--color-text); font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.inquiry-form-kicker { display: flex; align-items: center; gap: 10px; color: var(--color-text); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .inquiry-form-kicker span { width: 18px; height: 2px; background: var(--color-accent); }
 .inquiry-required-note { color: var(--color-text-muted); font-size: 13px; }
 .inquiry-form-section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 26px clamp(24px, 2.5vw, 36px) 28px; border-top: 1px solid var(--color-border); }
 /* One column: a small title over the fields, no step numbers (the steps after sending are numbered beside it). */
-.inquiry-form-section-title { margin: 0; color: var(--color-accent-strong); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.inquiry-form-section-title { margin: 0; color: var(--color-accent-strong); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .inquiry-form-section-body { min-width: 0; }
 .inquiry-fields { display: grid; align-items: start; gap: 16px; }
 .inquiry-fields-two { grid-template-columns: 1fr 1fr; }
 .inquiry-form label, .inquiry-select { display: grid; align-content: start; gap: 8px; }
-.inquiry-form label > span, .inquiry-choice legend { color: var(--color-text-secondary); font-size: 12.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.inquiry-form input, .inquiry-form select, .inquiry-form textarea { width: 100%; min-width: 0; border: 1px solid var(--color-border-control); border-radius: 0; outline: none; color: var(--color-text); background: var(--color-field); font: 500 14px/1.4 var(--font-manrope), sans-serif; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
+.inquiry-form label > span, .inquiry-choice legend { color: var(--color-text-secondary); font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
+.inquiry-form input, .inquiry-form select, .inquiry-form textarea { width: 100%; min-width: 0; border: 1px solid var(--color-border-control); border-radius: 0; outline: none; color: var(--color-text); background: var(--color-field); font: 500 16px/1.4 var(--font-manrope), sans-serif; transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease; }
 .inquiry-form input, .inquiry-form select { min-height: 54px; padding: 0 14px; }
 .inquiry-form textarea { resize: vertical; min-height: 108px; padding: 13px 14px; }
 /* The field's focus: a copper border and a 3 px halo. The outline is transparent, not none: forced colours drop the halo
@@ -579,9 +653,8 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-choice > div { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .inquiry-choice label { position: relative; display: block; cursor: pointer; }
 .inquiry-choice input { position: absolute; opacity: 0; pointer-events: none; }
-.inquiry-choice label > span { min-height: var(--control-min-height); display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px; color: var(--color-text-secondary); border: 1px solid var(--color-border-control); background: var(--color-field); font-size: 12px; text-align: center; transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.inquiry-choice label > span { min-height: var(--control-min-height); display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px; color: var(--color-text-secondary); border: 1px solid var(--color-border-control); background: var(--color-field); font-size: var(--type-action-size); text-align: center; transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .inquiry-choice label > span svg, .inquiry-choice label > span img { flex: 0 0 auto; width: 17px; height: 17px; }
-.inquiry-choice label > span svg { stroke-width: 1.8; }
 .inquiry-choice input:checked + span { color: var(--color-bg); border-color: var(--color-text); background: var(--color-text); }
 .inquiry-choice input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 1px var(--focus-gap); }
 .inquiry-select { margin-top: 0; }
@@ -611,16 +684,15 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-config-brief-heading strong { color: var(--color-text); font: 600 15px/1.25 var(--font-condensed), sans-serif; font-variant-numeric: tabular-nums; }
 .inquiry-config-brief-actions { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0 18px; }
 .inquiry-config-brief-heading button { flex: none; padding: 0; border: 0; color: var(--color-accent-strong); background: transparent; cursor: pointer; font: 800 12px/1.3 var(--font-manrope), sans-serif; letter-spacing: .04em; text-decoration: underline; text-underline-offset: 4px; text-transform: uppercase; }
-/* 44 px targets: the underline stays on the text (UX review 2026-10: these were 16 px tall) */
+/* 44 px targets: the underline stays on the text (UX review 2026-10: these were 16 px tall). Focus: the site's outer ring
+   (3 px / 4; 3 / 3 before W3-06), as on .inquiry-config-detached and .inquiry-sent buttons */
 .inquiry-config-brief-heading button, .inquiry-config-edit { min-height: 44px; display: inline-flex; align-items: center; }
-.inquiry-config-brief-heading button:focus-visible, .inquiry-config-edit:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .inquiry-config-brief-heading .inquiry-config-brief-toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text); }
 /* «Не додавати» steps back from the copper of the ways forward (08.10, audit F87) */
 .inquiry-config-brief-heading .inquiry-config-brief-detach { color: var(--color-text-secondary); }
 /* …and leaves a line with the way back in place of the card */
 .inquiry-config-detached { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 0; padding: 12px 16px; color: var(--color-text-secondary); border: 1px dashed var(--color-border-strong); font-size: 14px; }
 .inquiry-config-detached button { min-height: 44px; padding: 0; border: 0; background: none; color: var(--color-accent-strong); font: 700 14px/1.3 var(--font-manrope), sans-serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
-.inquiry-config-detached button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .inquiry-config-brief-toggle svg { width: 15px; height: 15px; color: var(--color-accent); transition: transform .25s ease; }
 .inquiry-config-brief-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 .inquiry-config-brief-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; margin-top: 16px; padding: 18px 0 2px; border-top: 1px solid var(--color-border); }
@@ -634,7 +706,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-config-edit { grid-column: 1 / -1; width: fit-content; color: var(--color-accent-strong); font-size: 12px; font-weight: 800; line-height: 1.3; letter-spacing: .04em; text-decoration: underline; text-underline-offset: 4px; text-transform: uppercase; }
 .inquiry-field-full { grid-column: 1 / -1; }
 .inquiry-details { margin-top: 20px; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
-.inquiry-details summary { min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 18px; cursor: pointer; list-style: none; color: var(--color-text); font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.inquiry-details summary { min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 18px; cursor: pointer; list-style: none; color: var(--color-text); font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
 .inquiry-details summary::-webkit-details-marker { display: none; }
 .inquiry-details summary svg { width: 18px; height: 18px; color: var(--color-accent); transition: transform .25s ease; }
 .inquiry-details[open] summary svg { transform: rotate(180deg); }
@@ -661,7 +733,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-turnstile { min-width: 0; }
 .inquiry-form-submit-layout.has-turnstile-challenge { grid-template-columns: 1fr; }
 .inquiry-form-submit-layout.has-turnstile-challenge .inquiry-turnstile { margin-bottom: 14px; }
-.inquiry-submit { width: 100%; margin-top: 0; border: 0; cursor: pointer; }
+/* gap 16 (W3-02, 25.10; .button's 28 before): at the 13 px action «Надіслати запит» took two lines at 1262–1315 px wide,
+   where in 12 px it had one — now one line wherever main has it (two at 1181–1253 px, main 1181–1261) */
+.inquiry-submit { width: 100%; margin-top: 0; gap: 16px; border: 0; cursor: pointer; }
 .inquiry-submit svg { width: 17px; height: 17px; }
 .inquiry-submit-note { margin: 10px 0 0; color: var(--color-text-muted); font-size: 13px; line-height: 1.5; text-align: center; }
 .inquiry-noscript { margin: 10px 0 0; padding: 10px 12px; color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 9%, transparent); border-left: 3px solid var(--color-accent); font-size: 13px; line-height: 1.5; }
@@ -696,7 +770,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-video-control {
   position: absolute; right: 24px; bottom: 24px; z-index: 3; display: inline-flex; align-items: center; gap: 12px;
   min-height: var(--control-min-height, 44px); padding: 0 0 0 14px; color: var(--color-dark-text); background: none; border: 0; border-radius: 22px;
-  font: 700 11.5px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
+  font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; cursor: pointer; /* the technical label (W3-02; 11.5 / .14em before) */
 }
 .hero-video-control-label { color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); transition: color var(--duration-fast) ease; }
 .hero-video-control-icon {
@@ -708,7 +782,6 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .hero-video-control[data-paused] .hero-video-control-icon::before { width: 0; height: 0; background: none; border-block: 8px solid transparent; border-left: 13px solid currentColor; translate: 1.5px 0; }
 .hero-video-control:hover .hero-video-control-label { color: var(--color-dark-text); }
 .hero-video-control:hover .hero-video-control-icon { background: rgba(13, 16, 14, .82); border-color: var(--color-accent-on-dark); }
-.hero-video-control:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 /* Where a hero button reaches under it, the control keeps its circle; the word stays for screen readers
    (useHeroControlPlacement) */
 .hero-video-control[data-compact] { padding-left: 0; }
@@ -737,7 +810,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .about-subhero h1 { max-width: 860px; }
 .about-subhero .subhero-grid { z-index: 1; opacity: .055; background-size: 120px 120px; mask-image: linear-gradient(90deg, rgba(0,0,0,.7), transparent 62%); }
 .about-subhero .subhero-overlay { z-index: 1; background: linear-gradient(90deg, rgba(10,11,12,.9), rgba(10,11,12,.68) 42%, rgba(10,11,12,.4) 72%, rgba(10,11,12,.28)), linear-gradient(0deg, rgba(10,11,12,.5), transparent 58%); }
-.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 var(--hero-gap-crumb); color: var(--color-dark-text-muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 0 0 var(--hero-gap-crumb); color: var(--color-dark-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .breadcrumb span { display: inline-flex; align-items: center; gap: 8px; }
 .breadcrumb a { display: inline-flex; align-items: center; min-height: 24px; margin-block: -4px; transition: color var(--duration-fast) ease; }
 .breadcrumb a:hover { color: var(--color-dark-text); }
@@ -754,6 +827,10 @@ body:has(main:is([data-home="v2"], .about-page)) {
    H1 instead of running past it. */
 @media (min-width: 761px) {
   main h1 em { display: inline-block; width: max-content; max-width: 100%; }
+  /* A short word before the accent («до» on /yak-pratsyuiemo) and the accent are one such box (PDO-44 п. 2, W3-02, as
+     HOME's .hv2-keep): a no-break space before the accent's own box did not hold in Chromium or WebKit. */
+  main h1 .keep-pair { display: inline-block; width: max-content; max-width: 100%; }
+  main h1 .keep-pair em { display: inline; }
 }
 .subhero h1 em, .service-subhero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .subhero-side { padding-top: 24px; border-top: 2px solid var(--color-accent); }
@@ -783,12 +860,16 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .service-subhero-lead .lead-phone, .service-subhero-note { display: none; }
 .about-hero-cta, .subhero-side-cta { margin-top: 28px; }
 .directions-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; }
-.directions-hero-actions .text-link { display: inline-flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 28px; color: var(--color-dark-text); white-space: nowrap; }
-.directions-hero-actions .text-link span { margin-left: 0; color: var(--color-accent-strong); }
+.directions-hero-actions .text-link { --link-ink: var(--color-dark-text); white-space: nowrap; }
 
 .page-section { padding-block: var(--section-space); background: var(--color-bg); }
+/* Neighbours of one tone (PDO-15, W3-03, 25.10): «Вартість» → FAQ on metal, concrete and roofing share a background, so
+   their seam is the compact space on both sides (112 px on a phone, not 144) — not two full section spaces after a list
+   that already ends on its own rule. Without :has() the upper one keeps its space. The grain bands keep their own
+   rhythm (grain-editorial.css): compact from 761 px, the section space on a phone, its seams too (OD-PX-17 A). */
+.cost-section:has(+ .faq-section) { padding-bottom: var(--section-space-compact); }
+.cost-section + .faq-section { padding-top: var(--section-space-compact); }
 .directions-index { scroll-margin-top: 88px; padding-top: clamp(58px, 6vw, 84px); }
-.directions-index .page-heading { margin-bottom: clamp(34px, 4vw, 48px); }
 .page-section-dark { color: var(--color-dark-text); background: var(--color-dark); }
 .page-section-dark .eyebrow { color: var(--color-dark-text-secondary); }
 .page-two-col { display: grid; grid-template-columns: .92fr 1.08fr; align-items: center; gap: var(--grid-gap); }
@@ -796,7 +877,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: var(--type-h2); font-weight: 400; line-height: 1.05; letter-spacing: -.035em; text-wrap: balance; }
 .copy-column > p:not(.eyebrow) { margin: 22px 0 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.85; }
 .copy-column .lead-copy { margin-top: 32px; color: var(--color-text-secondary); font-size: 18px; line-height: 1.7; }
-.page-heading { margin-bottom: 54px; }
+.page-heading { margin-bottom: var(--rhythm-header); }
 
 .logo-lab { min-height: 100vh; background: var(--color-surface-alt); }
 .logo-lab-intro { padding: 180px 0 86px; color: white; background: #101214; }
@@ -895,7 +976,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
    as unfinished) */
 .detail-steps li:is(:first-child, :last-child) span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
 /* Shared icon token for .cost-grid / .use-case-grid (bordered-card families). */
-.card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); stroke-width: 1.45; }
+.card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); }
 .detail-steps h3 { margin: 0 0 12px; font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }
 .detail-steps p { max-width: 300px; margin: 0 auto; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.7; }
 .use-case-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--color-border); border-left: 1px solid var(--color-border); }
@@ -912,7 +993,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 /* min-width 0: the copy is a grid item, so a heading word wider than the column (a reader's text-spacing override on a
    320 px phone) wraps in it instead of widening the column past the page. */
 .direction-editorial-copy { align-self: center; min-width: 0; }
-.direction-editorial-copy h2 { max-width: 650px; margin: 0; font: 400 clamp(38px, 4.1vw, 62px)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
+.direction-editorial-copy h2 { max-width: 650px; margin: 0; font: 400 var(--type-h2-compact)/1.04 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.035em; text-wrap: balance; }
 .direction-editorial-copy > p:not(.eyebrow) { max-width: 500px; margin: var(--rhythm-lead) 0 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.8; }
 .direction-editorial-media { position: relative; min-height: 520px; margin: 0; overflow: hidden; background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 18px 18px 0 var(--copper-offset); }
 .direction-editorial-media::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(21,24,22,.09); }
@@ -933,7 +1014,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 @media (min-width: 1181px) { .footer-grid { grid-template-columns: minmax(260px, 1.2fr) auto auto auto; row-gap: 36px; } }
 @media (min-width: 761px) and (max-width: 1180px) { .footer-about { display: none; } }
 .footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 3px; padding-top: 3px; color: var(--color-dark-text-secondary); font-size: 12px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
-.footer-group-title { margin-bottom: 7px; color: var(--color-dark-text-muted); font-size: 11px; font-weight: 750; letter-spacing: .1em; white-space: nowrap; }
+.footer-group-title { margin-bottom: 7px; color: var(--color-dark-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); white-space: nowrap; }
 .footer-nav a, .footer-directions a { display: flex; align-items: center; min-height: 24px; white-space: nowrap; transition: color var(--duration-fast) ease; }
 .footer-nav a:hover, .footer-directions a:hover { color: var(--color-dark-text); }
 .footer-contact-stack { display: grid; justify-items: start; justify-self: start; padding-top: 3px; gap: 12px; }
@@ -941,7 +1022,7 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 /* the number in one face across the site — the header's and the heroes' Plex Condensed 600 (PDO-19); a pixel larger than
    the mail beside it, as the condensed face is narrower */
 .footer-phone span { font-family: var(--font-condensed), sans-serif; font-size: calc(1em + 1px); font-weight: 600; letter-spacing: .03em; }
-.footer-phone svg, .footer-email svg { width: 17px; height: 17px; color: var(--color-accent); stroke-width: 1.7; }
+.footer-phone svg, .footer-email svg { width: 17px; height: 17px; color: var(--color-accent); }
 .footer-messengers { display: flex; gap: 7px; }
 .footer-messengers .messenger-link { width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.16); }
 .footer-messengers .messenger-brand-icon { width: 19px; height: 19px; }
@@ -1009,7 +1090,8 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 .privacy-hero h1 { max-width: 980px; margin: 28px 0 24px; font: 400 min(clamp(44px, 5vw, 72px), calc(100cqi / var(--display-fit)))/.92 var(--font-display), sans-serif; letter-spacing: -.045em; }
 .privacy-hero > .shell > p:last-child { margin: 0; color: var(--color-dark-text-secondary); font-size: 13px; }
 .not-found-hero .not-found-lead { display: block; max-width: 560px; margin: 0; color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.6; }
-.not-found-hero .text-link { color: var(--color-dark-text); }
+/* The 404 / page error's quiet links (a phone, an address — not arrow links): their own look, as before W3-06 */
+.not-found-hero .text-link { display: inline-flex; align-items: center; gap: 18px; padding-block: 10px; color: var(--color-dark-text); border-bottom: 1px solid currentColor; font-size: var(--type-action-size); font-weight: var(--type-action-weight); letter-spacing: var(--type-action-track); text-transform: uppercase; }
 /* an address is read as it is written: not in capitals */
 .not-found-hero .not-found-email { text-transform: none; letter-spacing: 0; }
 .privacy-content { max-width: 980px; }
@@ -1030,7 +1112,6 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .hero-actions { gap: 16px; }
   /* Tablet: the two hero buttons share their row, or fill it when they wrap, so they never sit at two different widths. */
   .hero-actions .button { flex: 1 1 auto; gap: 16px; padding-inline: 18px; }
-  .hero-actions .text-link { gap: 8px; }
   .promise-visual { min-height: 560px; }
   .person-story, .person-story-reverse { grid-template-columns: 1fr; }
   .person-story:not(.person-story-reverse) .person-photo { justify-self: start; }
@@ -1155,18 +1236,27 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 @media (max-width: 760px) {
   :root {
     --container-gutter: 16px;
-    --section-space: 82px;
+    /* One phone scale (PDO-22 A, W3-03, 25.10): 72 for a section, 56 for a compact one (the seam of two neighbours of
+       one tone, /angary's closing band) — no page sets its own; a section never goes under 72 (64 is not offered:
+       KEEP 38). The grain page's all-compact bands are its laptop exception (grain-editorial.css). */
+    --section-space: 72px;
+    --section-space-compact: 56px;
     --grid-gap: 44px;
     --radius-lg: 28px;
     /* 28 / 28 / 28.86 / 31.82 px at 320 / 375 / 390 / 430, never larger than the phone H1 (29–35 px: home-v2.css,
        phone-hero.css; PDO-05 variant A). In rem like that H1, so a larger browser text size keeps H1 ≥ H2. The local
-       phone H2 rules (conversation, HOME signature, /angary, grain band, /pro-nas story, configurator band) use it. */
+       phone H2 rules (HOME signature, /angary) use it; on a phone the compact level is the same size (W3-02), so the
+       conversation, the direction node, the grain band, the /pro-nas story and the configurator band take it too.
+       The minor level is 26–28 px (27.3 at 390), under the section size. */
     --type-h2: clamp(1.75rem, 7.4vw, 2rem);
-    --type-h2-minor: clamp(1.625rem, 7.4vw, 1.875rem);
+    --type-h2-compact: var(--type-h2);
+    --type-h2-minor: clamp(1.625rem, 7vw, 1.75rem);
     --type-h3: 1.5rem;
     --type-h1: clamp(2.375rem, 10.6vw, 2.875rem);
     --hero-lead: 1rem;
-    --rhythm-lead: 22px;
+    --rhythm-label: var(--space-4);
+    --rhythm-lead: var(--space-5);
+    --rhythm-header: var(--space-7);
     --card-pad: 20px;
     --card-gap: 12px;
   }
@@ -1196,10 +1286,9 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .hero-layout { min-height: 790px; grid-template-columns: 1fr; align-content: end; padding: 128px 0 38px; gap: 0; }
   .hero h1 { font-size: clamp(36px, 10.2vw, 40px); }
   .hero-copy { display: grid; gap: 40px; margin-top: 24px; }
-  .hero-lead { margin-top: 0; font-size: 16px; }
+  .hero-lead { margin-top: 0; font-size: var(--hero-lead); }
   .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 12px; margin-top: 0; }
   .button { width: 100%; }
-  .hero-actions .text-link { justify-self: start; }
   /* Stacked full-width hero buttons: content centred, the ↗ pinned to the same trailing edge on
      each. Only the arrow span is pinned (not the call button's label). Scoped to .hero-actions
      .button only; every other .button on the site keeps its normal mechanic. 44 px, not 48:
@@ -1212,8 +1301,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .inquiry-consent > span { font-size: 13px !important; }
   .about-hero-media > :is(img, video) { filter: saturate(.58) contrast(1.08) brightness(.84); }
   .about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.86), rgba(10,11,12,.58)), linear-gradient(0deg, rgba(10,11,12,.78), transparent 66%); }
-  .section-header { grid-template-columns: 1fr; gap: 26px; margin-bottom: 42px; padding-bottom: 28px; }
-  .section-header-copy .eyebrow { margin-bottom: 22px; }
+  .section-header { grid-template-columns: 1fr; }
   .section-header h2 { font-size: var(--type-h2); line-height: 1.02; }
   .section-header-support { max-width: 560px; margin-top: 0; padding-left: 20px; font-size: 16px; }
   .direction-grid { grid-template-columns: 1fr; grid-template-rows: none; }
@@ -1234,7 +1322,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .team-home .team-stories { grid-template-columns: 1fr; gap: 48px; }
   .team-about .team-stories { grid-template-columns: 1fr; gap: 48px; }
   .person-info { justify-content: flex-start; padding: 28px 20px 20px; border-bottom: 0; }
-  .person-info > span { max-width: none; font-size: 12px; line-height: 1.45; letter-spacing: .09em; }
+  .person-info > span { max-width: none; line-height: 1.45; } /* the UI label at every width (W3-02: .09em on a phone before) */
   .person-info h3 { margin: 18px 0; font-size: clamp(32px, 8.4vw, 38px); line-height: 1.02; }
   .team-about .person-info h3 { font-size: clamp(30px, 8.2vw, 38px); letter-spacing: normal; white-space: normal; }
   .person-info p, .person-info p:first-of-type { font-size: 16px; line-height: 1.65; }
@@ -1262,8 +1350,9 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .directions-subhero .subhero-layout { padding-bottom: 74px; }
   .directions-hero-actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 28px; }
   .directions-hero-actions .subhero-side-cta,
+  /* a phone: the link stands as an outlined 56 px row beside the call, as the inner heroes' second button */
   .directions-hero-actions .text-link { width: 100%; min-height: 56px; margin-top: 0; }
-  .directions-hero-actions .text-link { position: relative; justify-content: center; padding: 0 48px; border: 1px solid rgba(255,255,255,.38); }
+  .directions-hero-actions .text-link { position: relative; align-items: center; justify-content: center; padding: 0 48px; border: 1px solid rgba(255,255,255,.38); }
   .directions-hero-actions .text-link span { position: absolute; right: 18px; }
   .breadcrumb { margin-bottom: 34px; }
   /* Over a hero photo on a phone the muted crumbs fell to 3.8–3.9:1 where the sky shows (review 11.10, sweep 2.3; measured
@@ -1285,14 +1374,12 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .page-two-col, .faq-grid { grid-template-columns: 1fr; gap: 44px; }
   .copy-column h2, .page-heading h2, .sticky-heading h2, .faq-grid h2 { font-size: var(--type-h2); }
   .copy-column .lead-copy { font-size: 16px; }
-  .page-heading { margin-bottom: 42px; }
   .use-case-grid { grid-template-columns: 1fr; }
   .direction-editorial-grid { grid-template-columns: 1fr; gap: 36px; }
   .direction-editorial-grid[data-layout="media-first"] { grid-template-columns: 1fr; }
   .direction-editorial-grid[data-layout="media-first"] .direction-editorial-copy { grid-column: 1; grid-row: 1; }
   .direction-editorial-grid[data-layout="media-first"] .direction-editorial-media { grid-column: 1; grid-row: 2; min-height: 0; box-shadow: 10px 10px 0 var(--copper-offset); }
   .direction-editorial-copy { padding: 0; }
-  .direction-editorial-copy h2 { font-size: var(--type-h2); }
   .direction-editorial-copy > p:not(.eyebrow) { margin-top: var(--rhythm-lead); font-size: 16px; }
   .direction-editorial-media { min-height: 0; aspect-ratio: 3 / 2; border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 10px 10px 0 var(--copper-offset); }
   .cost-grid { grid-template-columns: 1fr; }
@@ -1570,9 +1657,9 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .contact-bridge { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px 40px; margin-top: 52px; padding-top: 28px; border-top: 1px solid var(--color-border); }
 .contact-bridge p { max-width: 620px; margin: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
 .contact-bridge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 32px; }
-.contact-bridge-actions .section-link { margin-top: 0; }
+.contact-bridge-actions .section-link { margin-top: -10px; } /* its words on the call's line (.link-arrow) */
 .contact-bridge-call { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-text); font: 600 22px/1 var(--font-condensed), sans-serif; letter-spacing: .02em; white-space: nowrap; }
-.contact-bridge-call svg { width: 20px; height: 20px; color: var(--color-accent-strong); stroke-width: 1.7; }
+.contact-bridge-call svg { width: 20px; height: 20px; color: var(--color-accent-strong); }
 .contact-bridge-call:hover span { text-decoration: underline; text-underline-offset: 5px; }
 
 .home-proof { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); margin: 48px 0 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
@@ -1597,7 +1684,7 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 /* Two columns only where the column is wide enough to hold them: 820 px keeps this block beside the «Що буде далі» card. */
 .prep-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 22px 28px; margin: 22px 0 0; padding: 0; list-style: none; }
 .prep-list li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 0 12px; align-items: start; }
-.prep-icon { width: 24px; height: 24px; color: var(--color-accent-strong); stroke-width: 1.5; }
+.prep-icon { width: 24px; height: 24px; color: var(--color-accent-strong); }
 .prep-list h3 { margin: 0 0 4px; font: 600 15px/1.2 var(--font-condensed), sans-serif; letter-spacing: .04em; text-transform: none; }
 .prep-list p { margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.6; }
 .first-conversation .copy-column > p.first-conversation-call { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin-top: 34px; padding-top: 24px; border-top: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
@@ -1685,19 +1772,26 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
    conversation in one tap. (Until Phase 2 this was the phone's rule only; wider screens led with the page's own action
    in copper and the call as a quiet link.) */
 :is(.hero-action-row, .angary-hero-actions, .grain-hero-actions, .directions-hero-actions, .about-hero-actions, .proc-hero-actions) > .hero-call-lead { margin: 0; }
+/* The quieter button on a dark hero: same size as the primary, outline only — HOME's «Написати або залишити запит» too
+   (W3-06, PDO-99: HOME's .hero .button-outline was a copy of this rule) */
 .button-hero-secondary { color: var(--color-dark-text); background: transparent; border-color: rgba(245, 242, 235, .4); text-align: center; }
 .button-hero-secondary:hover { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .72); }
-:is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link {
-  display: inline-flex; align-items: center; gap: 18px; align-self: center; margin: 0 0 0 12px; color: var(--color-dark-text); white-space: nowrap;
-}
-:is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link span { margin-left: 0; color: var(--color-accent-on-dark); }
-:is(.hero-action-row, .angary-hero-actions, .grain-hero-actions) > .text-link:is(:hover, :focus-visible) { color: var(--color-accent-on-dark-hover); }
+/* The quiet second action beside the call: an arrow link (.link-arrow), its words on the buttons' line (margin-top -10px).
+   /angary and the grain store put a third action in the row: at the 13 px action (W3-02, 25.10) the three no longer
+   fitted a tablet's row (/angary 761–771 px, grain 786–821 px: the link went to a second row, 12 px in from its edge).
+   The row's own 12 px gap separates the link, so it has no side margin of its own; the link's arrow sits 10 px from its
+   words, as .angary-text-link's, and the outline's 14 px, as the call's icon beside it. */
+:is(.angary-hero-actions, .grain-hero-actions) > .text-link { --link-ink: var(--color-dark-text); align-self: center; gap: 10px; margin: -10px 0 0; white-space: nowrap; }
+:is(.angary-hero-actions, .grain-hero-actions) > .button-hero-secondary { gap: 14px; }
+/* The 404 / page error row */
+.hero-action-row > .text-link { align-self: center; margin: 0 0 0 12px; white-space: nowrap; }
+.not-found-hero .hero-action-row > .text-link:is(:hover, :focus-visible) { color: var(--color-accent-on-dark-hover); }
 /* /planner-preview keeps its pre-Phase-2 hero while D-04 is open (DirectionPageConfig legacyCallLink): the tool in
    copper, the call as a quiet link beside it, and the copper call only on a phone, where the tool steps down */
 .hero-call { width: fit-content; min-height: 48px; display: grid; grid-template-columns: 18px auto; align-items: center; gap: 12px; margin: 0 0 0 20px; align-self: center; padding: 6px 2px 8px; color: var(--color-dark-text); border-bottom: 1px solid rgba(255,255,255,.3); transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease; }
-.hero-call svg { width: 18px; height: 18px; color: var(--color-accent); stroke-width: 1.8; }
+.hero-call svg { width: 18px; height: 18px; color: var(--color-accent); }
 .hero-call span { display: grid; gap: 6px; }
-.hero-call small { color: var(--color-dark-text-muted); font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .12em; text-transform: uppercase; }
+.hero-call small { color: var(--color-dark-text-muted); line-height: 1; font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .hero-call strong { font: 500 19px/1 var(--font-condensed), sans-serif; letter-spacing: .035em; }
 .hero-call:hover, .hero-call:focus-visible { color: var(--color-accent-on-dark-hover); border-color: color-mix(in srgb, var(--color-accent-on-dark) 72%, transparent); }
 .hero-call-phone-only { display: none; }
@@ -1745,7 +1839,11 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .hero-provenance {
   position: absolute; z-index: 3; right: var(--container-gutter); bottom: 20px; padding: 5px 8px; pointer-events: none;
   color: color-mix(in srgb, var(--color-dark-text) 86%, transparent); background: rgba(13, 16, 14, .72); border: 1px solid rgba(255, 255, 255, .18);
-  font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase;
+  font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase;
+  /* The technical label is Plex 700 (W3-02): «Ілюстрація» is 3 px wider in it than in its metric fallback, and a box held
+     by its right edge moved its left one at the late swap (CLS 0.0578 → 0.0596 on a Pixel 7). The box is reserved,
+     as .hero-call-primary's: 8.75em, wider than the word in either face. */
+  min-width: 8.75em; text-align: center;
 }
 .directions-subhero .hero-provenance { top: 196px; bottom: auto; }
 @media (max-width: 760px) {
@@ -1814,5 +1912,4 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .inquiry-sent dt { color: var(--color-text-muted); font-size: 13px; font-weight: 700; }
 .inquiry-sent dd { margin: 0; color: var(--color-text); font-weight: 600; }
 .inquiry-sent button { justify-self: start; min-height: 44px; padding: 0; border: 0; background: none; color: var(--color-text); font: 700 14px/1.3 var(--font-manrope), sans-serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
-.inquiry-sent button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .inquiry-form-fields[hidden] { display: none; }

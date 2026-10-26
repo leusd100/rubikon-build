@@ -11,14 +11,15 @@
    as it was.
 
    The sheets are set to the header's own lines: their bottom is the note's bottom, their top the top of the title's
-   capitals — 48.6 px of eyebrow above the title, then .15 of the title's size down to the capitals (measured; the
-   title's size is --type-h2). Between those two lines a sheet comes out upright, about 1 : 1.5. */
+   capitals — the eyebrow above the title (its 18.6 px line and the label → H2 rhythm, 20 px since W3-03), then .15 of
+   the title's size down to the capitals (measured; the title's size is --type-h2). Between those two lines a sheet
+   comes out upright, about 1 : 1.5. */
 main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
 main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside { display: none; }
 @media (min-width: 1200px) {
   main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside {
     display: grid; grid-column: 1; grid-row: 1 / span 2; align-self: stretch; justify-self: end; width: 54%; margin: 0;
-    padding-top: calc(48.6px + .15 * var(--type-h2)); pointer-events: none;
+    padding-top: calc(18.6px + var(--rhythm-label) + .15 * var(--type-h2)); pointer-events: none;
   }
   /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
   main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-copy { grid-row: 1; max-width: calc(46% - 36px); }
@@ -33,7 +34,7 @@ main[data-home="v2"] .hv2-directions .dsh .cdw { padding: 4px 7px; }
 /* The title block: the direction's name (two lines kept, so the five blocks are one height), then the sheet's strip */
 main[data-home="v2"] .hv2-directions .dsh-block { display: block; border-top: 1px solid var(--color-border-strong); }
 main[data-home="v2"] .hv2-directions .dsh-name { display: flex; align-items: center; min-height: calc(2.3em + 12px); padding: 6px 8px; color: var(--color-text); font: 600 12.5px/1.15 var(--font-condensed), sans-serif; letter-spacing: .01em; text-wrap: balance; }
-main[data-home="v2"] .hv2-directions .dsh-strip { display: flex; justify-content: space-between; gap: 6px; padding: 0 8px 7px; color: var(--color-text-muted); font: 600 9.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+main[data-home="v2"] .hv2-directions .dsh-strip { display: flex; justify-content: space-between; gap: 6px; padding: 0 8px 7px; color: var(--color-text-muted); font: 600 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; } /* a sheet's strip: the drawings' floor, 11 px (PDO-16; 9.5 before) */
 main[data-home="v2"] .hv2-directions .dsh-strip i { font-style: normal; }
 /* Under 124 px a sheet's strip keeps the number and «Схема» */
 @media (max-width: 1359px) { main[data-home="v2"] .hv2-directions .dsh-strip i { display: none; } }
@@ -81,7 +82,6 @@ main[data-home="v2"] .hv2-directions .dxi { display: none; }
     display: block; padding: 12px 14px 0; color: inherit; text-decoration: none; container-type: inline-size;
     background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color var(--duration-fast) ease;
   }
-  main[data-home="v2"] .hv2-directions .dxi-sheet:focus-visible { outline-offset: 3px; }
   main[data-home="v2"] .hv2-directions .dxi-strip {
     display: flex; justify-content: space-between; gap: 12px; color: var(--color-text-muted);
     font: 600 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
@@ -107,7 +107,7 @@ main[data-home="v2"] .hv2-directions .dxi { display: none; }
     display: inline-flex; align-items: center; gap: 7px; min-height: 44px; margin-left: auto; color: var(--color-accent-strong);
     font: 600 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
   }
-  main[data-home="v2"] .hv2-directions .dxi-more svg { width: 18px; height: 18px; flex: none; stroke-width: 1.8; transition: transform var(--duration-fast) ease; }
+  main[data-home="v2"] .hv2-directions .dxi-more svg { width: 18px; height: 18px; flex: none; transition: transform var(--duration-fast) ease; }
   @media (hover: hover) {
     main[data-home="v2"] .hv2-directions .dxi-sheet:hover { border-color: var(--color-accent); }
     main[data-home="v2"] .hv2-directions .dxi-sheet:hover .dxi-more svg { transform: translateX(3px); }
@@ -119,7 +119,7 @@ main[data-home="v2"] .hv2-directions .dxi { display: none; }
     padding: 6px 0 6px 12px; color: var(--color-text); text-align: left; background: none; border: 0; border-bottom: 1px solid var(--color-border);
     border-radius: 0; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  main[data-home="v2"] .hv2-directions .dxi-row:focus-visible { outline-offset: -3px; box-shadow: none; }
+  main[data-home="v2"] .hv2-directions .dxi-row:focus-visible { outline-offset: -4px; box-shadow: none; } /* a full-width row: the inner ring */
   main[data-home="v2"] .hv2-directions .dxi-num { color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
   main[data-home="v2"] .hv2-directions .dxi-row-name { font: 400 19px/1.2 var(--font-display), sans-serif; letter-spacing: -.01em; }
   main[data-home="v2"] .hv2-directions .dxi-row[aria-pressed="true"] { color: var(--color-accent-strong); }

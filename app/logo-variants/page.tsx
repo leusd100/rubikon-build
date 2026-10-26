@@ -67,7 +67,7 @@ export default function LogoVariantsPage() {
                 <div className="logo-option-copy">
                   <h2>{title}</h2>
                   <p>{text}</p>
-                  <a className="section-link" href={`/brand/${asset}.svg`} download>Завантажити SVG <span aria-hidden="true">↓</span></a>
+                  <a className="link-arrow section-link" href={`/brand/${asset}.svg`} download>Завантажити SVG <span aria-hidden="true" data-arrow="down">↓</span></a>
                 </div>
               </article>
             ))}

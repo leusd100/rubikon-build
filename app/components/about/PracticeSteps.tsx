@@ -5,6 +5,7 @@ import { PracticeDrawing } from './PracticeDrawing';
 import { DrawingSheet } from '../DrawingSheet';
 import { useDrawingCamera, type ViewNeeds } from '../useDrawingCamera';
 import { useDrawingTour } from '../useDrawingTour';
+import { keepHeadingWords } from '../../lib/typography';
 
 // /pro-nas «Досвід працює ще до початку робіт»: the illustration answers the list one step at a time. The camera
 // pushes in on that step's place in the image — the drawing under the hands, the order the frame goes up (base
@@ -94,9 +95,9 @@ export function PracticeSteps({
           },
         ]}
         action={motion && (
-          <button type="button" className="ps-control" data-paused={touring ? undefined : true} onClick={toggle}>
-            <span className="ps-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ' показу кроків' : ' показ кроків'}</span></span>
-            <span className="ps-control-icon" aria-hidden="true" />
+          <button type="button" className="motion-control ps-control" data-paused={touring ? undefined : true} onClick={toggle}>
+            <span className="motion-control-label ps-control-label">{touring ? 'Пауза' : 'Відтворити'}<span className="sr-only">{touring ? ' показу кроків' : ' показ кроків'}</span></span>
+            <span className="motion-control-icon ps-control-icon" aria-hidden="true" />
           </button>
         )}
       >
@@ -137,12 +138,12 @@ export function PracticeSteps({
       </DrawingSheet>
       <div className="about-story-copy">
         <p className="eyebrow"><span /> {eyebrow}</p>
-        <h2 id={titleId}>{title}</h2>
+        <h2 id={titleId}>{keepHeadingWords(title)}</h2>
         <p className="about-story-lead">{lead}</p>
         <ol className="about-before">
           {steps.map((item, index) => (
             <li key={item.title} style={{ '--i': index } as CSSProperties}>
-              <button type="button" className="about-before-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)} {...hover(index + 1)}>
+              <button type="button" className="step-option about-before-step" aria-pressed={step === index + 1} onClick={() => choose(index + 1)} {...hover(index + 1)}>
                 <span className="about-before-index" aria-hidden="true">{pad(index + 1)}</span>
                 <b>{item.title}</b>
                 <span className="about-before-text">{item.text}</span>

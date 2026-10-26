@@ -60,7 +60,8 @@
 .proc-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 36px; margin-top: var(--hero-gap-actions); }
 .proc-provenance {
   position: absolute; right: 24px; bottom: 20px; padding: 5px 8px; color: color-mix(in srgb, var(--color-dark-text) 86%, transparent);
-  background: rgba(13, 16, 14, .72); border: 1px solid rgba(255, 255, 255, .18); font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase;
+  background: rgba(13, 16, 14, .72); border: 1px solid rgba(255, 255, 255, .18); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase;
+  min-width: 8.75em; text-align: center; /* its box reserved against the late swap, as .hero-provenance (globals.css) */
 }
 
 /* ---------------------------------------------------------------- 2 · Where to start */
@@ -75,12 +76,13 @@
 .proc-start-list li::after { content: ''; position: absolute; top: 50%; left: 100%; width: 36px; height: 1px; background: var(--color-accent); transform-origin: left; }
 .proc-start-list::after { content: ''; position: absolute; top: calc(100% / 6); bottom: calc(100% / 6); left: calc(100% + 36px); width: 1px; background: var(--color-accent); transform-origin: top; }
 .proc-start-list::before { content: ''; position: absolute; top: 50%; left: calc(100% + 36px); width: 36px; height: 1px; background: var(--color-accent); transform-origin: left; }
+/* «Далі» is an arrow link (.link-arrow) that is also the diagram's last node: it keeps its plate — the frame the lines
+   run into, its padding and tint — and takes the link's type, hover and arrow */
 .proc-start-merge {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; color: var(--color-text);
-  background: var(--color-surface-elevated); border: 1px solid var(--color-accent); font: 700 13px/1.25 var(--font-condensed), sans-serif;
-  letter-spacing: .06em; text-transform: uppercase; transition: background var(--duration-fast) ease;
+  display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; --link-ink: var(--color-text);
+  background: var(--color-surface-elevated); border: 1px solid var(--color-accent); transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
 }
-.proc-start-merge span[aria-hidden] { color: var(--color-accent-strong); font-size: 18px; }
+.proc-start-merge span[aria-hidden] { font-size: 18px; }
 .proc-start-merge:hover { background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-elevated)); }
 .start-glyph { width: 52px; height: 52px; margin-top: -4px; }
 .start-glyph path, .start-glyph rect { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
@@ -123,10 +125,8 @@
 .proc-scope-legend i { width: 22px; height: 12px; border: 1.5px solid var(--color-border-control); background: color-mix(in srgb, var(--color-text) 3%, transparent); }
 .proc-scope-legend .is-scope i { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
 .proc-scope-legend .is-context i { border-style: dashed; border-color: var(--color-border-strong); background: none; }
-/* «Обговорити цей формат» */
-.proc-scope-cta { justify-self: start; align-self: end; display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 18px; color: var(--color-text); border-bottom: 1px solid var(--color-accent); font: 700 12px/1 var(--font-manrope), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
-.proc-scope-cta span { color: var(--color-accent-strong); transition: transform var(--duration-fast) var(--m-ease); }
-.proc-scope-cta:hover span, .proc-scope-cta:focus-visible span { transform: translate(3px, -3px); }
+/* «Обговорити цей формат» (an arrow link: .link-arrow) */
+.proc-scope-cta { justify-self: start; align-self: end; margin-top: 18px; }
 /* The form field it fills: a short copper halo so the visitor sees what was chosen */
 .process-page #inquiry select.is-prefilled { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent); }
 
@@ -163,7 +163,7 @@
 .proc-resp-switch span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
 .proc-resp-switch label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
 .proc-resp-switch input:checked + span { color: var(--color-bg); background: var(--color-text); }
-.proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -6px; }
+.proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -4px; } /* a segment: the inner ring */
 @container scroll-state(stuck: top) {
   .proc-resp-switch > div { box-shadow: 0 10px 28px rgba(20, 18, 15, .16); }
 }
@@ -173,7 +173,7 @@
 .proc-responsibility:has(input[value="subcontract"]:checked) [data-format]:not([data-format="subcontract"]) { display: none; }
 /* The contract band under the table, with its «Договір» tab */
 .proc-contract-band { position: relative; padding: 30px 28px 22px; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); }
-.proc-contract-tab { position: absolute; top: -13px; left: 24px; margin: 0; padding: 6px 12px; color: var(--color-bg); background: var(--color-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.proc-contract-tab { position: absolute; top: -13px; left: 24px; margin: 0; padding: 6px 12px; color: var(--color-bg); background: var(--color-text); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .proc-contract-band p { max-width: 920px; margin: 0; color: var(--color-text); font-size: 16.5px; line-height: 1.6; }
 /* The chosen format's words settle in (display: none → shown restarts the animation) */
 @media (prefers-reduced-motion: no-preference) {
@@ -225,7 +225,6 @@
 
 /* ---------------------------------------------------------------- Phone */
 @media (max-width: 760px) {
-  .process-page { --section-space: 72px; }
   /* the «Далі — один зрозумілий процес» plate only scrolled to the next block here (PDO-101); the desktop keeps it as the
      diagram's last link */
   .proc-start-merge { display: none; }

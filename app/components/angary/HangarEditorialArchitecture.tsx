@@ -14,6 +14,7 @@ import { deriveSummary } from '../../lib/configurator/deriveSummary';
 import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 import { ProcessDrawing } from '../directions/ProcessDrawing';
 import type { ProcessSplit } from '../../types/directionPage';
+import { keepHeadingWords } from '../../lib/typography';
 
 // /angary below the configurator (UX review 2026-10, report «/angary по блоках»): the visitor's frame from roof to
 // footing, a real hangar built that way, what drives the cost, and the route from the brief to handed-over works with
@@ -75,7 +76,7 @@ export function HangarEditorialArchitecture({
         <div className="shell">
           <header className="angary-section-heading">
             <p className="eyebrow"><span /> Вартість</p>
-            <h2 id="angary-cost-title">{content.cost.title}</h2>
+            <h2 id="angary-cost-title">{keepHeadingWords(content.cost.title)}</h2>
             <p>{content.cost.text}</p>
           </header>
           <CostFactorsFigure factors={content.cost.factors} title={null} tour={false} notes={notes} sheet />
@@ -85,8 +86,8 @@ export function HangarEditorialArchitecture({
               <a className="button button-primary" href="#inquiry" data-open-inquiry>
                 Обговорити вартість вашого ангара <span aria-hidden="true">↓</span>
               </a>
-              <a className="angary-text-link" href="/yak-pratsyuiemo#koshtorys">
-                Як формуємо кошторис і графік <span aria-hidden="true">→</span>
+              <a className="link-arrow angary-text-link" href="/yak-pratsyuiemo#koshtorys">
+                Як формуємо кошторис і графік <span aria-hidden="true" data-arrow="right">→</span>
               </a>
             </div>
           </div>
@@ -97,7 +98,7 @@ export function HangarEditorialArchitecture({
         <div className="shell">
           <header className="angary-section-heading is-inverse">
             <p className="eyebrow light"><span /> Від брифу до об’єкта</p>
-            <h2 id="angary-process-title">Зрозумілий шлях від першого брифу</h2>
+            <h2 id="angary-process-title">{keepHeadingWords('Зрозумілий шлях від першого брифу')}</h2>
           </header>
           {/* «Ви · Ми» (owner, 06.10, as on the other direction pages): over the rail what you do, under it what we do — the
               Delivery Model's steps word for word — and on it what you get, drawn small. 01 is the visitor's own brief: its
@@ -118,13 +119,13 @@ export function HangarEditorialArchitecture({
                     down to the attached brief in the form once something is */}
                 {/* the form under the configurator's stamp (Phase 4): up to it */}
                 {attached && !sent && (
-                  <a className="angary-route-brief-action" href="#inquiry" onClick={(event) => revealAttachedBrief(event, { takeOver: formAbove })}>
-                    Надіслати бриф <span aria-hidden="true">{formAbove ? '↑' : '↓'}</span>
+                  <a className="link-arrow angary-route-brief-action" href="#inquiry" onClick={(event) => revealAttachedBrief(event, { takeOver: formAbove })}>
+                    Надіслати бриф <span aria-hidden="true" data-arrow={formAbove ? 'up' : 'down'}>{formAbove ? '↑' : '↓'}</span>
                   </a>
                 )}
                 {!attached && (
-                  <a className="angary-route-brief-action" href="#configurator">
-                    Сформувати бриф <span aria-hidden="true">↑</span>
+                  <a className="link-arrow angary-route-brief-action" href="#configurator">
+                    Сформувати бриф <span aria-hidden="true" data-arrow="up">↑</span>
                   </a>
                 )}
               </div>
@@ -137,7 +138,7 @@ export function HangarEditorialArchitecture({
             </li>
             {content.route.steps.map((step, index) => (
               <li key={step.title} style={{ '--i': index + 1 } as CSSProperties}>
-                <h3><b>{pad(index + 2)}</b>{step.title}</h3>
+                <h3><b>{pad(index + 2)}</b>{keepHeadingWords(step.title)}</h3>
                 <p className="ps-you"><small>Ви</small>{content.route.sides[index]?.you}</p>
                 <div className="ps-node">{content.route.sides[index] && <ProcessDrawing kind={content.route.sides[index].drawing} />}</div>
                 <p className="ps-result"><span className="sr-only">Результат: </span>{content.route.sides[index]?.result}</p>
@@ -145,8 +146,8 @@ export function HangarEditorialArchitecture({
               </li>
             ))}
           </ol>
-          <a className="angary-route-more" href="/yak-pratsyuiemo#etapy">
-            Усі етапи, документи й відповідальність <span aria-hidden="true">→</span>
+          <a className="link-arrow angary-route-more" href="/yak-pratsyuiemo#etapy">
+            Усі етапи, документи й відповідальність <span aria-hidden="true" data-arrow="right">→</span>
           </a>
 
           {/* Who answers for it — the route's title block («штамп»), in place of a separate section. Owner, 03.10: it hands
@@ -167,7 +168,7 @@ export function HangarEditorialArchitecture({
               <a className="angary-stamp-phone" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
                 <Phone aria-hidden="true" /> {company.phone.display}
               </a>
-              <a className="angary-stamp-link" href="/pro-nas">Про компанію <span aria-hidden="true">→</span></a>
+              <a className="link-arrow angary-stamp-link" href="/pro-nas">Про компанію <span aria-hidden="true" data-arrow="right">→</span></a>
             </div>
           </div>
         </div>

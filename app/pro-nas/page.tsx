@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { AboutHeroVideo } from '../components/AboutHeroVideo';
 import { Breadcrumbs, HeroCallButton, SectionHeader, TeamSection } from '../components/SiteChrome';
+import { keepHeadingWords, keepShortWords } from '../lib/typography';
 import { ConversationSection } from '../components/ConversationSection';
 import { ProcessMotion } from '../components/process/ProcessMotion';
 import { PhoneHeroScroll } from '../components/PhoneHeroScroll';
@@ -105,12 +106,12 @@ export default function AboutPage() {
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
             <h1>
-              <span className="subhero-title-line">Будуємо й відповідаємо</span>
+              <span className="subhero-title-line">{keepHeadingWords('Будуємо й відповідаємо')}</span>
               <span className="subhero-title-line"><em>своїми іменами</em></span>
             </h1>
           </div>
           <div className="subhero-side about-subhero-side">
-            <p>RUBIKON BUILD — родинна будівельна компанія з Дніпра. Практичний досвід Сергія Івановича поєднуємо із системною організацією роботи та зрозумілою комунікацією з клієнтом.</p>
+            <p>{keepShortWords('RUBIKON BUILD — родинна будівельна компанія з Дніпра. Практичний досвід Сергія Івановича поєднуємо із системною організацією роботи та зрозумілою комунікацією з клієнтом.')}</p>
             <div className="about-hero-actions" data-hero-actions>
               <HeroCallButton />
               <a className="button button-hero-secondary about-hero-cta" href="#inquiry" data-open-inquiry="">
@@ -136,8 +137,8 @@ export default function AboutPage() {
             supporting="Беремо окремі роботи або погоджений комплекс робіт. Хто виконує кожну частину, фіксуємо в договорі до початку робіт."
           />
           <CapabilityFigure columns={capabilityLedger()} />
-          <a className="section-link about-build-all" href={siteRoutes.directions}>
-            Усі напрямки робіт <span aria-hidden="true">↗</span>
+          <a className="link-arrow section-link about-build-all" href={siteRoutes.directions}>
+            Усі напрямки робіт <span aria-hidden="true" data-arrow="up-right">↗</span>
           </a>
           {/* The region closes the block the way «Два покоління — одна відповідальність» closes the people; under the
               line, the oblast's real outline (geoBoundaries / OpenStreetMap, credited) draws itself once, Dnipro — where
@@ -174,9 +175,9 @@ export default function AboutPage() {
               <li key={title} style={{ '--i': index } as CSSProperties}>
                 <span className="about-principle-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                 <PrincipleMark kind={mark} />
-                <h3>{title}</h3>
+                <h3>{keepHeadingWords(title)}</h3>
                 <p>{text}</p>
-                <a className="about-principle-link" href={href}>{link} <span aria-hidden="true">↗</span></a>
+                <a className="link-arrow about-principle-link" href={href}>{link} <span aria-hidden="true" data-arrow="up-right">↗</span></a>
               </li>
             ))}
           </ol>

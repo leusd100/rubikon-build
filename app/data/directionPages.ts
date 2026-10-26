@@ -60,7 +60,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
         sectionClassName: 'angary-service-subhero',
         items: [
           { label: 'Зібрати конфігурацію', href: '#configurator', className: 'button button-hero-secondary', arrow: '↓' },
-          { label: 'Обговорити задачу', href: '#inquiry', className: 'text-link', arrow: '↓', openInquiry: true },
+          { label: 'Обговорити задачу', href: '#inquiry', className: 'link-arrow text-link', arrow: '↓', openInquiry: true },
         ],
       },
     },
@@ -178,6 +178,9 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   },
   metalokonstruktsii: {
     id: 'metalokonstruktsii',
+    // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
+    // on /angary (PDO-15)
+    related: { placement: 'after-inquiry' },
     hero: {
       breadcrumbLabel: 'Металоконструкції', title: 'Металоконструкції', accent: 'від деталі до монтажу',
       intro: 'Надійність металоконструкції залежить не лише від металу, а й від геометрії, вузлів, зварних і болтових з’єднань та монтажної схеми. Організовуємо виготовлення металоконструкцій і виконуємо монтаж — комплексно або окремим етапом.',
@@ -277,6 +280,9 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   },
   'betonni-roboty': {
     id: 'betonni-roboty',
+    // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
+    // on /angary (PDO-15)
+    related: { placement: 'after-inquiry' },
     hero: {
       breadcrumbLabel: 'Бетонні роботи', title: 'Бетонні роботи', accent: 'під навантаження об’єкта',
       intro: 'Виконуємо типові фундаменти й бетонні основи для промислових, складських, аграрних і комерційних об’єктів — комплексно або окремим підрядом. Основні параметри перевіряються до подачі бетону.',
@@ -374,6 +380,9 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   },
   'pokrivelni-roboty': {
     id: 'pokrivelni-roboty',
+    // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
+    // on /angary (PDO-15)
+    related: { placement: 'after-inquiry' },
     hero: {
       breadcrumbLabel: 'Покрівельні роботи', title: 'Покрівельні роботи', accent: 'для промислових споруд',
       intro: 'Монтуємо й ремонтуємо покрівлі промислових, складських і комерційних об’єктів. Можемо виконати покрівлю під час будівництва всього об’єкта або взяти її окремим підрядом.',

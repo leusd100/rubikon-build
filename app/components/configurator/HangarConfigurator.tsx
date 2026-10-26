@@ -10,7 +10,7 @@ import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 import { InquiryFormSlot } from '../inquiry/InquiryFormHost';
 import { HangarPreviewModes } from './HangarPreviewModes';
-import { keepShortWords } from '../../lib/typography';
+import { keepHeadingWords, keepShortWords } from '../../lib/typography';
 import { sheetObjectLabel } from './sheetLabels';
 import './configurator-sheet.css';
 
@@ -298,7 +298,7 @@ export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ e
           {embedded ? 'Конфігуратор · перший технічний бриф' : 'Proof of concept · дослідницький екран'}
         </p>
         {embedded ? (
-          <h2 id="hangar-configurator-title">Сформуйте базову конфігурацію ангара</h2>
+          <h2 id="hangar-configurator-title">{keepHeadingWords('Сформуйте базову конфігурацію ангара')}</h2>
         ) : (
           <h1 id="hangar-configurator-title">Живий конфігуратор ангара</h1>
         )}

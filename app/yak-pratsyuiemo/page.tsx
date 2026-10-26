@@ -1,6 +1,7 @@
 import { ChangeSheets } from '../components/process/ChangeSheets';
 import { CostFactorsFigure } from '../components/process/CostFactorsFigure';
 import { Breadcrumbs, HeroCallButton, SectionHeader } from '../components/SiteChrome';
+import { keepHeadingWords, keepShortWords } from '../lib/typography';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionFaq } from '../components/DirectionDetail';
 import { FormatSwitchSync } from '../components/process/FormatSwitchSync';
@@ -145,10 +146,11 @@ export default function DeliveryModelPage() {
         <div className="shell proc-hero-layout phone-hero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Як працюємо', href: siteRoutes.process }]} />
           <p className="eyebrow light"><span /> Як працюємо</p>
-          <h1>Від задачі — до <em>зрозумілого плану робіт</em></h1>
+          {/* «до» and the accent are one box from 761 px (.keep-pair, globals.css): a no-break space before the accent's own
+              inline box did not hold in Chromium or WebKit (PDO-44 п. 2, W3-02) */}
+          <h1>{keepHeadingWords('Від задачі —')} <span className="keep-pair">до{'\u00A0'}<em>зрозумілого плану робіт</em></span></h1>
           <p className="proc-hero-lead">
-            Розкажіть про задум, покажіть готовий проєкт або назвіть роботи, які потрібно виконати. Ми уточнимо задачу,
-            погодимо свій обсяг і скажемо, які дані потрібні для кошторису.
+            {keepShortWords('Розкажіть про задум, покажіть готовий проєкт або назвіть роботи, які потрібно виконати. Ми уточнимо задачу, погодимо свій обсяг і скажемо, які дані потрібні для кошторису.')}
           </p>
           <div className="proc-hero-actions">
             <HeroCallButton />
@@ -164,7 +166,7 @@ export default function DeliveryModelPage() {
         <div className="shell proc-start-layout">
           <div className="proc-start-head">
             <p className="eyebrow"><span /> Перше звернення</p>
-            <h2 id="proc-start-title">З чого можна почати</h2>
+            <h2 id="proc-start-title">{keepHeadingWords('З чого можна почати')}</h2>
             <p>Для першої розмови достатньо того, що ви знаєте про об’єкт зараз.</p>
           </div>
           <div className="proc-start-flow" data-motion>
@@ -173,15 +175,15 @@ export default function DeliveryModelPage() {
                 <li key={title} style={{ '--i': index } as CSSProperties}>
                   <StartGlyph kind={kind} />
                   <div>
-                    <h3>{title}</h3>
+                    <h3>{keepHeadingWords(title)}</h3>
                     <p>{text}</p>
                   </div>
                 </li>
               ))}
             </ul>
             {/* Three starting states, one route: the rows join into the four steps below */}
-            <a className="proc-start-merge" href="#etapy">
-              <span>Далі — один зрозумілий процес</span> <span aria-hidden="true">↓</span>
+            <a className="link-arrow proc-start-merge" href="#etapy">
+              <span>Далі — один зрозумілий процес</span> <span aria-hidden="true" data-arrow="down">↓</span>
             </a>
           </div>
         </div>
@@ -205,7 +207,7 @@ export default function DeliveryModelPage() {
           <ol className="process-split proc-split" data-motion>
             {steps.map((step, index) => (
               <li key={step.number} style={{ '--i': index } as CSSProperties}>
-                <h3><b>{step.number}</b>{step.title}</h3>
+                <h3><b>{step.number}</b>{keepHeadingWords(step.title)}</h3>
                 <p className="ps-you"><small>Ви</small>{ROUTE_SIDES[index].you}</p>
                 <div className="ps-node">
                   <ProcessDrawing kind={ROUTE_SIDES[index].drawing} />

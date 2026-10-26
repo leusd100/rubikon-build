@@ -9,6 +9,7 @@ import { useDrawingTour } from '../useDrawingTour';
 import type { DirectionNode as DirectionNodeConfig } from '../../types/directionPage';
 import { TourCaptions, TourControl, TourProgress, TourSteps, tourStepCell } from './TourParts';
 import { ScopeKey } from './ScopeKey';
+import { keepHeadingWords, keepShortWords } from '../../lib/typography';
 
 // «Вузол напряму» — a direction page's editorial picture as a tour of one node, in three steps (metal: the drawing,
 // the bolted joint, the weld; concrete: reinforcement, anchors, formwork; roofing: the base, the eave, the drainage).
@@ -128,8 +129,8 @@ export function DirectionNode({
             phone they come after the picture, so a pressed step changes what is right above it */}
         <div className="direction-editorial-copy">
           <p className="eyebrow"><span /> {eyebrow}</p>
-          <h2 id={titleId}>{title}</h2>
-          <p>{text}</p>
+          <h2 id={titleId}>{keepHeadingWords(title)}</h2>
+          <p>{keepShortWords(text)}</p>
         </div>
         <TourSteps steps={steps} step={step} choose={chooseInView} hover={hover} />
         {/* The sheet alone is the picture's grid item; with a key (the grain store's line types) both share the place */}

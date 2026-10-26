@@ -3,6 +3,7 @@ import { siteRoutes } from '../../data/navigation';
 import { leadership } from '../../data/people';
 import { ProofContour } from './ProofContour';
 import { ScopeCells } from './ScopeCells';
+import { keepHeadingWords } from '../../lib/typography';
 
 // HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
 //
@@ -58,7 +59,7 @@ export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase 
       <div className="shell">
         <header className="hv2-signature-head">
           <p className="hv2-kicker"><span aria-hidden="true" /> Інженерний погляд</p>
-          <h2 id="hv2-signature-title">Як ми дивимося на об’єкт</h2>
+          <h2 id="hv2-signature-title">{keepHeadingWords('Як ми дивимося на об’єкт')}</h2>
           <p className="hv2-signature-support">
             Пояснюємо об’єкт через його конструкцію — на фото, кресленні чи простій схемі. Так легше разом визначити,
             які роботи потрібні.
@@ -71,7 +72,7 @@ export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase 
           Ілюстрації та схеми пояснюють підхід і не замінюють проєкт: розрахунки та проєктні рішення — за проєктувальником.
         </p>
         {/* The one way on from the explanation to how the work itself is organised; the band's own link style */}
-        <a className="hv2-people-link hv2-process-link" href={siteRoutes.process}>Як працюємо <span aria-hidden="true">↗</span></a>
+        <a className="link-arrow hv2-people-link hv2-process-link" href={siteRoutes.process}>Як працюємо <span aria-hidden="true" data-arrow="up-right">↗</span></a>
       </div>
     </section>
   );

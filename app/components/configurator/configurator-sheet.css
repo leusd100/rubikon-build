@@ -73,7 +73,7 @@
 /* 32 px chips with a 1 px border: the target reaches 7 px past the padding box each way, 44 px in all */
 .hc-sheet-expand::after, .hc-sheet-chip::after { position: absolute; inset: -7px 0; content: ''; }
 .hc-sheet-expand:hover, .hc-sheet-chip:hover, .hc-sheet-chip[aria-expanded="true"] { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .4); }
-.hc-sheet-expand:focus-visible, .hc-sheet-chip:focus-visible { outline: 2px solid var(--color-accent-on-dark); outline-offset: 2px; }
+.hc-sheet-expand:focus-visible, .hc-sheet-chip:focus-visible { outline: 3px solid var(--color-accent-on-dark); outline-offset: 4px; } /* the outer ring, on the sheet's charcoal */
 /* the colours, opened from their chip: a note laid on the picture under the chips, on the sheet's paper */
 .hangar-configurator-embedded .hc-preview-sheet .hc-sheet-options {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 3;
@@ -101,8 +101,15 @@
   background: none; border: 0; backdrop-filter: none;
 }
 :is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay > div { display: flex; align-items: baseline; gap: 6px; }
-:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dt { margin: 0; font-size: 10px; letter-spacing: .1em; }
-:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dd { font-size: 13px; }
+:is(.hangar-configurator-embedded .hc-preview-sheet, .hc-fullscreen-sheet) .hc-three-overlay dt { margin: 0; letter-spacing: .1em; }
+/* The floor (PDO-16, W3-02): on the page the sheet's quiet line has the drawings' 11 px names (10 before) beside its 13 px
+   sizes. Nothing runs out of the picture; the line takes its second row at 807–857 and 1024–1102 px wide (in 10 px at
+   807–826 and 1024–1069), and the camera frames the building clear of it as before. The expanded view is opened to look
+   closer: 12 / 14 px (10 / 13 before). Only /angary has this sheet — /configurator-preview has no .hc-preview-sheet. */
+.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay dt { font-size: 11px; }
+.hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay dd { font-size: 13px; }
+.hc-fullscreen-sheet .hc-three-overlay dt { font-size: 12px; }
+.hc-fullscreen-sheet .hc-three-overlay dd { font-size: 14px; }
 /* «Сховати розміри» is not on the sheet (10.10): its 3D shows the sizes as this one quiet line; the expanded view keeps
    the toggle */
 .hangar-configurator-embedded .hc-preview-sheet .hc-three-overlay-toggle { display: none; }
@@ -119,7 +126,7 @@
 /* choice targets of 44 px (03.10: swatches 30–36 px, the scale figure's row 15 px, «Закрити» 36 px) */
 .hangar-configurator-embedded .hc-material-swatch-row button { min-height: 44px; padding-inline: 10px 12px; }
 .hangar-configurator-embedded .hc-scale-figure-toggle { min-height: 44px; }
-.hc-fullscreen-sheet .hc-fullscreen-close { min-height: 44px; }
+.hc-fullscreen-sheet .hc-fullscreen-close { min-height: 44px; font-size: 13px; }
 
 /* A narrow sheet puts «Що показано» on its own row — from 640 px here, not drawing-sheet.css's 480: beside the object
    and the switch on a 1024–1200 px window it was squeezed into a 128 px column of four lines (03.10) */
@@ -269,7 +276,7 @@
 .hc-section figcaption {
   margin-bottom: 8px;
   color: var(--color-dark-text-muted);
-  font: 700 10px/1 var(--font-condensed), sans-serif;
+  font: 700 11px/1 var(--font-condensed), sans-serif; /* the drawings' floor (PDO-16; 10 before) */
   letter-spacing: .14em;
   text-transform: uppercase;
 }
@@ -293,8 +300,11 @@
   /* The whole sheet's legend names its materials (10.10, audit F56): its caption and, under each glyph, the words —
      wrapping, in the width under the drawing it had left empty. The glyphs alone did not say what the material was.
      The mini drawing keeps the glyphs alone (below). */
-  .hc-section-row { grid-template-columns: 52px minmax(0, 1fr); align-items: start; column-gap: 8px; }
-  .hc-section-row dt { font-size: 10px; line-height: 16px; letter-spacing: .04em; white-space: nowrap; }
+  /* The drawings' floor (PDO-16, W3-02; 10 px before): the names column 56 px (52 before), so «Покрівля» in 11 px stays in
+     it (it ran 3 px past), and the caption .10em, so on a 320 px phone it keeps one line (in .14em it took two) */
+  .hc-section figcaption { letter-spacing: .1em; }
+  .hc-section-row { grid-template-columns: 56px minmax(0, 1fr); align-items: start; column-gap: 8px; }
+  .hc-section-row dt { font-size: 11px; line-height: 16px; letter-spacing: .04em; white-space: nowrap; }
   .hc-section-row dd { flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12.5px; line-height: 1.3; white-space: normal; }
   .hc-section-glyph { width: 48px; height: 16px; }
   .hc-preview-image > .hc-section { max-width: calc(100% - 20px); }
@@ -360,7 +370,7 @@
 .hc-frame.ft[data-step="2"] :is(.ft-footing, .ft-footing-top, .ft-slab, .ft-ground) { opacity: .35; }
 .hc-frame-node-number {
   display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 7px; border: 1px solid currentColor;
-  border-radius: 50%; font: 700 10.5px/1 var(--font-condensed), sans-serif;
+  border-radius: 50%; font: 700 11px/1 var(--font-condensed), sans-serif; /* the drawings' floor (PDO-16, W3-02; 10.5 before) */
 }
 /* The tour's progress bars run the field's width: they stopped short of the «Подивитися в 3D» chip in its corner (07.10),
    and «Каркас» has no chip since 09.10 (HangarPreviewModes) — and are there only while «Показати по черзі» plays (10.10,
@@ -420,11 +430,17 @@
   background: transparent; color: var(--color-text); font: 700 12px/1 var(--font-manrope), sans-serif; cursor: pointer;
 }
 .hc-mini-toggle::after { position: absolute; inset: -6px 0; content: ''; }
-.hc-mini-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.hc-mini-toggle:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; } /* the outer ring (W3-06, PDO-88) */
 @media (max-width: 760px) {
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet .sheet-action:has(.hc-mini-toggle) { display: flex; align-items: center; }
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-sheet.is-folded :is(.sheet-image, .sheet-ruler) { display: none; }
 }
+
+/* On /angary the band's title is a section title beside the sheet: the compact H2 (W3-02 T4; on a phone the site's
+   phone H2 size, PDO-05). Only the embedded band (an h2): /configurator-preview's own h1 and its configurator-visual
+   shots keep theirs. Here, not in configurator.css, so the short laptop's size below follows it in one file: the two
+   are equally specific, and the two files' order is not promised. */
+.hangar-configurator-embedded .hc-hero h2 { font-size: var(--type-h2-compact); }
 
 /* ── A short laptop (07.10): the configurator's own heading gives the room to the step ──────────────────────────────── */
 @media (min-width: 1024px) and (max-height: 760px) {
@@ -434,7 +450,10 @@
   /* «Ще не знаю» among the answers says they can be skipped */
   .hangar-configurator-embedded .hc-object-note { display: none; }
   .hangar-configurator-embedded .hc-hero { gap: 8px var(--grid-gap); margin-bottom: 18px; }
-  .hangar-configurator-embedded .hc-hero :is(h1, h2) { font-size: 34px; max-width: none; }
+  /* …one step down the H2 scale, to the minor level (W3-02, 25.10: 32 / 34.15 / 36 px at 1280 / 1366 / 1536; it was 34
+     px, a fourth H2 size on the page and under the minor one at 1536). One line beside the lede, so the band keeps its
+     height; the compact level wrapped it to two and pushed the steps 13–25 px further down. */
+  .hangar-configurator-embedded .hc-hero :is(h1, h2) { font-size: var(--type-h2-minor); max-width: none; }
   .hangar-configurator-embedded .hc-lede { font-size: 14px; line-height: 1.5; }
   /* the step tabs' own short-screen sizes are with the stepper (configurator-controls.css) */
   .hangar-configurator-embedded .hc-step-panel .hc-control-group { padding-block: 16px 18px; }

@@ -22,7 +22,7 @@
 .cs-rows { display: grid; margin: 0; padding: 0; list-style: none; }
 .cs-rows li, .cs-total { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr) 34%; align-items: center; gap: 10px; min-height: 34px; }
 .cs-rows li { border-bottom: 1px dashed var(--color-border); }
-.cs-num { display: grid; place-items: center; width: 18px; height: 18px; color: var(--cs-copper-ink); border: 1px solid var(--cs-copper); border-radius: 50%; font: 700 10px/1 var(--font-condensed), sans-serif; }
+.cs-num { display: grid; place-items: center; width: 18px; height: 18px; color: var(--cs-copper-ink); border: 1px solid var(--cs-copper); border-radius: 50%; font: 700 11px/1 var(--font-condensed), sans-serif; }
 /* the names wrap rather than end in «…» where a sheet is narrow (07.10: «Залежності від інших робіт і стр…» on tablets
    and phones; a two-line name still fits the row's 34 px) */
 .cs-name { color: var(--color-text-secondary); font-size: 13.5px; line-height: 1.25; }
@@ -40,8 +40,8 @@
 .cs-bar .cs-cloud-box { inset: -2px -4px; }
 .cs-cloud { position: absolute; top: -6px; left: -6px; overflow: visible; }
 .cs-cloud path { fill: none; stroke: var(--cs-copper); stroke-width: 1.5; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
-.cs-delta { position: absolute; z-index: 1; top: -11px; right: -8px; padding: 3px 6px 2px; color: var(--color-on-action); background: var(--color-action); font: 700 10px/1.1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; opacity: 0; transform: translateY(4px); }
-.cs-tick { position: absolute; right: 0; bottom: -9px; padding: 1px 5px; color: var(--cs-copper-ink); background: var(--color-surface-elevated); font: 700 10.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; opacity: 0; }
+.cs-delta { position: absolute; z-index: 1; top: -11px; right: -8px; padding: 3px 6px 2px; color: var(--color-on-action); background: var(--color-action); font: 700 11px/1.1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; opacity: 0; transform: translateY(4px); }
+.cs-tick { position: absolute; right: 0; bottom: -9px; padding: 1px 5px; color: var(--cs-copper-ink); background: var(--color-surface-elevated); font: 700 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; opacity: 0; }
 
 /* The schedule: a lane per work over thirteen columns; the «зараз» line where the change comes */
 .cs-gantt { --name: 36%; position: relative; display: grid; flex: 1; align-content: space-evenly; gap: 9px; padding-top: 18px; }
@@ -57,8 +57,8 @@
 .cs-bar .cs-grow { position: absolute; top: -1.5px; left: 100%; width: calc(var(--g) / var(--l) * 100%); height: calc(100% + 3px); background: repeating-linear-gradient(-45deg, var(--cs-copper) 0 2px, transparent 2px 5px); border: 1.5px solid var(--cs-copper); border-left: 0; transform: scaleX(0); transform-origin: left; }
 .cs-bar .cs-delta { top: -20px; right: auto; left: 0; }
 .cs-now { position: absolute; top: 0; bottom: -4px; left: calc(var(--name) + (100% - var(--name)) * var(--s) / 13); border-left: 1px dashed var(--cs-copper); }
-.cs-now span { position: absolute; top: -2px; left: 5px; color: var(--cs-copper-ink); font: 700 10px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-.cs-back { margin: auto 0 0; padding-top: 14px; color: var(--cs-copper-ink); font: 700 11.5px/1.35 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: 0; }
+.cs-now span { position: absolute; top: -2px; left: 5px; color: var(--cs-copper-ink); font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.cs-back { margin: auto 0 0; padding-top: 14px; color: var(--cs-copper-ink); font: 700 12px/1.35 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: 0; }
 
 /* The change slip: drafted at step 1, signed by both and stamped at step 3 */
 .cs-order { position: relative; grid-column: 3; grid-row: 1; margin-top: 26px; padding: 14px 16px 16px; background: var(--color-surface-elevated); border: 1px solid var(--cs-copper); box-shadow: 0 14px 34px rgba(20, 18, 15, .08); opacity: 0; transform: translateY(14px) rotate(-1.5deg); }
@@ -69,7 +69,7 @@
 .cs-signs > span { display: grid; gap: 2px; border-top: 1px solid var(--color-border-strong); }
 .cs-signs svg { order: -1; width: 100%; height: 22px; }
 .cs-signs path, .cs-stamp circle { fill: none; stroke: var(--cs-copper); stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
-.cs-signs small { color: var(--color-text-muted); font: 600 10.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; }
+.cs-signs small { color: var(--color-text-muted); font: 600 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; }
 .cs-stamp { position: absolute; right: 12px; bottom: 34px; width: 44px; height: 44px; transform: rotate(-12deg); }
 
 /* The procedure under the sheets */
@@ -79,7 +79,7 @@
 .cs-principle { max-width: 860px; margin: 0; color: var(--color-text); font-size: 16.5px; line-height: 1.6; }
 .cs-example { margin: 6px 0 0; color: var(--color-text-muted); font-size: 13.5px; font-style: italic; }
 /* Says the steps are live (owner 07.10: big nodes, and it must be obvious the sheets answer) — pointer or touch wording */
-.cs-hint { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; color: var(--cs-copper-ink); font: 700 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.cs-hint { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; color: var(--cs-copper-ink); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.3 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .cs-hint::before { content: ''; flex: none; width: 8px; height: 8px; background: var(--cs-copper); border-radius: 50%; box-shadow: 0 0 0 4px color-mix(in srgb, var(--cs-copper) 22%, transparent); }
 .cs-hint-touch { display: none; }
 @media (hover: none) { .cs-hint-pointer { display: none; } .cs-hint-touch { display: inline; } }
@@ -92,7 +92,6 @@
 .cs-steps li[data-state="done"] .cs-node { color: var(--color-on-action); background: var(--cs-copper); }
 .cs-steps li[data-state="now"] .cs-node { color: var(--color-on-action); background: var(--color-action); box-shadow: 0 0 0 8px color-mix(in srgb, var(--cs-copper) 22%, transparent); transform: scale(1.08); }
 .cs-steps li[data-state="now"] b { color: var(--cs-copper-ink); }
-.cs-steps button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (hover: hover) {
   .cs-steps button:hover b { color: var(--cs-copper-ink); }
   .cs-steps li:not([data-state="now"]) button:hover .cs-node { background: color-mix(in srgb, var(--cs-copper) 14%, var(--color-surface-elevated)); box-shadow: 0 0 0 6px color-mix(in srgb, var(--cs-copper) 14%, transparent); transform: scale(1.06); }

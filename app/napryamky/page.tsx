@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Breadcrumbs, HeroCallButton, SectionHeader } from '../components/SiteChrome';
+import { keepHeadingWords, keepShortWords } from '../lib/typography';
 import { ConversationSection } from '../components/ConversationSection';
 import { DirectionsCatalog, type CatalogItem } from '../components/directions/DirectionsCatalog';
 import { DirectionsKey } from '../components/home-v2/DirectionsKey';
@@ -67,19 +68,19 @@ export default function DirectionsPage() {
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }]} />
             <p className="eyebrow light"><span /> Напрями робіт</p>
             <h1>
-              <span className="subhero-title-line">Від фундаменту</span>
+              <span className="subhero-title-line">{keepHeadingWords('Від фундаменту')}</span>
               <span className="subhero-title-line">до <em>покрівлі</em></span>
             </h1>
           </div>
           <div className="subhero-side directions-subhero-side">
-            <p>Ангари й склади, зерносховища, металоконструкції, бетонні й покрівельні роботи — окремим етапом або погодженим комплексом. Не знаєте, з чого почати? Опишіть завдання — допоможемо визначити склад робіт.</p>
+            <p>{keepShortWords('Ангари й склади, зерносховища, металоконструкції, бетонні й покрівельні роботи — окремим етапом або погодженим комплексом. Не знаєте, з чого почати? Опишіть завдання — допоможемо визначити склад робіт.')}</p>
             <div className="directions-hero-actions" data-hero-actions>
               <HeroCallButton />
               <a className="button button-hero-secondary subhero-side-cta" href="#directions-list">
                 Обрати напрям <span aria-hidden="true">↓</span>
               </a>
-              <a className="text-link" href="#inquiry" data-open-inquiry="">
-                Обговорити задачу <span aria-hidden="true">↓</span>
+              <a className="link-arrow text-link" href="#inquiry" data-open-inquiry="">
+                Обговорити задачу <span aria-hidden="true" data-arrow="down">↓</span>
               </a>
             </div>
           </div>
@@ -117,7 +118,7 @@ export default function DirectionsPage() {
             {formatCards().map((format) => (
               <li key={format.id}>
                 <span className="dhow-number" aria-hidden="true">{format.number}</span>
-                <h3>{format.title}</h3>
+                <h3>{keepHeadingWords(format.title)}</h3>
                 <p>{format.text}</p>
               </li>
             ))}
@@ -130,7 +131,7 @@ export default function DirectionsPage() {
                 (/pro-nas: «Етапи роботи», «Хто за що відповідає»; this band's own «Формати участі») */}
             <div className="dhow-links">
               {HOW_LINKS.map(({ hash, label }) => (
-                <a key={hash} className="section-link" href={`${siteRoutes.process}#${hash}`}>{label} <span aria-hidden="true">↗</span></a>
+                <a key={hash} className="link-arrow section-link" href={`${siteRoutes.process}#${hash}`}>{label} <span aria-hidden="true" data-arrow="up-right">↗</span></a>
               ))}
             </div>
           </div>

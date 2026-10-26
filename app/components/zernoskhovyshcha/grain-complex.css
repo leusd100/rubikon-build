@@ -23,13 +23,13 @@
 .gc-crop-soy { --crop: var(--crop-soy); }
 .gc-crop-mixed { --crop: var(--crop-mixed); }
 .gc-crop-icon { display: inline-grid; flex: none; place-items: center; width: 22px; height: 22px; margin-right: 9px; color: var(--crop); }
-.gc-crop-icon svg { width: 20px; height: 20px; stroke-width: 1.8; }
+.gc-crop-icon svg { width: 20px; height: 20px; }
 
 /* The sheet: a light drawing on paper (the sheet's image area is dark by default, for photographs) at the elevation's
    own 3 : 1 */
 .gc-sheet .gc-visual { flex: none; aspect-ratio: 3 / 1; background: var(--color-surface-alt); }
 .gc-scroll { position: absolute; inset: 0; }
-.gc-scroll:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.gc-scroll:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -4px; } /* the drawing's whole frame: the inner ring */
 .gc-drawing { display: block; width: 100%; height: 100%; }
 .gc-drawing :is(path, circle) { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .gc-drawing .gc-ground { stroke: var(--color-text-muted); stroke-width: 2.4; }
@@ -78,8 +78,9 @@
 .gc-tip-own::before { display: inline-block; width: 14px; margin-right: 7px; vertical-align: middle; content: ''; border-top: 3px solid var(--color-accent); }
 .gc-tip-partner::before { display: inline-block; width: 14px; height: 2px; margin-right: 7px; vertical-align: middle; content: ''; background: repeating-linear-gradient(90deg, var(--color-text-muted) 0 5px, transparent 5px 8px); }
 .gc-tip em { color: var(--color-accent-strong); font: 600 12px/1.3 var(--font-condensed), sans-serif; font-style: normal; letter-spacing: .04em; }
-/* the title block's end: the way into the form (owner, 06.10: the button right under the drawing) */
-.gc-sheet .gc-cta { min-height: 44px; padding: 0 18px; white-space: nowrap; }
+/* the title block's end: the way into the form (owner, 06.10: the button right under the drawing); a tool's button is
+   the M height (W3-06, PDO-99: 44 → 48) */
+.gc-sheet .gc-cta { min-height: var(--button-h-m); padding: 0 18px; white-space: nowrap; }
 .gc-cta-phone { display: none; }
 .gc-pause { position: absolute; z-index: 5; top: 8px; right: 8px; }
 .gc-pause .dn-control { padding-left: 10px; background: color-mix(in srgb, var(--color-surface-elevated) 88%, transparent); border-radius: 22px; }
@@ -119,7 +120,7 @@
 /* The choices */
 .gc-controls { display: flex; flex-wrap: wrap; gap: 10px 40px; }
 .gc-group { min-width: 0; margin: 0; padding: 0; border: 0; }
-.gc-group legend { margin: 0 0 6px; padding: 0; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.gc-group legend { margin: 0 0 6px; padding: 0; color: var(--color-text-muted); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .gc-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .gc-chip { position: relative; display: inline-flex; }
 .gc-chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
@@ -133,11 +134,11 @@
    part on the drawings (owner 24.10, W2-07 · PDO-49). The crop's icon keeps its colour, the drawing's silo colour (A′); it
    is decorative — the chip's words say the crop */
 .gc-chip input:checked + span { color: var(--color-bg); background: var(--color-text); border-color: var(--color-text); }
-.gc-chip input:focus-visible + span { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.gc-chip input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 
 /* Who builds what, and the way on */
 .gc-scope { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(260px, .8fr); gap: 24px 44px; padding-top: 24px; border-top: 1px solid var(--color-border-strong); }
-.gc-scope-col h3 { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; color: var(--color-text); font: 700 13px/1.3 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+.gc-scope-col h3 { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; color: var(--color-text); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.3 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .gc-scope-col h3::before { flex: none; width: 30px; content: ''; border-top: 3px solid var(--color-accent); }
 .gc-scope-col[data-tone="partner"] h3::before { height: 2px; border: 0; background: repeating-linear-gradient(90deg, var(--color-text-muted) 0 10px, transparent 10px 15px); }
 .gc-scope-col ul { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }

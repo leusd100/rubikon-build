@@ -11,6 +11,8 @@
 .directions-page .directions-subhero-side > p { max-width: 640px; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
 .directions-page .directions-hero-actions { gap: 18px 36px; margin-top: var(--hero-gap-actions); }
 .directions-page .directions-hero-actions :is(.subhero-side-cta, .text-link) { margin: 0; }
+/* the arrow link's words on the button's line (.link-arrow); a phone stacks the two as 56 px rows */
+@media (min-width: 761px) { .directions-page .directions-hero-actions .text-link { margin-top: -10px; } }
 /* The clean photographs carry the visual detail; no blueprint grid or blur over their geometry. From y 0, behind the
    header, at every width (PDO-18: the 101 px band above the slides on ≥1100 px is gone; ≤1099 px it already was). */
 .directions-page .directions-hero-sequence-image { top: 0; height: 100%; filter: saturate(.88) contrast(1.02); }
@@ -73,7 +75,7 @@
 /* The sheet keeps its own paper when its row turns dark (pointer or keyboard), and that state swaps the copper text
    token for the on-dark one. The list holds the paper's copper, resolved above the row, for the one copper letter. */
 .dcat-list { --dcat-sheet-copper: var(--color-accent-strong); }
-.dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 10.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .dcat-strip span:first-child { color: var(--color-text); }
 @media (prefers-reduced-motion: no-preference) {
   .dcat-list a.route-service { transition: color .25s ease; }
@@ -88,14 +90,14 @@
 .dhow-formats li { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-content: start; gap: 8px 12px; padding: 22px clamp(18px, 2vw, 30px) 24px 0; }
 .dhow-formats li + li { padding-left: clamp(18px, 2vw, 30px); border-left: 1px solid var(--color-dark-line); }
 .dhow-number { grid-row: 1 / span 2; padding-top: 5px; color: var(--color-accent-on-dark); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; }
-.dhow-formats h3 { margin: 0; color: var(--color-dark-text); font: 400 clamp(22px, 1.9vw, 27px)/1.15 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+.dhow-formats h3 { margin: 0; color: var(--color-dark-text); font: 400 var(--type-h3)/1.15 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
 .dhow-formats p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15.5px; line-height: 1.6; }
 .dhow-start { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 18px clamp(24px, 4vw, 64px); margin-top: clamp(8px, 1vw, 14px); padding-top: clamp(22px, 2.4vw, 30px); border-top: 1px solid var(--color-dark-line); }
 .dhow-start p { max-width: 760px; margin: 0; color: var(--color-dark-text-secondary); font-size: 16px; line-height: 1.7; }
 .dhow-start b { color: var(--color-dark-text); font-weight: 700; }
-.dhow-links { display: grid; justify-items: start; gap: 12px; }
-.dhow-links .section-link { margin-top: 0; color: var(--color-dark-text); }
-.dhow-links .section-link span { color: var(--color-accent-on-dark); }
+/* stacked arrow links: one 44 px target under the other (W3-06: the 29 px links stood 12 px apart, a 40 px step) */
+.dhow-links { display: grid; justify-items: start; gap: 0; }
+.dhow-links .section-link { --link-ink: var(--color-dark-text); margin-top: 0; }
 
 /* ---------------------------------------------------------------- 5 · Where we work */
 .dregion { background: var(--color-surface); }

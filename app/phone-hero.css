@@ -31,9 +31,11 @@
   main.inner-page > .phone-hero :is(.subhero-grid, .proc-hero-trace) { display: none; }
   main.inner-page > .phone-hero :is(.hero-provenance, .proc-provenance) { top: calc(var(--phone-scene-header) + 14px); right: 20px; bottom: auto; }
   main.inner-page > .phone-hero .hero-video-control { top: calc(var(--phone-scene-header) + 48px); }
-  main.inner-page > .phone-hero .breadcrumb { min-height: 44px; margin-bottom: 16px; font-size: .625rem; }
+  /* The crumbs and the eyebrow at the UI label's 12 px like everywhere else (PDO-16; they were 10 and 11.2 px). At 320 px
+     the concrete and grain crumbs take a second line, as metal and roofing already did (accepted by the owner, W3-02) */
+  main.inner-page > .phone-hero .breadcrumb { min-height: 44px; margin-bottom: 16px; }
   main.inner-page > .phone-hero .breadcrumb a { min-height: 44px; }
-  main.inner-page > .phone-hero .eyebrow { margin: 0 0 20px; font-size: .7rem; }
+  main.inner-page > .phone-hero .eyebrow { margin: 0 0 20px; }
   main.inner-page > .phone-hero h1 {
     width: auto; max-width: 36rem; margin: 0; padding: 0;
     font-size: clamp(1.8125rem, 8.3vw, 2.1875rem); line-height: 1.08; letter-spacing: -.035em;

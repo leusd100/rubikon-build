@@ -127,7 +127,8 @@ const RETIRED_PHRASES = [
 /**
  * The text of the elements each selector matches in a route's server HTML — or, for
  * «selector::attribute», that attribute. DOMParser builds the document without running its
- * scripts, so what this reads is what arrives before hydration.
+ * scripts, so what this reads is what arrives before hydration. A no-break space reads as a space: headings and leads
+ * keep their short words with the next one at render (W3-02, PDO-44 п. 2), the words are the same.
  */
 async function serverText(page: Page, path: string, selectors: Record<string, string>) {
   const response = await getFromServer(page.request, path);
@@ -137,7 +138,7 @@ async function serverText(page: Page, path: string, selectors: Record<string, st
     return Object.fromEntries(
       Object.entries(queries).map(([key, query]) => {
         const [selector = '', attribute] = query.split('::');
-        return [key, [...doc.querySelectorAll(selector)].map((element) => (attribute ? element.getAttribute(attribute) : element.textContent?.trim()) ?? '')];
+        return [key, [...doc.querySelectorAll(selector)].map((element) => (attribute ? element.getAttribute(attribute) : element.textContent?.replaceAll('\u00A0', ' ').trim()) ?? '')];
       }),
     );
   }, { markup: await response.text(), queries: selectors });

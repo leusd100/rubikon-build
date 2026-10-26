@@ -48,7 +48,8 @@ main[data-home="v2"] .hv2-nowrap { white-space: nowrap; }
   main[data-home="v2"] .hv2-keep:lang(uk) em { display: inline; }
 }
 
-main[data-home="v2"] .hv2-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--hv2-copper-text); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+/* HOME's kickers are the site's UI label, in Manrope (W3-02, PDO-63; Plex 700 12 / .14em before) */
+main[data-home="v2"] .hv2-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--hv2-copper-text); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 main[data-home="v2"] .hv2-kicker > span { width: 26px; height: 2px; flex: none; background: var(--hv2-copper); }
 
 /* ================================ 1 · HERO ================================ */
@@ -108,7 +109,8 @@ main[data-home="v2"] .hv2-inquiry-phone { display: none; }
   main[data-home="v2"] .hv2-hero-provenance {
     position: absolute; z-index: 3; top: calc(var(--hv2-header) + 14px); right: 20px; display: block; padding: 6px 9px;
     color: var(--color-dark-text); background: color-mix(in srgb, var(--color-dark) 90%, transparent); border: 1px solid rgba(255,255,255,.3);
-    font: 700 10px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase;
+    font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; /* the stamp of every hero (PDO-16; it was 10 px here) */
+    min-width: 8.75em; text-align: center; /* its box reserved against the late swap, as .hero-provenance (globals.css) */
   }
   main[data-home="v2"] .phone-hero-scroll { position: relative; z-index: 3; flex: none; align-self: center; margin-top: 24px; display: grid; place-items: center; width: 44px; height: 44px; color: var(--color-accent-on-dark); font-size: 24px; line-height: 1; }
   /* Keep the existing first-visit call guarantee, now from the first frame: data-consent-pending is set in <head> before
@@ -157,13 +159,15 @@ main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-col
 /* On a phone (≤ 760 px; PDO-42 a, owner 20.10) the five directions are a list of their scheme sheets
    (DirectionsSheetList, directions-sheets.css) instead of the image cards — the sideways rail with «01 / 05», dots and
    «Гортайте →» showed one card of five. The cards are not shown there, so neither is the intro's sentence about their
-   images (its words stay in the page). The header's own hairline gives way to the list's strong line, 30 px under the
-   intro, and the geography line follows 32 px under the last row. */
+   images (its words stay in the page). The header's own hairline gives way to the list's strong line, 32 px under the
+   intro (the shared section-header rule, globals.css, W3-03), and the geography line follows 32 px under the last row. */
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-directions .section-header { margin-bottom: 30px; padding-bottom: 0; border-bottom: 0; }
   main[data-home="v2"] .hv2-directions .direction-grid,
   main[data-home="v2"] .hv2-directions .hv2-image-note { display: none; }
   main[data-home="v2"] .hv2-directions .hv2-geo-bond { margin-top: 32px; }
+  /* A browser without :has() (Firefox < 121, Safari < 15.4) keeps every header's rule, but this list always follows the
+     header here and opens on its strong line, so the header gives way to it as before W3-03 */
+  @supports not selector(:has(*)) { main[data-home="v2"] .hv2-directions .section-header { padding-bottom: 0; border-bottom: 0; } }
 }
 
 /* ======================= 3 · ENGINEERING SIGNATURE + REAL OBJECT ======================= */
@@ -515,7 +519,7 @@ main[data-home="v2"] .hv2-contour-stage[data-dragging] .hv2-contour-handle { cur
 }
 main[data-home="v2"] .hv2-contour-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
 /* The keyboard's ring only: focus a click or a finger put on the range draws nothing until a key is pressed */
-main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-rail .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-rail .hv2-contour-handle::before { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* «Фото» / «Схема», the keys and the layers glide the seam: the four's --split. A drag follows the pointer as it is, a
@@ -578,7 +582,7 @@ main[data-home="v2"] .hv2-contour .hv2-contour-right b { display: grid; gap: 7px
 main[data-home="v2"] .hv2-contour-layers { display: inline-flex; justify-self: start; gap: 16px; border: 0; }
 main[data-home="v2"] .hv2-contour-layers button {
   min-height: 36px; padding: 0 2px; color: var(--hv2-text-2); background: none; border: 0; border-radius: 0; cursor: pointer;
-  font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
+  font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; white-space: nowrap;
 }
 main[data-home="v2"] .hv2-contour-layers button[aria-pressed="true"] { color: var(--hv2-copper-text); background: none; box-shadow: inset 0 -2px 0 var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-contour-layers button:disabled { cursor: default; opacity: .55; }
@@ -617,7 +621,6 @@ main[data-home="v2"] .hv2-chain-step {
 }
 main[data-home="v2"] .hv2-chain-step:is(:hover, :focus-visible, [aria-pressed="true"]) { text-decoration-color: currentColor; }
 main[data-home="v2"] .hv2-chain-step[aria-pressed="true"] { text-decoration-style: solid; font-weight: 800; }
-main[data-home="v2"] .hv2-chain-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 main[data-home="v2"] .hv2-contour-stage[data-step-on] :is(.hv2-proof-load, .hv2-proof-wind) [data-step] { opacity: .14; transition: opacity 220ms ease; }
 main[data-home="v2"] .hv2-contour-stage[data-step-on] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="flow"] { opacity: .3; }
 main[data-home="v2"] .hv2-contour-stage[data-step-on="0"] :is(.hv2-proof-load, .hv2-proof-wind) [data-step="0"],
@@ -661,7 +664,7 @@ main[data-home="v2"] .hv2-contour-controls { display: flex; flex-wrap: wrap; ali
 main[data-home="v2"] .hv2-contour-controls button {
   display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 12px; color: var(--hv2-text);
   background: none; border: 1px solid var(--hv2-line-strong); border-radius: 0; cursor: pointer;
-  font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap;
+  font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; white-space: nowrap;
 }
 main[data-home="v2"] .hv2-contour-controls button[aria-pressed="true"] { background: var(--hv2-copper-fill); border-color: var(--hv2-copper-fill); }
 @media (hover: hover) { main[data-home="v2"] .hv2-contour-controls button[aria-pressed="false"]:enabled:hover { border-color: var(--hv2-copper-text); } }
@@ -670,17 +673,20 @@ main[data-home="v2"] .hv2-contour-controls button:disabled { cursor: default; op
 /* The way on to the visitor's own hangar, in the toggle's old place: the sheet's one filled button; once a load or the
    assembly has played it rings twice */
 main[data-home="v2"] .hv2-contour-brief {
-  display: inline-grid; align-content: center; gap: 4px; min-height: 52px; padding: 8px 16px 8px 14px; color: var(--hv2-ink); text-decoration: none;
+  /* a sheet's button: M (W3-06, PDO-99: 52 → 48; its two lines are 33 px, so 6 px above and below) */
+  display: inline-grid; align-content: center; gap: 4px; min-height: var(--button-h-m); padding: 6px 16px 6px 14px; color: var(--hv2-ink); text-decoration: none;
   /* the sheet's one filled button is the light copper of every action on charcoal, with a graphite label (6.17 : 1;
      PDO-17 — warm white on #A0522A, and 3.85 : 1 on the #B76432 hover, was below AA for its 12–13 px words) */
   background: var(--color-accent-on-dark); border: 1px solid #f0b48a; transition: background-color 200ms ease;
 }
 main[data-home="v2"] .hv2-contour-brief small { font: 600 12px/1.1 var(--font-manrope), sans-serif; letter-spacing: 0; }
+/* The title block's action keeps its condensed 13 px face (already at the action floor): in Manrope the action cell grew
+   4 px, the first cell lost them, and on Linux its line took a 4th row — the block over 120 px at 1440×700 and the brief
+   past the edge of a 1250×613 window (W3-02, CI) */
 main[data-home="v2"] .hv2-contour-brief span { display: inline-flex; align-items: center; gap: 8px; font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 main[data-home="v2"] .hv2-contour-brief i { font-style: normal; font-size: 16px; transition: transform 200ms ease; }
 main[data-home="v2"] .hv2-contour-brief:hover { background: var(--color-accent-on-dark-hover); }
 main[data-home="v2"] .hv2-contour-brief:hover i { transform: translateX(3px); }
-main[data-home="v2"] .hv2-contour-brief:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 @media (prefers-reduced-motion: no-preference) {
   main[data-home="v2"] .hv2-contour-brief[data-lit] { animation: hv2-brief-ring 1100ms ease-out 2; }
 }
@@ -692,7 +698,7 @@ main[data-home="v2"] .hv2-contour-brief:focus-visible { outline: 2px solid var(-
 main[data-home="v2"] .hv2-contour-build {
   display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 10px; color: var(--hv2-text); background: none;
   border: 1px solid var(--hv2-copper-text); border-radius: 0; cursor: pointer;
-  font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
+  font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; white-space: nowrap;
 }
 main[data-home="v2"] .hv2-contour-build i { width: 0; height: 0; border-block: 5px solid transparent; border-left: 8px solid var(--hv2-copper-text); }
 main[data-home="v2"] .hv2-contour-build:disabled { cursor: default; opacity: .45; }
@@ -747,7 +753,6 @@ main[data-home="v2"] .hv2-contour-nodes button {
 }
 main[data-home="v2"] .hv2-contour-nodes button:is(:hover, [aria-expanded="true"]) { color: var(--hv2-node-ink); background: var(--hv2-node-light); }
 main[data-home="v2"] .hv2-contour-nodes button:disabled { cursor: default; opacity: .45; }
-main[data-home="v2"] .hv2-contour-nodes button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (pointer: coarse) { main[data-home="v2"] .hv2-contour-nodes button { width: 40px; height: 40px; } }
 /* On a laptop the row stands over the picture's foot, on the photo's gravel, a bar of its own; the title block's copy is
    a phone's */
@@ -835,7 +840,7 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
   main[data-home="v2"] .hv2-contour-controls button { justify-content: center; }
   main[data-home="v2"] .hv2-contour .hv2-contour-right { flex-basis: 100%; border-left: 0; }
   main[data-home="v2"] .hv2-contour-layers { display: flex; justify-self: stretch; }
-  main[data-home="v2"] .hv2-contour-layers button { flex: 1 1 auto; min-height: 44px; padding: 0 6px; letter-spacing: .06em; }
+  main[data-home="v2"] .hv2-contour-layers button { flex: 1 1 auto; min-height: 44px; padding: 0 6px; }
 }
 /* The narrowest phone (320 px): the three layers still on one row, a little tighter */
 @container sheet (max-width: 300px) {
@@ -863,16 +868,17 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
     max-width: max(min(100%, 1147px), calc((100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))) * 1536 / 560 + 46px));
     margin-inline: auto;
     /* …the usual rest by width, so the server's picture is the hydrated one's (measured 05.10 on every layer: 169 from
-       1400 px, 170 at 1280–1366, 220–240 at 1100–1200, 260 below) */
-    --hv2-sheet-rest-0: 170px;
+       1400 px, 170 at 1280–1366, 220–240 at 1100–1200, 260 below; 166 since W3-06, the brief's button 52 → 48) */
+    --hv2-sheet-rest-0: 166px;
   }
   main[data-home="v2"] .hv2-contour .sheet-image {
     flex: none; aspect-ratio: auto;
     height: clamp(calc(100cqw * 560 / 1536), calc(100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))), calc(100cqw * 788 / 1536));
   }
 }
-/* (measured 09.10 on the one-line title block: 170 px from 1239 px, 240–241 px from 832, 266–267 px below) */
-@media (min-width: 761px) and (max-width: 1238px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 241px; } }
+/* (measured 09.10 on the one-line title block: 170 px from 1239 px, 240–241 px from 832, 266–267 px below; W3-06: 166 and
+   237, the brief 4 px lower) */
+@media (min-width: 761px) and (max-width: 1238px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 237px; } }
 @media (min-width: 761px) and (max-width: 831px) { main[data-home="v2"] .hv2-contour { --hv2-sheet-rest-0: 266px; } }
 @media (min-width: 761px) {
   main[data-home="v2"] .hv2-contour-canvas { top: calc((100% - 100cqw * 788 / 1536) * .367); }
@@ -890,7 +896,7 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
   main[data-home="v2"] .hv2-contour .sheet-stamp { margin-top: 8px; }
   main[data-home="v2"] .hv2-contour .sheet-stamp > :is(.sheet-cell, .sheet-action) { padding-block: 4px; }
   main[data-home="v2"] .hv2-contour .sheet-cell-note b { line-height: 1.3; }
-  main[data-home="v2"] .hv2-contour-exit[data-place="line"] { margin-top: 4px; }
+  main[data-home="v2"] .hv2-contour-exit[data-place="line"] { margin-top: .75px; } /* 4 px and 22 px before, as above */
   main[data-home="v2"] .hv2-contour-brief { min-height: 46px; padding-block: 5px; }
   @media (pointer: fine) { main[data-home="v2"] .hv2-contour-controls .hv2-contour-tour-btn { min-height: 34px; } }
 }
@@ -899,12 +905,14 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
 @media (max-width: 760px) {
   main[data-home="v2"] :is(.hv2-proof-marks, .hv2-proof-labels, .hv2-contour-seamtags) { display: none; }
   main[data-home="v2"] .hv2-contour-stamp { top: 6px; right: 6px; padding: 4px 6px 3px; }
-  main[data-home="v2"] .hv2-contour-stamp small { font-size: 10px; }
   main[data-home="v2"] :is(.hv2-contour-stamp-text, .hv2-contour-stamp-more) { display: none; }
   /* A phone's frame is short and its middle band is the gates: the handle drops into the gravel under the gable's
      base, its disc smaller than its grip, so it covers no gate and no corner at the resting split */
   main[data-home="v2"] .hv2-contour-handle { top: auto; bottom: 0; margin-top: 0; padding: 5px 0 0; font-size: 20px; }
   main[data-home="v2"] .hv2-contour-handle::before, main[data-home="v2"] .hv2-contour-handle::after { inset: auto 6px 2px; height: 32px; }
+  /* the disc stands 2 px over the frame's bottom edge, which would cut its focus ring: under the keyboard it steps up by
+     the ring's 7 px (W3-06, PDO-88) */
+  main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-range:focus-visible ~ .hv2-contour-rail .hv2-contour-handle { bottom: 7px; }
 }
 /* The narrowest phones: a smaller disc, clear of the gable's base and the gates' feet (review, 05.10) */
 @media (max-width: 389px) {
@@ -941,27 +949,28 @@ main[data-home="v2"] .hv2-proof-facts {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 400px); gap: 28px clamp(32px, 4vw, 64px); margin-top: 8px;
   padding: 22px 0 0; background: none; border: 0;
 }
-main[data-home="v2"] .hv2-evidence-lead h3 { margin: 14px 0 10px; font: 400 clamp(26px, 2.3vw, 36px)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
+main[data-home="v2"] .hv2-evidence-lead h3 { margin: 14px 0 10px; font: 400 var(--type-h3)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
 main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { max-width: 560px; margin: 0; color: var(--hv2-text-2); font-size: 16px; line-height: 1.6; }
 /* The scope as the building it made (UX pass 2026-10): three cells, the same hangar in each, the named part in copper */
 main[data-home="v2"] .hv2-scope-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin: 26px 0 0; padding: 0; list-style: none; border: 1px solid var(--hv2-line-strong); }
-main[data-home="v2"] .hv2-scope-chips li { display: grid; gap: 14px; padding: 18px 20px 16px; color: var(--hv2-text); transition: background-color .25s ease; font: 700 12.5px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-scope-chips li { display: grid; gap: 14px; padding: 18px 20px 16px; color: var(--hv2-text); transition: background-color .25s ease; font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 /* A cell that lights its part on the scheme above is a button filling the cell (ScopeCells) */
 main[data-home="v2"] .hv2-scope-chips li:has(> .hv2-scope-cell) { padding: 0; }
 main[data-home="v2"] .hv2-scope-cell {
   position: relative; display: grid; gap: 14px; width: 100%; height: 100%; padding: 18px 20px 16px; margin: 0; color: inherit; text-align: left; text-transform: inherit;
   font: inherit; letter-spacing: inherit; background: none; border: 0; border-radius: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-main[data-home="v2"] .hv2-scope-cell:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -4px; }
+/* a cell of the scheme's row: the inner ring (W3-06, PDO-88: the site's two rings — outer 3 px / 4 and this one) */
+main[data-home="v2"] .hv2-scope-cell:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -4px; }
 main[data-home="v2"] .hv2-scope-cell[aria-pressed="true"] { background: color-mix(in srgb, var(--hv2-copper) 12%, transparent); box-shadow: inset 0 -2px 0 var(--hv2-copper); }
 /* «↑ на схемі»: where the part lights up — shown on a cell pointed at, focused or pressed, always on a touch screen */
 main[data-home="v2"] .hv2-scope-hint {
-  position: absolute; top: 10px; right: 12px; color: var(--hv2-copper-text); font: 600 11px/1 var(--font-manrope), sans-serif; letter-spacing: 0;
+  position: absolute; top: 10px; right: 12px; color: var(--hv2-copper-text); font: 600 12px/1 var(--font-manrope), sans-serif; letter-spacing: 0;
   text-transform: none; opacity: 0; transition: opacity 200ms ease;
 }
 main[data-home="v2"] .hv2-scope-cell:is(:hover, :focus-visible, [aria-pressed="true"]) .hv2-scope-hint { opacity: 1; }
 @media (hover: none) { main[data-home="v2"] .hv2-scope-hint { opacity: .85; } }
-@media (max-width: 760px) { main[data-home="v2"] .hv2-scope-hint { top: 6px; right: 6px; font-size: 10px; } }
+@media (max-width: 760px) { main[data-home="v2"] .hv2-scope-hint { top: 6px; right: 6px; } } /* 12 px like the rest (PDO-16; 11 / 10 before) */
 main[data-home="v2"] .hv2-scope-chips li + li { border-left: 1px solid var(--hv2-line-strong); }
 main[data-home="v2"] .hv2-scope-glyph { display: block; width: 100%; max-width: 150px; height: auto; overflow: visible; }
 main[data-home="v2"] .hv2-scope-glyph path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -993,8 +1002,8 @@ main[data-home="v2"] .hv2-people-note { margin: auto 0 0; padding-top: 16px; col
 main[data-home="v2"] .hv2-person { padding-left: 16px; border-left: 2px solid var(--hv2-copper); }
 main[data-home="v2"] .hv2-person h4 { margin: 0 0 3px; color: var(--hv2-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
 main[data-home="v2"] .hv2-person p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.5; }
-main[data-home="v2"] .hv2-people-link { align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; gap: 12px; color: var(--hv2-text); border-bottom: 1px solid var(--hv2-copper); font: 700 13px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
+/* (an arrow link: .link-arrow; copper text on the charcoal is the light copper) */
+main[data-home="v2"] .hv2-people-link { --link-ink: var(--hv2-text); --color-accent-strong: var(--hv2-copper-text); align-self: flex-start; white-space: nowrap; }
 
 /* ================================ Tablet ================================ */
 
@@ -1016,7 +1025,7 @@ main[data-home="v2"] .hv2-people-link span { color: var(--hv2-copper-text); }
   /* (no box any more, so no bleed: the facts keep the page's gutter — 09.10, the heading ran to the screen's edge) */
 }
 @media (max-width: 560px) {
-  main[data-home="v2"] .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; font-size: 11.5px; }
+  main[data-home="v2"] .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; }
   main[data-home="v2"] .hv2-scope-cell { gap: 10px; padding: 12px 10px 10px; }
 }
 
@@ -1120,7 +1129,6 @@ main[data-home="v2"] .hv2-proof-detail-pin::after { content: ''; position: absol
   main[data-home="v2"] .hv2-contour-stage[data-nodes-hint] .hv2-proof-detail-pin[data-detail="purlin"]::after { animation-delay: 150ms; }
   main[data-home="v2"] .hv2-contour-stage[data-nodes-hint] .hv2-proof-detail-pin[data-detail="base"]::after { animation-delay: 300ms; }
 }
-main[data-home="v2"] .hv2-proof-detail-pin:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 main[data-home="v2"] :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 0; visibility: hidden; transition: opacity 240ms ease, visibility 240ms; }
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"]:not([data-focus]) :is(.hv2-proof-detail-rings, .hv2-proof-detail-pins) { opacity: 1; visibility: visible; }
 /* not while the first view's sweep runs: the drawing's names come in when it rests, and a swipe must not catch a letter */
@@ -1140,17 +1148,19 @@ main[data-home="v2"] .hv2-detail:not([data-sheet]) > .hv2-detail-drawing { flex:
 main[data-home="v2"] .hv2-detail-head { display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--hv2-line-strong); }
 /* its plain name, the draughtsman's term under it (R-UX-06 §07) */
 main[data-home="v2"] .hv2-detail-name { flex: 1; display: grid; gap: 3px; min-width: 0; }
-main[data-home="v2"] .hv2-detail-head b { font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-main[data-home="v2"] .hv2-detail-head small { color: var(--hv2-text-2); font: 500 11.5px/1.25 var(--font-manrope), sans-serif; }
+/* A sheet the visitor opens to look closer reads at the floor and above it (PDO-16, W3-02): the name 14, the term 13, the note
+   and the toggles 12 px (they were 12 / 11.5 / 11.5 / 11) */
+main[data-home="v2"] .hv2-detail-head b { font: 700 14px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+main[data-home="v2"] .hv2-detail-head small { color: var(--hv2-text-2); font: 500 13px/1.25 var(--font-manrope), sans-serif; }
 main[data-home="v2"] .hv2-detail-letter { display: grid; place-items: center; width: 22px; height: 22px; color: var(--hv2-node-ink); background: var(--hv2-node); border-radius: 50%; font: 700 12px/1 var(--font-condensed), sans-serif; }
 main[data-home="v2"] .hv2-detail-close { display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -6px -6px 0; padding: 0; color: var(--hv2-text-2); background: none; border: 0; font: 400 22px/1 var(--font-manrope), sans-serif; cursor: pointer; }
 main[data-home="v2"] .hv2-detail-close:hover { color: var(--hv2-text); }
-main[data-home="v2"] .hv2-detail-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
-main[data-home="v2"] .hv2-detail-note { margin: 0; color: var(--hv2-text-3); font: 500 11.5px/1.3 var(--font-manrope), sans-serif; }
+main[data-home="v2"] .hv2-detail-close:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -4px; } /* its corner of the sheet: the inner ring */
+main[data-home="v2"] .hv2-detail-note { margin: 0; color: var(--hv2-text-3); font: 500 12px/1.3 var(--font-manrope), sans-serif; }
 main[data-home="v2"] .hv2-detail-foot { display: flex; flex-direction: column; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: 6px 12px; }
 main[data-home="v2"] .hv2-detail-again {
   display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px; color: var(--hv2-copper-text); background: none;
-  border: 1px solid rgba(204, 132, 85, .55); border-radius: 0; cursor: pointer; font: 700 11px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase;
+  border: 1px solid rgba(204, 132, 85, .55); border-radius: 0; cursor: pointer; font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase;
 }
 main[data-home="v2"] .hv2-detail-again span { font-size: 14px; letter-spacing: 0; }
 main[data-home="v2"] .hv2-detail-again:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
@@ -1165,8 +1175,7 @@ main[data-home="v2"] .hv2-detail-step {
   border: 1px solid var(--hv2-line-strong); border-radius: 0; cursor: pointer; font: 700 18px/1 var(--font-condensed), sans-serif;
 }
 main[data-home="v2"] .hv2-detail-step:hover { color: var(--hv2-text); border-color: var(--hv2-copper-text); }
-main[data-home="v2"] .hv2-detail-step:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
-@media (pointer: coarse) { main[data-home="v2"] .hv2-detail-step { width: 40px; height: 40px; } }
+@media (pointer: coarse) { main[data-home="v2"] .hv2-detail-step { width: 44px; height: 44px; } }
 main[data-home="v2"] .hv2-detail-flow-words { margin: 0; color: var(--hv2-load, var(--color-load)); font: 600 12px/1.35 var(--font-manrope), sans-serif; opacity: 0; transition: opacity 300ms ease; }
 /* its line kept while the node comes together, the words in once the way shows */
 main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-flow-words { opacity: 1; }
@@ -1184,8 +1193,7 @@ main[data-home="v2"] .hv2-detail-leader circle { fill: var(--hv2-node); }
   main[data-home="v2"] .hv2-detail-leader circle { opacity: 0; animation: hv2-contour-fade 200ms 820ms ease forwards; }
 }
 @keyframes hv2-leader-draw { to { stroke-dashoffset: 0; } }
-main[data-home="v2"] .hv2-detail-again:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-@media (pointer: coarse) { main[data-home="v2"] .hv2-detail-again { min-height: 40px; } }
+@media (pointer: coarse) { main[data-home="v2"] .hv2-detail-again { min-height: 44px; } }
 /* A phone: the node as a sheet from the screen's foot, over a dimmed page (ProofContour portals it into main) */
 main[data-home="v2"] .hv2-detail[data-sheet] {
   touch-action: pan-y;
@@ -1199,7 +1207,6 @@ main[data-home="v2"] .hv2-detail-backdrop { position: fixed; z-index: 59; inset:
 /* A tablet's frame: «Г» and «Б» inside the truss — over the right rake they met the slope's figure (06.10) */
 @media (min-width: 761px) and (max-width: 1180px) { main[data-home="v2"] .hv2-proof-detail-pin { left: var(--nx, var(--x)); top: var(--ny, var(--y)); } }
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-detail-note { font-size: 11px; }
   main[data-home="v2"] .hv2-proof-detail-pin { left: var(--px); top: var(--py); width: 20px; height: 20px; margin: -10px 0 0 -10px; font-size: 11px; }
 }
 
@@ -1275,20 +1282,29 @@ main[data-home="v2"] .hv2-contour-stage:is(:hover, :focus-within, [data-touring]
 /* (inside the stage, so it outranks the stage's own hover rule above: the letter under the cursor, or open, lightens) */
 main[data-home="v2"] .hv2-contour-stage .hv2-proof-detail-pin:is(:hover, [aria-expanded="true"]) { color: var(--hv2-node-ink); background: var(--hv2-node-light); border-color: var(--hv2-node-edge); }
 
-/* a quiet way out for another task */
-main[data-home="v2"] .hv2-contour-exit {
-  align-self: start; display: inline-flex; align-items: center; gap: 6px; min-height: 22px; color: var(--hv2-text-2); text-decoration: underline;
-  text-underline-offset: 3px; font: 500 12.5px/1.2 var(--font-manrope), sans-serif;
-}
-main[data-home="v2"] .hv2-contour-exit:hover { color: var(--hv2-text); }
-main[data-home="v2"] .hv2-contour-exit[data-place="line"] { margin-top: 8px; }
+/* a quiet way out for another task: an arrow link (.link-arrow) in the secondary ink; under the line it stands in the
+   note's <b>, whose overflow (kept for the other cells' ellipsis) would cut the focus ring. The <b> is also the link's
+   container (container-type, for the short laptop below). */
+main[data-home="v2"] .hv2-contour-exit { --link-ink: var(--hv2-text-2); align-self: start; }
+main[data-home="v2"] .hv2-contour .sheet-cell-note b { overflow: visible; container-type: inline-size; }
+/* Under the line the title block's height sizes the picture on a laptop, so there the link keeps its 25.25 px box (its
+   words, 8 px, the rule) and its 44 px target is an invisible zone centred on it, as the configurator sheet's chips: a
+   44 px box pushed the block 16–22 px taller, and one reaching up over the line had its focus ring across the words.
+   4.75 px over it: with the 8 px of air and the 22 px link before, the cell keeps its height; the ring stays in the
+   line's lower leading (W3-06) */
+main[data-home="v2"] .hv2-contour-exit[data-place="line"] { position: relative; min-height: 0; margin-top: 4.75px; }
+/* A short laptop window narrows the sheet to 1147 px and the note to 256 px: there the link's words in capitals (291 px)
+   would take two lines and push the block 16 px taller, past the window the owner asked it to fit (06.10), so they drop
+   the capitals and the tracking (235 px) and stay one line (the note's <b> is the container, above) */
+@container (max-width: 290px) { main[data-home="v2"] .hv2-contour-exit[data-place="line"] { letter-spacing: 0; text-transform: none; } }
+main[data-home="v2"] .hv2-contour-exit[data-place="line"]::after { position: absolute; top: 50%; right: 0; left: 0; height: 44px; content: ''; translate: 0 -50%; }
 main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
 @media (max-width: 760px) {
   main[data-home="v2"] .hv2-contour-exit[data-place="line"] { display: none; }
-  main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: inline-flex; align-self: center; }
+  /* as wide as its words (the phone's controls row grows each child to fill it, and the rule would run to the cell's
+     edge); 320: two even lines, not past the cell */
+  main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: inline-flex; flex: 0 1 auto; align-self: center; }
 }
-main[data-home="v2"] .hv2-contour-exit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-@media (pointer: coarse) { main[data-home="v2"] .hv2-contour-exit { min-height: 44px; } }
 
 /* DEC-42 (a), the owner's choice of 13.10 (Phase 5): the arrival's last word — node Г lit and one line saying what a press does; nothing
    opens by itself (ProofContour's NODE_HINT). Still: no ring ripples, it only fades in, and it is gone at the visitor's
@@ -1312,7 +1328,7 @@ main[data-home="v2"] .hv2-contour-node-hint [data-input="touch"] { display: none
 /* a phone's close-up has little sky over the gable: the line goes to the photo's foot instead — the retouched gravel — in
    two lines, short of the seam's handle, which rests at the frame's foot at 62 % (44 px wide) */
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-contour-node-hint { top: auto; bottom: 6px; left: 6px; max-width: calc(62% - 40px); gap: 6px; padding: 3px 8px 3px 3px; font-size: 11.5px; }
+  main[data-home="v2"] .hv2-contour-node-hint { top: auto; bottom: 6px; left: 6px; max-width: calc(62% - 40px); gap: 6px; padding: 3px 8px 3px 3px; font-size: 12px; }
 }
 
 /* a phone: the sheet edge to edge, the photo's full height (rows 0–788: the gable whole), the five letters and no numbers

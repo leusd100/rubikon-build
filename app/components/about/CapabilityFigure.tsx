@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type FocusEvent, type PointerEvent } from 'react';
 import type { CapabilityLedgerColumn } from '../../lib/deliveryModelPresentation';
+import { keepHeadingWords } from '../../lib/typography';
 
 // /pro-nas «Що робимо самі, а що організовуємо». Owner, 04.10: the see-through hangar on its site read as overloaded
 // — the spoil heap and the depth mark had to go, and with them everything that is not a work of the list. Owner, 05.10:
@@ -99,7 +100,7 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
     >
       <h3 id={`about-ledger-${column.id}`}>
         <span aria-hidden="true">{number(index)}</span>
-        {column.title}
+        {keepHeadingWords(column.title)}
       </h3>
       <ul>
         {column.items.map((item) => (
