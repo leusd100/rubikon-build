@@ -10,9 +10,11 @@ import { customPropertyDeclarations, motionDeclarations, timeLiterals } from '..
 // it too. scripts/motion/motion-diff.mjs proves a move changed no value; this file proves it stays moved.
 //
 // Scope: the transition*/animation* declarations of the app's CSS files, and the custom properties of the token
-// (`--motion|ease|duration-*`) and choreography (`--<prefix>-for|at|curve-*`) families they take their values from. Out of
-// scope: an intermediate custom property of any other name (`--x: .3s` read by `transition: opacity var(--x)`), and the
-// inline styles of TSX.
+// (`--motion|ease|duration-*`) and choreography (`--<prefix>-for|at|curve-*`) families they take their values from. A
+// variable of any other name that a declaration reads must be declared by some app stylesheet or be set by a component's
+// inline style (INLINE below), so a misspelt name cannot silently drop a whole transition or animation. Out of scope: the
+// value an intermediate custom property of another name holds (`--x: .3s` read by `transition: opacity var(--x)`), and the
+// inline styles of TSX themselves.
 
 const app = path.join(process.cwd(), 'app');
 const files: string[] = [];
@@ -28,6 +30,16 @@ const sheets: Record<string, string> = Object.fromEntries(
   files.map((file) => [path.relative(app, file).split(path.sep).join('/'), readFileSync(file, 'utf8')]),
 );
 const names = Object.keys(sheets).sort();
+/** The source of every .ts/.tsx under app/: where the inline custom properties are set */
+const sources: string[] = [];
+const walkSources = (dir: string) => {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) walkSources(full);
+    else if (/\.tsx?$/.test(entry.name)) sources.push(readFileSync(full, 'utf8'));
+  }
+};
+walkSources(app);
 
 /** A choreography variable: a file's own time, delay or curve — `--rm-for-row`, `--ft-at-step`, `--fd-curve-draw` */
 const CHOREOGRAPHY = /^--[a-z0-9]+-(?:for|at|curve)-/;
@@ -36,6 +48,23 @@ const MOTION_VARIABLE = /^--(?:(?:motion|ease|duration)-|[a-z0-9]+-(?:for|at|cur
 
 /** The token families: a declaration of one of these names belongs in globals.css :root and nowhere else */
 const TOKEN_FAMILY = /^--(?:motion|ease|duration)-/;
+
+/**
+ * Variables a motion declaration reads that no stylesheet declares: a component sets them in an inline style
+ * (`style={{ '--n': index }}`), per element, so the CSS can only read them. Each name lists where it is set; the test
+ * «lists only inline variables a component still sets» fails when no .tsx/.ts under app/ sets a name any more.
+ */
+const INLINE: Readonly<Record<string, string>> = {
+  // the index of a part in a cascade: app/components/angary/FrameTour.tsx:673, app/components/home-v2/ProofFrame.tsx:166–223,
+  // app/components/home-v2/ProofContour.tsx:586, app/components/home-v2/ProofDetails.tsx:165
+  '--n': 'FrameTour.tsx, ProofFrame.tsx, ProofContour.tsx, ProofDetails.tsx',
+  // the shown step's own length, read with a fallback: app/components/configurator/ConfiguratorFrameView.tsx:92
+  '--dn-step-ms': 'ConfiguratorFrameView.tsx',
+  // the number of parts of a detail drawing, read with a fallback: app/components/home-v2/ProofDetails.tsx:260
+  '--parts': 'ProofDetails.tsx',
+  // the hold of the tour's step, read with a fallback: app/components/home-v2/ProofContour.tsx:834
+  '--hold': 'ProofContour.tsx',
+};
 
 const isChoreography = (name: string) => CHOREOGRAPHY.test(name);
 const propertyDeclarations = (file: string) => customPropertyDeclarations(sheets[file]);
@@ -106,6 +135,36 @@ describe('Motion v1 tokens (M1-1)', () => {
       }
     }
     expect(unresolved).toEqual([]);
+  });
+
+  it('declares every variable a transition or an animation reads', () => {
+    // A misspelt name (`var(--moiton-micro)`, `var(--easing-premium)`, `var(--hv2-fro-x)`) is a custom property nobody
+    // declares: the declaration is invalid at computed-value time and the whole transition or animation silently drops.
+    // The test above holds the Motion v1 families (a token anywhere, a choreography name in its own file); this one holds
+    // the rest: every name a motion declaration reads, with a fallback or without, is declared by some app stylesheet or
+    // is one of the INLINE names a component sets on an element.
+    const declared = new Set(names.flatMap((file) => propertyDeclarations(file).map(({ name }) => name)));
+    const unknown: string[] = [];
+    for (const file of names) {
+      for (const declaration of motionDeclarations(sheets[file])) {
+        for (const name of variablesIn(declaration.value)) {
+          if (!declared.has(name) && !(name in INLINE)) unknown.push(`${row(file, declaration)} | ${name}`);
+        }
+      }
+    }
+    expect(unknown).toEqual([]);
+  });
+
+  it('lists only inline variables a component still sets', () => {
+    const readByMotion = new Set(names.flatMap((file) => motionDeclarations(sheets[file]).flatMap(({ value }) => variablesIn(value))));
+    const declared = new Set(names.flatMap((file) => propertyDeclarations(file).map(({ name }) => name)));
+    const stale: string[] = [];
+    for (const name of Object.keys(INLINE)) {
+      if (!sources.some((source) => source.includes(`'${name}'`))) stale.push(`${name} | no .ts/.tsx under app/ sets it`);
+      if (declared.has(name)) stale.push(`${name} | a stylesheet declares it: take it off INLINE`);
+      if (!readByMotion.has(name)) stale.push(`${name} | no transition or animation reads it`);
+    }
+    expect(stale).toEqual([]);
   });
 
   it('declares the motion family only as the Motion v1 tokens', () => {

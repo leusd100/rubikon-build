@@ -11,6 +11,8 @@
 // --run-for <ms>   fake time advanced after every scroll step (default 1200)
 // --show <n>       differing rows printed per page and width (default 20)
 // Exit 0: no difference. Exit 1: at least one difference (the first rows are printed). Exit 2: a page could not be loaded.
+// A page error (an uncaught exception in the page) is printed per side; one the head build throws and the base build does not
+// is a difference too.
 //
 // Method. Both builds must walk the same timeline: a node-drawing tour or a 260 ms hold is driven by timers, and a run
 // that lets the page's clock flow in real time would move them between two runs of the same build. So every page gets
@@ -162,6 +164,17 @@ async function run(browser, origin, path, width, runFor) {
   }
 }
 
+/** The messages of `list` that `other` does not hold as often (a multiset difference), in order */
+function onlyIn(list, other) {
+  const left = new Map();
+  for (const message of other) left.set(message, (left.get(message) ?? 0) + 1);
+  return list.filter((message) => {
+    const count = left.get(message) ?? 0;
+    if (count > 0) left.set(message, count - 1);
+    return count === 0;
+  });
+}
+
 /** The first `show` differing rows between two row lists, matched by key */
 function differences(base, head, show) {
   const baseByKey = new Map(base.map(({ key, row }) => [key, row]));
@@ -203,14 +216,21 @@ async function main() {
         const shape = `${baseRun.elements}/${headRun.elements} elements, ${baseRun.rows.length}/${headRun.rows.length} motion rows, ${baseRun.steps}/${headRun.steps} scroll steps`;
         const { count, lines } = differences(baseRun.rows, headRun.rows, show);
         const sameDom = baseRun.elements === headRun.elements;
-        if (count === 0 && sameDom) {
-          console.log(`same  ${path} @ ${width}: ${shape}`);
+        const headOnlyErrors = onlyIn(headRun.errors, baseRun.errors);
+        const errorLines = [
+          ...baseRun.errors.slice(0, show).map((message) => `    base page error: ${message.slice(0, 200)}`),
+          ...headRun.errors.slice(0, show).map((message) => `    head page error: ${message.slice(0, 200)}`),
+        ];
+        if (count === 0 && sameDom && headOnlyErrors.length === 0) {
+          console.log(`same  ${path} @ ${width}: ${shape}${errorLines.length ? `; page errors ${baseRun.errors.length}/${headRun.errors.length}, none new in head` : ''}`);
+          for (const line of errorLines) console.log(line);
           continue;
         }
         different += 1;
-        console.log(`DIFF  ${path} @ ${width}: ${shape}${sameDom ? '' : ' — the DOM differs'}; ${count} differing rows`);
+        console.log(`DIFF  ${path} @ ${width}: ${shape}${sameDom ? '' : ' — the DOM differs'}; ${count} differing rows${headOnlyErrors.length ? `; ${headOnlyErrors.length} page errors only in head` : ''}`);
         for (const line of lines) console.log(line);
         if (count > show) console.log(`    … ${count - show} more`);
+        for (const line of errorLines) console.log(line);
       }
     }
   } finally {
