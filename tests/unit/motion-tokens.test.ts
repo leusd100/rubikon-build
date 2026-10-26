@@ -32,7 +32,6 @@ const names = Object.keys(sheets).sort();
 
 /** The files (relative to app/) that still hold literal times or curves in a transition or an animation */
 const PENDING: readonly string[] = [
-  'pro-nas/about.css',
   'components/directions/direction-template.css',
   'components/directions/catalog-drawing.css',
   'components/process/change-sheets.css',
@@ -42,16 +41,12 @@ const PENDING: readonly string[] = [
   'components/home-v2/proof-details.css',
   'components/zernoskhovyshcha/grain-complex.css',
   'components/process/resp-matrix.css',
-  'components/directions/process-split.css',
   'components/drawing-sheet.css',
   'components/directions/formats-scope.css',
   'zernoskhovyshcha/grain-planner.css',
-  'yak-pratsyuiemo/delivery.css',
-  'components/about/capability.css',
   'components/faq.css',
   'components/home-v2/directions-key.css',
   'components/configurator/configurator-sheet.css',
-  'components/about/region.css',
   'configurator-preview/configurator.css',
   'components/configurator/configurator-controls.css',
   'napryamky/directions.css',

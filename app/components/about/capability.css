@@ -7,6 +7,16 @@
    Imported by the page (app/pro-nas/page.tsx) and only there: a CSS file imported by two client modules becomes an
    empty chunk under vinext. Theme roles only (app/theme.css): Light and Dark need no rules of their own. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the pointed states: a part and its tag light as the pointer moves */
+  --cap-for-point: .25s;
+  /* first view: the solid lines draw, then the ground, the axis, the numbers and the title strip fade in */
+  --cap-for-scheme-draw: 1100ms;
+  --cap-for-scheme-in: 500ms;
+  --cap-at-scheme-in: 900ms;
+}
+
 /* The block's root is the ledger itself (.about-cap.about-ledger — one element, so the grid below wins over any
    plain .about-ledger rule whatever the import order). --cap-own-rest is the line of group 01 at rest: copper. Set it
    to a graphite role (e.g. var(--color-text-secondary)) to compare «graphite at rest, copper only while pointing».
@@ -20,7 +30,7 @@
 
 /* The works as name tags. The base row styles (about.css: a ruled list) are replaced here. */
 .about-cap .about-ledger-col ul { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.about-cap .about-ledger-col li { max-width: 100%; padding: 0; border: 1px solid var(--color-text-muted); transition: background-color .2s ease, border-color .2s ease; }
+.about-cap .about-ledger-col li { max-width: 100%; padding: 0; border: 1px solid var(--color-text-muted); transition: background-color var(--motion-micro) ease, border-color var(--motion-micro) ease; }
 .about-cap .about-ledger-col.is-core li { border-color: var(--cap-own-rest); }
 .about-cap .about-ledger-col.is-partner li { border-style: dashed; }
 .about-cap .about-ledger-col li b { font-size: 15px; line-height: 1.3; }
@@ -38,7 +48,7 @@
 .cap-ground { stroke: var(--color-border-strong); stroke-width: calc(1px * var(--cap-k)); }
 .cap-axis { stroke: var(--color-text-muted); stroke-width: calc(.8px * var(--cap-k)); stroke-dasharray: 12 3 2 3; opacity: .7; }
 /* 02 organised for the project — and any part the model stops naming — is thin graphite */
-.cap-part { --cap-ink: var(--color-text-muted); stroke: var(--cap-ink); stroke-width: calc(1.1px * var(--cap-k)); transition: stroke .25s ease, stroke-width .25s ease, fill .25s ease, opacity .25s ease; }
+.cap-part { --cap-ink: var(--color-text-muted); stroke: var(--cap-ink); stroke-width: calc(1.1px * var(--cap-k)); transition: stroke var(--cap-for-point) ease, stroke-width var(--cap-for-point) ease, fill var(--cap-for-point) ease, opacity var(--cap-for-point) ease; }
 /* Every solid part carries pathLength=1: one dash covers it, so the first view can draw it (see the motion block) */
 .cap-part:not([data-tier="partner"]) { stroke-dasharray: 1; stroke-dashoffset: 0; }
 /* 01 own team: the one accent; the frame is the heavy "cut" line, the footings carry the faint cut fill */
@@ -49,10 +59,10 @@
 .cap-part[data-tier="partner"] { stroke-width: calc(1.2px * var(--cap-k)); stroke-dasharray: 5 4; }
 /* The scheme's own pointer targets: a wide stroke nobody sees, over each part */
 .cap-fig path.cap-hit { stroke: transparent; stroke-width: 13px; pointer-events: stroke; }
-.cap-tag { transition: opacity .25s ease; }
+.cap-tag { transition: opacity var(--cap-for-point) ease; }
 .cap-tag path { stroke: var(--color-text-muted); stroke-width: calc(.8px * var(--cap-k)); opacity: .8; }
 .cap-tag circle { fill: var(--color-text-muted); stroke: none; }
-.cap-tag text { fill: var(--color-text-muted); font: 600 calc(13px * var(--cap-k)) var(--font-condensed), sans-serif; letter-spacing: .1em; dominant-baseline: central; transition: fill .25s ease; }
+.cap-tag text { fill: var(--color-text-muted); font: 600 calc(13px * var(--cap-k)) var(--font-condensed), sans-serif; letter-spacing: .1em; dominant-baseline: central; transition: fill var(--cap-for-point) ease; }
 /* The title strip, as under «Переріз» on the direction pages (.dsd figcaption): provenance, the view in bold, the subject */
 .cap-fig figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--color-border-strong); color: var(--color-text-muted); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.3 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .cap-fig figcaption b { color: var(--color-text); font-size: 14px; letter-spacing: .04em; }
@@ -77,8 +87,8 @@
    Reduced motion and no JavaScript never arm ProcessMotion, so the complete scheme shows at once. */
 .about-page[data-motion-ready] .cap-fig:not([data-motion-state="on"]) .cap-part:not([data-tier="partner"]) { stroke-dashoffset: 1; stroke-linecap: butt; fill-opacity: 0; }
 .about-page[data-motion-ready] .cap-fig:not([data-motion-state="on"]) :is(.cap-ground, .cap-axis, .cap-part[data-tier="partner"], .cap-tag, figcaption) { opacity: 0; }
-.about-page[data-motion-ready] .cap-fig[data-motion-state="on"] .cap-part:not([data-tier="partner"]) { animation: cap-draw 1100ms var(--m-ease) backwards; }
-.about-page[data-motion-ready] .cap-fig[data-motion-state="on"] :is(.cap-ground, .cap-axis, .cap-part[data-tier="partner"], .cap-tag, figcaption) { animation: cap-in 500ms ease 900ms backwards; }
+.about-page[data-motion-ready] .cap-fig[data-motion-state="on"] .cap-part:not([data-tier="partner"]) { animation: cap-draw var(--cap-for-scheme-draw) var(--m-ease) backwards; }
+.about-page[data-motion-ready] .cap-fig[data-motion-state="on"] :is(.cap-ground, .cap-axis, .cap-part[data-tier="partner"], .cap-tag, figcaption) { animation: cap-in var(--cap-for-scheme-in) ease var(--cap-at-scheme-in) backwards; }
 @keyframes cap-draw { from { stroke-dashoffset: 1; fill-opacity: 0; } }
 @keyframes cap-in { from { opacity: 0; } }
 

@@ -3,6 +3,22 @@
    up across the steps (subgrid), so the rail is one line and the drawings stand on it. Used by DirectionProcess (`split`),
    the /angary route and /yak-pratsyuiemo «Від задачі до будівництва» (owner 06.10: «спростити… з вау ефектом»). Always on a
    dark band, so the inks are the band's in both themes. ── */
+
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* arriving: the rail draws step by step, each drawing plots in on its stretch, the outcome follows, then the light runs */
+  --ps-at-step: 340ms;
+  --ps-for-rail: 500ms;
+  --ps-at-rail: 150ms;
+  --ps-at-draw: 350ms;
+  --ps-for-ink: 500ms;
+  --ps-at-ink: 250ms;
+  --ps-for-result: 400ms;
+  --ps-at-result: 750ms;
+  --ps-for-spark: 2400ms;
+  --ps-at-spark: 1900ms;
+}
+
 .process-key { display: flex; gap: 28px; margin: -6px 0 28px; color: var(--color-dark-text-secondary); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
 .process-key span::before { display: inline-block; width: 22px; margin-right: 10px; vertical-align: middle; content: ''; border-top: 1px solid var(--color-dark-text-muted); }
 .process-key span:last-child::before { border-top: 2px solid var(--color-accent-on-dark); }
@@ -48,11 +64,11 @@
 :is(.direction-page, .process-page)[data-motion-ready] .process-split:not([data-motion-state="on"]) .pd [pathLength="1"] { stroke-dashoffset: 1; }
 :is(.direction-page, .process-page)[data-motion-ready] .process-split:not([data-motion-state="on"]) .pd :is(.pd-ink, .pd-cut, .pd-partner, .pd-grain, .pd-sight, .pd-water, .pd-letter) { opacity: 0; }
 :is(.direction-page, .process-page)[data-motion-ready] .process-split:not([data-motion-state="on"]) .ps-result { opacity: 0; transform: translateY(6px); }
-:is(.direction-page, .process-page)[data-motion-ready="on"] .process-split .ps-node::before { transition: transform 500ms var(--m-ease) calc(150ms + var(--i, 0) * 340ms); }
-:is(.direction-page, .process-page)[data-motion-ready="on"] .process-split .pd [pathLength="1"] { transition: stroke-dashoffset 900ms var(--m-ease) calc(350ms + var(--i, 0) * 340ms); }
-:is(.direction-page, .process-page)[data-motion-ready="on"] .process-split .pd :is(.pd-ink, .pd-cut, .pd-partner, .pd-grain, .pd-sight, .pd-water, .pd-letter) { transition: opacity 500ms ease calc(250ms + var(--i, 0) * 340ms); }
-:is(.direction-page, .process-page)[data-motion-ready="on"] .process-split .ps-result { transition: opacity 400ms ease calc(750ms + var(--i, 0) * 340ms), transform 400ms var(--m-ease) calc(750ms + var(--i, 0) * 340ms); }
-:is(.direction-page, .process-page)[data-motion-ready] .process-split[data-motion-state="on"] .ps-spark { animation: ps-run 2400ms var(--m-ease) 1900ms both; }
+:is(.direction-page, .process-page)[data-motion-ready="on"] .process-split .ps-node::before { transition: transform var(--ps-for-rail) var(--m-ease) calc(var(--ps-at-rail) + var(--i, 0) * var(--ps-at-step)); }
+:is(.direction-page, .process-page)[data-motion-ready="on"] .process-split .pd [pathLength="1"] { transition: stroke-dashoffset var(--motion-draw) var(--m-ease) calc(var(--ps-at-draw) + var(--i, 0) * var(--ps-at-step)); }
+:is(.direction-page, .process-page)[data-motion-ready="on"] .process-split .pd :is(.pd-ink, .pd-cut, .pd-partner, .pd-grain, .pd-sight, .pd-water, .pd-letter) { transition: opacity var(--ps-for-ink) ease calc(var(--ps-at-ink) + var(--i, 0) * var(--ps-at-step)); }
+:is(.direction-page, .process-page)[data-motion-ready="on"] .process-split .ps-result { transition: opacity var(--ps-for-result) ease calc(var(--ps-at-result) + var(--i, 0) * var(--ps-at-step)), transform var(--ps-for-result) var(--m-ease) calc(var(--ps-at-result) + var(--i, 0) * var(--ps-at-step)); }
+:is(.direction-page, .process-page)[data-motion-ready] .process-split[data-motion-state="on"] .ps-spark { animation: ps-run var(--ps-for-spark) var(--m-ease) var(--ps-at-spark) both; }
 
 /* One column from 1050 px down: the rail runs down the left, each step's drawing beside its outcome */
 @media (max-width: 1050px) {

@@ -5,6 +5,50 @@
    Theme roles only (app/theme.css): Light and Dark need no rules of their own. Motion (ProcessMotion, root
    .about-page) plays once; without it — or with reduced motion — every block shows its final state. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the two people: the second card follows the first, then the line between them draws out and its words come */
+  --about-at-person-second: 160ms;
+  --about-for-bond-line: 700ms;
+  --about-at-bond-line: 420ms;
+  --about-at-bond-text: 900ms;
+  /* what we build, the list before work, the principle cards: one after another */
+  --about-at-ledger-step: 110ms;
+  --about-at-before-step: 160ms;
+  --about-at-principle-reveal-step: 150ms;
+  /* the practice tour: the camera, the marks, the progress bar */
+  --about-for-camera: 1100ms;
+  --about-curve-camera: cubic-bezier(.65, 0, .25, 1);
+  --about-for-mark-fade: 400ms;
+  --about-for-step-bar: 5200ms;
+  --about-at-mark-draw: 650ms;
+  /* the frame goes up in its order — base plate, column, beam; the route line and its numbers run with it */
+  --about-for-route-draw: 1300ms;
+  --about-for-step-pop: 320ms;
+  --about-at-frame-plate: 700ms;
+  --about-at-frame-column: 1350ms;
+  --about-at-frame-beam: 2000ms;
+  /* the principles' marks: copper plots, graphite fades in */
+  --about-for-principle-draw: 1100ms;
+  --about-at-principle-draw: 450ms;
+  --about-for-principle-ink: 500ms;
+  --about-at-principle-ink: 250ms;
+  --about-at-principle-mark-step: 260ms;
+  /* the practice drawing: a step lights its parts, then builds what it names */
+  --about-for-step-light: .3s;
+  --about-for-working-draw: 1100ms;
+  --about-at-working-draw: 650ms;
+  --about-for-grid-pop: 380ms;
+  --about-at-grid-pop: 1300ms;
+  --about-at-grid-pop-step: 120ms;
+  --about-for-frame-draw: 700ms;
+  --about-for-joint-draw: 700ms;
+  --about-at-joint-draw: 800ms;
+  --about-for-bolt-draw: 420ms;
+  --about-at-bolt-draw: 1400ms;
+  --about-at-bolt-step: 180ms;
+}
+
 .about-page {
   --m-reveal: var(--duration-medium);
   --m-ease: var(--ease-premium);
@@ -53,10 +97,10 @@
 .team-bond::after { transform-origin: left; }
 .team-bond span { color: var(--color-accent-strong); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
 .about-page[data-motion-ready="on"] .team-about .person-story { transition: opacity var(--m-reveal) ease, transform var(--m-reveal) var(--m-ease); }
-.about-page[data-motion-ready="on"] .team-about .person-story + .person-story { transition-delay: 160ms; }
+.about-page[data-motion-ready="on"] .team-about .person-story + .person-story { transition-delay: var(--about-at-person-second); }
 .about-page[data-motion-ready="on"] .team-bond::before,
-.about-page[data-motion-ready="on"] .team-bond::after { transition: transform 700ms var(--m-ease) 420ms; }
-.about-page[data-motion-ready="on"] .team-bond span { transition: opacity var(--m-reveal) ease 900ms; }
+.about-page[data-motion-ready="on"] .team-bond::after { transition: transform var(--about-for-bond-line) var(--m-ease) var(--about-at-bond-line); }
+.about-page[data-motion-ready="on"] .team-bond span { transition: opacity var(--m-reveal) ease var(--about-at-bond-text); }
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .person-story { opacity: 0; transform: translateY(14px); }
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond::before { transform: scaleX(0); }
 .about-page[data-motion-ready] .team-about .team-stories:not([data-motion-state="on"]) .team-bond::after { transform: scaleX(0); }
@@ -83,7 +127,7 @@
 .about-build-all { margin-top: 12px; } /* 28 to the words, as before the 44 px box (W3-06) */
 /* The phone still (AboutHeroVideo): the footage's grey grade would put its sunset out — a lighter one, framed on the light */
 .about-hero-media > img.about-hero-still { filter: saturate(.85) contrast(1.04) brightness(.95); object-position: 62% 40%; }
-.about-page[data-motion-ready="on"] .about-ledger-col { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
+.about-page[data-motion-ready="on"] .about-ledger-col { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * var(--about-at-ledger-step)), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * var(--about-at-ledger-step)); }
 .about-page[data-motion-ready] .about-ledger:not([data-motion-state="on"]) .about-ledger-col { opacity: 0; transform: translateY(12px); }
 /* The region (RegionBlock) closes the block; its own styles live in app/components/about/region.css */
 .about-build-region { margin-top: clamp(44px, 5vw, 68px); }
@@ -101,7 +145,7 @@
 .about-before b { color: var(--color-text); font: 600 18px/1.25 var(--font-condensed), sans-serif; letter-spacing: .02em; text-transform: none; }
 .about-before-text { color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
 .about-story-support { max-width: 640px; margin: 22px 0 0; color: var(--color-text-muted); font-size: 14.5px; line-height: 1.7; }
-.about-page[data-motion-ready="on"] .about-before li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 160ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 160ms); }
+.about-page[data-motion-ready="on"] .about-before li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * var(--about-at-before-step)), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * var(--about-at-before-step)); }
 .about-page[data-motion-ready] .about-story-layout:not([data-motion-state="on"]) .about-before li { opacity: 0; transform: translateX(-10px); }
 
 /* The illustration answers the list one step at a time (PracticeSteps). The stage holds the image and its marks, so
@@ -124,7 +168,7 @@
 .aqc-step circle { fill: rgba(13, 16, 14, .84); stroke: var(--color-accent-on-dark); stroke-width: 4; }
 .aqc-badge text, .aqc-step text { fill: #fff; font: 700 30px var(--font-condensed), sans-serif; letter-spacing: .04em; text-anchor: middle; }
 .aqc-step text { font-size: 28px; }
-.aqc-mark, .aqc-badge { transition: opacity 400ms ease; }
+.aqc-mark, .aqc-badge { transition: opacity var(--about-for-mark-fade) ease; }
 .ps[data-step] .aqc-mark { opacity: 0; }
 .ps[data-step="1"] .aqc-mark-1, .ps[data-step="2"] .aqc-mark-2, .ps[data-step="3"] .aqc-mark-3 { opacity: 1; }
 .ps[data-step] .aqc-badge { opacity: 0; }
@@ -149,7 +193,7 @@
 .ps-fill { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; }
 @keyframes ps-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 /* as long as the step (STEP_MS in useDrawingTour), as the direction nodes' bars */
-.ps[data-touring] .ps-fill { animation: ps-fill 5200ms linear both; }
+.ps[data-touring] .ps-fill { animation: ps-fill var(--about-for-step-bar) linear both; }
 /* The items are the steps' buttons; the shown one takes the copper bar */
 /* (the row's button and its pressed state: .step-option, globals.css) */
 .about-before-step { grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; padding: 18px 12px; }
@@ -157,15 +201,15 @@
 @keyframes ps-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes ps-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: no-preference) {
-  .ps-stage { transition: transform 1100ms cubic-bezier(.65, 0, .25, 1); }
+  .ps-stage { transition: transform var(--about-for-camera) var(--about-curve-camera); }
   .ps[data-step="1"] .aqc-mark-1 .aqc-line,
   .ps[data-step="2"] .aqc-mark-2 .aqc-line,
-  .ps[data-step="3"] .aqc-mark-3 .aqc-line { animation: ps-draw var(--motion-draw) var(--ease-plot) 650ms backwards; }
+  .ps[data-step="3"] .aqc-mark-3 .aqc-line { animation: ps-draw var(--motion-draw) var(--ease-plot) var(--about-at-mark-draw) backwards; }
   /* the route runs with the frame: each number lands as its part draws */
-  .ps[data-step="2"] .aqc-mark-2 .aqc-line { animation-duration: 1300ms; animation-delay: 700ms; animation-timing-function: linear; }
-  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { animation: ps-pop 320ms ease 700ms backwards; }
-  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(2) .aqc-step { animation: ps-pop 320ms ease 1350ms backwards; }
-  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(3) .aqc-step { animation: ps-pop 320ms ease 2000ms backwards; }
+  .ps[data-step="2"] .aqc-mark-2 .aqc-line { animation-duration: var(--about-for-route-draw); animation-delay: var(--about-at-frame-plate); animation-timing-function: linear; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(1) .aqc-step { animation: ps-pop var(--about-for-step-pop) ease var(--about-at-frame-plate) backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(2) .aqc-step { animation: ps-pop var(--about-for-step-pop) ease var(--about-at-frame-column) backwards; }
+  .ps[data-step="2"] .aqc-mark-2 > g:nth-of-type(3) .aqc-step { animation: ps-pop var(--about-for-step-pop) ease var(--about-at-frame-beam) backwards; }
 }
 
 /* ---------------------------------------------------------------- 5 · Principles (charcoal band) */
@@ -192,13 +236,13 @@
 .principle-mark [pathLength="1"] { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .about-page[data-motion-ready] .about-principles-grid:not([data-motion-state="on"]) .principle-mark [pathLength="1"] { stroke-dashoffset: 1; }
 .about-page[data-motion-ready] .about-principles-grid:not([data-motion-state="on"]) .principle-mark :is(.pm-ink, .pm-cut, .pm-partner, .pm-dot, text) { opacity: 0; }
-.about-page[data-motion-ready="on"] .about-principles-grid .principle-mark [pathLength="1"] { transition: stroke-dashoffset 1100ms var(--m-ease) calc(450ms + var(--i, 0) * 260ms); }
-.about-page[data-motion-ready="on"] .about-principles-grid .principle-mark :is(.pm-ink, .pm-cut, .pm-partner, .pm-dot, text) { transition: opacity 500ms ease calc(250ms + var(--i, 0) * 260ms); }
+.about-page[data-motion-ready="on"] .about-principles-grid .principle-mark [pathLength="1"] { transition: stroke-dashoffset var(--about-for-principle-draw) var(--m-ease) calc(var(--about-at-principle-draw) + var(--i, 0) * var(--about-at-principle-mark-step)); }
+.about-page[data-motion-ready="on"] .about-principles-grid .principle-mark :is(.pm-ink, .pm-cut, .pm-partner, .pm-dot, text) { transition: opacity var(--about-for-principle-ink) ease calc(var(--about-at-principle-ink) + var(--i, 0) * var(--about-at-principle-mark-step)); }
 .about-principles-grid h3 { margin: 18px 0 12px; color: var(--color-dark-text); font: 600 22px/1.12 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; }
 .about-principles-grid p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.65; }
 /* (an arrow link: .link-arrow) */
 .about-principle-link { --link-ink: var(--color-dark-text); justify-self: start; margin-top: 18px; }
-.about-page[data-motion-ready="on"] .about-principles-grid li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 150ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 150ms); }
+.about-page[data-motion-ready="on"] .about-principles-grid li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * var(--about-at-principle-reveal-step)), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * var(--about-at-principle-reveal-step)); }
 .about-page[data-motion-ready] .about-principles-grid:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(14px); }
 
 /* ---------------------------------------------------------------- Tablet */
@@ -276,23 +320,23 @@
    22.10): pulled back, the other's letter came into the frame at its edge or under the bars */
 .ps[data-step] .practice-drawing [data-view] { opacity: 0; }
 .ps[data-step="1"] .practice-drawing [data-view="1"], .ps[data-step="2"] .practice-drawing [data-view="2"], .ps[data-step="3"] .practice-drawing [data-view="3"] { opacity: 1; }
-@media (prefers-reduced-motion: no-preference) { .practice-drawing [data-view] { transition: opacity .3s ease; } }
+@media (prefers-reduced-motion: no-preference) { .practice-drawing [data-view] { transition: opacity var(--about-for-step-light) ease; } }
 .practice-drawing .pd-paper { fill: color-mix(in srgb, var(--color-text) 4%, transparent); stroke: var(--color-border-strong); stroke-width: 2; }
-.practice-drawing .pd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke .3s ease, opacity .3s ease; }
+.practice-drawing .pd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke var(--about-for-step-light) ease, opacity var(--about-for-step-light) ease; }
 .practice-drawing .pd-part circle { fill: color-mix(in srgb, var(--color-text) 12%, transparent); }
 .ps[data-step] .practice-drawing .pd-part { opacity: .38; }
 .ps[data-step="1"] .practice-drawing [data-part="1"], .ps[data-step="2"] .practice-drawing [data-part="2"], .ps[data-step="3"] .practice-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }
 /* Each step builds what it names once the camera has arrived: the working drawing draws itself; the frame goes up in its
    order — base plates, columns, the beam; the joint's plate draws and its bolts set one by one. Reduced motion: still. */
 @media (prefers-reduced-motion: no-preference) {
-  .ps[data-step="1"] .practice-drawing [data-part="1"] path { stroke-dasharray: 1; animation: pd-draw 1100ms var(--ease-premium) 650ms both; }
-  .ps[data-step="1"] .practice-drawing [data-part="1"] circle { transform-box: fill-box; transform-origin: center; animation: pd-pop 380ms var(--ease-premium) both; animation-delay: calc(1300ms + var(--i, 0) * 120ms); }
-  .ps[data-step="2"] .practice-drawing [data-seq] { stroke-dasharray: 1; animation: pd-draw 700ms var(--ease-premium) both; }
-  .ps[data-step="2"] .practice-drawing [data-seq="1"] { animation-delay: 700ms; }
-  .ps[data-step="2"] .practice-drawing [data-seq="2"] { animation-delay: 1350ms; }
-  .ps[data-step="2"] .practice-drawing [data-seq="3"] { animation-delay: 2000ms; }
-  .ps[data-step="3"] .practice-drawing [data-part="3"] path { stroke-dasharray: 1; animation: pd-draw 700ms var(--ease-premium) 800ms both; }
-  .ps[data-step="3"] .practice-drawing [data-part="3"] path[data-bolt] { animation-duration: 420ms; animation-delay: calc(1400ms + var(--i, 0) * 180ms); }
+  .ps[data-step="1"] .practice-drawing [data-part="1"] path { stroke-dasharray: 1; animation: pd-draw var(--about-for-working-draw) var(--ease-premium) var(--about-at-working-draw) both; }
+  .ps[data-step="1"] .practice-drawing [data-part="1"] circle { transform-box: fill-box; transform-origin: center; animation: pd-pop var(--about-for-grid-pop) var(--ease-premium) both; animation-delay: calc(var(--about-at-grid-pop) + var(--i, 0) * var(--about-at-grid-pop-step)); }
+  .ps[data-step="2"] .practice-drawing [data-seq] { stroke-dasharray: 1; animation: pd-draw var(--about-for-frame-draw) var(--ease-premium) both; }
+  .ps[data-step="2"] .practice-drawing [data-seq="1"] { animation-delay: var(--about-at-frame-plate); }
+  .ps[data-step="2"] .practice-drawing [data-seq="2"] { animation-delay: var(--about-at-frame-column); }
+  .ps[data-step="2"] .practice-drawing [data-seq="3"] { animation-delay: var(--about-at-frame-beam); }
+  .ps[data-step="3"] .practice-drawing [data-part="3"] path { stroke-dasharray: 1; animation: pd-draw var(--about-for-joint-draw) var(--ease-premium) var(--about-at-joint-draw) both; }
+  .ps[data-step="3"] .practice-drawing [data-part="3"] path[data-bolt] { animation-duration: var(--about-for-bolt-draw); animation-delay: calc(var(--about-at-bolt-draw) + var(--i, 0) * var(--about-at-bolt-step)); }
 }
 @keyframes pd-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes pd-pop { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: none; } }

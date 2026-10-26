@@ -5,6 +5,20 @@
    promised. On fine-pointer devices with motion a soft copper light follows the cursor and brings the nearest rings up.
    Motion runs once inside a ProcessMotion root; without it every part stands complete. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the cursor's light, and the rings it brings up */
+  --region-for-light: 320ms;
+  /* arriving: the line extends, the distance rings step out from the city, then the city pulses twice */
+  --region-for-bond: 700ms;
+  --region-at-bond: 160ms;
+  --region-for-rings: 1100ms;
+  --region-at-rings: 200ms;
+  --region-at-rings-step: 110ms;
+  --region-for-pulse: 1400ms;
+  --region-at-pulse: 400ms;
+}
+
 .region-block {
   --region-draw: var(--ease-plot); /* an even pen: no rush at the start, no crawl at the end */
   --region-ease: var(--m-ease, var(--ease-premium));
@@ -29,9 +43,9 @@
 .arm-fill-edge { stop-color: var(--color-accent); stop-opacity: .05; }
 .arm-ring-line { fill: none; stroke: var(--color-accent); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: calc(.46 - var(--k, 0) * .034); stroke-dasharray: 1; stroke-dashoffset: 0; }
 .arm-rings-lit .arm-ring-line { stroke: var(--color-accent-strong); stroke-width: 1.6; opacity: 1; }
-.arm-rings-lit { opacity: 0; transition: opacity 320ms ease; }
+.arm-rings-lit { opacity: 0; transition: opacity var(--region-for-light) ease; }
 .arm-light { transform: translate(var(--mx), var(--my)); transform-box: view-box; }
-.arm-glow { opacity: 0; transition: opacity 320ms ease; pointer-events: none; }
+.arm-glow { opacity: 0; transition: opacity var(--region-for-light) ease; pointer-events: none; }
 .arm-spot-core { stop-color: var(--color-accent); stop-opacity: .26; }
 .arm-spot-edge { stop-color: var(--color-accent); stop-opacity: 0; }
 .arm[data-light="on"] :is(.arm-rings-lit, .arm-glow) { opacity: 1; }
@@ -46,10 +60,10 @@
 /* Arriving (UX pass 2026-10): what the block says — the region, the city, the words — is there from the first frame.
    Only the decorative line extends and the distance rings step out from the city, then the city pulses twice. */
 :where([data-motion-ready="on"]) .region-bond::before,
-:where([data-motion-ready="on"]) .region-bond::after { transition: transform 700ms var(--region-ease) 160ms; }
-:where([data-motion-ready="on"]) .arm-ring-line { transition: stroke-dashoffset 1100ms var(--region-draw) calc(200ms + var(--k, 0) * 110ms); }
+:where([data-motion-ready="on"]) .region-bond::after { transition: transform var(--region-for-bond) var(--region-ease) var(--region-at-bond); }
+:where([data-motion-ready="on"]) .arm-ring-line { transition: stroke-dashoffset var(--region-for-rings) var(--region-draw) calc(var(--region-at-rings) + var(--k, 0) * var(--region-at-rings-step)); }
 @keyframes arm-pulse { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
-:where([data-motion-ready="on"]) .region-block[data-motion-state="on"] .arm-pulse { animation: arm-pulse 1400ms ease-out 400ms 2; }
+:where([data-motion-ready="on"]) .region-block[data-motion-state="on"] .arm-pulse { animation: arm-pulse var(--region-for-pulse) ease-out var(--region-at-pulse) 2; }
 :where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .region-bond::before,
 :where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .region-bond::after { transform: scaleX(0); }
 :where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .arm-ring-line { stroke-dashoffset: 1; }
