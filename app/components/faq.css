@@ -36,10 +36,12 @@
 .faq-ask { max-width: 380px; margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--color-border-strong); }
 .faq-ask p { margin: 0; color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
 .faq-ask div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-top: 16px; }
-.faq-ask a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font: 700 15px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
-.faq-ask-call { color: var(--color-text); border-bottom: 1px solid var(--color-accent); }
-.faq-ask-write { color: var(--color-accent-strong); text-transform: uppercase; font-size: 13px; letter-spacing: .08em; }
-.faq-ask a:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+/* The number is a call, in the number's own type; «Залишити запит» is an arrow link (.link-arrow), copper as the way on.
+   Both stand their words on the rule, 8 px above it, so the two read as one line.
+   (Until W3-06 a rule for both links, .faq-ask a, outranked .faq-ask-write and set it in Plex 15 px.) */
+.faq-ask-call { display: inline-flex; align-items: flex-end; gap: 10px; min-height: 44px; padding-bottom: 8px; color: var(--color-text); border-bottom: 1px solid var(--color-accent); font: 700 15px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
+.faq-ask-call:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
+.faq-ask-write { --link-ink: var(--color-accent-strong); --link-hover-ink: var(--color-text); } /* it rests in copper: hover and focus turn it to the text's ink */
 /* One copy shown per width (FaqAsk, PDO-14 A): beside the list under the title, after the list on a phone */
 .faq-ask-end { display: none; }
 

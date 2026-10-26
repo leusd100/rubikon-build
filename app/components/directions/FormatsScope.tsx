@@ -145,7 +145,7 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
           <li key={format.id}>
             <button
               type="button"
-              className="dfmt-option"
+              className="step-option dfmt-option"
               aria-pressed={format.id === active}
               onClick={() => choose(format.id)}
               onFocus={mirror ? undefined : () => choose(format.id)}

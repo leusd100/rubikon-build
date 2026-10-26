@@ -138,6 +138,23 @@ test.describe('Grain page composition on /zernoskhovyshcha', () => {
     await expect(inquiryComment(page)).toHaveValue('Основа під силоси. ');
   });
 
+  // The whole card is the way in: its link's ::after covers it. A press on the title, away from the link's own box, with
+  // a mouse held as a hand holds it and with a finger on a 390 px phone (W3-06 review: the arrow link's press scale made
+  // the link the containing block of its own ::after, the overlay shrank to the link, and the press reached nothing).
+  test('a press on a situation card’s title starts the message with its name', async ({ page, isMobile }) => {
+    if (isMobile) await page.setViewportSize({ width: 390, height: 844 });
+    await openPlanner(page, GRAIN_PAGE);
+    const title = page.locator('.gs-card', { hasText: 'Основа під силоси' }).locator('h3');
+    await title.scrollIntoViewIfNeeded();
+    const box = await title.boundingBox();
+    if (!box) throw new Error('the card has no title box');
+    const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+    if (isMobile) await page.touchscreen.tap(x, y);
+    else await page.mouse.click(x, y, { delay: 80 });
+    await expect(page).toHaveURL(/#inquiry$/);
+    await expect(inquiryComment(page)).toHaveValue('Основа під силоси. ');
+  });
+
   test('the drawing answers a pointer: a tip names who builds what, a press changes the complex', async ({ page, isMobile }) => {
     test.skip(isMobile, 'a mouse points; a phone has the chips, tested above');
     await openPlanner(page, GRAIN_PAGE);

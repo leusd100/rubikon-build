@@ -72,7 +72,7 @@ export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase 
           Ілюстрації та схеми пояснюють підхід і не замінюють проєкт: розрахунки та проєктні рішення — за проєктувальником.
         </p>
         {/* The one way on from the explanation to how the work itself is organised; the band's own link style */}
-        <a className="hv2-people-link hv2-process-link" href={siteRoutes.process}>Як працюємо <span aria-hidden="true">↗</span></a>
+        <a className="link-arrow hv2-people-link hv2-process-link" href={siteRoutes.process}>Як працюємо <span aria-hidden="true" data-arrow="up-right">↗</span></a>
       </div>
     </section>
   );

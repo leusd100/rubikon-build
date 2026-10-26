@@ -79,8 +79,8 @@ export default function DirectionsPage() {
               <a className="button button-hero-secondary subhero-side-cta" href="#directions-list">
                 Обрати напрям <span aria-hidden="true">↓</span>
               </a>
-              <a className="text-link" href="#inquiry" data-open-inquiry="">
-                Обговорити задачу <span aria-hidden="true">↓</span>
+              <a className="link-arrow text-link" href="#inquiry" data-open-inquiry="">
+                Обговорити задачу <span aria-hidden="true" data-arrow="down">↓</span>
               </a>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function DirectionsPage() {
                 (/pro-nas: «Етапи роботи», «Хто за що відповідає»; this band's own «Формати участі») */}
             <div className="dhow-links">
               {HOW_LINKS.map(({ hash, label }) => (
-                <a key={hash} className="section-link" href={`${siteRoutes.process}#${hash}`}>{label} <span aria-hidden="true">↗</span></a>
+                <a key={hash} className="link-arrow section-link" href={`${siteRoutes.process}#${hash}`}>{label} <span aria-hidden="true" data-arrow="up-right">↗</span></a>
               ))}
             </div>
           </div>

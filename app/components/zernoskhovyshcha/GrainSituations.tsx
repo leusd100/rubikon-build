@@ -82,8 +82,8 @@ export function GrainSituations({ entry }: Readonly<{ entry: NonNullable<Directi
                 <p>{item.text}</p>
               </div>
               <p className="direction-entry-start"><b>Почнемо з</b> {item.start}</p>
-              <PrefillInquiryLink className="direction-entry-link" text={`${item.situation}. `}>
-                Обговорити <span aria-hidden="true">↓</span>
+              <PrefillInquiryLink className="link-arrow direction-entry-link" text={`${item.situation}. `}>
+                Обговорити <span aria-hidden="true" data-arrow="down">↓</span>
               </PrefillInquiryLink>
             </li>
           ))}

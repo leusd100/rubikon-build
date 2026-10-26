@@ -25,7 +25,7 @@ export function ContactBridge({ children }: Readonly<{ children: ReactNode }>) {
           <Phone aria-hidden="true" />
           <span>{company.phone.display}</span>
         </a>
-        <a className="section-link" href={siteRoutes.contact}>Або залишити запит <span aria-hidden="true">↗</span></a>
+        <a className="link-arrow section-link" href={siteRoutes.contact}>Або залишити запит <span aria-hidden="true" data-arrow="up-right">↗</span></a>
       </div>
     </div>
   );
@@ -79,7 +79,7 @@ export function HomeCapability({ proof }: Readonly<{ proof: HomeProofCase | null
           supporting="Каркас, панелі та покрівля цього ангара — частина попереднього досвіду Сергія Леуса. Для вашого об’єкта обговоримо задачу й визначимо, як можемо долучитися."
         />
         <HomeProofSlot proof={proof} />
-        <a className="section-link" href={`${siteRoutes.process}#khto-vykonuie`}>Як узгоджуємо склад робіт <span aria-hidden="true">↗</span></a>
+        <a className="link-arrow section-link" href={`${siteRoutes.process}#khto-vykonuie`}>Як узгоджуємо склад робіт <span aria-hidden="true" data-arrow="up-right">↗</span></a>
         <ContactBridge>
           Маєте задум або готовий проєкт? Розкажіть про нього — разом визначимо можливий обсяг нашої участі.
         </ContactBridge>
@@ -139,7 +139,7 @@ export function HomeFirstConversation() {
           <p className="next-note"><strong>Почнемо з розмови.</strong> Розкажіть коротко про завдання — допоможемо визначити наступний крок.</p>
           <div className="contact-bridge-actions">
             <a className="contact-bridge-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}><Phone aria-hidden="true" /> <span>{company.phone.display}</span></a>
-            <a className="section-link" href={siteRoutes.contact}>Або залишити запит <span aria-hidden="true">↗</span></a>
+            <a className="link-arrow section-link" href={siteRoutes.contact}>Або залишити запит <span aria-hidden="true" data-arrow="up-right">↗</span></a>
           </div>
         </div>
       </div>

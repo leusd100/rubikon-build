@@ -75,10 +75,12 @@
 .about-ledger-col ul { display: grid; gap: 0; margin: 18px 0 0; padding: 0; list-style: none; }
 .about-ledger-col li { padding: 14px 0; border-top: 1px solid var(--color-border); }
 .about-ledger-col li b { display: block; color: var(--color-text); font: 600 17px/1.35 var(--font-manrope), sans-serif; }
-.about-ledger-col li b a { color: inherit; text-decoration: none; }
+/* A linked work keeps its tag's look; its target reaches 44 px tall (W3-06, PDO-56: the 36 px tags, 40 on a phone) */
+.about-ledger-col li b a { position: relative; color: inherit; text-decoration: none; }
+.about-ledger-col li b a::after { position: absolute; top: 50%; right: 0; left: 0; height: max(100%, 44px); content: ''; translate: 0 -50%; }
 .about-ledger-col li b a span { color: var(--color-accent-strong); }
 .about-ledger-col li b a:is(:hover, :focus-visible) { color: var(--color-accent-strong); }
-.about-build-all { display: inline-flex; margin-top: 28px; }
+.about-build-all { margin-top: 12px; } /* 28 to the words, as before the 44 px box (W3-06) */
 /* The phone still (AboutHeroVideo): the footage's grey grade would put its sunset out — a lighter one, framed on the light */
 .about-hero-media > img.about-hero-still { filter: saturate(.85) contrast(1.04) brightness(.95); object-position: 62% 40%; }
 .about-page[data-motion-ready="on"] .about-ledger-col { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 110ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 110ms); }
@@ -129,11 +131,9 @@
 /* The image lies on the «Креслення» sheet (DrawingSheet): its title block names the step and what the camera shows,
    and ends with the round control that pauses or replays the tour */
 .ps-sheet .promise-visual { flex: none; border: 0; border-radius: 0; box-shadow: none; }
-.ps-control {
-  display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 44px; padding: 0 0 0 4px; color: var(--color-text); background: none;
-  border: 0; border-radius: 22px; font: 700 12px/1 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
-}
-.ps-control-label { color: var(--color-text-secondary); min-width: 7.5em; text-align: end; }
+/* (its look: .motion-control, globals.css) */
+.ps-control { font: 700 12px/1 var(--font-condensed), sans-serif; }
+.ps-control-label { min-width: 7.5em; text-align: end; }
 /* The title block keeps its geometry through the tour, as the direction pages' (direction-node.css, 07.10): the step's
    cell as wide for «Огляд» as for «Крок 03 / 03», the control as wide for «Пауза» as for «Відтворити», and every caption
    laid in one place — the cells jumped ~40 px sideways whenever the tour paused or went on as the sheet left or entered
@@ -142,12 +142,6 @@
 .ps-captions { display: grid; }
 .ps-captions > span { grid-area: 1 / 1; }
 .ps-captions > span:not([data-on]) { visibility: hidden; }
-.ps-control-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border: 1px solid var(--color-border-strong); border-radius: 50%; }
-.ps-control-icon::before { content: ''; width: 10px; height: 13px; background: linear-gradient(90deg, currentColor 0 3.5px, transparent 3.5px 6.5px, currentColor 6.5px 10px); }
-.ps-control[data-paused] .ps-control-icon { border-color: var(--color-accent); }
-.ps-control[data-paused] .ps-control-icon::before { width: 0; height: 0; background: none; border-block: 6.5px solid transparent; border-left: 11px solid currentColor; translate: 1.5px 0; }
-.ps-control:hover .ps-control-label { color: var(--color-text); }
-.ps-control:hover .ps-control-icon { border-color: var(--color-accent); }
 /* Three bars, like stories: done, filling, to come */
 .ps-progress { position: absolute; z-index: 3; top: 16px; right: 16px; left: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .ps-progress span { position: relative; height: 3px; overflow: hidden; background: rgba(255, 255, 255, .38); }
@@ -157,15 +151,9 @@
 /* as long as the step (STEP_MS in useDrawingTour), as the direction nodes' bars */
 .ps[data-touring] .ps-fill { animation: ps-fill 5200ms linear both; }
 /* The items are the steps' buttons; the shown one takes the copper bar */
-.about-before-step {
-  display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; width: 100%; padding: 18px 12px; color: inherit; text-align: left;
-  background: none; border: 0; font: inherit; cursor: pointer; transition: background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
-}
-.about-before-step[aria-pressed="true"] { background-color: color-mix(in srgb, var(--color-accent) 10%, transparent); box-shadow: inset 3px 0 0 var(--color-accent); }
+/* (the row's button and its pressed state: .step-option, globals.css) */
+.about-before-step { grid-template-columns: 44px minmax(0, 1fr); gap: 4px 14px; padding: 18px 12px; }
 .about-before-step[aria-pressed="true"] b { color: var(--color-accent-strong); }
-@media (hover: hover) {
-  .about-before-step:hover { background-color: color-mix(in srgb, var(--color-accent) 6%, transparent); }
-}
 @keyframes ps-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes ps-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: no-preference) {
@@ -208,12 +196,8 @@
 .about-page[data-motion-ready="on"] .about-principles-grid .principle-mark :is(.pm-ink, .pm-cut, .pm-partner, .pm-dot, text) { transition: opacity 500ms ease calc(250ms + var(--i, 0) * 260ms); }
 .about-principles-grid h3 { margin: 18px 0 12px; color: var(--color-dark-text); font: 600 22px/1.12 var(--font-condensed), sans-serif; letter-spacing: .01em; text-transform: none; }
 .about-principles-grid p { margin: 0; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.65; }
-.about-principle-link {
-  justify-self: start; display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 18px; color: var(--color-dark-text);
-  border-bottom: 1px solid var(--color-accent-on-dark); font: var(--type-action-weight) var(--type-action-size)/1 var(--font-manrope), sans-serif; letter-spacing: var(--type-action-track); text-transform: uppercase;
-}
-.about-principle-link span { color: var(--color-accent-on-dark); transition: transform var(--duration-fast) var(--m-ease); }
-.about-principle-link:hover span, .about-principle-link:focus-visible span { transform: translate(3px, -3px); }
+/* (an arrow link: .link-arrow) */
+.about-principle-link { --link-ink: var(--color-dark-text); justify-self: start; margin-top: 18px; }
 .about-page[data-motion-ready="on"] .about-principles-grid li { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 150ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 150ms); }
 .about-page[data-motion-ready] .about-principles-grid:not([data-motion-state="on"]) li { opacity: 0; transform: translateY(14px); }
 

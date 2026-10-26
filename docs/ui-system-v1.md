@@ -107,6 +107,25 @@ mechanics, each tied to a context — pick the one that matches, don't invent a 
 - **Corner mark** — `.related-card > span`, `.route-service > b`: plain accent-colored glyph,
   grid-positioned or right-aligned, no border.
 
+**The arrow link (W3-06, PDO-56).** Every «words + arrow» way on that is not a button or a card is one
+`.link-arrow` (`globals.css`): the action label (Manrope 800, 13 px, .06em, capitals), a 44 px target with
+its words and a 1 px `--color-accent` rule at its foot, the arrow in `--color-accent-strong`. Hover and
+keyboard focus change its colour — to `--color-accent-strong`, or to `--link-hover-ink` where the link
+already rests in copper (`.faq-ask-write` → `--color-text`, `.angary-route-brief-action` on graphite →
+`--color-dark-text`) — and nudge the arrow the way its span's `data-arrow` says (`up-right` 3 / −3 px,
+`down`, `up`, `right` 3 px). Under reduced motion the arrow stays and the colour is the only answer, so
+every arrow link's hover and focus colour differs from its rest colour (`links-buttons-focus.spec.ts`).
+The page's class (`.section-link`, `.text-link`, `.faq-ask-write`, …) keeps only its place and, where the
+link is quieter or louder than its text, its ink through `--link-ink`. `display` is in `:where()`, so a rule
+that hides one copy of a link always wins. A one-line link is as wide as its words: in a column that
+stretches its children it takes `align-self: flex-start` (or no `flex-grow`), or its rule runs across the
+column. A link stretched over its card (`.gs-card`: its `::after` covers the card) takes no press transform
+(`transform: none` on `:active`) — a transform would make the link the containing block of that `::after`
+and the card would stop taking the press. In a row centred on a button or a number the link takes
+`margin-top: -10px`, so its words meet theirs on one line; after a block's content `.section-link` takes
+`calc(var(--rhythm-cta) - 16px)`, so its words and rule stay where the 29 px link had them. A phone
+number (`.faq-ask-call`, `.angary-stamp-phone`) is not an arrow link.
+
 **Adjacent CTAs must agree on geometry.** If two CTA boxes sit next to or stacked on each other
 (like `.hero-actions`'s button + text-link pair), their arrows must use the *same* mechanic —
 mixing in-flow and pinned-absolute in the same row/stack is what produced the mobile hero arrow
@@ -173,7 +192,7 @@ token's today; other literals move onto a token when their file changes for a vi
 | Labels | `--type-label-ui-*`, `--type-action-*`, `--type-label-tech-*` (`-weight`, `-size`, `-track` each; letter-spacing has no place in `font`) | W3-02 |
 | Rhythm | `--rhythm-label`, `--rhythm-lead`, `--rhythm-header`, `--rhythm-cta`; `--section-space(-compact)` | W3-03 |
 | Spacing | `--space-1` … `--space-10` = 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px; `--card-pad`, `--card-gap` | W3-03, then file by file |
-| Buttons | `--button-h-l` 56 px, `--button-h-m` 48 px | W3-06 |
+| Buttons | `--button-h-l` 56 px (page buttons, the conversation's call), `--button-h-m` 48 px (a button in a sheet or a tool: the grain sheet, the configurator's summary, HOME's brief); the 50 / 46 px of short laptop windows stay as compact modes | W3-06 |
 | Header | `--header-h` 101 px (the fixed header from 761 px) | PDO-98's next step (short windows, tablets) |
 | Motion | `--motion-micro`, `--motion-reveal`, `--motion-draw`, `--motion-draw-long`, `--motion-media-fade`; `--ease-premium`, `--ease-plot`, `--ease-standard` | W3-10 (Motion v1: the pages' local `--m-*` move onto them) |
 | Colour (theme.css) | `--color-load`, `--color-wind` — the loads on a drawing, one pair for both modes | — |
@@ -237,7 +256,15 @@ never in metadata, JSON-LD or aria-labels.
 
 ## Accessibility (already in place, keep it that way)
 
-Global `:focus-visible` ring (3px outline, 2px box-shadow gap) on every interactive element;
+Global `:focus-visible` ring (3px outline at 4px, 2px box-shadow gap) on every interactive element,
+and one other form of it: the inner ring (3px at -4px) for what fills its row or frame — a cell, a
+segment, a tab, a full-width row or a fixed full-width bar (W3-06, PDO-88); form fields show a copper halo
+instead (W3-07). A ring next to an `overflow: hidden` edge takes the inner form rather than being cut; a frame
+with positioned children takes the outer one, as they paint over an inner ring (the planner's tab panel).
+lucide icons share
+one stroke, `svg.lucide { stroke-width: 1.75 }` (PDO-89); a crop lucide lacks is drawn on its 24 grid
+(`CornCobIcon`). The tour controls (`.motion-control`) and the step rows (`.step-option`) are shared
+rules in `globals.css` (PDO-99);
 `--control-min-height: 44px` for touch targets (spot-checked on form choice inputs and messenger
 links); the single reduced-motion block above; a `forced-colors:active` block that hides
 decorative-only grid textures. New interactive elements should inherit these automatically through

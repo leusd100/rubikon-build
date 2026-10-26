@@ -82,7 +82,6 @@ main[data-home="v2"] .hv2-directions .dxi { display: none; }
     display: block; padding: 12px 14px 0; color: inherit; text-decoration: none; container-type: inline-size;
     background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color var(--duration-fast) ease;
   }
-  main[data-home="v2"] .hv2-directions .dxi-sheet:focus-visible { outline-offset: 3px; }
   main[data-home="v2"] .hv2-directions .dxi-strip {
     display: flex; justify-content: space-between; gap: 12px; color: var(--color-text-muted);
     font: 600 11px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
@@ -108,7 +107,7 @@ main[data-home="v2"] .hv2-directions .dxi { display: none; }
     display: inline-flex; align-items: center; gap: 7px; min-height: 44px; margin-left: auto; color: var(--color-accent-strong);
     font: 600 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
   }
-  main[data-home="v2"] .hv2-directions .dxi-more svg { width: 18px; height: 18px; flex: none; stroke-width: 1.8; transition: transform var(--duration-fast) ease; }
+  main[data-home="v2"] .hv2-directions .dxi-more svg { width: 18px; height: 18px; flex: none; transition: transform var(--duration-fast) ease; }
   @media (hover: hover) {
     main[data-home="v2"] .hv2-directions .dxi-sheet:hover { border-color: var(--color-accent); }
     main[data-home="v2"] .hv2-directions .dxi-sheet:hover .dxi-more svg { transform: translateX(3px); }
@@ -120,7 +119,7 @@ main[data-home="v2"] .hv2-directions .dxi { display: none; }
     padding: 6px 0 6px 12px; color: var(--color-text); text-align: left; background: none; border: 0; border-bottom: 1px solid var(--color-border);
     border-radius: 0; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  main[data-home="v2"] .hv2-directions .dxi-row:focus-visible { outline-offset: -3px; box-shadow: none; }
+  main[data-home="v2"] .hv2-directions .dxi-row:focus-visible { outline-offset: -4px; box-shadow: none; } /* a full-width row: the inner ring */
   main[data-home="v2"] .hv2-directions .dxi-num { color: var(--color-text-muted); font: 600 12px/1 var(--font-condensed), sans-serif; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
   main[data-home="v2"] .hv2-directions .dxi-row-name { font: 400 19px/1.2 var(--font-display), sans-serif; letter-spacing: -.01em; }
   main[data-home="v2"] .hv2-directions .dxi-row[aria-pressed="true"] { color: var(--color-accent-strong); }

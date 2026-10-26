@@ -268,7 +268,7 @@
 
 .hc-option-card input:focus-visible + span {
   outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: 4px;
 }
 
 /* Phase 3F.1 — an option that would not fit at the current dimensions (a fixed-size gate too
@@ -1140,7 +1140,8 @@
 
 .hc-summary-flagship .hc-summary-handoff { grid-column: 1 / -1; }
 
-.hc-summary-action { min-height: 52px; }
+/* a tool's button: the M height (W3-06, PDO-99: 52 → 48) */
+.hc-summary-action { min-height: var(--button-h-m); }
 
 .hc-summary-handoff p {
   margin: 0;

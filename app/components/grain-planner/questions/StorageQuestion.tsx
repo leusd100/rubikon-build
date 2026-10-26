@@ -1,8 +1,9 @@
 'use client';
 
-import { Bean, Check, CircleHelp, Flower2, Sprout, Vegan, Wheat } from 'lucide-react';
+import { Bean, Check, CircleHelp, Flower2, Sprout, Wheat } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cropOptions, parseCapacity, separationOptions } from '../../../lib/planner/grain';
+import { CornCobIcon } from '../../CornCobIcon';
 import { CheckOptionGrid } from '../../planner/CheckOptionGrid';
 import { ChoiceGroup } from '../../planner/ChoiceGroup';
 import { Clarifier } from '../../planner/Clarifier';
@@ -10,7 +11,7 @@ import type { GrainQuestionProps } from './types';
 
 const cropIcons: Record<string, ReactNode> = {
   'Пшениця': <Wheat />,
-  'Кукурудза': <Vegan />,
+  'Кукурудза': <CornCobIcon />,
   'Соняшник': <Flower2 />,
   'Ячмінь': <Sprout />,
   'Соя': <Bean />,
