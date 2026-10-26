@@ -9,6 +9,11 @@ import { customPropertyDeclarations, motionDeclarations, timeLiterals } from '..
 // files move over, group by group (Tasks A3–A8 of the plan): a file in PENDING still carries literals and is exempt from
 // «keeps numbers out»; a task that migrates its files removes them from the list, and from then on they are checked.
 // scripts/motion/motion-diff.mjs proves the move changed no value; this file proves it stays moved.
+//
+// Scope: the transition*/animation* declarations of the app's CSS files, and the custom properties of the token
+// (`--motion|ease|duration-*`) and choreography (`--<prefix>-for|at|curve-*`) families they take their values from. Out of
+// scope: an intermediate custom property of any other name (`--x: .3s` read by `transition: opacity var(--x)`), and the
+// inline styles of TSX.
 
 const app = path.join(process.cwd(), 'app');
 const files: string[] = [];
@@ -60,6 +65,9 @@ const PENDING: readonly string[] = [
 const CHOREOGRAPHY = /^--[a-z0-9]+-(?:for|at|curve)-/;
 /** A variable a motion declaration may take: a token (`--motion-*`, `--ease-*`, `--duration-*`) or a choreography variable */
 const MOTION_VARIABLE = /^--(?:(?:motion|ease|duration)-|[a-z0-9]+-(?:for|at|curve)-)/;
+
+/** The token families: a declaration of one of these names belongs in globals.css :root and nowhere else */
+const TOKEN_FAMILY = /^--(?:motion|ease|duration)-/;
 
 const isChoreography = (name: string) => CHOREOGRAPHY.test(name);
 const propertyDeclarations = (file: string) => customPropertyDeclarations(sheets[file]);
@@ -126,17 +134,42 @@ describe('Motion v1 tokens (M1-1)', () => {
   });
 
   it('resolves every motion variable in its own file or the tokens', () => {
+    // A token (`--motion-*`, `--ease-*`, `--duration-*`) may come from the file or from globals.css / theme.css; a
+    // choreography variable only from its own file, so a name declared in globals.css is usable from globals.css alone
     const tokens = new Set(['globals.css', 'theme.css'].flatMap((file) => propertyDeclarations(file).map(({ name }) => name)));
     const unresolved: string[] = [];
     for (const file of names) {
       const own = new Set(propertyDeclarations(file).map(({ name }) => name));
       for (const declaration of motionDeclarations(sheets[file])) {
         for (const name of variablesIn(declaration.value)) {
-          if (MOTION_VARIABLE.test(name) && !own.has(name) && !tokens.has(name)) unresolved.push(`${row(file, declaration)} | ${name}`);
+          const known = isChoreography(name) ? own.has(name) : own.has(name) || tokens.has(name);
+          if (MOTION_VARIABLE.test(name) && !known) unresolved.push(`${row(file, declaration)} | ${name}`);
         }
       }
     }
     expect(unresolved).toEqual([]);
+  });
+
+  it('declares the motion family only as the Motion v1 tokens', () => {
+    // One name, one place: a `--motion-*` / `--ease-*` / `--duration-*` declared again in another file, in a media query or
+    // under a new name would shadow a token or pass a number round the guard (`.x { --motion-local: .3s }`)
+    const place = (file: string, atRule: string | null, selector: string, name: string, value: string) =>
+      `${file} | ${atRule ? `${atRule} | ` : ''}${selector} | ${name}: ${value}`;
+    const allowed = new Set([
+      ...Object.entries(TOKENS).map(([name, value]) => place('globals.css', null, ':root', name, value)),
+      place('globals.css', '@media (max-width: 760px)', ':root', '--motion-rise', '10px'),
+    ]);
+    const seen = new Set<string>();
+    const stray: string[] = [];
+    for (const file of names) {
+      for (const { name, value, selector, atRule } of propertyDeclarations(file)) {
+        if (!TOKEN_FAMILY.test(name)) continue;
+        const key = place(file, atRule, selector, name, value);
+        if (allowed.has(key) && !seen.has(key)) seen.add(key);
+        else stray.push(key);
+      }
+    }
+    expect(stray).toEqual([]);
   });
 
   it('declares each choreography variable once', () => {
