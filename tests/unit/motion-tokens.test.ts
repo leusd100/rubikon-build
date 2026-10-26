@@ -5,10 +5,9 @@ import { customPropertyDeclarations, motionDeclarations, timeLiterals } from '..
 
 // Motion v1 (M1-1): a transition or an animation takes its time and its curve from a token, never from a literal. The
 // tokens live in app/globals.css :root; each stylesheet's own choreography (its times, delays and curves that no token
-// covers) is a block of `--<prefix>-for|at|curve-*` variables at the top of that file. This guard holds the line while the
-// files move over, group by group (Tasks A3–A8 of the plan): a file in PENDING still carries literals and is exempt from
-// «keeps numbers out»; a task that migrates its files removes them from the list, and from then on they are checked.
-// scripts/motion/motion-diff.mjs proves the move changed no value; this file proves it stays moved.
+// covers) is a block of `--<prefix>-for|at|curve-*` variables at the top of that file. The guard runs over every stylesheet
+// under app/: a new literal in any transition* or animation* declaration fails it, and a name outside the families fails
+// it too. scripts/motion/motion-diff.mjs proves a move changed no value; this file proves it stays moved.
 //
 // Scope: the transition*/animation* declarations of the app's CSS files, and the custom properties of the token
 // (`--motion|ease|duration-*`) and choreography (`--<prefix>-for|at|curve-*`) families they take their values from. Out of
@@ -29,9 +28,6 @@ const sheets: Record<string, string> = Object.fromEntries(
   files.map((file) => [path.relative(app, file).split(path.sep).join('/'), readFileSync(file, 'utf8')]),
 );
 const names = Object.keys(sheets).sort();
-
-/** The files (relative to app/) that still hold literal times or curves in a transition or an animation */
-const PENDING: readonly string[] = [];
 
 /** A choreography variable: a file's own time, delay or curve — `--rm-for-row`, `--ft-at-step`, `--fd-curve-draw` */
 const CHOREOGRAPHY = /^--[a-z0-9]+-(?:for|at|curve)-/;
@@ -87,22 +83,12 @@ describe('Motion v1 tokens (M1-1)', () => {
 
   it('keeps numbers out of transitions and animations', () => {
     const literals: string[] = [];
-    for (const file of names.filter((name) => !PENDING.includes(name))) {
+    for (const file of names) {
       for (const declaration of motionDeclarations(sheets[file])) {
         if (hasLiteral(declaration.value)) literals.push(row(file, declaration));
       }
     }
     expect(literals).toEqual([]);
-  });
-
-  it('keeps PENDING exact: each file listed exists, is listed once, and still carries a literal', () => {
-    expect(new Set(PENDING).size, 'duplicates').toBe(PENDING.length);
-    const unknown = PENDING.filter((file) => !(file in sheets));
-    expect(unknown, 'not a stylesheet under app/').toEqual([]);
-    const clean = PENDING.filter((file) => !motionDeclarations(sheets[file]).some(({ value }) => hasLiteral(value)));
-    expect(clean, 'no literal left: take it off PENDING').toEqual([]);
-    const missed = names.filter((file) => !PENDING.includes(file) && motionDeclarations(sheets[file]).some(({ value }) => hasLiteral(value)));
-    expect(missed, 'a literal outside PENDING').toEqual([]);
   });
 
   it('resolves every motion variable in its own file or the tokens', () => {
