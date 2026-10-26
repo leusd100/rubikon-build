@@ -7,7 +7,7 @@
 | Підстава | План Motion v1 M1, схвалений власником 26.10 (PR #253) |
 | PR | [#256](https://github.com/leusd100/rubikon-build/pull/256), Draft, мітка `visual-freeze`. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `refactor/m1-1-motion-tokens` від `main` `bcf9eab7` (#254); у гілку злито `origin/main` `bcf9eab7` перед міграцією |
-| Коміти | `740d95fe` A1 парсер руху `css-motion.mjs` і `motion-diff.mjs` · `3ca1f510` A1 motion-diff: спільний `:root`, область оголошення, подвійні оголошення, симлінк · `99be4266` A2 токени Motion v1 у `globals.css` і сторож `motion-tokens.test.ts` · `1b852836` A2 сторож: хореографія лише у своєму файлі, токени лише в `globals.css` · `611767f8` злиття `origin/main` (#254) · `c40c7f32` A3 `home-v2.css` · `edd1317d` A4 `frame-tour.css`, `direction-node.css` · `bba3b493` A5 `about`, `capability`, `region`, `delivery`, `process-split` · `fcbab2b6` A6 `direction-template`, `catalog-drawing`, `formats-scope`, `directions`, `drawing-sheet`, `faq` · `61283c29` A7 `change-sheets`, `resp-matrix`, `proof-details`, `directions-key`, `directions-sheets`, `grain-*` · `dc43e3ac` A8 конфігуратор (4 файли) і `globals.css` · `706060cc` A9 сторож без `PENDING` · `939db483` A9 `ui-system-v1.md` §6 «Motion v1» · `5de6603e` A9 `computed-motion.mjs` · цей handoff |
+| Коміти | `740d95fe` A1 парсер руху `css-motion.mjs` і `motion-diff.mjs` · `3ca1f510` A1 motion-diff: спільний `:root`, область оголошення, подвійні оголошення, симлінк · `99be4266` A2 токени Motion v1 у `globals.css` і сторож `motion-tokens.test.ts` · `1b852836` A2 сторож: хореографія лише у своєму файлі, токени лише в `globals.css` · `611767f8` злиття `origin/main` (#254) · `c40c7f32` A3 `home-v2.css` · `edd1317d` A4 `frame-tour.css`, `direction-node.css` · `bba3b493` A5 `about`, `capability`, `region`, `delivery`, `process-split` · `fcbab2b6` A6 `direction-template`, `catalog-drawing`, `formats-scope`, `directions`, `drawing-sheet`, `faq` · `61283c29` A7 `change-sheets`, `resp-matrix`, `proof-details`, `directions-key`, `directions-sheets`, `grain-*` · `dc43e3ac` A8 конфігуратор (4 файли) і `globals.css` · `706060cc` A9 сторож без `PENDING` · `939db483` A9 `ui-system-v1.md` §6 «Motion v1» · `5de6603e` A9 `computed-motion.mjs` · `bde10d30`, `95101c85` handoff і номер PR · фінальне рев'ю: `9fc65053` сторож: кожна змінна руху оголошена (+ `computed-motion` друкує помилки сторінки) · `b03611af` уточнення §6, шапка `home-v2.css`, ризики й знахідки · `776cb049` `--site-*` у єдиному `:root` `globals.css` (SonarCloud css:S4666) · цей handoff |
 | Змінено | 27 CSS-файлів `app/`: числа часу й `cubic-bezier` у `transition*`/`animation*` стали посиланнями на токени або на змінні хореографії файлу. `app/globals.css`: 8 нових токенів і 2 аліаси. Нові `scripts/motion/css-motion.mjs`, `motion-diff.mjs`, `computed-motion.mjs`; нові тести `tests/unit/css-motion.test.ts`, `tests/unit/motion-tokens.test.ts`; два наявні тести оновлено (`design-tokens.test.ts` — нові імена токенів, `planner/grain-planner-css.test.ts` — рівно один `:root` хореографії). `docs/ui-system-v1.md`: §6 переписано як «Motion v1», рядок Motion у §9 |
 | Не змінено | Жодного значення часу, затримки чи кривої: ні в CSS, ні в обчислених стилях. Хореографія турів, X-Ray, 3D-збірки, `ProofContour` (лише числа переїхали в блоки хореографії). TSX і JS (0 файлів). Глобальне скидання зменшеного руху (`.01ms !important`). Локальні змінні `--m-reveal`, `--m-draw`, `--m-ease`, `--region-*`, `--ft-k`, `--step` (змінні темпу `--m-*` і `--region-*` чекають M1-2). Залежності (0 нових), еталони DEC-18 (0 PNG) |
 
@@ -78,8 +78,44 @@
 | `computed-motion` `main` ↔ гілка | 18 з 18 без відмінностей; контроль `main` ↔ `main` — 18 з 18 |
 | E2E на production-збірці гілки (порт 4382), desktop-chromium + mobile-chromium, `--workers=2`: `napryamky-key-plan`, `home-proof-contour`, `drawing-sheet-plot`, `yak-formats-scope`, `cost-factors`, `configurator-sheet`, `angary-editorial`, `smoke`, `form` | 382 тести: **298 passed**, 84 skipped (розділення по проєктах), **0 failed**, 0 flaky. `home-proof-contour:2054` цього разу не падав |
 | `visual.spec.ts` локально (проєкт `visual-chromium`, macOS, `--update-snapshots=none`) | не авторитетно: darwin-еталони на `main` застарілі, тож 32 з 33 падають і на гілці, і на `main` (на `main` — теж 32). З 32 знімків 29 побайтово однакові у парному проході гілка ↔ `main`; три (`homepage-hero` desktop і mobile, `homepage-directions` desktop) відрізнялись, але в повторних проходах дають різні варіанти й на самому `main` (`homepage-hero-mobile-375`: два варіанти, різниця 48 599 пікселів, не більше 15 з 255 за каналом). Жоден PNG не оновлювався й не коміттився. Вирішує Main Regression на Linux |
-| CI | Main Regression на гілці запущено вручну (`workflow_dispatch`) на `bde10d30`: запуск [40390938035](https://github.com/leusd100/rubikon-build/actions/runs/40390938035); PR Fast Gate і DEC-18 (`visual-freeze`) — у самому PR |
+| CI | Main Regression (`workflow_dispatch`) на гілці: [40390938035](https://github.com/leusd100/rubikon-build/actions/runs/40390938035) (`bde10d30`) — success; після фінального рев'ю [40397245729](https://github.com/leusd100/rubikon-build/actions/runs/40397245729) (`776cb049`) — success; PR Fast Gate і SonarQube Cloud на `776cb049` — success |
 | Розмір CSS, що віддається сторінці (gzip) | головна 46 576 → 48 031 B (+3,1 %), `/napryamky` 33 918 → 34 540, `/yak-pratsyuiemo` 45 127 → 46 212, `/pro-nas` 36 719 → 37 499, `/angary` 57 019 → 58 252 |
+
+### Швидкість (Lighthouse у Nightly Full QA)
+
+Критерій специфікації §3.4 вимагає порівняння з `main` на кожен PR, але **жоден PR-воркфлоу Lighthouse не запускає** (його є лише в `nightly-full-qa.yml` і `pagespeed-monitor.yml`). Тому гілку й `main` прогнано через Nightly Full QA (`workflow_dispatch`, Lighthouse 12.6.1, мобільний профіль, 5 запусків, медіана). Прогін друкує значення й зберігає звіти **лише для профілю, що впав** (`if: failure()`); пройдений профіль дає тільки «passed».
+
+| Прогін | Коміт | Запуск |
+|---|---|---|
+| A. `main`, за розкладом | `6aa2da6c` (до #249, #252, #254) | [40287891804](https://github.com/leusd100/rubikon-build/actions/runs/40287891804) |
+| B. `main`, та сама база, що в гілки | `bcf9eab7` | [40395144205](https://github.com/leusd100/rubikon-build/actions/runs/40395144205) |
+| C. гілка | `95101c85` (весь код M1-1) | [40394182941](https://github.com/leusd100/rubikon-build/actions/runs/40394182941) |
+| D. гілка, повтор | `776cb049` | [40398705334](https://github.com/leusd100/rubikon-build/actions/runs/40398705334) |
+
+**Три профілі (`lighthouserc.cjs`): пройшов чи ні**
+
+| Профіль | A `main` 6aa2da6c | B `main` bcf9eab7 | C гілка | D гілка |
+|---|---|---|---|---|
+| `/` (home) | passed | passed | passed | passed |
+| `/zernoskhovyshcha` (grain) | passed | passed | passed | passed |
+| `/angary` (standard) | **failed** | passed | **failed** | **failed** |
+
+Для `/` і `/zernoskhovyshcha` чисел немає ні в `main`, ні в гілці: «passed» означає лише, що медіани в межах бюджетів (performance ≥ 0,7; LCP ≤ 6100 мс; CLS ≤ 0,05; вага ≤ 6 000 000 / 900 000 B). Порівняти дельти для них прогони не дозволяють.
+
+**`/angary`: медіана з 5 запусків** (з доданих звітів `lighthouse-standard`; для B звіту немає, бо профіль пройшов)
+
+| Метрика | A `main` 6aa2da6c | C гілка | D гілка | C−A | D−A |
+|---|---|---|---|---|---|
+| Performance | 0,69 | 0,69 | 0,69 | 0 | 0 |
+| LCP, мс | 6138 | 6181 | 6201 | +43 (+0,7 %) | +63 (+1,0 %) |
+| FCP, мс | 3718 | 3657 | 3694 | −61 | −24 |
+| CLS | 0 | 0 | 0 | 0 | 0 |
+| TBT, мс | 97 | 29 | 97 | −68 | 0 |
+| Вага, B | 776 724 | 772 851 | 772 839 | −3 873 | −3 885 |
+
+Як це читати. A стоїть на іншій базі (там немає шкали заголовків #249, стрілок #252), тож дельти C−A змішують M1-1 з чужими змінами; вага, що «впала», — з цієї ж причини. Чисте порівняння — з B, але B дало лише «passed»: на тій самій базі `main` вкладається в LCP ≤ 6100 мс і performance ≥ 0,70, а гілка в обох прогонах ні (LCP 6181 і 6201 мс, performance 0,69). Тобто на `/angary` гілка **щонайменше на ~80–100 мс (близько 1,5 %) гірша за `main` на LCP (стеля 6100 мс; точне значення B невідоме), або це шум**: `main` на A теж упав (6138 мс). Один можливий механізм: M1-1 додає ~1,2 КБ gzip CSS на `/angary` (58 252 проти 57 019 B), а в змодельованому повільному 4G CSS блокує рендер; це гіпотеза, не вимірювання. CLS не змінився, TBT у межах шуму (запуск 1 у кожному прогоні — викид 540–770 мс). Ні E2E (4/4 шарди), ні visual (2/2) у прогоні C не впали.
+
+**Потрібне рішення власника: прийняти без точного заміру** (бюджет LCP `/angary` і так на межі, `main` падав на ньому сам) **або виміряти окремо** (A/B `main` проти гілки з однаковою базою, по кілька прогонів, зі збереженням звітів також для пройдених профілів — потрібна тимчасова гілка з нульовими порогами `lighthouserc.cjs`; у цьому PR CI-конфіг не змінювався).
 
 ## Знахідки поза задачею
 
@@ -99,6 +135,7 @@
 ## Ризики
 
 - **Помилка в імені змінної** зробила б декларацію `transition`/`animation` недійсною під час обчислення (рух зник би мовчки). **Після merge в CI працює лише сторож** (`tests/unit/motion-tokens.test.ts`); `motion-diff` і `computed-motion` — ручні інструменти, у CI їх немає. Сторож ловить: ім'я токена (`--motion|ease|duration-*`) або хореографії (`--<префікс>-for|at|curve-*`), якого не оголошено (токен — у `globals.css`/`theme.css`, хореографія — лише у своєму файлі), і **будь-яке інше ім'я, яке читає `transition*`/`animation*` і якого не оголошує жоден CSS застосунку й немає в `INLINE`**. Перевірено мутаціями у тимчасовій копії `app/` (до виправлення сторож пропускав усі три першими): `var(--moiton-micro)` у `faq.css`, `var(--easing-premium)` у `about.css`, `var(--hv2-fro-held-fade)` у `home-v2.css` — кожна валить новий тест «declares every variable a transition or an animation reads»; ще `var(--m-reveel)` і `var(--hldo, …)` (описка з fallback) падають, а перейменування `'--hold'` у `ProofContour.tsx` валить «lists only inline variables a component still sets». Чого він **не** ловить: описку, що збіглась з іншим оголошеним іменем; токен не тієї ролі (`--motion-ui` замість `--motion-micro`); те, що ім'я оголошене в іншому файлі або в іншій області (`.about-page`, `.process-page`), ніж там, де його читають, — для нелокальних імен сторож не знає області; значення проміжної змінної (`--x: .3s`). Це ловить `motion-diff`/`computed-motion` перед merge.
+- **Швидкість `/angary`:** LCP гілки 6181 і 6201 мс проти бюджету 6100 (два прогони з двох), `main` на тій самій базі пройшов; причина не встановлена, рішення за власником (див. «Швидкість»).
 - **Спільний `:root`.** Усі файли пишуть у один `:root`; два файли з однаковим ім'ям змінної перезаписали б одне одного. Сторож не допускає ім'я хореографії у двох файлах, а `motion-diff` окремо ловить розбіжні значення того самого імені.
 - **Розмір CSS** +0,6…+1,5 КБ gzip на сторінку (див. таблицю вище). Швидкість мірялась через Nightly Full QA (у PR-воркфлоу Lighthouse немає), див. «Перевірка».
 - **Таймерні стани.** M1-1 не чіпає ні `.tsx`, ні `.ts`: JS, що тримає тривалість власним числом (`CLIP_DURATION_MS`, утримання, тури), не змінився. Узгодження цих чисел із CSS — M1-4.
