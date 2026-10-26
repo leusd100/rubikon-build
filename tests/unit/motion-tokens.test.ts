@@ -32,7 +32,6 @@ const names = Object.keys(sheets).sort();
 
 /** The files (relative to app/) that still hold literal times or curves in a transition or an animation */
 const PENDING: readonly string[] = [
-  'home-v2.css',
   'components/angary/frame-tour.css',
   'pro-nas/about.css',
   'components/directions/direction-template.css',
