@@ -108,9 +108,13 @@ export function SmoothScroll() {
             autoRaf: false,
           });
           lenis = instance;
+          // Nothing here calls this instance's `scrollTo`; the wheel and Lenis's own anchor handler are what start the
+          // smoothing. Any future code that calls it must call `wake()` of this loop too, or the loop stays asleep until
+          // the next wheel or click.
           const loop = startLenisLoop(instance);
-          // Before Lenis's own wheel and anchor handlers, which start the smoothing the loop then has to step.
-          // Only a frame is asked for here, so Lenis has acted on the event by the time it runs.
+          // The frame a wake asks for runs after the event has been dispatched, so Lenis has acted on it by then
+          // (`isScrolling` is 'smooth'), whatever the order of the listeners. Capture, so the wake still runs when page
+          // code stops the event's propagation.
           const wake = () => loop.wake();
           window.addEventListener('wheel', wake, { capture: true, passive: true });
           window.addEventListener('click', wake, { capture: true, passive: true });

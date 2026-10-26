@@ -24,7 +24,7 @@ const browserClock: FrameClock = {
  * Lenis's frame loop that rests with the page. Lenis's own (`autoRaf`) asks for a frame on every display refresh for as
  * long as the page is open, about 60 calls a second at rest on every desktop page, for an animation that runs only
  * while a wheel or an anchor scroll is being smoothed. This loop asks for frames only then: `wake()` (a wheel or a
- * click, before Lenis acts on it) starts it, and it ends with the frame after which Lenis is no longer smoothing.
+ * click) starts it, and it ends with the frame after which Lenis is no longer smoothing.
  *
  * Lenis measures a frame as the time since its last `raf`; after a rest that gap is the whole rest, and the smoothing
  * would jump to its end in one step. So the first frame after a rest is measured as one frame long.
