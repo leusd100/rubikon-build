@@ -128,16 +128,34 @@ test.describe('smooth scroll at rest (desktop)', () => {
     const restingTop = await target.evaluate((element) => Number.parseFloat(getComputedStyle(element).scrollMarginTop));
     expect(restingTop, 'the section keeps room for the header').toBeGreaterThan(0);
 
+    // `html { scroll-behavior: smooth }` (globals.css) and Lenis lets the click through, so the browser scrolls to the
+    // fragment by itself, smoothly, and would put the section in its place without a single frame from Lenis. This
+    // listener (on window, after Lenis's own, which was added on mount) cancels that: only Lenis can move the page now.
+    await page.evaluate(() => window.addEventListener('click', (event) => event.preventDefault()));
+
     await recordScrollPositions(page);
     await anchor.click();
     await expect
       .poll(() => target.evaluate((element, expected) => Math.abs(element.getBoundingClientRect().top - expected), restingTop), {
         message: 'distance of the section from its place under the header',
-        timeout: 1500,
+        // Lenis takes about 0.9 s without load; a stuck loop never gets there
+        timeout: 2500,
       })
       .toBeLessThanOrEqual(2);
 
-    // It glided: Lenis stepped the page over several frames, the browser's own jump would be one
+    // It glided: Lenis stepped the page over several frames, a jump would be one
     expect((await scrollPositions(page)).length, 'scroll steps on the way').toBeGreaterThan(5);
+
+    // And the loop went back to rest (see the trackpad test for why the count starts after the smoothing ends)
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.classList.contains('lenis-smooth')), {
+        message: 'the anchor scroll has stopped smoothing',
+        timeout: 2000,
+      })
+      .toBe(false);
+    const before = await rafCalls(page);
+    await page.waitForTimeout(1000);
+    const after = await rafCalls(page);
+    expect(after - before, 'requestAnimationFrame calls in the second after the anchor scroll').toBeLessThanOrEqual(2);
   });
 });
