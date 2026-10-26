@@ -1297,8 +1297,11 @@ main[data-home="v2"] .hv2-contour .sheet-cell-note b { overflow: visible; contai
 main[data-home="v2"] .hv2-contour-exit[data-place="line"] { position: relative; min-height: 0; margin-top: 4.75px; }
 /* A short laptop window narrows the sheet to 1147 px and the note to 256 px: there the link's words in capitals (291 px)
    would take two lines and push the block 16 px taller, past the window the owner asked it to fit (06.10), so they drop
-   the capitals and the tracking (235 px) and stay one line (the note's <b> is the container, above) */
-@container (max-width: 290px) { main[data-home="v2"] .hv2-contour-exit[data-place="line"] { letter-spacing: 0; text-transform: none; } }
+   the capitals and the tracking (235 px) and stay one line (the note's <b> is the container, above). The capitals keep
+   to a note wider than the widest they are set at: 306 px in Chrome on Linux, which sets each letter on whole pixels
+   (26.10). Under 290 px, below that, a note of 291 px took them in two lines, the taller block narrowed the sheet, its
+   note fell under 290, the block shrank, the sheet widened — on every frame (main after #252 on CI, 1280 × 720) */
+@container (max-width: 312px) { main[data-home="v2"] .hv2-contour-exit[data-place="line"] { letter-spacing: 0; text-transform: none; } }
 main[data-home="v2"] .hv2-contour-exit[data-place="line"]::after { position: absolute; top: 50%; right: 0; left: 0; height: 44px; content: ''; translate: 0 -50%; }
 main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
 @media (max-width: 760px) {
