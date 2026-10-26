@@ -2,6 +2,22 @@
    left edges, the picture, and a title block under it. Theme roles only, so it follows Light/Dark and dark bands. The
    picture area has no size of its own: each place gives the sheet (or .sheet-image) its height or aspect ratio. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* arriving: the picture is plotted in (the cover drawn back down, the plotter line riding with it), the rulers draw, the title block fills */
+  --sheet-for-plot: 900ms;
+  --sheet-at-plot: 120ms;
+  --sheet-for-rulers: 700ms;
+  --sheet-for-stamp: 360ms;
+  --sheet-at-stamp: 700ms;
+  --sheet-at-stamp-step: 80ms;
+  /* replayed with every new picture: the plotter line, then the cells one after another */
+  --sheet-for-replay-scan: 780ms;
+  --sheet-for-replay-in: 420ms;
+  --sheet-at-replay-second: 70ms;
+  --sheet-at-replay-third: 140ms;
+}
+
 .sheet {
   --sheet-pad: 16px;
   --sheet-gutter: 28px;
@@ -91,17 +107,17 @@
 @keyframes sheet-scan { 0% { transform: translateY(0); opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(calc(100% - 2px)); opacity: 0; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(6px); } }
 @media (prefers-reduced-motion: no-preference) {
-  .sheet[data-sheet-state="on"] .sheet-cover { transition: transform 900ms var(--sheet-plot) 120ms; }
-  .sheet[data-sheet-state="on"] .sheet-scan { animation: sheet-scan 900ms var(--sheet-plot) 120ms both; }
-  .sheet[data-sheet-state="on"] :is(.sheet-ruler-x, .sheet-ruler-y) { transition: transform 700ms var(--sheet-plot); }
-  .sheet[data-sheet-state="on"] :is(.sheet-cell, .sheet-action) { transition: opacity 360ms ease, transform 360ms ease; transition-delay: calc(700ms + var(--sheet-i, 0) * 80ms); }
+  .sheet[data-sheet-state="on"] .sheet-cover { transition: transform var(--sheet-for-plot) var(--sheet-plot) var(--sheet-at-plot); }
+  .sheet[data-sheet-state="on"] .sheet-scan { animation: sheet-scan var(--sheet-for-plot) var(--sheet-plot) var(--sheet-at-plot) both; }
+  .sheet[data-sheet-state="on"] :is(.sheet-ruler-x, .sheet-ruler-y) { transition: transform var(--sheet-for-rulers) var(--sheet-plot); }
+  .sheet[data-sheet-state="on"] :is(.sheet-cell, .sheet-action) { transition: opacity var(--sheet-for-stamp) ease, transform var(--sheet-for-stamp) ease; transition-delay: calc(var(--sheet-at-stamp) + var(--sheet-i, 0) * var(--sheet-at-stamp-step)); }
   .sheet[data-sheet-state="on"] .sheet-cell:nth-child(2) { --sheet-i: 1; }
   .sheet[data-sheet-state="on"] :is(.sheet-cell:nth-child(3), .sheet-action) { --sheet-i: 2; }
   /* Replayed with every new picture (replayKey) */
-  .sheet-scan[data-replay] { animation: sheet-scan 780ms var(--sheet-plot) both; }
-  .sheet-stamp[data-replay] :is(.sheet-cell, .sheet-action) { animation: sheet-in 420ms ease both; }
-  .sheet-stamp[data-replay] .sheet-cell:nth-child(2) { animation-delay: 70ms; }
-  .sheet-stamp[data-replay] .sheet-cell:nth-child(3) { animation-delay: 140ms; }
+  .sheet-scan[data-replay] { animation: sheet-scan var(--sheet-for-replay-scan) var(--sheet-plot) both; }
+  .sheet-stamp[data-replay] :is(.sheet-cell, .sheet-action) { animation: sheet-in var(--sheet-for-replay-in) ease both; }
+  .sheet-stamp[data-replay] .sheet-cell:nth-child(2) { animation-delay: var(--sheet-at-replay-second); }
+  .sheet-stamp[data-replay] .sheet-cell:nth-child(3) { animation-delay: var(--sheet-at-replay-third); }
 }
 
 @media (max-width: 760px) {

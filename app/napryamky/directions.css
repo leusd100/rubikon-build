@@ -2,6 +2,14 @@
    directions as a catalogue (paper: a key plan, then five rows with their scheme sheets) → how we take the work on, in
    short (charcoal) → the region → the site-wide conversation block. Theme roles only (app/theme.css). */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the hero's slide indicator: the current bar fills for the slide's 6 s */
+  --dcat-for-slide-bar: 6000ms;
+  /* the catalogue's rows: the sheet's border and the row's colour turn as the pointer comes */
+  --dcat-for-row-hover: .25s;
+}
+
 /* ---------------------------------------------------------------- 1 · Hero */
 /* Crumbs, eyebrow and title, then the lead and one row of actions under them; the slides keep the right side. The
    title is two short lines («Від фундаменту / до покрівлі»), so its copper word stays over the dark left of the
@@ -43,7 +51,7 @@
 .dhs-bars { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
 .dhs-bars i { position: relative; height: 2px; overflow: hidden; background: rgba(255, 255, 255, .32); }
 .dhs-bars i.is-done { background: var(--color-accent-on-dark); }
-.dhs-bars b { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; animation: dhs-fill 6000ms linear both; }
+.dhs-bars b { position: absolute; inset: 0; background: var(--color-accent-on-dark); transform-origin: left; animation: dhs-fill var(--dcat-for-slide-bar) linear both; }
 @keyframes dhs-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .dhs-indicator[data-paused] .dhs-bars b { animation-play-state: paused; }
 /* A quiet glass chip under the name: it sits over the brightest part of every slide, the sky */
@@ -65,7 +73,7 @@
 .dcat-list a.route-service > div { grid-area: body; }
 .dcat-list a.route-service > b { grid-area: arrow; }
 /* the «Креслення» sheet's small echo: the scheme, then its title block; its own paper in both row states */
-.dcat-list .dcat-thumb { display: flex; flex-direction: column; grid-area: thumb; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color .25s ease; }
+.dcat-list .dcat-thumb { display: flex; flex-direction: column; grid-area: thumb; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color var(--dcat-for-row-hover) ease; }
 .dcat-list a.route-service:is(:hover, :focus-visible) .dcat-thumb { border-color: var(--color-accent); }
 .dcat-list .dcat-kinds-row { display: flex; margin-top: 16px; }
 /* On the row's dark state (pointer or keyboard) the kinds turn light with it */
@@ -78,7 +86,7 @@
 .dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .dcat-strip span:first-child { color: var(--color-text); }
 @media (prefers-reduced-motion: no-preference) {
-  .dcat-list a.route-service { transition: color .25s ease; }
+  .dcat-list a.route-service { transition: color var(--dcat-for-row-hover) ease; }
 }
 
 /* ---------------------------------------------------------------- 3 · How we take the work on (charcoal band) */
