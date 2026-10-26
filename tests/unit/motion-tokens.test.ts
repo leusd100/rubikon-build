@@ -32,19 +32,11 @@ const names = Object.keys(sheets).sort();
 
 /** The files (relative to app/) that still hold literal times or curves in a transition or an animation */
 const PENDING: readonly string[] = [
-  'components/process/change-sheets.css',
   'components/configurator/general-view.css',
   'globals.css',
-  'zernoskhovyshcha/grain-editorial.css',
-  'components/home-v2/proof-details.css',
-  'components/zernoskhovyshcha/grain-complex.css',
-  'components/process/resp-matrix.css',
-  'zernoskhovyshcha/grain-planner.css',
-  'components/home-v2/directions-key.css',
   'components/configurator/configurator-sheet.css',
   'configurator-preview/configurator.css',
   'components/configurator/configurator-controls.css',
-  'components/home-v2/directions-sheets.css',
 ];
 
 /** A choreography variable: a file's own time, delay or curve — `--rm-for-row`, `--ft-at-step`, `--fd-curve-draw` */

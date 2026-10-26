@@ -4,6 +4,24 @@
    line, line style, word colour, word), and the chosen format's set becomes the live one, so a switch slides the words to
    their new columns (the track is the three party columns; a mark is one column wide). Theme tokens, light and dark;
    «Робимо» wears the site's action pair (button colours). */
+
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* a format switch: the words slide to their new columns row by row, their tint follows the format, the rows that changed are lit for a moment */
+  --rm-for-slide: 640ms;
+  --rm-curve-slide: cubic-bezier(.3, .7, .2, 1);
+  --rm-for-slide-fade: 360ms;
+  --rm-at-row-step: 22ms;
+  --rm-for-mark-tint: 300ms;
+  --rm-for-fresh: 2400ms;
+  /* arriving: the rows rise in one by one, their words pop onto them */
+  --rm-for-arrive: 420ms;
+  --rm-at-arrive-step: 45ms;
+  --rm-for-pop: 420ms;
+  --rm-curve-pop: cubic-bezier(.3, 1.5, .5, 1);
+  --rm-at-pop: 220ms;
+}
+
 .resp-matrix-wrap {
   --rm-own: var(--color-action);
   --rm-own-ink: var(--color-on-action);
@@ -57,12 +75,12 @@
   --c: var(--c-comprehensive); --o: var(--o-comprehensive); --f: var(--f-comprehensive); --l: var(--l-comprehensive); --s: var(--s-comprehensive); --k: var(--k-comprehensive); --t: var(--t-comprehensive);
   position: absolute; top: 0; left: 0; width: calc(100% / 3); height: 100%; padding: 10px 0 0 16px;
   opacity: var(--o); transform: translateX(calc(var(--c) * 100%));
-  transition: transform 640ms cubic-bezier(.3, .7, .2, 1) calc(var(--i, 0) * 22ms), opacity 360ms ease calc(var(--i, 0) * 22ms);
+  transition: transform var(--rm-for-slide) var(--rm-curve-slide) calc(var(--i, 0) * var(--rm-at-row-step)), opacity var(--rm-for-slide-fade) ease calc(var(--i, 0) * var(--rm-at-row-step));
 }
 .rm-mark::before {
   content: var(--t); display: inline-block; padding: 6px 9px 5px; color: var(--k); background: var(--f); border: 1.5px var(--s) var(--l);
   font: 700 11.5px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
-  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
+  transition: background-color var(--rm-for-mark-tint) ease, border-color var(--rm-for-mark-tint) ease, color var(--rm-for-mark-tint) ease;
 }
 .proc-responsibility:has(input[value="work-package"]:checked) .rm-mark { --c: var(--c-work-package); --o: var(--o-work-package); --f: var(--f-work-package); --l: var(--l-work-package); --s: var(--s-work-package); --k: var(--k-work-package); --t: var(--t-work-package); }
 .proc-responsibility:has(input[value="subcontract"]:checked) .rm-mark { --c: var(--c-subcontract); --o: var(--o-subcontract); --f: var(--f-subcontract); --l: var(--l-subcontract); --s: var(--s-subcontract); --k: var(--k-subcontract); --t: var(--t-subcontract); }
@@ -73,16 +91,16 @@
 /* After a switch, the rows whose parties changed are lit for a moment (FormatSwitchSync) */
 .rm-row[data-fresh] { background: color-mix(in srgb, var(--color-accent) 11%, transparent); }
 @media (prefers-reduced-motion: no-preference) {
-  .rm-row[data-fresh] { animation: rm-fresh 2400ms ease-out forwards; }
+  .rm-row[data-fresh] { animation: rm-fresh var(--rm-for-fresh) ease-out forwards; }
 }
 @keyframes rm-fresh { 0%, 40% { background: color-mix(in srgb, var(--color-accent) 11%, transparent); } 100% { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .rm-mark { transition: none; } }
 
 /* Arriving: the rows rise in one by one, their words pop onto them */
-.process-page[data-motion-ready="on"] .rm-row { transition: background-color var(--duration-fast) ease, opacity 420ms ease calc(var(--i, 0) * 45ms), transform 420ms var(--m-ease) calc(var(--i, 0) * 45ms); }
+.process-page[data-motion-ready="on"] .rm-row { transition: background-color var(--duration-fast) ease, opacity var(--rm-for-arrive) ease calc(var(--i, 0) * var(--rm-at-arrive-step)), transform var(--rm-for-arrive) var(--m-ease) calc(var(--i, 0) * var(--rm-at-arrive-step)); }
 .process-page[data-motion-ready] .resp-matrix-wrap:not([data-motion-state="on"]) .rm-row { opacity: 0; transform: translateY(8px); }
 .process-page[data-motion-ready] .resp-matrix-wrap:not([data-motion-state="on"]) .rm-mark::before { transform: scale(0); }
-.process-page[data-motion-ready="on"] .rm-mark::before { transition: background-color 300ms ease, border-color 300ms ease, transform 420ms cubic-bezier(.3, 1.5, .5, 1) calc(220ms + var(--i, 0) * 45ms); }
+.process-page[data-motion-ready="on"] .rm-mark::before { transition: background-color var(--rm-for-mark-tint) ease, border-color var(--rm-for-mark-tint) ease, transform var(--rm-for-pop) var(--rm-curve-pop) calc(var(--rm-at-pop) + var(--i, 0) * var(--rm-at-arrive-step)); }
 
 .resp-matrix-wrap .proc-contract-band { margin-top: 44px; }
 

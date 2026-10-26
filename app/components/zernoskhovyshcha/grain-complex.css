@@ -3,6 +3,25 @@
    building part RUBIKON does, long dash the specialists' equipment, the grain in --color-grain; the dotted golden lines
    are the grain moving. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the elevation: a module out of the chain stays as a ghost; the storage grows, the incline and the grain follow; the flows fade in once it stands */
+  --gc-for-ghost: .5s;
+  --gc-for-grow: .6s;
+  --gc-for-flows: .6s;
+  /* a press: the changed module flashes, the line the change brought in lights */
+  --gc-for-flash: 1.4s;
+  --gc-for-new: 1.4s;
+  /* arriving, module by module (--o is each module's turn): the outline draws (--motion-draw) and fades in, then the rest of the module, the labels last */
+  --gc-at-module-step: 380ms;
+  --gc-at-own: 150ms;
+  --gc-for-own-fade: 500ms;
+  --gc-at-module-rest: 450ms;
+  --gc-for-module-fade: 600ms;
+  --gc-for-labels-fade: 600ms;
+  --gc-at-labels: 2.2s;
+}
+
 .gc-band .gc { display: grid; gap: 24px; margin-top: 34px; }
 /* the sheet and the choices together: the choices sit right under the drawing (owner, 06.10: both in one screen) */
 .gc-stage { display: grid; gap: 12px; }
@@ -52,18 +71,18 @@
 @media (min-width: 761px) and (max-width: 1023px) { .gc-drawing .gc-label { font-size: 40px; } }
 .gc-drawing .gc-flow { stroke: var(--color-grain); stroke-width: 11; stroke-linecap: round; stroke-dasharray: 1 24; }
 /* A module out of the chain stays as a ghost, so the chain keeps its places */
-.gc-mod { transition: opacity .5s ease; }
+.gc-mod { transition: opacity var(--gc-for-ghost) ease; }
 .gc-mod.is-off { opacity: .16; }
 /* The storage grows to the right; the incline and the grain follow it (Chrome animates the path, others jump) */
-.gc-mod-shipping .gc-partner, .gc-flow { transition: d .6s ease; }
+.gc-mod-shipping .gc-partner, .gc-flow { transition: d var(--gc-for-grow) ease; }
 
 /* The drawing answers a pointer (owner, 06.10): a module under it is lit and named in a tip; a press changes it and the
    changed module flashes. Pointer only — the chips are the same choices for a keyboard and a screen reader. */
 /* touch-action: a second tap on a module is a press, not iOS's double-tap zoom (PDO-100) */
-.gc-drawing .gc-hit { fill: transparent; stroke: none; cursor: pointer; pointer-events: all; touch-action: manipulation; transition: fill .2s ease; }
+.gc-drawing .gc-hit { fill: transparent; stroke: none; cursor: pointer; pointer-events: all; touch-action: manipulation; transition: fill var(--motion-micro) ease; }
 .gc-drawing .gc-hit.is-hover { fill: color-mix(in srgb, var(--color-accent) 7%, transparent); }
 @keyframes gc-flash { from { fill: color-mix(in srgb, var(--color-accent) 26%, transparent); } to { fill: transparent; } }
-.gc-drawing .gc-hit.is-flash { animation: gc-flash 1.4s ease-out; }
+.gc-drawing .gc-hit.is-flash { animation: gc-flash var(--gc-for-flash) ease-out; }
 .gc-mod.is-hot .gc-own { stroke-width: 4.4; }
 .gc-mod.is-hot .gc-partner { stroke: var(--color-text-secondary); }
 .gc-mod.is-off.is-hot { opacity: .42; }
@@ -103,18 +122,18 @@
 .gc[data-gc="armed"] .gc-drawing :is(.gc-own, .gc-partner, .gc-grain, .gc-ring, .gc-vehicle, .gc-grate, .gc-label, .gc-unknown, .gc-unknown-mark) { opacity: 0; }
 .gc[data-gc]:not([data-gc="armed"]) .gc-mod .gc-own {
   stroke-dasharray: 1;
-  animation: gc-draw 900ms var(--ease-premium) calc(var(--o) * 380ms + 150ms) both, gc-fade 500ms ease calc(var(--o) * 380ms + 150ms) both;
+  animation: gc-draw var(--motion-draw) var(--ease-premium) calc(var(--o) * var(--gc-at-module-step) + var(--gc-at-own)) both, gc-fade var(--gc-for-own-fade) ease calc(var(--o) * var(--gc-at-module-step) + var(--gc-at-own)) both;
 }
 .gc[data-gc]:not([data-gc="armed"]) .gc-mod :is(.gc-partner, .gc-grain, .gc-ring, .gc-vehicle, .gc-grate, .gc-label, .gc-unknown, .gc-unknown-mark) {
-  animation: gc-fade 600ms ease calc(var(--o) * 380ms + 450ms) both;
+  animation: gc-fade var(--gc-for-module-fade) ease calc(var(--o) * var(--gc-at-module-step) + var(--gc-at-module-rest)) both;
 }
-.gc[data-gc]:not([data-gc="armed"]) .gc-drawing > .gc-label { animation: gc-fade 600ms ease 2.2s both; }
+.gc[data-gc]:not([data-gc="armed"]) .gc-drawing > .gc-label { animation: gc-fade var(--gc-for-labels-fade) ease var(--gc-at-labels) both; }
 /* After the arrival a module that comes into the chain draws in at once */
 .gc[data-gc="assembled"] .gc-mod { --o: 0 !important; }
-.gc-flows { transition: opacity .6s ease; }
+.gc-flows { transition: opacity var(--gc-for-flows) ease; }
 .gc[data-gc]:not([data-gc="assembled"]) .gc-flows { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .gc[data-gc="assembled"][data-flow="on"][data-inview] .gc-flow { animation: gc-flow 900ms linear infinite; }
+  .gc[data-gc="assembled"][data-flow="on"][data-inview] .gc-flow { animation: gc-flow var(--motion-draw) linear infinite; }
 }
 
 /* The choices */
@@ -156,7 +175,7 @@
 }
 /* a line the last change brought in lights for a moment */
 @keyframes gc-new { from { background-color: color-mix(in srgb, var(--color-accent) 24%, transparent); } to { background-color: transparent; } }
-.gc-scope-col li.is-new { animation: gc-new 1.4s ease-out; }
+.gc-scope-col li.is-new { animation: gc-new var(--gc-for-new) ease-out; }
 
 @media (max-width: 1050px) {
   .gc-scope { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

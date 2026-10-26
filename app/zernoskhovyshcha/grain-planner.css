@@ -3,9 +3,25 @@
  *
  * Every rule is scoped to .grain-planner-root, built on the site's tokens (globals.css :root) and
  * free of !important. Motion lives only under `prefers-reduced-motion: no-preference`, so reduced
- * motion needs no overrides. Breakpoints are the site's: 1050/1051 for the two-column layout,
+ * motion needs no overrides. The :root block below (this file's own motion times and curves, Motion v1) is the one
+ * exception to the scoping. Breakpoints are the site's: 1050/1051 for the two-column layout,
  * 760 for the phone tier (docs/ui-system-v1.md).
  */
+
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the overview's three draw in once in view, card by card: copper and the grain's slope plot, the grain and the specialists' lines fade in */
+  --planner-for-approach-draw: 1100ms;
+  --planner-at-approach-step: 180ms;
+  --planner-at-approach-draw: 250ms;
+  --planner-for-approach-fade: 600ms;
+  --planner-at-approach-fade: 700ms;
+  /* what an answer changes rises in; the diagram's zones follow the choice */
+  --planner-for-synthesis: .34s;
+  --planner-for-fact: .3s;
+  --planner-for-question: .22s;
+  --planner-for-diagram: .32s;
+}
 
 .grain-planner-root {
   --planner-surface: var(--color-surface-elevated);
@@ -277,8 +293,8 @@
 .grain-planner-root .planner-approach-grid[data-motion] > :nth-child(3) { --i: 2; }
 .grain-planner-root .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { stroke-dasharray: 1; stroke-dashoffset: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .grain-planner-root:is([data-motion-ready="on"] *) .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { transition: stroke-dashoffset var(--m-draw, 1100ms) var(--ease-premium) calc(var(--i, 0) * 180ms + 250ms); }
-  .grain-planner-root:is([data-motion-ready="on"] *) .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-grain, .gcv-partner) { transition: opacity 600ms ease calc(var(--i, 0) * 180ms + 700ms); }
+  .grain-planner-root:is([data-motion-ready="on"] *) .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { transition: stroke-dashoffset var(--m-draw, var(--planner-for-approach-draw)) var(--ease-premium) calc(var(--i, 0) * var(--planner-at-approach-step) + var(--planner-at-approach-draw)); }
+  .grain-planner-root:is([data-motion-ready="on"] *) .planner-approach-grid[data-motion] .planner-approach-visual :is(.gcv-grain, .gcv-partner) { transition: opacity var(--planner-for-approach-fade) ease calc(var(--i, 0) * var(--planner-at-approach-step) + var(--planner-at-approach-fade)); }
   .grain-planner-root:is([data-motion-ready] *) .planner-approach-grid[data-motion]:not([data-motion-state="on"]) .planner-approach-visual :is(.gcv-own, .gcv-grain-line) { stroke-dashoffset: 1; }
   .grain-planner-root:is([data-motion-ready] *) .planner-approach-grid[data-motion]:not([data-motion-state="on"]) .planner-approach-visual :is(.gcv-grain, .gcv-partner) { opacity: 0; }
 }
@@ -467,12 +483,12 @@
 
 /* ── Motion: only for visitors who have not asked for less ──────────────────────────── */
 @media (prefers-reduced-motion: no-preference) {
-  .grain-planner-root .planner-synthesis, .grain-planner-root .planner-live-strip b { animation: planner-rise .34s var(--ease-premium); }
-  .grain-planner-root .planner-facts li, .grain-planner-root .planner-live-strip span { animation: planner-rise .3s ease-out; }
-  .grain-planner-root .planner-question { animation: planner-rise .22s ease-out; }
+  .grain-planner-root .planner-synthesis, .grain-planner-root .planner-live-strip b { animation: planner-rise var(--planner-for-synthesis) var(--ease-premium); }
+  .grain-planner-root .planner-facts li, .grain-planner-root .planner-live-strip span { animation: planner-rise var(--planner-for-fact) ease-out; }
+  .grain-planner-root .planner-question { animation: planner-rise var(--planner-for-question) ease-out; }
   .grain-planner-root .planner-choice-row, .grain-planner-root .planner-check-option, .grain-planner-root .planner-drivers button,
   .grain-planner-root .planner-approach > button, .grain-planner-root .planner-reset { transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, color var(--duration-fast) ease; }
-  .grain-planner-root .planner-diagram .zone, .grain-planner-root .planner-diagram .node rect { transition: fill .32s ease, stroke .32s ease; }
+  .grain-planner-root .planner-diagram .zone, .grain-planner-root .planner-diagram .node rect { transition: fill var(--planner-for-diagram) ease, stroke var(--planner-for-diagram) ease; }
 }
 
 @keyframes planner-rise {

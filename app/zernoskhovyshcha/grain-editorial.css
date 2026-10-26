@@ -3,6 +3,31 @@
    editorial and process sections, tightened so the whole page — planner included — stays within the
    height of the page it replaces (Implementation Spec v1: 7.3 screens at 1440×900, 11.7 at 390×844). */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the grain store's drawing: the equipment and a step's notes follow the step shown */
+  --ge-for-equip: .3s;
+  --ge-for-show: .4s;
+  /* step 1: the pressure plots in arrow by arrow, deeper ones later */
+  --ge-for-press: 520ms;
+  --ge-at-press-first: 1000ms;
+  --ge-at-press-second: 1250ms;
+  --ge-at-press-third: 1380ms;
+  --ge-at-press-fourth: 1510ms;
+  --ge-at-press-fifth: 1640ms;
+  --ge-at-press-sixth: 1770ms;
+  /* step 4: the air runs, the meeting points ring twice */
+  --ge-for-air: 700ms;
+  --ge-at-air: 600ms;
+  --ge-for-ping: 900ms;
+  --ge-at-ping: 900ms;
+  /* the situations: arriving, each card's copper draws in after its card (--motion-draw); pointing at a card draws it again and the grain pushes */
+  --ge-at-own-step: 160ms;
+  --ge-at-own: 300ms;
+  --ge-for-own-redraw: 800ms;
+  --ge-for-push: 1.2s;
+}
+
 /* ---------- 01 Hero: a reveal into the planner rather than a full-screen gate ---------- */
 /* The hero follows the site's hero standard (globals.css --hero-*), as every direction page (owner, 02.10) */
 .grain-page .grain-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
@@ -50,7 +75,7 @@
 .node-drawing-grain-store pattern circle { fill: var(--color-grain); stroke: none; opacity: .5; }
 .node-drawing-grain-store .gsd-grain-line { stroke: var(--color-grain); stroke-width: 3; }
 .node-drawing-grain-store .gsd-grate { stroke-dasharray: 10 8; }
-.node-drawing-grain-store .gsd-equip :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 3; stroke-dasharray: 34 10; transition: stroke .3s ease, opacity .3s ease; }
+.node-drawing-grain-store .gsd-equip :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 3; stroke-dasharray: 34 10; transition: stroke var(--ge-for-equip) ease, opacity var(--ge-for-equip) ease; }
 .node-drawing-grain-store .nd-axis-letter { fill: var(--color-text-muted); font: 600 36px var(--font-condensed), sans-serif; text-anchor: middle; }
 .node-drawing-grain-store .gsd-press { stroke: var(--color-grain); stroke-width: 3.4; }
 .node-drawing-grain-store .gsd-air { stroke: var(--color-air); stroke-width: 9; stroke-dasharray: 1 26; }
@@ -60,7 +85,7 @@
   paint-order: stroke; stroke: var(--color-surface-elevated); stroke-width: 10px; stroke-linejoin: round;
 }
 .node-drawing-grain-store .gsd-note[data-show="1"] { fill: color-mix(in srgb, var(--color-grain) 80%, var(--color-text)); }
-.node-drawing-grain-store [data-show] { opacity: 0; transition: opacity .4s ease; }
+.node-drawing-grain-store [data-show] { opacity: 0; transition: opacity var(--ge-for-show) ease; }
 .dn[data-step="1"] .node-drawing-grain-store [data-show="1"],
 .dn[data-step="3"] .node-drawing-grain-store [data-show="3"],
 .dn[data-step="4"] .node-drawing-grain-store [data-show="4"] { opacity: 1; }
@@ -77,15 +102,15 @@
 @keyframes gsd-ping { 0% { stroke-width: 4.5; } 40% { stroke-width: 12; } 100% { stroke-width: 4.5; } }
 @media (prefers-reduced-motion: no-preference) {
   /* the pressure plots in arrow by arrow, deeper ones later; the air runs; the meeting points ring twice */
-  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path { stroke-dasharray: 1; animation: nd-draw 520ms var(--ease-premium) both; }
-  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(1) { animation-delay: 1000ms; }
-  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(2) { animation-delay: 1250ms; }
-  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(3) { animation-delay: 1380ms; }
-  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(4) { animation-delay: 1510ms; }
-  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(5) { animation-delay: 1640ms; }
-  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(6) { animation-delay: 1770ms; }
-  .dn[data-step="4"] .node-drawing-grain-store .gsd-air path { animation: gsd-air 700ms linear 600ms 7; }
-  .dn[data-step="4"] .node-drawing-grain-store .gsd-joint circle { animation: gsd-ping 900ms ease-in-out 900ms 2; }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path { stroke-dasharray: 1; animation: nd-draw var(--ge-for-press) var(--ease-premium) both; }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(1) { animation-delay: var(--ge-at-press-first); }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(2) { animation-delay: var(--ge-at-press-second); }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(3) { animation-delay: var(--ge-at-press-third); }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(4) { animation-delay: var(--ge-at-press-fourth); }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(5) { animation-delay: var(--ge-at-press-fifth); }
+  .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(6) { animation-delay: var(--ge-at-press-sixth); }
+  .dn[data-step="4"] .node-drawing-grain-store .gsd-air path { animation: gsd-air var(--ge-for-air) linear var(--ge-at-air) 7; }
+  .dn[data-step="4"] .node-drawing-grain-store .gsd-joint circle { animation: gsd-ping var(--ge-for-ping) ease-in-out var(--ge-at-ping) 2; }
 }
 
 /* ---------- 02–03 The complex on a drawing and the situations (since 06.10) ---------- */
@@ -133,9 +158,9 @@
   /* arriving, each card's copper draws in after its card; pointing at a card draws it again and the grain pushes */
   .gs-list[data-motion] .gs-own { stroke-dasharray: 1; }
   .direction-page[data-motion-ready] .gs-list:not([data-motion-state="on"]) .gs-own { stroke-dashoffset: 1; }
-  .direction-page[data-motion-ready="on"] .gs-list .gs-own { transition: stroke-dashoffset 900ms var(--ease-premium) calc(var(--i, 0) * 160ms + 300ms); }
-  .gs-card:is(:hover, :focus-within) .gs-own { animation: gs-draw 800ms var(--ease-premium) both; }
-  .gs-card:is(:hover, :focus-within) .gs-press path { animation: gs-push 1.2s ease-in-out 2; }
+  .direction-page[data-motion-ready="on"] .gs-list .gs-own { transition: stroke-dashoffset var(--motion-draw) var(--ease-premium) calc(var(--i, 0) * var(--ge-at-own-step) + var(--ge-at-own)); }
+  .gs-card:is(:hover, :focus-within) .gs-own { animation: gs-draw var(--ge-for-own-redraw) var(--ease-premium) both; }
+  .gs-card:is(:hover, :focus-within) .gs-press path { animation: gs-push var(--ge-for-push) ease-in-out 2; }
   .gs-card .gs-press .gs-press-left { --push: -3px; }
   .gs-card .gs-press .gs-press-right { --push: 3px; }
 }

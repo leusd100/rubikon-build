@@ -3,6 +3,7 @@
 
    Imported by DirectionsKey.tsx only. Every rule is keyed to .dkey-host — the section that holds the header with the
    plan and the links it is the key to — and uses the page's theme roles, so Light and Dark need no rules of their own.
+   The one exception is the :root block below: this file's own motion times and curves (Motion v1).
 
    globals.css would give an aside a grid column of its own from 1051 px; here the header keeps its one column and
    the aside is laid OVER it, spanning both rows at the right edge, with the figure absolutely positioned inside. The
@@ -12,6 +13,18 @@
    wider than Jost) «Оберіть потрібний вид робіт» no longer fits that room on one line at 1200 px. Shown from 1200 px;
    below that the header is as it was.
    No frame, no rule and no title strip: the plan stands free and is named in its own corner. */
+
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the draw-in, once, on first view: the axes and the bubbles fade in first, then the two solid outlines draw, the frame and its footings, the roof, and the numbers last */
+  --dkey-for-fade: 400ms;
+  --dkey-for-outline: 800ms;
+  --dkey-at-outline: 200ms;
+  --dkey-at-frame: 700ms;
+  --dkey-at-roof: 950ms;
+  --dkey-at-numbers: 1200ms;
+}
+
 .dkey-host .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
 .dkey-host .section-header.has-aside .section-header-aside { display: none; }
 @media (min-width: 1200px) {
@@ -80,10 +93,10 @@
    axes first, then the outlines, the frame and its footings, the roof, and the numbers last. ---- */
 [data-motion-ready] .dkey-host .dkey:not([data-motion-state="on"]) :is(.dkey-wall, .dkey-base) { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; }
 [data-motion-ready] .dkey-host .dkey:not([data-motion-state="on"]) :is(.dkey-axis, .dkey-bubbles, .dkey-dim, .dkey-dim-text, .dkey-fill, .dkey-col, .dkey-hidden, .dkey-over, .dkey-line, .dkey-equip, .dkey-leader, .dkey-dot, .dkey-num, .dkey-cap) { opacity: 0; }
-.dkey-host .dkey[data-motion-state="on"] :is(.dkey-axis, .dkey-bubbles) { animation: dkey-fade 400ms ease backwards; }
-.dkey-host .dkey[data-motion-state="on"] :is(.dkey-wall, .dkey-base) { animation: dkey-draw 800ms var(--ease-premium) 200ms backwards; }
-.dkey-host .dkey[data-motion-state="on"] :is(.dkey-fill, .dkey-col, .dkey-hidden) { animation: dkey-fade 400ms ease 700ms backwards; }
-.dkey-host .dkey[data-motion-state="on"] :is(.dkey-over, .dkey-line, .dkey-equip, .dkey-dim, .dkey-dim-text) { animation: dkey-fade 400ms ease 950ms backwards; }
-.dkey-host .dkey[data-motion-state="on"] :is(.dkey-leader, .dkey-dot, .dkey-num, .dkey-cap) { animation: dkey-fade 400ms ease 1200ms backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-axis, .dkey-bubbles) { animation: dkey-fade var(--dkey-for-fade) ease backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-wall, .dkey-base) { animation: dkey-draw var(--dkey-for-outline) var(--ease-premium) var(--dkey-at-outline) backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-fill, .dkey-col, .dkey-hidden) { animation: dkey-fade var(--dkey-for-fade) ease var(--dkey-at-frame) backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-over, .dkey-line, .dkey-equip, .dkey-dim, .dkey-dim-text) { animation: dkey-fade var(--dkey-for-fade) ease var(--dkey-at-roof) backwards; }
+.dkey-host .dkey[data-motion-state="on"] :is(.dkey-leader, .dkey-dot, .dkey-num, .dkey-cap) { animation: dkey-fade var(--dkey-for-fade) ease var(--dkey-at-numbers) backwards; }
 @keyframes dkey-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; } to { stroke-dasharray: 1; stroke-dashoffset: 0; stroke-linecap: butt; } }
 @keyframes dkey-fade { from { opacity: 0; } }
