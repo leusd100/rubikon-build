@@ -2,6 +2,16 @@
 
 <!-- One or two sentences: what does this PR change, and why? Link the roadmap item if there is one. -->
 
+## Evidence and review
+
+<!-- The acceptance record (CLAUDE.md → «Як іде кожна задача»). Numbers with their method: tool, profile, runs, median. -->
+
+- **Before → after:**
+- **Rejected hypotheses** (tried and measured, not shipped):
+- **Independent review:** verdict, and the commits that fixed its findings
+- **Owner decision needed:** what exactly to approve. Merge and production deploy are separate OKs (DEC-30)
+- **Handoff:** `docs/handoffs/…`
+
 ## Screenshots
 
 <!-- Required if this PR changes anything visual. Before/after, both light situations the site
@@ -23,7 +33,7 @@
 - [ ] `pnpm test:unit` passes
 - [ ] `pnpm build` succeeds locally
 - [ ] `pnpm test:e2e` passes
-- [ ] Typecheck — *(no `typecheck` script exists yet; run `pnpm exec tsc --noEmit` manually until one is added)*
+- [ ] `pnpm typecheck` passes
 
 ## Accessibility
 

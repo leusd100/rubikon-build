@@ -31,27 +31,26 @@ pnpm start     # vinext start — run a production build locally
 pnpm lint      # eslint . --ignore-pattern dist --ignore-pattern .next
 pnpm test:unit # Vitest tests for lead validation, idempotency, and rate limiting
 pnpm test:e2e  # Playwright route, form-flow, and visual regression tests
-pnpm test:lighthouse # Lighthouse mobile quality budgets for / and /angary (requires pnpm build)
+pnpm typecheck # tsc --noEmit (part of the PR Fast Gate)
+pnpm test:lighthouse # Lighthouse mobile quality budgets for /, /angary and /zernoskhovyshcha (requires pnpm build)
 ```
 
 Install the Chromium browser once before the first local smoke-test run with
-`pnpm exec playwright install chromium`. There is currently **no `typecheck` script** in
-`package.json`. If one is added later (e.g. `"typecheck": "tsc --noEmit"`), update this section and
-the CI workflow together.
+`pnpm exec playwright install chromium`. Which suites a change needs, and the PR Gate behind them, are described in
+`docs/ci-tier-model.md`; Claude Code sessions follow `CLAUDE.md`.
 
 Visual baselines cover the homepage hero, directions, team and inquiry sections, plus the
 directions hub and representative cost/FAQ sections at 375, 768 and 1440px. After an intentional
-visual change, review the rendered diff before updating them with
-`pnpm exec playwright test tests/e2e/visual.spec.ts --project=visual-chromium --update-snapshots=all`.
+visual change, the owner reviews the rendered diff first; Linux baselines then come from the CI
+`changed-area-visual-diff` artifact of the same commit, never from a local refresh (docs/ci-tier-model.md →
+Baselines are contracts).
 
-Lighthouse CI runs three mobile-emulated passes per route against the production build, then
-evaluates their median results. The homepage has an intentional responsive autoplay hero and a
-6 MB transfer ceiling; `/angary` retains the strict 900 kB ceiling used for standard pages. Both
-profiles fail on regressions below the current quality floor: performance 70,
-accessibility/SEO/best practices 95, CLS 0.05, LCP 5.75 seconds, or any browser console error. Unit
-tests additionally cap each responsive Home hero video asset at 5 MB. The LCP and transfer budgets
-remain regression guards on the local uncompressed server while production measurements continue
-to target LCP below 3 seconds.
+Lighthouse CI (Nightly, or `pnpm test:lighthouse`) runs five mobile-emulated passes per profile against the
+production build behind a compressing proxy (`scripts/perf/lhci-server.mjs`) and gates on the medians. The
+budgets live in `lighthouserc.cjs` — the homepage keeps a 6 MB transfer ceiling for its autoplay hero, `/angary`
+and `/zernoskhovyshcha` the strict 900 kB one. Unit tests additionally cap each responsive Home hero video asset at
+5 MB. Production is measured by `.github/workflows/pagespeed-monitor.yml`; the DebugBear history up to 27.10.2026 is in
+`docs/performance/debugbear-2026-10-27/`.
 The route smoke suite also decodes every page image, rejects failed image requests, and confirms
 that pages with responsive media actually select a generated `/media-responsive/` variant.
 
