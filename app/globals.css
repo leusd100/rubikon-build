@@ -955,7 +955,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 .cost-list p { margin: 0; color: var(--color-text-muted); font-size: 16px; line-height: 1.7; }
 
 /* Related directions — compact cross-navigation between adjacent stages of one object.
-   Reuses the .cost-grid hairline vocabulary (container border-top/left, cell border-right/bottom)
+   Reuses the .use-case-grid hairline vocabulary (container border-top/left, cell border-right/bottom)
    so it reads as part of the existing system; capped column width keeps it visibly lighter than
    /napryamky's full-width .route-service list. The title's one rule is in direction-template.css (Fixel); the Plex one
    here always lost to it and is gone (W3-01). */
@@ -992,7 +992,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 /* Start and finish filled, the steps between them open rings (owner, 02.10: one filled start and an open last node read
    as unfinished) */
 .detail-steps li:is(:first-child, :last-child) span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
-/* Shared icon token for .cost-grid / .use-case-grid (bordered-card families). */
+/* Shared icon token for .use-case-grid (bordered-card family); .cost-list hides it. */
 .card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); }
 .detail-steps h3 { margin: 0 0 12px; font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }
 .detail-steps p { max-width: 300px; margin: 0 auto; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.7; }
