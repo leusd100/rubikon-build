@@ -7,11 +7,12 @@ name: PageSpeed Monitor
 #   - after each deploy of main: https://rubikonbuild.com/, mobile + desktop (6 PSI calls); waits for Cloudflare's
 #     "Workers Builds: rubikon-build" check on that exact commit, so PSI measures the code that was just merged, not the
 #     previous deploy;
-#   - daily, one page per template (PSI_DAILY_PAGES, 24 PSI calls): DebugBear watched 11 pages daily until its
-#     subscription ended on 27.10.2026 (docs/performance/debugbear-2026-10-27/), and this is now the only production
-#     signal for the pages after HOME. HOME on both form factors, the rest on mobile, where DebugBear saw every
-#     regression (desktop held 0.89–1.00 over its two weeks). It also shows drift no deploy caused (Cloudflare
-#     features, PSI/Lighthouse updates);
+#   - daily, one page per template (PSI_DAILY_PAGES, 24 PSI calls): DebugBear watched 10 pages on both form factors
+#     daily until its subscription ended on 27.10.2026 (docs/performance/debugbear-2026-10-27/), and this is now the
+#     only production signal for the pages after HOME. HOME on both form factors, the rest on mobile, where the scores
+#     are lowest and moved most (DebugBear's desktop medians held 0.89–1.00, single runs no lower than 0.85).
+#     /polityka-konfidentsiinosti, text only at 0.97–1.00, is left out. It also shows drift no deploy caused
+#     (Cloudflare features, PSI/Lighthouse updates);
 #   - manually, optionally for another https:// URL (e.g. a Workers preview).
 on:
   push:
@@ -40,16 +41,18 @@ permissions:
   checks: read
 
 concurrency:
-  # A newer deploy supersedes a measurement still waiting for or measuring the previous one; a deploy does not cancel
-  # the daily pages.
-  group: pagespeed-monitor-${{ github.event_name }}
+  # A newer deploy or manual run supersedes a measurement still waiting for or measuring the previous one; neither
+  # cancels the daily pages. A deploy measured while the daily run is on HOME may get PSI's cached analysis of the old
+  # code (the cache check in pagespeed.mjs sees only its own run): compare its fetch times with the deploy time.
+  group: pagespeed-monitor-${{ github.event_name == 'schedule' && 'daily' || 'deploy' }}
   cancel-in-progress: true
 
 jobs:
   pagespeed:
     name: PageSpeed Insights (production)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # the daily pages' own time limits (below) add up to 48 minutes
+    timeout-minutes: 55
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -84,8 +87,8 @@ jobs:
           PSI_URL: ${{ inputs.url || 'https://rubikonbuild.com/' }}
           PSI_RUNS: ${{ inputs.runs || '3' }}
           PSI_STRATEGY: ${{ inputs.strategy || 'both' }}
-          # path:form factor. /metalokonstruktsii stands for the direction template (DirectionDetail) without the
-          # configurator or the planner, which /angary and /zernoskhovyshcha add.
+          # path:form factor. /metalokonstruktsii stands for the direction template (DirectionDetail) as it is; /angary
+          # adds the configurator to it, /zernoskhovyshcha the grain complex band.
           PSI_DAILY_PAGES: >-
             /:both
             /angary:mobile
@@ -100,13 +103,20 @@ jobs:
             exit
           fi
           # One page after another (parallel PSI calls compete for the same origin). A page PSI could not measure at all
-          # fails the run, but only after every page has had its turn.
+          # fails the run, but only after every page has had its turn: each page gets 6 minutes per form factor — about
+          # three times a slow day's PSI — so a PSI outage (3 × 120 s per call) cannot use up the pages after it.
           status=0
           for page in $PSI_DAILY_PAGES; do
             path="${page%:*}"
+            strategy="${page##*:}"
             slug="${path//\//}"
-            node scripts/perf/pagespeed.mjs --url "https://rubikonbuild.com${path}" --runs "$PSI_RUNS" \
-              --strategy "${page##*:}" --out "psi-results/${slug:-home}" || status=1
+            minutes=6
+            if [ "$strategy" = both ]; then minutes=12; fi
+            if ! timeout "${minutes}m" node scripts/perf/pagespeed.mjs --url "https://rubikonbuild.com${path}" \
+              --runs "$PSI_RUNS" --strategy "$strategy" --out "psi-results/${slug:-home}"; then
+              status=1
+              echo "**${path}**: not measured — PSI failed or took longer than ${minutes} min." >> "$GITHUB_STEP_SUMMARY"
+            fi
           done
           exit "$status"
 
