@@ -63,6 +63,9 @@ const eslintConfig = defineConfig([
     // floods the output with bogus findings on minified code.
     'playwright-report/**',
     'test-results/**',
+    // Claude Code's per-task worktrees (CLAUDE.md → Worktree): other branches' whole checkouts. Each lints itself; from
+    // here they doubled the run (510 files on 27.10) and a branch's work in progress would fail this checkout's lint.
+    '.claude/worktrees/**',
   ]),
 ]);
 
