@@ -40,7 +40,7 @@ export function parseCapacity(value: string): CapacityInfo {
   // one (Sonar S8786); here each run of spaces sits between digits, so the match is linear. On the trimmed value it
   // matches the same strings and, once parsePositiveInteger drops the spaces, gives the same numbers
   // (tests/unit/planner/grain/capacity.test.ts).
-  const range = normalized.match(/^(\d+(?:\s+\d+)*)\s*[–—-]\s*(\d+(?:\s+\d+)*)\s*$/);
+  const range = /^(\d+(?:\s+\d+)*)\s*[–—-]\s*(\d+(?:\s+\d+)*)\s*$/.exec(normalized);
   if (range) {
     const min = parsePositiveInteger(range[1]);
     const max = parsePositiveInteger(range[2]);
