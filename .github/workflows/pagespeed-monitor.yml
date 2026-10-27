@@ -51,8 +51,8 @@ jobs:
   pagespeed:
     name: PageSpeed Insights (production)
     runs-on: ubuntu-latest
-    # the daily pages' own time limits (below) add up to 48 minutes
-    timeout-minutes: 55
+    # the daily pages' own time limits (below) add up to 72 minutes; a normal day takes about 15
+    timeout-minutes: 80
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -103,19 +103,20 @@ jobs:
             exit
           fi
           # One page after another (parallel PSI calls compete for the same origin). A page PSI could not measure at all
-          # fails the run, but only after every page has had its turn: each page gets 6 minutes per form factor — about
-          # three times a slow day's PSI — so a PSI outage (3 × 120 s per call) cannot use up the pages after it.
+          # fails the run, but only after every page has had its turn: each page gets 9 minutes per form factor, room for
+          # the script's own retries (a call that hangs: 3 × 120 s; cached analyses: up to 90 s of waits per run), so a
+          # PSI outage on one page cannot use up the pages after it.
           status=0
           for page in $PSI_DAILY_PAGES; do
             path="${page%:*}"
             strategy="${page##*:}"
             slug="${path//\//}"
-            minutes=6
-            if [ "$strategy" = both ]; then minutes=12; fi
+            minutes=9
+            if [ "$strategy" = both ]; then minutes=18; fi
             if ! timeout "${minutes}m" node scripts/perf/pagespeed.mjs --url "https://rubikonbuild.com${path}" \
               --runs "$PSI_RUNS" --strategy "$strategy" --out "psi-results/${slug:-home}"; then
               status=1
-              echo "**${path}**: not measured — PSI failed or took longer than ${minutes} min." >> "$GITHUB_STEP_SUMMARY"
+              printf '\n**%s**: incomplete — PSI failed for a form factor, or the page ran past %s min.\n\n' "$path" "$minutes" >> "$GITHUB_STEP_SUMMARY"
             fi
           done
           exit "$status"
