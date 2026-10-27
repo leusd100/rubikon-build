@@ -1,19 +1,24 @@
 name: PageSpeed Monitor
 
-# Production PageSpeed Insights (lab) for https://rubikonbuild.com/: 3 runs × mobile + desktop, per-metric medians,
-# raw PSI JSON as an artifact, a Markdown table in the run summary. Reporting only — never a gate on scores.
+# Production PageSpeed Insights (lab): 3 runs per form factor, per-metric medians, raw PSI JSON as an artifact, a Markdown
+# table in the run summary. Reporting only — never a gate on scores.
 #
-# Triggers are deliberately few (6 PSI calls per run):
-#   - after each deploy of main: waits for Cloudflare's "Workers Builds: rubikon-build" check on that exact commit,
-#     so PSI measures the code that was just merged, not the previous deploy;
-#   - weekly, to see drift that no deploy caused (Cloudflare features, PSI/Lighthouse updates);
+# Triggers are deliberately few:
+#   - after each deploy of main: https://rubikonbuild.com/, mobile + desktop (6 PSI calls); waits for Cloudflare's
+#     "Workers Builds: rubikon-build" check on that exact commit, so PSI measures the code that was just merged, not the
+#     previous deploy;
+#   - daily, one page per template (PSI_DAILY_PAGES, 24 PSI calls): DebugBear watched 11 pages daily until its
+#     subscription ended on 27.10.2026 (docs/performance/debugbear-2026-10-27/), and this is now the only production
+#     signal for the pages after HOME. HOME on both form factors, the rest on mobile, where DebugBear saw every
+#     regression (desktop held 0.89–1.00 over its two weeks). It also shows drift no deploy caused (Cloudflare
+#     features, PSI/Lighthouse updates);
 #   - manually, optionally for another https:// URL (e.g. a Workers preview).
 on:
   push:
     branches: [main]
     paths-ignore: ['docs/**', '**/*.md']
   schedule:
-    - cron: '30 5 * * 1'
+    - cron: '30 5 * * *'
   workflow_dispatch:
     inputs:
       url:
@@ -35,15 +40,16 @@ permissions:
   checks: read
 
 concurrency:
-  group: pagespeed-monitor
-  # A newer deploy supersedes a measurement still waiting for or measuring the previous one.
+  # A newer deploy supersedes a measurement still waiting for or measuring the previous one; a deploy does not cancel
+  # the daily pages.
+  group: pagespeed-monitor-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
   pagespeed:
     name: PageSpeed Insights (production)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -78,7 +84,31 @@ jobs:
           PSI_URL: ${{ inputs.url || 'https://rubikonbuild.com/' }}
           PSI_RUNS: ${{ inputs.runs || '3' }}
           PSI_STRATEGY: ${{ inputs.strategy || 'both' }}
-        run: node scripts/perf/pagespeed.mjs --url "$PSI_URL" --runs "$PSI_RUNS" --strategy "$PSI_STRATEGY" --out psi-results
+          # path:form factor. /metalokonstruktsii stands for the direction template (DirectionDetail) without the
+          # configurator or the planner, which /angary and /zernoskhovyshcha add.
+          PSI_DAILY_PAGES: >-
+            /:both
+            /angary:mobile
+            /zernoskhovyshcha:mobile
+            /pro-nas:mobile
+            /napryamky:mobile
+            /yak-pratsyuiemo:mobile
+            /metalokonstruktsii:mobile
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != schedule ]; then
+            node scripts/perf/pagespeed.mjs --url "$PSI_URL" --runs "$PSI_RUNS" --strategy "$PSI_STRATEGY" --out psi-results
+            exit
+          fi
+          # One page after another (parallel PSI calls compete for the same origin). A page PSI could not measure at all
+          # fails the run, but only after every page has had its turn.
+          status=0
+          for page in $PSI_DAILY_PAGES; do
+            path="${page%:*}"
+            slug="${path//\//}"
+            node scripts/perf/pagespeed.mjs --url "https://rubikonbuild.com${path}" --runs "$PSI_RUNS" \
+              --strategy "${page##*:}" --out "psi-results/${slug:-home}" || status=1
+          done
+          exit "$status"
 
       - name: Upload PSI results
         if: always() && env.skip != 'true'
