@@ -56,7 +56,7 @@
 | E2E на Chrome 156, desktop + mobile, 2 workers: `configurator-polish` (з F113: `appearance` = `auto` у forced colors), `configurator-behaviour` (forced colors), `grain-planner`, `grain-planner-handoff`, `grain-planner-stabilization` | 70 passed, 36 skipped, 6 failed — усі 6 за таймаутом під навантаженням |
 | Ці 6 по одному (1 worker), гілка і main | гілка: 5 passed, 5 failed; **main: 3 passed, 7 failed** — ті самі тести таймаутять і на main, тобто це навантаження машини, а не зміна |
 | SonarCloud API на `main` перед PR | gate `ERROR` (`new_reliability_rating` 5); відкриті `css:S9424` (рядок 435) і `typescript:S8786` (рядок 39) |
-| SonarCloud на цьому PR | Перший аналіз (`a3ab8aa`): gate **failed** — B Maintainability on New Code через один MINOR `typescript:S6594` («Use the RegExp.exec() method instead») на рядку з новим виразом; S8786 і S9424 на PR не позначені. Виправлено наступним комітом (`/…/.exec(normalized)`, для виразу без `g` результат той самий). Результат повторного аналізу — у checks PR |
+| SonarCloud на цьому PR | Перший аналіз (`a3ab8aa`): gate **failed** — B Maintainability on New Code через один MINOR `typescript:S6594` («Use the RegExp.exec() method instead») на рядку з новим виразом; S8786 і S9424 на PR не позначені. Виправлено наступним комітом (`/…/.exec(normalized)`, для виразу без `g` результат той самий). Повторний аналіз (`2f9e147`): gate **OK** — 0 нових issues, 0 hotspots, coverage нового коду 100 %, дублювання 0 % |
 
 Firefox і WebKit не запускались: зміна CSS не змінює зібраного CSS, а зміна JS — один вираз, рівнозначність якого доведено без браузера.
 
@@ -74,7 +74,6 @@ Firefox і WebKit не запускались: зміна CSS не змінює 
 ## Не перевірено
 
 - Справжній аналіз SonarCloud на `main` після merge (gate і закриття обох issues).
-- Чи не позначить SonarCloud новий вираз іншим правилом: локально сканера немає; покаже аналіз цього PR.
 - Firefox, WebKit, справжній Safari і пристрої (не потрібні для цих змін, див. вище).
 - E2E-набір повністю зеленим на цій машині: 5 тестів планувальника таймаутять під навантаженням і на main, і на гілці; остаточно — Main Regression на CI.
 
