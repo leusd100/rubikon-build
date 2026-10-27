@@ -14,8 +14,8 @@
 
 ## Screenshots
 
-<!-- Required if this PR changes anything visual. Before/after, both light situations the site
-     actually renders in (no dark-mode toggle exists on this site — just before/after is enough). -->
+<!-- Required if this PR changes anything visual. Before/after at 390 and 1440, Light and Dark where the page
+     supports both (docs/ci-tier-model.md → Design iteration and visual freeze). -->
 
 - [ ] Not applicable — no UI change in this PR
 - [ ] Screenshots attached
@@ -32,7 +32,7 @@
 - [ ] `pnpm lint` passes
 - [ ] `pnpm test:unit` passes
 - [ ] `pnpm build` succeeds locally
-- [ ] `pnpm test:e2e` passes
+- [ ] `pnpm test:e2e:critical` and the suites PR Gate selects for this diff pass (`/targeted-tests`; the full `pnpm test:e2e` runs in Main Regression and Nightly)
 - [ ] `pnpm typecheck` passes
 
 ## Accessibility

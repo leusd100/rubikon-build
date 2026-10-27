@@ -10,7 +10,8 @@
 1. **Одна сесія — одна задача — один worktree — один PR**, з доказом «до/після» і незалежним рев'ю ще до власника.
 2. **Агенти лише там, де ізоляція контексту дає якість**: дослідження без правок, рев'ю без упередження автора, паралельна
    реалізація без спільних файлів. Решту робить основна сесія.
-3. **Правила власника — механічно**, не лише прозою: хук блокує merge/deploy/Cloudflare/rulesets і питає про еталони, бюджети, Sonar.
+3. **Правила власника — механічно**, не лише прозою: перед merge, push у main, deploy, rulesets, еталонами, бюджетами, Sonar і
+   зміною самого запобіжника хук показує запит на підтвердження людині з причиною.
 4. **Знання, що вже коштували часу, — у репозиторії**: скіли з відхиленими гіпотезами, вимірювальний стенд, експорт DebugBear,
    handoff кожної сесії.
 
@@ -58,8 +59,8 @@ Guardrails: CLAUDE.md (+@AGENTS.md) · .claude/settings.json (deny/allow) · gua
 
 | Хук | Подія | Що робить | Обґрунтування |
 |---|---|---|---|
-| `guard-owner-actions.sh` | PreToolUse: Bash, Edit/Write | **Блокує**: push у `main`, `gh pr merge`, `wrangler deploy/secret/rollback`, D1 `--remote`, rulesets. **Питає**: оновлення еталонів, force push, правки `lighthouserc.cjs` і `sonar-project.properties` | AGENTS.md, DEC-30, DEC-18 — найдорожчі помилки. Правила дозволів збігаються лише з початком команди (`git -C . push … HEAD:main` їх обходить); хук читає всю команду. 25/25 випадків у тесті |
-| `session-start.sh` | SessionStart, лише хмара | `pnpm install`; вказує Playwright на передвстановлений Chromium | Без нього в кожній хмарній сесії e2e падає з «Executable doesn't exist» (Playwright 1.62.1 чекає chromium-1234, CDN недоступний). З ним — `pr-critical.spec.ts` 60/60 |
+| `guard-owner-actions.sh` → `guard_owner_actions.py` | PreToolUse: Bash, Edit/Write | **Питає** (підтверджує людина, з причиною): push у `main` (зокрема `git push` без гілки, коли checkout на main, `--all`/`--mirror`), merge PR (`gh pr merge`, GraphQL, REST), deploy (`wrangler`, `vinext deploy`), секрети, D1 `--remote`, записи в rulesets/branch protection, оновлення еталонів, force push, будь-яку зміну `lighthouserc.cjs`, `sonar-project.properties`, еталонів і самого запобіжника — і через Edit, і через `sed -i`/`cp`/`>` | AGENTS.md дозволяє merge і deploy на явний запит, тож це запит підтвердження, не заборона. Команду читає як оболонка: текст у лапках і heredoc — не команда, `bash -c`/`eval` — команда. Без Python питає, а не пропускає. 66 тестів; незалежне рев'ю знайшло 10 класів обходу першої версії — усі в тестах |
+| `session-start.sh` | SessionStart (startup, resume), лише хмара | `pnpm install` (вивід — не в контекст); вказує Playwright на потрібну ревізію Chromium, а без неї — на найновішу передвстановлену | Без нього в кожній хмарній сесії e2e падає з «Executable doesn't exist» (Playwright 1.62.1 чекає chromium-1234, CDN недоступний). З ним — `pr-critical.spec.ts` 60/60 |
 
 Не додано: автоформатування (у репозиторії немає форматера), Stop-хуки з нагадуваннями (шум), хуки на кожен Edit з запуском тестів
 (повільно; тести — свідомий крок `/targeted-tests`).
@@ -67,8 +68,11 @@ Guardrails: CLAUDE.md (+@AGENTS.md) · .claude/settings.json (deny/allow) · gua
 ### Дозволи
 
 - **deny**: MCP-інструменти merge і auto-merge; читання `.env*` і `.dev.vars*` — діють одразу, навіть у bypass-режимі.
-- **allow**: лише читання і стандартні локальні команди (lint, typecheck, unit, build, focused Playwright, git на читання,
-  GitHub MCP на читання) — менше підтверджень без розширення того, що агент може змінити поза репозиторієм.
+- **deny** також: MCP-інструменти, що пишуть у репозиторій напряму (`push_files`, `create_or_update_file`, `delete_file`) — повз
+  git і хук.
+- **allow**: лише стандартні локальні команди (lint, typecheck, unit, build, focused Playwright, класифікатор) і GitHub MCP на
+  читання. Префіксні правила на `git diff/log/fetch` прибрано: `--output=`, `difftool -x`, `--upload-pack` виконують код і пишуть
+  файли.
 - **Не налаштовано на рівні проєкту**: `bypassPermissions`/`auto` (проєктні налаштування їх не вмикають за дизайном Claude Code).
 
 ## Worktree і паралельне виконання
@@ -116,4 +120,5 @@ Guardrails: CLAUDE.md (+@AGENTS.md) · .claude/settings.json (deny/allow) · gua
   модель побудовано на правилах, що є в репозиторії; звірити з Brief — окремий крок.
 - Агенти, скіли й дозволи з `.claude/` підхопились у тій самій сесії, де їх створено (27.10: deny на MCP merge — одразу,
   скіли — після запису, агенти — за кілька хвилин). Ролі в пілоті до того виконували загальні субагенти з тими самими інструкціями.
-- Хук-guard — запобіжник, не межа безпеки: він ловить типові форми команд; справжня межа — GitHub Ruleset на `main` і доступи Cloudflare.
+- Хук-guard — запобіжник, не межа безпеки: він ловить типові форми команд (66 тестів), а не будь-яку; справжня межа — GitHub
+  Ruleset на `main` і доступи Cloudflare.

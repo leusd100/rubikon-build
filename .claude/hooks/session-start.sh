@@ -12,8 +12,12 @@ fi
 
 cd "${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
-# Reuses the pnpm store the container cache keeps between sessions
-pnpm install --frozen-lockfile --prefer-offline
+# Reuses the pnpm store the container cache keeps between sessions. Its output stays out of the session's context
+# (a SessionStart hook's stdout is added to it); on failure it goes to stderr with the hook's error.
+if ! log=$(pnpm install --frozen-lockfile --prefer-offline 2>&1); then
+  echo "$log" >&2
+  exit 1
+fi
 
 PREINSTALLED=/opt/pw-browsers
 [ -d "$PREINSTALLED" ] || exit 0
@@ -28,7 +32,9 @@ expected=$(node -e "
 ")
 for want in $expected; do
   name="${want%-*}"
-  have=$(ls -d "$PREINSTALLED/$name"-[0-9]* 2>/dev/null | sort -V | tail -1 || true)
+  # the revision Playwright expects when the image has it, else the newest preinstalled one
+  if [ -d "$PREINSTALLED/$want" ]; then have="$PREINSTALLED/$want"
+  else have=$(ls -d "$PREINSTALLED/$name"-[0-9]* 2>/dev/null | sort -V | tail -1 || true); fi
   if [ -n "$have" ]; then ln -sfn "$have" "$LINKS/$want"; fi
 done
 

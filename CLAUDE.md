@@ -8,16 +8,19 @@
 
 ## Лише з OK власника
 
-Не роби без окремого, конкретного дозволу Дмитра в цій розмові (хук `.claude/hooks/guard-owner-actions.sh` блокує або питає):
+Не роби без окремого, конкретного дозволу Дмитра саме на цю дію (AGENTS.md). Хук `.claude/hooks/guard-owner-actions.sh`
+для частини з них показує запит на підтвердження з причиною — підтверджує лише людина:
 
-- merge будь-якого PR і будь-який push у `main` (DEC-30); production deploy, `wrangler deploy/secret`, D1 `--remote`;
+- merge будь-якого PR і будь-який push у `main` (DEC-30); production deploy (`wrangler`, `vinext deploy`), секрети, D1 `--remote`;
 - зміни Cloudflare (Dashboard, зони, Workers Builds) і GitHub Rulesets / branch protection;
 - оновлення візуальних еталонів — лише переглянутий diff, Linux-PNG лише з артефакту CI того самого коміту (DEC-18, `docs/ci-tier-model.md`);
 - послаблення тестів, Lighthouse-бюджетів (`lighthouserc.cjs`), правил і обсягу Sonar (`sonar-project.properties`), security-правил (CSP, consent);
 - зміна затвердженого дизайну, текстів (`app/data/deliveryModel.ts` — дослівно), governance-рішень; нові залежності;
-- видалення коду, мертвість якого не доведена (пошук посилань + зелені тести + згода).
+- видалення коду, мертвість якого не доведена (пошук посилань + зелені тести + згода);
+- зміна самого запобіжника — `.claude/settings.json`, `.claude/hooks/`.
 
-Push своєї гілки і Draft PR — дозволені й очікувані; вони не є дозволом на merge чи deploy.
+Push своєї гілки і Draft PR — дозволені й очікувані; вони не є дозволом на merge чи deploy. Хук ловить типові форми
+команд, а не будь-які: правило діє й там, де він мовчить.
 
 ## Як іде кожна задача
 
@@ -34,8 +37,9 @@ pnpm exec playwright test --project=desktop-chromium tests/e2e/<spec>.ts [--grep
 pnpm test:lighthouse             # бюджети Nightly; локальний вимір — скіл /perf-lab
 ```
 
-Які набори запускати для diff — скіл `/targeted-tests` (той самий класифікатор, що в PR Gate). Повний `pnpm test:e2e` — лише
-коли змінено інфраструктуру тестів. Флейк — дефект, не привід для повтору (`docs/ci-tier-model.md` → Flaky-test policy).
+Які набори запускати для diff — скіл `/targeted-tests` (той самий класифікатор, що в PR Gate). Повний `pnpm test:e2e` PR Gate
+не запускає (лише Main Regression після merge і Nightly); локально — коли змінюєш саму інфраструктуру тестів (`playwright.config.ts`,
+спільні помічники e2e). Флейк — дефект, не привід для повтору (`docs/ci-tier-model.md` → Flaky-test policy).
 
 ## Гілки, коміти, PR
 
@@ -53,7 +57,8 @@ pnpm test:lighthouse             # бюджети Nightly; локальний в
 - Паралельно — лише задачі з **непересічними файлами**. Перед стартом другої задачі порівняй списки файлів у планах; спільні
   «гарячі» файли (`app/globals.css`, `app/layout.tsx`, `app/page.tsx`, `app/data/*`, `playwright.config.ts`, workflows,
   `scripts/ci/*`) змінює одна сесія за раз. Класифікатор CI підкаже, які зони зачіпає кожна.
-- Сервери — кожна збірка на своєму порту (e2e завжди 4173 — тож e2e двох worktree по черзі); зупиняй за портом після роботи.
+- Сервери — кожна збірка на своєму порту (e2e завжди 4173 — тож e2e двох worktree по черзі); зупиняй слухача порту після
+  роботи: `lsof -ti tcp:<порт> -sTCP:LISTEN | xargs -r kill`.
 - Субагенти: `perf-investigator`, `ci-triage`, `reviewer` — без правок; `implementer` — у власному worktree. Два агенти, що
   пишуть у ті самі файли, одночасно не запускаються.
 

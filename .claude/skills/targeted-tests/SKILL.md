@@ -12,8 +12,10 @@ description: Вибирає і запускає лише ті перевірки
 
 ```bash
 git fetch -q origin main
-HEAD_REF="$(git branch --show-current)" node scripts/ci/classify-changes.mjs origin/main HEAD
+node scripts/ci/classify-changes.mjs origin/main HEAD
 ```
+
+Режим візуальних тестів залежить від гілки: для `design/*` додай попереду `HEAD_REF="$(git branch --show-current)"` (як у CI).
 
 ## 2. Що запускати
 
@@ -46,8 +48,9 @@ PLAYWRIGHT_USE_PRODUCTION_BUILD=true pnpm test:e2e:critical
   не вимикай перевірку.
 - **Червоне, якого diff не торкається**: перевір той самий тест на `origin/main`; якщо червоне й там — це не твоя зміна,
   познач у handoff («Успадковані червоні перевірки») і не розширюй PR.
-- **Повний `pnpm test:e2e`** — лише коли класифікатор вибрав усе (змінено workflows, `scripts/ci/`, package/lock, конфіги, Worker,
-  CSP/consent): тоді його й так вибере CI.
+- **Повний `pnpm test:e2e`** PR Gate не запускає ніколи: зміна інфраструктури (workflows, `scripts/ci/`, package/lock, конфіги,
+  Worker, CSP/consent) вибирає всі **фокусні** job-и, а повний набір іде лише в Main Regression після merge і в Nightly. Локально
+  він потрібен, коли змінюєш саму інфраструктуру тестів (`playwright.config.ts`, спільні помічники e2e).
 
 ## Хмарна сесія
 

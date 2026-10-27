@@ -4,11 +4,13 @@
 //   node scripts/perf/lab-lighthouse.mjs --url http://127.0.0.1:4174/ --runs 5 --throttling devtools
 //
 // --throttling simulate (default): Lighthouse's own model, as `pnpm test:lighthouse` and Nightly use it.
-// --throttling devtools: the network and CPU really slowed to DebugBear's "Mobile" profile (150 ms RTT, 1.6 Mbit/s, CPU
-// ×4, 412 × 660 at DPR 2.625). On main 9079f47 it gave HOME's mobile LCP 3574 ms where DebugBear's production median was
-// 3568 ms (docs/performance/debugbear-2026-10-27/) — but by different parts: here the first byte takes ~20 ms and the
-// image's download ~3.2 s (one HTTP/1.1 server, no CDN, no HTTP/3 priorities), there 554 ms and 2.8 s. Compare a change
-// against main on this machine; do not read it as production. TBT reads lower than DebugBear's (368 vs 620 ms).
+// --throttling devtools: the network and CPU really slowed (Chrome DevTools, per request), on DebugBear's "Mobile" screen
+// (412 × 660 at DPR 2.625), with a profile calibrated to production rather than copied from DebugBear: 150 ms per request,
+// 1.6 Mbit/s, CPU ×4 gave HOME's mobile LCP 3574 ms on main 9079f47 where DebugBear's production median was 3568 ms
+// (docs/performance/debugbear-2026-10-27/). DebugBear throttles packets (150 ms RTT); Lighthouse's own per-request
+// conversion of that (562.5 ms) gave 8.5 s here, 2.4× production, because this one HTTP/1.1 server makes each of ~66
+// requests wait on six connections where Cloudflare multiplexes them over HTTP/3. The parts differ too (here the first byte
+// takes ~20 ms, there 554 ms). Compare a change against main on this machine; never read it as production.
 //
 // Prints each run and the medians; with --out, writes every Lighthouse JSON there. Chrome: CHROME_PATH, else
 // Playwright's Chromium (in cloud sessions the SessionStart hook points PLAYWRIGHT_BROWSERS_PATH at it).
@@ -21,12 +23,9 @@ const require = createRequire(import.meta.url);
 // Lighthouse comes with @lhci/cli (the version Nightly runs); no dependency of its own
 const lighthousePath = createRequire(require.resolve('@lhci/cli/package.json')).resolve('lighthouse');
 
-const DEBUGBEAR_MOBILE = {
-  throttlingMethod: 'devtools',
-  throttling: { requestLatencyMs: 150, downloadThroughputKbps: 1638, uploadThroughputKbps: 1638, cpuSlowdownMultiplier: 4 },
-  formFactor: 'mobile',
-  screenEmulation: { mobile: true, width: 412, height: 660, deviceScaleFactor: 2.625, disabled: false },
-};
+
+/** Per-request DevTools throttling that puts HOME's local mobile LCP where DebugBear measured production (see above) */
+const CALIBRATED_MOBILE = { requestLatencyMs: 150, downloadThroughputKbps: 1638.4, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 4 };
 
 export function parseArgs(argv) {
   const args = { url: 'http://127.0.0.1:4174/', runs: 5, throttling: 'simulate', out: null };
@@ -72,7 +71,7 @@ export function summarizeRun(lhr) {
 }
 
 async function main() {
-  const { url, runs, throttling, out } = parseArgs(process.argv.slice(2));
+  const { url, runs, throttling: mode, out } = parseArgs(process.argv.slice(2));
   const lighthouse = (await import(pathToFileURL(lighthousePath).href)).default;
   const chromeLauncher = createRequire(lighthousePath)('chrome-launcher');
   const chromePath = process.env.CHROME_PATH || require('@playwright/test').chromium.executablePath();
@@ -82,9 +81,12 @@ async function main() {
   for (let run = 1; run <= runs; run += 1) {
     const chrome = await chromeLauncher.launch({ chromePath, chromeFlags: ['--headless', '--no-sandbox', '--disable-dev-shm-usage'] });
     try {
-      const config = throttling === 'devtools' ? { extends: 'lighthouse:default', settings: DEBUGBEAR_MOBILE } : undefined;
+      const config = mode === 'devtools' ? { extends: 'lighthouse:default', settings: {
+        throttlingMethod: 'devtools', throttling: CALIBRATED_MOBILE, formFactor: 'mobile',
+        screenEmulation: { mobile: true, width: 412, height: 660, deviceScaleFactor: 2.625, disabled: false },
+      } } : undefined;
       const { lhr } = await lighthouse(url, { port: chrome.port, output: 'json', logLevel: 'error', onlyCategories: ['performance'] }, config);
-      if (out) writeFileSync(join(out, `lighthouse-${throttling}-${run}.json`), JSON.stringify(lhr));
+      if (out) writeFileSync(join(out, `lighthouse-${mode}-${run}.json`), JSON.stringify(lhr));
       const summary = summarizeRun(lhr);
       results.push(summary);
       console.log(`#${run} score ${summary.score} LCP ${summary.lcp} FCP ${summary.fcp} TBT ${summary.tbt} style+layout ${summary.styleLayout} LCP parts ${JSON.stringify(summary.lcpParts)}`);
@@ -94,7 +96,7 @@ async function main() {
   }
   const keys = ['score', 'fcp', 'lcp', 'tbt', 'si', 'cls', 'bytes', 'styleLayout', 'scriptEvaluation'];
   const medians = Object.fromEntries(keys.map((key) => [key, median(results.map((result) => result[key]))]));
-  console.log(`\nMedian of ${runs} (${throttling}, ${url}): ${JSON.stringify(medians)}`);
+  console.log(`\nMedian of ${runs} (${mode}, ${url}): ${JSON.stringify(medians)}`);
   const middle = results.find((result) => result.tbt === medians.tbt) ?? results[0];
   console.log(`Long tasks in the median-TBT run: ${middle.longTasks.join(' | ')}`);
 }

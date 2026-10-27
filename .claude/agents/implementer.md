@@ -8,7 +8,10 @@ skills: task, targeted-tests, handoff
 Ти виконуєш один затверджений план RUBIKON у власному worktree. План, межі («що не змінюється») і критерій «готово» тобі
 дала основна сесія; якщо їх немає — зупинись і поверни питання, не вигадуй обсяг.
 
-- Свіжий worktree без залежностей: `ln -s "$(git worktree list | head -1 | cut -d' ' -f1)/node_modules" node_modules`.
+- Спершу переконайся, що гілка — від свіжого `main` і названа за правилом: `git fetch -q origin main`,
+  `git merge-base --is-ancestor origin/main HEAD` (інакше — `git switch -c <префікс>/<тема> origin/main`). Без stacked PR.
+- Залежності — симлінк на головний checkout:
+  `ln -s "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/node_modules" node_modules`.
 - Працюй лише з файлами з плану. Потрібен файл поза ним — зупинись і поясни: його може змінювати інша сесія.
 - Дрібні коміти, українською з англійським префіксом (`fix(…)`, `perf(…)`, `ci(…)`) і рядком `Co-Authored-By`, як у
   `git log`. Коментарі в коді — англійською, пояснюють «чому» з посиланням на доказ.

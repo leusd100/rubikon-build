@@ -33,8 +33,10 @@ RUM не був підключений; CrUX порожній (замало тр
 - `CLAUDE.md` (~70 рядків, `@AGENTS.md` першим).
 - Агенти: `perf-investigator`, `ci-triage` (Sonar + QA + cross-browser), `reviewer` — без правок; `implementer` — `isolation: worktree`.
 - Скіли: `/task`, `/targeted-tests`, `/handoff`, `/perf-lab`.
-- Хуки: `guard-owner-actions.sh` (блокує merge/push у main/deploy/D1 remote/rulesets; питає про еталони, force push, бюджети, Sonar);
-  `session-start.sh` (хмара: залежності + Chromium). Дозволи: deny MCP merge і секретних файлів; allow — читання й стандартні команди.
+- Хуки: `guard-owner-actions.sh` → `guard_owner_actions.py` — перед merge, push у main, deploy, секретами, D1 remote, rulesets,
+  еталонами, бюджетами, Sonar і зміною самого запобіжника питає підтвердження людини (AGENTS.md дозволяє merge/deploy на явний
+  запит, тож не блокує); `session-start.sh` (хмара: залежності + Chromium). Дозволи: deny — MCP merge, auto-merge і прямі записи
+  файлів через MCP, секретні файли; allow — стандартні локальні команди й GitHub MCP на читання.
 - `eslint.config.mjs` і `.gitignore`: `.claude/worktrees/` (ESLint головного checkout лінтував 510 файлів чужого worktree).
 
 ### 3. Пілот
@@ -65,12 +67,31 @@ RUM не був підключений; CrUX порожній (замало тр
 Базова лінія для перших щоденних результатів — `docs/performance/debugbear-2026-10-27/README.md` (інший інструмент: PSI — Lighthouse 13
 з симуляцією, DebugBear — реальне тротлінгування; порівнювати тренди, не абсолютні числа).
 
-**Independent review.** Два раунди окремого субагента-рецензента у свіжому контексті:
+**Independent review пілоту.** Два раунди окремого субагента-рецензента у свіжому контексті:
 1. `716fee9` → approve-with-changes: група concurrency на кожну подію ламала взаємне скасування деплою і ручного запуску (суперечило
    коміту); ліміт job 45 хв обривав список при збої PSI; 4 неточності в коментарі (планувальника на `/zernoskhovyshcha` немає з 06.10,
    10 сторінок, а не 11, діапазон desktop, мовчки пропущена сторінка політики). Виправлено в `e114fac`.
 2. `e114fac` → approve-with-changes: 6 хв на форм-фактор менше за власні повтори скрипта (3 × 120 с) — повільний, але живий PSI вбивав
    сторінку з уже виміряними прогонами; рядок підсумку зливався з попереднім блоком. Виправлено в `31fdf73`.
+
+### 4. Рев'ю конфігурації Claude Code
+
+Окремий рецензент (свіжий контекст, 15 хв, офлайн-перевірки) на коміти `6bb681b`…`a39e01c`: блокерів немає, CI зелений; 10
+should-fix, усі виправлено наступним комітом:
+
+| Знахідка | Виправлення |
+|---|---|
+| Хук пропускав `git push` без гілки на main, `--all`/`--mirror`, `(… main)`, `main>/dev/null`, перенесення рядка; heredoc ховав решту першого рядка; апостроф у «рев'ю» ламав розбір лапок; `bash -c`/`eval`, GraphQL- і REST-merge; `npx @vinext/cloudflare deploy` | Логіка в `guard_owner_actions.py`: розбір як в оболонці, рекурсія в `bash -c`/`eval`, поточна гілка для `git push` без refspec, нові форми deploy і merge; 66 тестів, серед них усі випадки рецензента |
+| Без `jq`/Python або на дуже довгій команді хук пропускав виклик | Python читає stdin сам; обгортка без Python питає на все, що схоже на дію власника |
+| MCP `push_files`/`create_or_update_file`/`delete_file` у `main` повз хук | deny |
+| `sed -i` / `cp` / `>` у `lighthouserc.cjs`, Sonar, еталони; сам запобіжник не захищений | хук питає й на ці форми; `.claude/settings.json` і `.claude/hooks/` — теж |
+| allow `git diff*`/`git log*`/`git fetch*` виконують код і пишуть файли (`difftool -x`, `--output=`, `--upload-pack`) | прибрано; лишились `git status`, `git worktree list` |
+| «CI і так запустить повний e2e» — неправда: PR Gate його не запускає | виправлено в `/targeted-tests`, CLAUDE.md, шаблоні PR |
+| Блок merge суперечив AGENTS.md (merge на явний запит) | хук питає, а не блокує |
+| Профіль `devtools` названо «профілем DebugBear» | названо каліброваним; перерахунок Lighthouse (562,5 мс на запит) дав тут 8,5 с проти 3,57 с production — задокументовано |
+| Дрібне: stdout `pnpm` у контексті сесії, не та ревізія Chromium, `lsof` без `-sTCP:LISTEN`, «#257» в агенті, шлях `node_modules` з пробілами, база гілки implementer, «немає темної теми» в шаблоні PR | виправлено |
+
+Хибні спрацювання першої версії (`gh ruleset list`, `wrangler secret list`, гілка `fix/merge-x`) теж прибрано й покрито тестами.
 
 ## Відхилені гіпотези (не повторювати без нового доказу)
 
@@ -88,8 +109,8 @@ RUM не був підключений; CrUX порожній (замало тр
 |---|---|---|
 | Lint | `pnpm lint` | ✓ |
 | Typecheck | `pnpm typecheck` | ✓ |
-| Unit | `pnpm test:unit` | 100 файлів, 1577 тестів ✓ |
-| Нові тести | `vitest run tests/unit/claude-guard-hook.test.ts tests/unit/perf` | 29 + 26 ✓ |
+| Unit | `pnpm test:unit` | 100 файлів, 1614 тестів ✓ |
+| Нові тести | `vitest run tests/unit/claude-guard-hook.test.ts tests/unit/perf` | 66 + 26 ✓ |
 | Critical e2e у хмарній сесії (через Chromium з SessionStart-хука) | `PLAYWRIGHT_USE_PRODUCTION_BUILD=true pnpm test:e2e:critical` | 60 passed |
 | SessionStart-хук | `CLAUDE_CODE_REMOTE=true .claude/hooks/session-start.sh`, двічі; без `CLAUDE_CODE_REMOTE` | ✓ ідемпотентний; локально нічого не робить |
 | Workflow: YAML | pyyaml | ✓ |
@@ -124,8 +145,9 @@ Sonar quality gate на `main` червоний — його лагодить #2
 
 ## Ризики
 
-- Хук-guard — запобіжник, не межа безпеки: ловить типові форми команд (29 тестів), а не будь-яку можливу. Межа — Ruleset на `main`.
-- Хук може помилково заблокувати нетипову, але легітимну команду — повідомлення пояснює причину; правка — в одному файлі з тестами.
+- Хук-guard — запобіжник, не межа безпеки: ловить типові форми команд (66 тестів), а не будь-яку можливу. Межа — Ruleset на `main`.
+- Хук може запитати підтвердження на нетипову, але легітимну команду — запит пояснює причину; правка — в одному файлі з тестами
+  (і сама правка запобіжника теж проходить через підтвердження).
 - Щоденний PSI додає 24 виклики на день; деплой, що збігся з HOME у щоденному прогоні, може отримати кешований аналіз старого коду (описано в коментарі workflow).
 
 ## Що перевірити власнику
