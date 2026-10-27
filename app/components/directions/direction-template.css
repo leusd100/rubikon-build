@@ -1,6 +1,32 @@
 /* The direction-page template (metal, concrete, roofing — and the shared pieces /angary and /zernoskhovyshcha use):
    UX pass 2026-10. Colours from the theme roles (app/theme.css). */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* «Переріз»: the cut and its lines draw at --m-draw, then the hatching and the dimensions, the copper detail, last the axis, the words and the caption */
+  --dt-for-section-hatch: 700ms;
+  --dt-at-section-hatch: 650ms;
+  --dt-for-section-accent: 800ms;
+  --dt-at-section-accent: 1200ms;
+  --dt-for-section-ink: 500ms;
+  --dt-at-section-ink: 900ms;
+  /* «Що виконуємо» and the roofing situations: one by one */
+  --dt-at-feature-step: 120ms;
+  /* the steps: each node lights in turn, the rail runs on to the next one, the words follow their node */
+  --dt-at-step-cascade: 320ms;
+  --dt-for-step-rail: 460ms;
+  --dt-at-step-rail: 260ms;
+  --dt-for-step-node-fade: 260ms;
+  --dt-for-step-node-pop: 380ms;
+  --dt-at-step-words: 140ms;
+  /* the cost factors: a copper rule runs over each row in turn, the glyph draws (--motion-draw), the copper detail last */
+  --dt-at-cost-step: 220ms;
+  --dt-for-cost-rule: 1500ms;
+  --dt-at-cost-glyph: 120ms;
+  --dt-for-cost-detail: 700ms;
+  --dt-at-cost-detail: 620ms;
+}
+
 /* «Що виконуємо»: the lead sits apart from its heading (it touched it, 0 px), and the column below holds the drawing */
 .direction-overview-section .sticky-heading .lead-copy { max-width: 520px; margin: 26px 0 0; color: var(--color-text-secondary); font-size: 17px; line-height: 1.7; }
 @media (max-height: 820px) { .direction-overview-section .sticky-heading { position: static; } }
@@ -90,21 +116,21 @@
 /* «Переріз»: the cut and its lines draw, then the hatching and the dimensions, the copper detail last */
 .dsd :is(.dsd-cut, .dsd-line, .dsd-dim, .dsd-hatch, .dsd-insulation, .dsd-accent path, .dsd-accent circle) { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .direction-page[data-motion-ready="on"] .dsd :is(.dsd-cut, .dsd-line) { transition: stroke-dashoffset var(--m-draw) var(--m-ease); }
-.direction-page[data-motion-ready="on"] .dsd :is(.dsd-hatch, .dsd-insulation, .dsd-dim) { transition: stroke-dashoffset 700ms var(--m-ease) 650ms; }
-.direction-page[data-motion-ready="on"] .dsd .dsd-accent :is(path, circle) { transition: stroke-dashoffset 800ms var(--m-ease) 1200ms; }
-.direction-page[data-motion-ready="on"] .dsd :is(.dsd-axis, .dsd-dim-text, .dsd-bars, figcaption) { transition: opacity 500ms ease 900ms; }
+.direction-page[data-motion-ready="on"] .dsd :is(.dsd-hatch, .dsd-insulation, .dsd-dim) { transition: stroke-dashoffset var(--dt-for-section-hatch) var(--m-ease) var(--dt-at-section-hatch); }
+.direction-page[data-motion-ready="on"] .dsd .dsd-accent :is(path, circle) { transition: stroke-dashoffset var(--dt-for-section-accent) var(--m-ease) var(--dt-at-section-accent); }
+.direction-page[data-motion-ready="on"] .dsd :is(.dsd-axis, .dsd-dim-text, .dsd-bars, figcaption) { transition: opacity var(--dt-for-section-ink) ease var(--dt-at-section-ink); }
 .direction-page[data-motion-ready] .dsd:not([data-motion-state="on"]) :is(.dsd-cut, .dsd-line, .dsd-dim, .dsd-hatch, .dsd-insulation, .dsd-accent path, .dsd-accent circle) { stroke-dashoffset: 1; }
 .direction-page[data-motion-ready] .dsd:not([data-motion-state="on"]) :is(.dsd-axis, .dsd-dim-text, .dsd-bars, figcaption) { opacity: 0; }
 
 /* «Що виконуємо» and the roofing situations: one by one */
-.direction-page[data-motion-ready="on"] :is(.feature-list > article, .direction-entry-list > li) { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 120ms), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * 120ms); }
+.direction-page[data-motion-ready="on"] :is(.feature-list > article, .direction-entry-list > li) { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * var(--dt-at-feature-step)), transform var(--m-reveal) var(--m-ease) calc(var(--i, 0) * var(--dt-at-feature-step)); }
 .direction-page[data-motion-ready] :is(.feature-list, .direction-entry-list):not([data-motion-state="on"]) > :is(article, li) { opacity: 0; transform: translateY(14px); }
 
 /* The steps: each node lights in turn, the rail runs on to the next one, the words follow their node */
 .detail-steps li:not(:last-child)::before { transform-origin: left center; }
-.direction-page[data-motion-ready="on"] .detail-steps li::before { transition: transform 460ms var(--m-ease) calc(260ms + var(--i, 0) * 320ms); }
-.direction-page[data-motion-ready="on"] .detail-steps span { transition: opacity 260ms ease calc(var(--i, 0) * 320ms), transform 380ms var(--m-ease) calc(var(--i, 0) * 320ms); }
-.direction-page[data-motion-ready="on"] .detail-steps :is(h3, p) { transition: opacity var(--m-reveal) ease calc(140ms + var(--i, 0) * 320ms), transform var(--m-reveal) var(--m-ease) calc(140ms + var(--i, 0) * 320ms); }
+.direction-page[data-motion-ready="on"] .detail-steps li::before { transition: transform var(--dt-for-step-rail) var(--m-ease) calc(var(--dt-at-step-rail) + var(--i, 0) * var(--dt-at-step-cascade)); }
+.direction-page[data-motion-ready="on"] .detail-steps span { transition: opacity var(--dt-for-step-node-fade) ease calc(var(--i, 0) * var(--dt-at-step-cascade)), transform var(--dt-for-step-node-pop) var(--m-ease) calc(var(--i, 0) * var(--dt-at-step-cascade)); }
+.direction-page[data-motion-ready="on"] .detail-steps :is(h3, p) { transition: opacity var(--m-reveal) ease calc(var(--dt-at-step-words) + var(--i, 0) * var(--dt-at-step-cascade)), transform var(--m-reveal) var(--m-ease) calc(var(--dt-at-step-words) + var(--i, 0) * var(--dt-at-step-cascade)); }
 .direction-page[data-motion-ready] .detail-steps:not([data-motion-state="on"]) li::before { transform: scaleX(0); }
 .direction-page[data-motion-ready] .detail-steps:not([data-motion-state="on"]) span { opacity: 0; transform: scale(.55); }
 .direction-page[data-motion-ready] .detail-steps:not([data-motion-state="on"]) :is(h3, p) { opacity: 0; transform: translateY(10px); }
@@ -124,12 +150,12 @@
 .cost-list article h3 { transition: color var(--duration-fast) ease; }
 @media (hover: hover) { .cost-list article:hover h3 { color: var(--color-accent-strong); } }
 .cost-list article::before { content: ''; position: absolute; top: -1px; left: 0; right: 0; height: 1px; background: var(--color-accent); opacity: 0; transform-origin: left center; pointer-events: none; }
-.direction-page[data-motion-ready] .cost-list[data-motion-state="on"] article::before { animation: cost-rule 1500ms var(--m-ease) calc(var(--i, 0) * 220ms) both; }
+.direction-page[data-motion-ready] .cost-list[data-motion-state="on"] article::before { animation: cost-rule var(--dt-for-cost-rule) var(--m-ease) calc(var(--i, 0) * var(--dt-at-cost-step)) both; }
 @keyframes cost-rule { 0% { opacity: 1; transform: scaleX(0); } 55% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
-.direction-page[data-motion-ready="on"] .cost-glyph-line { transition: stroke-dashoffset 900ms var(--m-ease) calc(120ms + var(--i, 0) * 220ms); }
-.direction-page[data-motion-ready="on"] .cost-glyph-detail { transition: stroke-dashoffset 700ms var(--m-ease) calc(620ms + var(--i, 0) * 220ms); }
+.direction-page[data-motion-ready="on"] .cost-glyph-line { transition: stroke-dashoffset var(--motion-draw) var(--m-ease) calc(var(--dt-at-cost-glyph) + var(--i, 0) * var(--dt-at-cost-step)); }
+.direction-page[data-motion-ready="on"] .cost-glyph-detail { transition: stroke-dashoffset var(--dt-for-cost-detail) var(--m-ease) calc(var(--dt-at-cost-detail) + var(--i, 0) * var(--dt-at-cost-step)); }
 .direction-page[data-motion-ready] .cost-list:not([data-motion-state="on"]) .cost-glyph path { stroke-dashoffset: 1; }
-.direction-page[data-motion-ready="on"] .cost-list article :is(h3, p) { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * 220ms), color var(--duration-fast) ease; }
+.direction-page[data-motion-ready="on"] .cost-list article :is(h3, p) { transition: opacity var(--m-reveal) ease calc(var(--i, 0) * var(--dt-at-cost-step)), color var(--duration-fast) ease; }
 .direction-page[data-motion-ready] .cost-list:not([data-motion-state="on"]) article :is(h3, p) { opacity: 0; }
 @media (max-width: 760px) {
   .cost-list.has-glyphs article { grid-template-columns: 26px 40px minmax(0, 1fr); }

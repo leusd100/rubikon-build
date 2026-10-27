@@ -2,6 +2,15 @@
    globals.css so pages without the configurator do not download its component styles. Built
    entirely from the site's existing design tokens (:root in ../globals.css) — no new palette. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the preview's loading bar sweeps while the 3D loads */
+  --hcp-for-loading-sweep: 1.1s;
+  /* the title block: a value just changed lights up, and the sketch's lines run to their new sizes */
+  --hcp-for-changed: 1200ms;
+  --hcp-for-sketch: .35s;
+}
+
 .hangar-configurator {
   padding: 132px 0 96px;
   background: var(--color-bg);
@@ -494,7 +503,7 @@
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--color-dark-text-muted), transparent);
   background-size: 200% 100%;
-  animation: hc-preview-loading-sweep 1.1s var(--ease-premium) infinite;
+  animation: hc-preview-loading-sweep var(--hcp-for-loading-sweep) var(--ease-premium) infinite;
 }
 
 @keyframes hc-preview-loading-sweep {
@@ -1310,8 +1319,8 @@
   to { background-color: transparent; box-shadow: inset 0 -2px transparent; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .hc-stamp-row .is-changed { animation: hc-changed 1200ms ease-out; }
-  .hc-stamp-row .hc-sketch :is(path, rect) { transition: d .35s var(--ease-premium), x .35s var(--ease-premium), y .35s var(--ease-premium), width .35s var(--ease-premium), height .35s var(--ease-premium); }
+  .hc-stamp-row .is-changed { animation: hc-changed var(--hcp-for-changed) ease-out; }
+  .hc-stamp-row .hc-sketch :is(path, rect) { transition: d var(--hcp-for-sketch) var(--ease-premium), x var(--hcp-for-sketch) var(--ease-premium), y var(--hcp-for-sketch) var(--ease-premium), width var(--hcp-for-sketch) var(--ease-premium), height var(--hcp-for-sketch) var(--ease-premium); }
 }
 @media (max-width: 1180px) {
   .hc-stamp-row .hc-summary-grid { grid-template-columns: minmax(0, 1fr) minmax(250px, .7fr); }

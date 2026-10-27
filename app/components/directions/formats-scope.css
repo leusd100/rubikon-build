@@ -4,6 +4,16 @@
    it, the packages as tags and the two facts that tell the formats apart. Theme roles only.
    Imported by the page (app/yak-pratsyuiemo/page.tsx), never by the client component: a CSS file imported by two
    client modules becomes an empty chunk under vinext. */
+
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the drawing follows the format in focus: its parts and frames, the frames' names and the packages' tags */
+  --dfmt-for-format: 320ms;
+  --dfmt-at-layer-step: 70ms;
+  /* the sheet arrives once */
+  --dfmt-for-rise: 520ms;
+}
+
 .dfmt-grid { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: center; gap: clamp(28px, 4vw, 64px); }
 .dfmt-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
 .dfmt-list li { border-bottom: 1px solid var(--color-border); }
@@ -20,7 +30,7 @@
 .dfmt-grid .fs-axis { stroke: var(--color-text-muted); stroke-width: .8; stroke-dasharray: 12 3 2 3; opacity: .6; }
 /* A part of the building: thin graphite while it is another participant's, copper and heavier while it is RUBIKON's.
    The delay runs in build order, so a whole complex lights from the footings up. */
-.dfmt-grid .fs-layer { stroke: var(--color-text-muted); stroke-width: 1.2; transition: stroke 320ms ease, stroke-width 320ms ease, fill 320ms ease; transition-delay: calc(var(--i, 0) * 70ms); }
+.dfmt-grid .fs-layer { stroke: var(--color-text-muted); stroke-width: 1.2; transition: stroke var(--dfmt-for-format) ease, stroke-width var(--dfmt-for-format) ease, fill var(--dfmt-for-format) ease; transition-delay: calc(var(--i, 0) * var(--dfmt-at-layer-step)); }
 .dfmt-grid .fs-layer[data-layer="frame"] { stroke-width: 1.8; }
 .dfmt-grid .fs path.fs-layer[data-layer="foundation"] { fill: color-mix(in srgb, var(--color-text) 5%, transparent); }
 .dfmt-grid .fs-layer[data-scope] { stroke: var(--color-accent); stroke-width: 2; }
@@ -29,11 +39,11 @@
 /* Whose object it is. The inner frame is the object: the customer's (graphite) or, when RUBIKON coordinates it, the
    agreed scope (copper). The outer one appears for a general contractor's project — long dash and two dots, the
    site's line for what is someone else's. */
-.dfmt-grid .fs-frame { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 6 5; transition: stroke 320ms ease, stroke-width 320ms ease, opacity 320ms ease; }
+.dfmt-grid .fs-frame { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 6 5; transition: stroke var(--dfmt-for-format) ease, stroke-width var(--dfmt-for-format) ease, opacity var(--dfmt-for-format) ease; }
 .dfmt-grid .fs-outer { stroke-dasharray: 12 3 2 3 2 3; opacity: 0; }
 .dfmt-grid .fs[data-format="subcontract"] .fs-outer { opacity: 1; }
 .dfmt-grid .fs[data-format="comprehensive"] .fs-inner { stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 8 6; }
-.dfmt-grid .fs-label { fill: var(--color-text-muted); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: 0; transition: opacity 320ms ease; }
+.dfmt-grid .fs-label { fill: var(--color-text-muted); font: 700 11px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: 0; transition: opacity var(--dfmt-for-format) ease; }
 .dfmt-grid .fs[data-format="comprehensive"] .fs-label-scope { fill: var(--color-accent-strong); opacity: 1; }
 .dfmt-grid .fs[data-format="work-package"] .fs-label-client { opacity: 1; }
 .dfmt-grid .fs[data-format="subcontract"] :is(.fs-label-part, .fs-label-outer) { opacity: 1; }
@@ -44,7 +54,7 @@
 /* Under it: the packages as tags (the one in RUBIKON's scope in copper), then the two facts */
 .dfmt-facts { display: grid; gap: 16px; margin-top: 18px; }
 .dfmt-packages { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.dfmt-packages li { padding: 7px 12px; color: var(--color-text-secondary); border: 1px solid var(--color-border-strong); font: 600 14px/1.2 var(--font-manrope), sans-serif; transition: color 320ms ease, border-color 320ms ease, background-color 320ms ease; }
+.dfmt-packages li { padding: 7px 12px; color: var(--color-text-secondary); border: 1px solid var(--color-border-strong); font: 600 14px/1.2 var(--font-manrope), sans-serif; transition: color var(--dfmt-for-format) ease, border-color var(--dfmt-for-format) ease, background-color var(--dfmt-for-format) ease; }
 .dfmt-packages li[data-scope] { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 12%, transparent); border-color: var(--color-accent); }
 .dfmt-packages li.dfmt-packages-note { padding-inline: 4px; color: var(--color-text-muted); border: 0; font-weight: 500; }
 .dfmt-terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin: 0; padding-top: 14px; border-top: 1px solid var(--color-border); }
@@ -61,10 +71,10 @@
 @keyframes dfmt-rise { from { opacity: 0; transform: translateY(14px); } }
 @media (prefers-reduced-motion: no-preference) {
   /* RUBIKON's own frame runs round the object while the block is on screen (data-live: FormatsScope) */
-  .dfmt-figure[data-live] .fs[data-format="comprehensive"] .fs-inner { animation: dfmt-march 1.4s linear infinite; }
+  .dfmt-figure[data-live] .fs[data-format="comprehensive"] .fs-inner { animation: dfmt-march var(--motion-draw-long) linear infinite; }
   /* The sheet arrives once (the page's ProcessMotion) */
   [data-motion-ready] .dfmt-grid:not([data-motion-state="on"]) .dfmt-figure { opacity: 0; }
-  .dfmt-grid[data-motion-state="on"] .dfmt-figure { animation: dfmt-rise 520ms var(--ease-premium) backwards; }
+  .dfmt-grid[data-motion-state="on"] .dfmt-figure { animation: dfmt-rise var(--dfmt-for-rise) var(--ease-premium) backwards; }
 }
 
 /* Each button's two facts as text for a screen reader only (the visible copy under the drawing is aria-hidden). The

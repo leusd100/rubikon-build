@@ -132,28 +132,181 @@ mixing in-flow and pinned-absolute in the same row/stack is what produced the mo
 bug this branch fixed. When adding a second CTA next to an existing one, copy its arrow mechanic,
 not just its visual style.
 
-## 6. Motion
+## 6. Motion v1
 
-- **Micro** (hover/focus color, background, border-color, small icon transforms): `var(--duration-fast)`
-  (200ms) + `ease`. This is the dominant, already-consistent interaction speed sitewide.
-- **Scene/media** (image zoom on card hover, promise-visual hover): keep purpose-specific
-  durations (currently `.45s`/`.65s`/`1s` depending on the element) — these are intentionally
-  varied, not drift. Use `var(--ease-premium)` for the curve if it's the same
-  `cubic-bezier(.2,.7,.1,1)` the rest of the site's scene transforms use.
-- **A ~250ms family exists too** (nav underline sweep, bordered-card hover, chevron rotate) that
-  doesn't cleanly map to either `--duration-fast` (200ms) or `--duration-medium` (360ms) — left as
-  a literal on purpose rather than forced into an ill-fitting token. If a genuine 360ms use case
-  shows up, that's when `--duration-medium` gets its first real consumer; don't invent one just to
-  use the token.
-- **No sitewide scroll-reveal.** The only scroll-linked motion is the existing desktop-only Lenis
-  smooth scroll and the hero/direction image crossfades — both already shipped, both already
-  respect `prefers-reduced-motion`. Don't add a new scroll-triggered-reveal pattern without a
-  specific reason; it's an explicit non-goal, not an oversight.
-- `@media (prefers-reduced-motion: reduce)` is global and already correct (zeroes all
-  animation/transition durations, forces `scroll-behavior:auto`). Any new JS-driven motion (a
-  `setTimeout` stagger, for instance) needs its **own** JS-level reduced-motion check — the global
-  CSS rule only catches CSS transitions/animations, not JS timers. This is the specific trap
-  flagged for the Signature Configurator's build-up animation.
+**The site scrolls into life.** «Сайт має появу під час скролу — п'ять жестів, один раз, перший екран не ховається
+(рішення власника 26.10; скасовує попереднє правило "No sitewide scroll-reveal")». The earlier rule of this section
+(«No sitewide scroll-reveal … an explicit non-goal») is withdrawn.
+
+Motion is one system, built in CSS on tokens, with no motion library (the owner's decision, 26.10; the full design is
+`docs/design/2026-10-26-motion-v1-design.md`, PR #253). It lands in waves, and each part of this section says where it
+stands:
+
+- **In the code (M1-1).** The tokens of 6.1 and 6.2, the choreography blocks of 6.6 and the guard of 6.7. Every number of
+  time and every curve that was written out in a `transition*` / `animation*` declaration now reads a token or its file's
+  choreography variable, with the **value unchanged** — the computed `transition-*` / `animation-*` of every element of
+  the nine public pages, at 390 and 1440 px, are the same before and after (`scripts/motion/motion-diff.mjs`,
+  `scripts/motion/computed-motion.mjs`).
+- **Next (M1-2 … M1-4).** The pace by roles (the reveals of 360 / 420 ms → `--motion-enter`, the keyword `ease` on colour →
+  `--ease-standard`, the literal curves → the table of 6.2, the HOME cards no longer lift), Lenis at rest (rule 8), one
+  rule for the auto-shows (rule 7).
+- **Then (M2, M3).** The five gestures of 6.3 and the controller of 6.5, the three signature moments.
+
+### 6.1 Duration and distance tokens
+
+`app/globals.css` `:root`; the phone value of `--motion-rise` is in its `@media (max-width: 760px)` `:root` block.
+
+| Role | Token | Value | Where |
+|---|---|---|---|
+| Response | `--motion-micro` | 200 ms | hover, focus, press, colour |
+| Interface | `--motion-ui` | 360 ms | menus, FAQ, switches, panels |
+| Reveal | `--motion-enter` | 700 ms | blocks, headings, cards, leads |
+| Pen | `--motion-draw` | 900 ms | the lines of a drawing, the photo wipe, the copper rule |
+| Long pen | `--motion-draw-long` | 1400 ms | large drawings, the camera of the tours, the hero media settling |
+| Media | `--motion-media-fade` | 800 ms | crossfades of photos and video |
+| Group step | `--motion-stagger` | 80 ms | the delay between the items of a group, never more than 4 |
+| Distance | `--motion-rise` | 16 px; 10 px up to 760 px | the lift of a reveal |
+
+`--duration-fast` (= `--motion-micro`) and `--duration-medium` (= `--motion-ui`) stay as aliases, so nothing that reads
+them breaks. `--motion-reveal` (420 ms) had no use and is gone. The pages' own variables keep their values for now: in
+M1-2 only the three `--m-reveal` (`about.css`, `delivery.css`, `direction-template.css`) and `--region-reveal` move onto
+`--motion-enter`; `--m-draw` (the pen: 900 ms on /yak, 1100 ms on the direction pages) and the rest of `--region-*` are
+decided in M1-2, not moved by default.
+
+### 6.2 Curves
+
+| Token | Value | Role | Literals that move onto it (M1-2) |
+|---|---|---|---|
+| `--ease-premium` | `cubic-bezier(.2, .7, .1, 1)` | reveals, response, a camera that «arrives» | `(.3,.7,.2,1)` ×12, `(.2,.7,.2,1)` ×1, `(.2,.8,.25,1)` ×1, `(.3,.6,.3,1)` ×1 |
+| `--ease-plot` | `cubic-bezier(.55, 0, .25, 1)` | an even pen, the wipe, the camera's move between steps | `(.45,0,.2,1)` ×6, `(.65,0,.25,1)` ×2 |
+| `--ease-standard` | `cubic-bezier(.4, 0, .2, 1)` | crossfades, state changes, colour | the keyword `ease` on colour, background and border transitions |
+| `--ease-signature` | `cubic-bezier(.3, 1.5, .5, 1)` | a slight overshoot: the signature moments (M3) and the three existing «clicks» of a mark | `(.3,1.5,.5,1)` ×2, `(.3,1.6,.5,1)` ×1 (`catalog-drawing.css`, `resp-matrix.css`, `change-sheets.css`) |
+
+`linear` stays where the motion is mechanical by meaning (the formats' march, a progress bar). `ease-out` / `ease-in-out`
+become `--ease-premium` / `--ease-standard` by role. Until M1-2 each of the eight literal curves lives, with its value, in
+the `--<prefix>-curve-*` variable of the file that uses it; M1-2 re-points those variables, one place per file.
+
+### 6.3 The five gestures
+
+All of them animate `transform`, `opacity` and `clip-path` only, run once per page view, and end in the look of the page
+without motion. They arrive with M2-1; the table is the contract.
+
+| Gesture | `data-motion` | Start → end | Time · curve |
+|---|---|---|---|
+| Reveal | `rise` | `opacity: 0; translateY(var(--motion-rise))` → `1; none` | enter · premium |
+| Reveal as a group | `rise-group` | the same for the first 4 direct children, each delayed by `i × --motion-stagger`; with more than 4 children the whole container reveals as one `rise` | enter · premium |
+| Heading mask | `mask` | `clip-path: inset(-.25em -.25em 100% -.25em); translateY(100%)` → `inset(-.25em); none` — the text rises from under its own bottom edge as one block, never split into lines; the negative inset keeps «Й», «Ї» and descenders from being cut | enter · premium |
+| Photo wipe | `wipe` | the box: `clip-path: inset(0 100% 0 0)` → `inset(0)`; its content (`img`, `picture`, `video`, `svg`): `scale(1.06)` → `none` | draw · plot (box), draw-long · premium (content) |
+| Copper rule | `rule` | `transform: scaleX(0)`, `transform-origin: left` → `none` | draw · plot |
+| Response | — (CSS `:hover`, `:focus-visible`, `:active`) | border colour → copper; the arrow shifts 3 px (`globals.css`, `.link-arrow`); no card lift | micro · premium |
+
+### 6.4 Rules
+
+1. **The first screen hides nothing.** A block of a new gesture that is in the window when the controller arms gets `on` at
+   once, without animating (6.5). The existing drawings with no gesture value in `data-motion` behave as they do.
+2. **Once.** A block is never hidden again when it leaves the window.
+3. **Compositor properties only:** `transform`, `opacity`, `clip-path`. No `width`, `height`, `top`, `left` or `margin` in a
+   transition.
+4. **Groups:** no more than 4 items take a step; more than that is one block.
+5. **Paragraphs** appear as a block, not by line or by word.
+6. **Choreography** (the tours of the drawings, X-Ray, the 3D build-up, `frame-tour.css`): its internal times stay as they
+   are, but live in the block of custom properties at the top of the component's file (6.6): `--<prefix>-at-*` for moments,
+   `--<prefix>-for-*` for durations, a comment over each group saying what the times are for, the values word for word
+   (a `calc()` from the tokens only where a later step makes the time a token's multiple). It is the one place a number is
+   allowed.
+7. **Auto-shows (W4-04, PDO-55):** one hook, `app/hooks/useFirstViewWalk.ts`, for `CostFactorsFigure`, `CapabilityFigure`,
+   `ChangeSheets` and the formats walk of `FormatsScope`: it starts when at least 50 % of the block is in the window, runs
+   once, a step of at least 2.2 s (OD-PX-34 (a)) or 3 s (OD-PX-34 (b), the owner decides in the M1 brief); any action of a
+   person stops the show for good; it pauses off screen; one show plays at a time; no endless loops (`dfmt-march` is
+   `1.4s linear 3`, not `infinite`). Pending (M1-4).
+8. **Lenis at rest (W4-02, PDO-95 only):** `autoRaf: false` and an own rAF loop only while moving; `wake()` on `wheel`, on an
+   anchor click and after `scrollTo`; before the first frame after a rest `lenis.time = t − 1000/60`; `lerp .18`, the anchors
+   and `stopInertiaOnNavigate` unchanged. The keyboard part of X-Ray (PDO-37) is not in it. Pending (M1-3).
+9. **Reduced motion:** the end state at once. The sitewide `@media (prefers-reduced-motion: reduce)` block in
+   `globals.css` (it sets every animation and transition to `.01ms !important` and `scroll-behavior: auto`) is already
+   correct and does not change. It catches CSS only: any JS-driven motion (a `setTimeout` stagger, a timer-driven tour)
+   needs its **own** check, `matchMedia('(prefers-reduced-motion: reduce)')`. This is the specific trap flagged for the
+   Signature Configurator's build-up animation.
+
+### 6.5 Mechanism (M2-1)
+
+- **One controller, `ProcessMotion`** (`app/components/process/ProcessMotion.tsx`). Without JS the markup is complete; it
+  sets `data-motion-ready` (`arming`, then `on` two frames later) on the page's root and switches each `[data-motion]` to
+  `data-motion-state="on"` once, when the block is clearly in the window (30 % of it, or a third of the window's height).
+  Under `reduce` it switches nothing on. The attribute `data-motion` gets the gesture as its value — `rise`,
+  `rise-group`, `mask`, `wipe`, `rule`; an empty value keeps the behaviour that exists, so the 24 existing places do not
+  change.
+- **The first screen:** before `data-motion-ready="arming"` the controller measures `getBoundingClientRect()` of every block
+  with a new gesture and puts `on` on those that cross the window. This also covers an anchor jump, «Back» to the middle of
+  a page and a scroll restored before hydration. A scroll restored late (after the controller is on) simply reveals the
+  blocks of the new window by the usual rule; nothing stays hidden.
+- **Keyboard:** `focusin` inside a block that is not yet `on` puts `on` at once, so focus never rests on something
+  invisible. **Find in page:** the browser scrolls to the match, the observer fires, the block is `on`.
+- **Print (part of W4-05):** `app/components/PrintComplete.tsx` beside `SmoothScroll` in `layout.tsx`: on `beforeprint`
+  every `[data-motion]` becomes `on`; `@media print` has no transitions.
+- **CSS of the gestures:** a new `app/motion.css`, imported in `app/layout.tsx`, about 2 KB, its rules only under
+  `:where([data-motion-ready])`: without JS and under `reduce` nothing is hidden. No new JS: the same IntersectionObserver.
+
+### 6.6 A number: a token, or the file's choreography
+
+A time, a delay or a curve in a `transition*` / `animation*` declaration is never a literal. It is one of two things.
+
+**A token** (6.1, 6.2), only where the **value and the animated property** both match the table. For `animation*` the animated
+property is the properties of its `@keyframes`.
+
+| Value | Becomes | Only when the animated property is… |
+|---|---|---|
+| 200 ms / .2 s | `var(--motion-micro)` | `color`, `background-color`, `border-color`, `outline-color`, `text-decoration-color`, `fill`, `stroke`, `box-shadow` — or the rule has `:hover`, `:focus`, `:focus-visible` or `:active` in its selector |
+| 800 ms / .8 s | `var(--motion-media-fade)` | `opacity` / `filter` on a selector with the word `hero`, `media`, `image`, `img`, `video`, `poster`, `photo` or `picture` |
+| 900 ms / .9 s | `var(--motion-draw)` | `stroke-dashoffset`, `clip-path` |
+| 1400 ms / 1.4 s | `var(--motion-draw-long)` | `stroke-dashoffset`, `clip-path` |
+| anything else | the file's choreography variable | — |
+
+The same number on another property (a `.2s` on `transform`, a `.9s` on `opacity`) is **not** the token: it is the file's own
+time, and stays a choreography variable until a visible step (M1-2) decides it.
+
+**Choreography** — a block at the top of the file (after the header comment), in a top-level `:root` (`globals.css` has one `:root` only, so its `--site-*` variables sit at the end of it, after the tokens):
+
+```css
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* a format switch: the words slide to their new columns row by row, their tint follows the format */
+  --rm-for-slide: 640ms;                         /* a duration */
+  --rm-curve-slide: cubic-bezier(.3, .7, .2, 1); /* a curve no token carries yet (until M1-2) */
+  --rm-at-row-step: 22ms;                        /* the step of a cascade: calc(var(--i, 0) * var(--rm-at-row-step)) */
+}
+```
+
+- Names are `--<prefix>-for-<what>` (durations), `--<prefix>-at-<what>` (delays, and the steps of cascades) and
+  `--<prefix>-curve-<what>` (curves). Delays and steps are always `--<prefix>-at-*`, whatever their value (a delay is a
+  moment of the file's own timeline, not a role).
+- The prefix is the file's own — short, and used by no other file. One name is one value, declared once, read only in its file.
+- Values move over word for word (`.3s` stays `.3s`, `300ms` stays `300ms`), so a reverse substitution of the variables gives
+  back the file as it was.
+- The pages' own local variables (`--m-reveal`, `--m-draw`, `--m-ease`, `--region-*`) are not touched here.
+- Not in this rule: an intermediate custom property of any other name, and the inline styles of TSX.
+
+### 6.7 The guard
+
+`tests/unit/motion-tokens.test.ts` scans every `app/**/*.css` and fails when:
+
+- a `transition*` or `animation*` declaration holds a time literal or a `cubic-bezier(`;
+- a Motion v1 token is missing, has another value, or is declared twice or outside `globals.css` `:root` (the one other
+  declaration allowed is the phone `--motion-rise`); any other `--motion-*`, `--ease-*` or `--duration-*` declaration;
+  `--motion-reveal` comes back;
+- a motion variable cannot be resolved in its own file (a token may come from `globals.css` or `theme.css`);
+- a choreography variable is declared twice in a file, declared in two files, declared outside a top-level `:root`, or read
+  with a fallback (`var(--rm-for-row, 300ms)` would hide a missing declaration behind a number).
+
+`scripts/motion/motion-diff.mjs [--base <ref>] --expect-none` compares the resolved and normalised declarations of a tree with
+a base ref, so a refactor that moves values proves it moved none; `scripts/motion/computed-motion.mjs --base <url> --head <url>`
+compares what the browser computes for every element of the nine public pages (390 and 1440 px) in two builds.
+
+### 6.8 Out of scope
+
+A new motion library; parallax; cursor effects; animating text by line or by word; scroll-scrubbed animation; the phone menu;
+«the drawing becomes the building». The choreography of the tours, X-Ray and the 3D build-up is not changed: only its numbers
+move into the blocks of 6.6.
 
 ## 7. Footer
 
@@ -194,7 +347,7 @@ token's today; other literals move onto a token when their file changes for a vi
 | Spacing | `--space-1` … `--space-10` = 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px; `--card-pad`, `--card-gap` | W3-03, then file by file |
 | Buttons | `--button-h-l` 56 px (page buttons, the conversation's call), `--button-h-m` 48 px (a button in a sheet or a tool: the grain sheet, the configurator's summary, HOME's brief); the 50 / 46 px of short laptop windows stay as compact modes | W3-06 |
 | Header | `--header-h` 101 px (the fixed header from 761 px) | PDO-98's next step (short windows, tablets) |
-| Motion | `--motion-micro`, `--motion-reveal`, `--motion-draw`, `--motion-draw-long`, `--motion-media-fade`; `--ease-premium`, `--ease-plot`, `--ease-standard` | W3-10 (Motion v1: the pages' local `--m-*` move onto them) |
+| Motion | `--motion-micro`, `--motion-ui`, `--motion-enter`, `--motion-draw`, `--motion-draw-long`, `--motion-media-fade`, `--motion-stagger`, `--motion-rise` (16 px, 10 px on a phone); `--ease-premium`, `--ease-plot`, `--ease-standard`, `--ease-signature`; aliases `--duration-fast`, `--duration-medium` — see §6 | M1-2 (Motion v1: the pace by roles; the pages' local `--m-*` and the choreography curves move onto them) |
 | Colour (theme.css) | `--color-load`, `--color-wind` — the loads on a drawing, one pair for both modes | — |
 
 The type roles are in `rem`: at the default 16 px root the px are the same as before, and a larger

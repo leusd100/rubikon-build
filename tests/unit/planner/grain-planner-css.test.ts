@@ -52,12 +52,20 @@ describe('grain-planner.css', () => {
   const selectors = styleRuleSelectors(css);
 
   // Three roots: the two planner bands, and the phone handoff CTA — the one element the planner page
-  // adds outside them, because nothing inside the planner may be fixed.
+  // adds outside them, because nothing inside the planner may be fixed. The one rule outside all three is the
+  // file's own Motion v1 choreography (tests/unit/motion-tokens.test.ts): a top-level :root that holds nothing
+  // but `--planner-for|at|curve-*` custom properties, the planner's times and curves, no style of any element.
   it('scopes every selector to the planner bands or the handoff CTA', () => {
     expect(selectors.length).toBeGreaterThan(100);
     const roots = [/^\.grain-planner-root(?=[\s.:[>]|$)/, /^\.grain-result-band(?=[\s.:[>]|$)/, /^\.grain-handoff-cta(?=[\s.:[>]|$)/];
     const unscoped = selectors.filter(({ selector }) => !roots.some((root) => root.test(selector)));
-    expect(unscoped).toEqual([]);
+    expect(unscoped).toEqual([{ selector: ':root', within: null }]);
+
+    const rootBlocks = [...css.matchAll(/:root\s*\{([^{}]*)\}/g)];
+    expect(rootBlocks).toHaveLength(1);
+    const declarations = rootBlocks[0][1].split(';').map((declaration) => declaration.trim()).filter(Boolean);
+    expect(declarations.length).toBeGreaterThan(0);
+    for (const declaration of declarations) expect(declaration).toMatch(/^--planner-(?:for|at|curve)-[a-z0-9-]+\s*:/);
   });
 
   it('never uses !important', () => {

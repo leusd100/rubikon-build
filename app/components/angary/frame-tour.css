@@ -3,12 +3,42 @@
    parts in copper and names them; steps 4 and 5 send a load through the structure, link by link, with the legend above
    the drawing lighting in step. The camera's window keeps the drawing's own proportion, so at rest it never crops it. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* a step changes: its parts, tags, letters and bubbles light or step back */
+  --ft-for-step-light: .3s;
+  --ft-at-tags: 1100ms;
+  /* the visitor's answer on the columns, drawn anew */
+  --ft-for-answer-draw: .7s;
+  --ft-for-answer-in: .4s;
+  --ft-at-answer-in: .4s;
+  /* a step's parts, drawn once the camera has arrived */
+  --ft-for-part-draw: 1000ms;
+  --ft-at-part-draw: 700ms;
+  /* the loads: the arrows come in, then keep falling or gusting while the tour plays */
+  --ft-for-arrows-in: 500ms;
+  --ft-at-arrows-in: 300ms;
+  --ft-at-arrows-loop: 900ms;
+  --ft-for-snowfall: 1600ms;
+  --ft-at-snowfall-step: 200ms;
+  --ft-for-gusting: 1100ms;
+  --ft-at-gusting-step: 370ms;
+  /* a link every 520 ms, the legend and the drops in step with the drawing */
+  --ft-for-link-light: 480ms;
+  --ft-at-link-first: 700ms;
+  --ft-at-link-step: 520ms;
+  --ft-for-flow: 560ms;
+  /* the first bay leaning without the bracing, with the note */
+  --ft-for-lean: 2600ms;
+  --ft-at-lean: 3700ms;
+}
+
 /* --ft-k thickens the lines and enlarges the letters where the sheet is drawn small (configurator-sheet.css .hc-frame);
    the loads' colours are below */
 .ft { --ft-k: 1; --ft-snow: var(--color-load); --ft-wind: var(--color-wind); }
 .ft-window { position: relative; flex: none; overflow: hidden; aspect-ratio: 720 / 440; }
 .ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
-.ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke .3s ease, opacity .3s ease; }
+.ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke var(--ft-for-step-light) ease, opacity var(--ft-for-step-light) ease; }
 .ft-slab { stroke: var(--color-border-strong); stroke-width: calc(1.1px * var(--ft-k)); }
 /* The footings are the designer's (10.10): a pad foundation drawn under the ground, its edges dashed as hidden ones are —
    a finer dash than the 4 3 of the box it replaces, which on the pad's short edges read as dots — and only the
@@ -28,12 +58,12 @@
 .ft-dim { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
 /* coordinate axes: dash-dot, a bubble at the end past the dimension lines; letters and figures only */
 .ft-axis { stroke: var(--color-text-muted); stroke-width: calc(.9px * var(--ft-k)); stroke-dasharray: 14 4 1 4; }
-.ft-bubble { transform: scale(var(--ft-k)); transform-box: fill-box; transform-origin: center; transition: opacity .3s ease; }
-.ft-bubble circle { fill: var(--color-surface-alt); stroke: var(--color-text-muted); stroke-width: 1px; transition: stroke .3s ease; }
+.ft-bubble { transform: scale(var(--ft-k)); transform-box: fill-box; transform-origin: center; transition: opacity var(--ft-for-step-light) ease; }
+.ft-bubble circle { fill: var(--color-surface-alt); stroke: var(--color-text-muted); stroke-width: 1px; transition: stroke var(--ft-for-step-light) ease; }
 /* 14 px in the 22 px circle (12.5 before): the letters and figures as large as the circle takes, so a phone's read
    at ~10 px (04.10) */
-.ft-bubble text { fill: var(--color-text-secondary); font: 700 14px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill .3s ease; }
-.ft-letter { fill: var(--color-text-secondary); font: italic 600 calc(19px * var(--ft-k)) var(--font-manrope), sans-serif; text-anchor: middle; dominant-baseline: central; transition: fill .3s ease, opacity .3s ease; }
+.ft-bubble text { fill: var(--color-text-secondary); font: 700 14px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill var(--ft-for-step-light) ease; }
+.ft-letter { fill: var(--color-text-secondary); font: italic 600 calc(19px * var(--ft-k)) var(--font-manrope), sans-serif; text-anchor: middle; dominant-baseline: central; transition: fill var(--ft-for-step-light) ease, opacity var(--ft-for-step-light) ease; }
 /* Set on its middle, beside its line (FrameTour letters, 09.10): H ends at its point, a starts at its own; the field's
    paint round it parts an axis that runs behind L, as the members' names part what they lie on */
 .ft-letter[data-anchor="end"] { text-anchor: end; }
@@ -47,7 +77,7 @@
 .ft-dim-text[data-side="below"][data-cap="value"] { transform: translateY(calc(10.8px * var(--ft-k))); }
 /* A size's value beside its letter, once the visitor gave the sizes (10.10): upright figures, smaller than the letter */
 .ft-value { font-style: normal; font-weight: 600; font-size: calc(15px * var(--ft-k)); font-variant-numeric: tabular-nums; }
-.ft-part, .ft-tags, .ft-load { transition: opacity .3s ease; }
+.ft-part, .ft-tags, .ft-load { transition: opacity var(--ft-for-step-light) ease; }
 .ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
 .ft .dn-progress span:not(.is-done) { background: color-mix(in srgb, var(--color-text) 20%, transparent); }
@@ -88,13 +118,13 @@
    межі ангару»): «· без колон» or «· два прольоти по 12 м» in copper after L's value; on the overview L's line drawn
    over in copper, and with a centre row the row lit. A new answer draws it anew. */
 .ft-answer { fill: var(--color-accent-strong); }
-.ft-clear { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+.ft-clear { opacity: 0; pointer-events: none; transition: opacity var(--ft-for-step-light) ease; }
 .ft:not([data-step]) .ft-clear { opacity: 1; }
 .ft-clear-line { stroke: var(--color-accent); stroke-width: calc(1.6px * var(--ft-k)); }
 .ft-clear-row { stroke: var(--color-accent); stroke-width: calc(2.6px * var(--ft-k)); }
 @media (prefers-reduced-motion: no-preference) {
-  .ft-clear :is(.ft-clear-line, .ft-clear-row) { stroke-dasharray: 1; animation: ft-draw .7s var(--ease-premium, ease) both; }
-  .ft-answer { animation: ft-in .4s ease .4s both; }
+  .ft-clear :is(.ft-clear-line, .ft-clear-row) { stroke-dasharray: 1; animation: ft-draw var(--ft-for-answer-draw) var(--ease-premium, ease) both; }
+  .ft-answer { animation: ft-in var(--ft-for-answer-in) ease var(--ft-at-answer-in) both; }
 }
 @keyframes ft-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
@@ -156,39 +186,39 @@
 @keyframes ft-unbraced { 0%, 100% { opacity: 1; } 15%, 85% { opacity: .3; } }
 @media (prefers-reduced-motion: no-preference) {
   .ft[data-step="1"] [data-part~="1"] path[pathLength], .ft[data-step="2"] [data-part="2"] path[pathLength],
-  .ft[data-step="3"] [data-part~="3"] :is(.ft-brace, .ft-post) { stroke-dasharray: 1; animation: ft-draw 1000ms var(--ease-premium) 700ms both; }
+  .ft[data-step="3"] [data-part~="3"] :is(.ft-brace, .ft-post) { stroke-dasharray: 1; animation: ft-draw var(--ft-for-part-draw) var(--ease-premium) var(--ft-at-part-draw) both; }
   .ft[data-step="2"] [data-part="2"] path[pathLength] { animation-duration: var(--motion-draw-long); }
-  .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { transition-delay: 1100ms; }
+  .ft[data-step="2"] [data-tags="2"], .ft[data-step="3"] [data-tags="3"] { transition-delay: var(--ft-at-tags); }
   /* a link every 520 ms, the legend in step with the drawing; each link's drops appear and run as it lights, so the
      load front travels down the frame with the words. The snow keeps falling, the wind gusting and the drops running
      only while the tour plays (04.10): «Пауза» stops every motion, a tour that has left the view stops with it, and a
      step the visitor chooses settles complete once built. Each load's arrows move on its own step only (the other's,
      hidden, fell and gusted with them). */
-  .ft[data-step="4"] [data-load="snow"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 300ms both; }
-  .ft[data-step="5"] [data-load="wind"] .ft-arrows { animation: ft-gust 500ms var(--ease-premium) 300ms both; }
-  .ft[data-touring][data-step="4"] [data-load="snow"] .ft-arrows { animation: ft-drop 500ms var(--ease-premium) 300ms both, ft-snowfall 1600ms ease-in-out calc(900ms + var(--k, 0) * 200ms) infinite; }
-  .ft[data-touring][data-step="5"] [data-load="wind"] .ft-arrows { animation: ft-gust 500ms var(--ease-premium) 300ms both, ft-gusting 1100ms ease-out calc(900ms + var(--k, 0) * 370ms) infinite; }
+  .ft[data-step="4"] [data-load="snow"] .ft-arrows { animation: ft-drop var(--ft-for-arrows-in) var(--ease-premium) var(--ft-at-arrows-in) both; }
+  .ft[data-step="5"] [data-load="wind"] .ft-arrows { animation: ft-gust var(--ft-for-arrows-in) var(--ease-premium) var(--ft-at-arrows-in) both; }
+  .ft[data-touring][data-step="4"] [data-load="snow"] .ft-arrows { animation: ft-drop var(--ft-for-arrows-in) var(--ease-premium) var(--ft-at-arrows-in) both, ft-snowfall var(--ft-for-snowfall) ease-in-out calc(var(--ft-at-arrows-loop) + var(--k, 0) * var(--ft-at-snowfall-step)) infinite; }
+  .ft[data-touring][data-step="5"] [data-load="wind"] .ft-arrows { animation: ft-gust var(--ft-for-arrows-in) var(--ease-premium) var(--ft-at-arrows-in) both, ft-gusting var(--ft-for-gusting) ease-out calc(var(--ft-at-arrows-loop) + var(--k, 0) * var(--ft-at-gusting-step)) infinite; }
   .ft[data-step="4"] [data-load="snow"] .ft-link, .ft[data-step="5"] [data-load="wind"] .ft-link {
-    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both;
+    animation: ft-light var(--ft-for-link-light) ease calc(var(--ft-at-link-first) + var(--n) * var(--ft-at-link-step)) both;
   }
   /* each chain starts with its own step (both stay laid out, so a selector on any step would run it unseen) */
-  .ft[data-step="4"] .ft-chain[data-load="snow"] li, .ft[data-step="5"] .ft-chain[data-load="wind"] li { animation: ft-link-on 480ms ease calc(700ms + var(--n) * 520ms) both; }
+  .ft[data-step="4"] .ft-chain[data-load="snow"] li, .ft[data-step="5"] .ft-chain[data-load="wind"] li { animation: ft-link-on var(--ft-for-link-light) ease calc(var(--ft-at-link-first) + var(--n) * var(--ft-at-link-step)) both; }
   .ft[data-step="4"] [data-load="snow"] .ft-flow, .ft[data-step="5"] [data-load="wind"] .ft-flow {
-    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both;
+    animation: ft-light var(--ft-for-link-light) ease calc(var(--ft-at-link-first) + var(--n) * var(--ft-at-link-step)) both;
   }
   .ft[data-touring][data-step="4"] [data-load="snow"] .ft-flow, .ft[data-touring][data-step="5"] [data-load="wind"] .ft-flow {
-    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-flow 560ms linear calc(700ms + var(--n) * 520ms) infinite;
+    animation: ft-light var(--ft-for-link-light) ease calc(var(--ft-at-link-first) + var(--n) * var(--ft-at-link-step)) both, ft-flow var(--ft-for-flow) linear calc(var(--ft-at-link-first) + var(--n) * var(--ft-at-link-step)) infinite;
   }
   /* The wind's last link lights at 3.3 s; at 3.7 s the bracing steps back and the first bay leans (with the note), at
      ~5.9 s the bracing lights again and the bay stands up — the step holds 7.6 s (FrameTour's STEP_DURATIONS) */
   .ft[data-step="5"] [data-load="wind"] .ft-link[data-brace], .ft[data-step="5"] [data-load="wind"] .ft-flow[data-brace] {
-    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-unbraced 2600ms ease 3700ms;
+    animation: ft-light var(--ft-for-link-light) ease calc(var(--ft-at-link-first) + var(--n) * var(--ft-at-link-step)) both, ft-unbraced var(--ft-for-lean) ease var(--ft-at-lean);
   }
   .ft[data-touring][data-step="5"] [data-load="wind"] .ft-flow[data-brace] {
-    animation: ft-light 480ms ease calc(700ms + var(--n) * 520ms) both, ft-flow 560ms linear calc(700ms + var(--n) * 520ms) infinite, ft-unbraced 2600ms ease 3700ms;
+    animation: ft-light var(--ft-for-link-light) ease calc(var(--ft-at-link-first) + var(--n) * var(--ft-at-link-step)) both, ft-flow var(--ft-for-flow) linear calc(var(--ft-at-link-first) + var(--n) * var(--ft-at-link-step)) infinite, ft-unbraced var(--ft-for-lean) ease var(--ft-at-lean);
   }
-  .ft[data-step="5"] :is(.ft-ghost, .ft-note) { animation: ft-ghost 2600ms ease 3700ms both; }
-  .ft[data-step="5"] .ft-chain[data-load="wind"] { animation: ft-swap 2600ms ease 3700ms; }
+  .ft[data-step="5"] :is(.ft-ghost, .ft-note) { animation: ft-ghost var(--ft-for-lean) ease var(--ft-at-lean) both; }
+  .ft[data-step="5"] .ft-chain[data-load="wind"] { animation: ft-swap var(--ft-for-lean) ease var(--ft-at-lean); }
 }
 
 @media (max-width: 760px) {

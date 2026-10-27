@@ -3,6 +3,34 @@
    procedure under them acting on all three. [data-reached] lists the steps shown so far ("1 2 3 4" = the whole story,
    which the server renders); each mark appears from its step on. Theme tokens: paper on the page's ground, copper = the
    change and RUBIKON's marks on it. */
+
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* a step's node and its words follow the step shown */
+  --cs-for-node: 250ms;
+  --cs-curve-node: cubic-bezier(.3, 1.5, .5, 1);
+  --cs-for-title: 250ms;
+  /* each mark from its step on: the cloud draws (--motion-draw), the tag, the note and the tick appear, the slip arrives, the extension and the bar move in */
+  --cs-curve-mark: cubic-bezier(.3, .7, .2, 1);
+  --cs-for-mark: 400ms;
+  --cs-at-mark: 300ms;
+  --cs-for-slip-fade: 500ms;
+  --cs-for-slip-move: 600ms;
+  --cs-at-slip: 200ms;
+  --cs-for-grow: 700ms;
+  --cs-for-grow-tint: 400ms;
+  --cs-for-bar-shift: 700ms;
+  --cs-at-bar-shift: 250ms;
+  --cs-for-fill: 900ms;
+  /* the two signatures and the stamp are put on the slip in turn */
+  --cs-for-sign: 700ms;
+  --cs-at-sign-second: 500ms;
+  --cs-for-stamp: 600ms;
+  --cs-at-stamp: 1000ms;
+  /* the words of the step shown */
+  --cs-for-said: 300ms;
+}
+
 .cs { --cs-ink: var(--color-text-secondary); --cs-faint: var(--color-border-strong); --cs-copper: var(--color-accent); --cs-copper-ink: var(--color-accent-strong); display: grid; gap: 34px; }
 .cs-sheets { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 212px; grid-template-rows: auto auto; align-items: start; gap: 0 22px; }
 .cs-sheet { display: grid; grid-row: span 2; grid-template-rows: subgrid; min-width: 0; margin: 0; }
@@ -86,8 +114,8 @@
 .cs-steps { --rail: 40px; position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 18px; margin: 26px 0 0; padding: 0; list-style: none; }
 .cs-steps::before { content: ''; position: absolute; top: calc(var(--rail) / 2); right: calc(12.5% - 9px); left: calc(12.5% - 9px); height: 1.5px; background: var(--cs-faint); }
 .cs-steps button { display: grid; justify-items: center; gap: 10px; width: 100%; padding: 0 4px 6px; color: inherit; text-align: center; background: none; border: 0; font: inherit; cursor: pointer; }
-.cs-node { position: relative; z-index: 1; display: grid; place-items: center; width: var(--rail); height: var(--rail); color: var(--cs-copper-ink); background: var(--color-surface-elevated); border: 2px solid var(--cs-copper); border-radius: 50%; font: 700 17px/1 var(--font-condensed), sans-serif; transition: background-color 250ms ease, color 250ms ease, box-shadow 250ms ease, transform 250ms cubic-bezier(.3, 1.5, .5, 1); }
-.cs-steps b { color: var(--color-text); font: 600 17px/1.2 var(--font-condensed), sans-serif; transition: color 250ms ease; }
+.cs-node { position: relative; z-index: 1; display: grid; place-items: center; width: var(--rail); height: var(--rail); color: var(--cs-copper-ink); background: var(--color-surface-elevated); border: 2px solid var(--cs-copper); border-radius: 50%; font: 700 17px/1 var(--font-condensed), sans-serif; transition: background-color var(--cs-for-node) ease, color var(--cs-for-node) ease, box-shadow var(--cs-for-node) ease, transform var(--cs-for-node) var(--cs-curve-node); }
+.cs-steps b { color: var(--color-text); font: 600 17px/1.2 var(--font-condensed), sans-serif; transition: color var(--cs-for-title) ease; }
 .cs-detail { color: var(--color-text-secondary); font-size: 14.5px; line-height: 1.5; }
 .cs-steps li[data-state="done"] .cs-node { color: var(--color-on-action); background: var(--cs-copper); }
 .cs-steps li[data-state="now"] .cs-node { color: var(--color-on-action); background: var(--color-action); box-shadow: 0 0 0 8px color-mix(in srgb, var(--cs-copper) 22%, transparent); transform: scale(1.08); }
@@ -110,16 +138,16 @@
 .cs[data-reached~="4"] .cs-bar.cs-hot .cs-grow { background: var(--cs-copper); }
 .cs[data-reached~="4"] .cs-tick { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) {
-  .cs-cloud path { transition: stroke-dashoffset 900ms cubic-bezier(.3, .7, .2, 1); }
-  .cs-delta, .cs-back, .cs-tick { transition: opacity 400ms ease 300ms, transform 400ms ease 300ms; }
-  .cs-order { transition: opacity 500ms ease 200ms, transform 600ms cubic-bezier(.3, .7, .2, 1) 200ms; }
-  .cs-grow { transition: transform 700ms cubic-bezier(.3, .7, .2, 1), background-color 400ms ease; }
-  .cs-bar { transition: left 700ms cubic-bezier(.3, .7, .2, 1) 250ms; }
-  .cs-fill { transition: transform 900ms cubic-bezier(.3, .7, .2, 1); }
-  .cs-signs path { transition: stroke-dashoffset 700ms ease; }
-  .cs-signs > span + span path { transition-delay: 500ms; }
-  .cs-said > p { transition: opacity 300ms ease, visibility 300ms; }
-  .cs-stamp circle { transition: stroke-dashoffset 600ms ease 1000ms; }
+  .cs-cloud path { transition: stroke-dashoffset var(--motion-draw) var(--cs-curve-mark); }
+  .cs-delta, .cs-back, .cs-tick { transition: opacity var(--cs-for-mark) ease var(--cs-at-mark), transform var(--cs-for-mark) ease var(--cs-at-mark); }
+  .cs-order { transition: opacity var(--cs-for-slip-fade) ease var(--cs-at-slip), transform var(--cs-for-slip-move) var(--cs-curve-mark) var(--cs-at-slip); }
+  .cs-grow { transition: transform var(--cs-for-grow) var(--cs-curve-mark), background-color var(--cs-for-grow-tint) ease; }
+  .cs-bar { transition: left var(--cs-for-bar-shift) var(--cs-curve-mark) var(--cs-at-bar-shift); }
+  .cs-fill { transition: transform var(--cs-for-fill) var(--cs-curve-mark); }
+  .cs-signs path { transition: stroke-dashoffset var(--cs-for-sign) ease; }
+  .cs-signs > span + span path { transition-delay: var(--cs-at-sign-second); }
+  .cs-said > p { transition: opacity var(--cs-for-said) ease, visibility var(--cs-for-said); }
+  .cs-stamp circle { transition: stroke-dashoffset var(--cs-for-stamp) ease var(--cs-at-stamp); }
 }
 
 /* Tablet: the two sheets side by side, the slip under them */

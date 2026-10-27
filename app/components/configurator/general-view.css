@@ -5,6 +5,19 @@
    and the ground in the dimension lines' grey; copper only for what just changed and, where a surface is not clad, the
    frame's bracing. Laid out in screen px (generalViewGeometry.ts), so these widths are on-screen widths. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* a changed choice comes up copper at once and goes back slowly; a layer fades in and out; the first view plots its outline */
+  --gv-for-lit: .12s;
+  --gv-for-return: .7s;
+  --gv-for-fade: .5s;
+  --gv-for-value-fade: .4s;
+  --gv-for-build-draw: 1.1s;
+  /* a new size: the lines, the sizes and their values run to their new places, an even ease in and out */
+  --gv-for-morph: .55s;
+  --gv-curve-morph: cubic-bezier(.45, 0, .2, 1);
+}
+
 .gv {
   --gv-ink: var(--color-dark-text);
   --gv-ink-2: var(--color-dark-text-secondary);
@@ -60,12 +73,12 @@
    data-build, as configurator-sheet.css does for the old view's layers). */
 /* A changed choice comes up copper at once and goes back slowly (10.10, owner: «що змінив — те засвітилось»: it held
    260 ms, HangarGeneralView ANSWER_HOLD_MS) */
-.gv :is(.gv-stage, .gv-size, .gv-dim) { transition: opacity .5s var(--ease-premium), stroke .7s ease, stroke-width .7s ease, fill .7s ease; }
-.gv :is(.gv-value, .gv-hatch) { transition: opacity .4s ease, fill .7s ease; }
-.gv :is([data-active], [data-active] .gv-dim, [data-active] .gv-value) { transition-duration: .5s, .12s, .12s, .12s; }
+.gv :is(.gv-stage, .gv-size, .gv-dim) { transition: opacity var(--gv-for-fade) var(--ease-premium), stroke var(--gv-for-return) ease, stroke-width var(--gv-for-return) ease, fill var(--gv-for-return) ease; }
+.gv :is(.gv-value, .gv-hatch) { transition: opacity var(--gv-for-value-fade) ease, fill var(--gv-for-return) ease; }
+.gv :is([data-active], [data-active] .gv-dim, [data-active] .gv-value) { transition-duration: var(--gv-for-fade), var(--gv-for-lit), var(--gv-for-lit), var(--gv-for-lit); }
 .gv [data-held] { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
-  .gv[data-building] :is(.gv-front, .gv-edge) { stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset 1.1s var(--ease-premium); }
+  .gv[data-building] :is(.gv-front, .gv-edge) { stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset var(--gv-for-build-draw) var(--ease-premium); }
   .gv[data-building] [data-held] :is(.gv-front, .gv-edge) { stroke-dashoffset: 1; }
 }
 .hc-preview-image:is([data-build="armed"], [data-build="complete"]) .gv :is(.gv-stage, .gv-size, .gv-front, .gv-edge) { transition-property: none; }
@@ -82,9 +95,9 @@
    while it moves and come back on the new size (HangarGeneralView data-morph, set in the render that draws it) */
 @media (prefers-reduced-motion: no-preference) {
   /* an even ease, in and out: the premium ease ran four fifths of the way in the first tenth of a second, a jump */
-  .gv[data-morph] path:not(.gv-cladding, .gv-hatch) { transition: d .55s cubic-bezier(.45, 0, .2, 1), stroke .7s ease, fill .7s ease, opacity .5s var(--ease-premium); }
-  .gv[data-morph] .gv-dot { transition: cx .55s cubic-bezier(.45, 0, .2, 1), cy .55s cubic-bezier(.45, 0, .2, 1); }
-  .gv[data-morph] .gv-plate { transition: x .55s cubic-bezier(.45, 0, .2, 1), y .55s cubic-bezier(.45, 0, .2, 1), width .55s, height .55s; }
-  .gv[data-morph] .gv-value { transition: transform .55s cubic-bezier(.45, 0, .2, 1), fill .7s ease; }
+  .gv[data-morph] path:not(.gv-cladding, .gv-hatch) { transition: d var(--gv-for-morph) var(--gv-curve-morph), stroke var(--gv-for-return) ease, fill var(--gv-for-return) ease, opacity var(--gv-for-fade) var(--ease-premium); }
+  .gv[data-morph] .gv-dot { transition: cx var(--gv-for-morph) var(--gv-curve-morph), cy var(--gv-for-morph) var(--gv-curve-morph); }
+  .gv[data-morph] .gv-plate { transition: x var(--gv-for-morph) var(--gv-curve-morph), y var(--gv-for-morph) var(--gv-curve-morph), width var(--gv-for-morph), height var(--gv-for-morph); }
+  .gv[data-morph] .gv-value { transition: transform var(--gv-for-morph) var(--gv-curve-morph), fill var(--gv-for-return) ease; }
   .gv[data-morph] :is(.gv-cladding, .gv-hatch) { opacity: 0; transition: none; }
 }

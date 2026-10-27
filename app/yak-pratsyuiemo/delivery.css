@@ -4,6 +4,23 @@
    time (paper over a faint drawing sheet) → FAQ → the site-wide conversation block. Colours are theme roles only
    (app/theme.css), so Light and Dark need no rules of their own here. */
 
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the hero's trace: its lines, then the dimension line, then the node */
+  --proc-at-hero-trace: 250ms;
+  --proc-at-hero-dim: 900ms;
+  --proc-at-hero-node: 1300ms;
+  /* where to start: the glyphs; each row's connector, the collector, the line into «Далі», then «Далі» itself */
+  --proc-at-glyph-step: 160ms;
+  --proc-at-row-link: 700ms;
+  --proc-at-row-link-step: 90ms;
+  --proc-at-collector: 950ms;
+  --proc-at-merge-line: 1150ms;
+  --proc-at-merge: 1300ms;
+  /* the responsibility map: the chosen format's words settle in */
+  --proc-for-resp-in: 320ms;
+}
+
 .process-page [id] { scroll-margin-top: 96px; }
 /* Motion language (ProcessMotion arms it; without it — or with reduced motion — every block shows its final state).
    Arming is two-phase: data-motion-ready="arming" puts blocks in their "before" state with no transition, then "on"
@@ -49,9 +66,9 @@
 .ht-dim { stroke: rgba(245, 242, 235, .28); stroke-width: 1; }
 .ht-node { fill: var(--color-accent-on-dark); opacity: .8; }
 .process-page[data-motion-ready="on"] .proc-hero-trace path { transition: stroke-dashoffset var(--motion-draw-long) var(--m-ease); }
-.process-page[data-motion-ready="on"] .proc-hero-trace .ht-trace { transition-delay: 250ms; }
-.process-page[data-motion-ready="on"] .proc-hero-trace .ht-dim { transition-delay: 900ms; }
-.process-page[data-motion-ready="on"] .proc-hero-trace .ht-node { transition: opacity var(--m-reveal) ease 1300ms; }
+.process-page[data-motion-ready="on"] .proc-hero-trace .ht-trace { transition-delay: var(--proc-at-hero-trace); }
+.process-page[data-motion-ready="on"] .proc-hero-trace .ht-dim { transition-delay: var(--proc-at-hero-dim); }
+.process-page[data-motion-ready="on"] .proc-hero-trace .ht-node { transition: opacity var(--m-reveal) ease var(--proc-at-hero-node); }
 .process-page[data-motion-ready] .proc-hero-trace:not([data-motion-state="on"]) path { stroke-dashoffset: 1; }
 .process-page[data-motion-ready] .proc-hero-trace:not([data-motion-state="on"]) .ht-node { opacity: 0; }
 .proc-hero h1 { max-width: 900px; margin: 0; font: 400 var(--type-h1)/1.03 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
@@ -92,11 +109,11 @@
 .sg-dash { opacity: .7; }
 .sg-dim { stroke-width: 1.2; }
 .sg-bolt { fill: var(--color-accent); }
-.process-page[data-motion-ready="on"] .proc-start-flow :is(.start-glyph path, .start-glyph rect) { transition: stroke-dashoffset var(--m-draw) var(--m-ease) calc(var(--i, 0) * 160ms); }
-.process-page[data-motion-ready="on"] .proc-start-list li::after { transition: transform var(--m-reveal) var(--m-ease) calc(700ms + var(--i, 0) * 90ms); }
-.process-page[data-motion-ready="on"] .proc-start-list::after { transition: transform var(--m-reveal) var(--m-ease) 950ms; }
-.process-page[data-motion-ready="on"] .proc-start-list::before { transition: transform var(--m-reveal) var(--m-ease) 1150ms; }
-.process-page[data-motion-ready="on"] .proc-start-merge { transition: opacity var(--m-reveal) ease 1300ms, transform var(--m-reveal) var(--m-ease) 1300ms, background var(--duration-fast) ease; }
+.process-page[data-motion-ready="on"] .proc-start-flow :is(.start-glyph path, .start-glyph rect) { transition: stroke-dashoffset var(--m-draw) var(--m-ease) calc(var(--i, 0) * var(--proc-at-glyph-step)); }
+.process-page[data-motion-ready="on"] .proc-start-list li::after { transition: transform var(--m-reveal) var(--m-ease) calc(var(--proc-at-row-link) + var(--i, 0) * var(--proc-at-row-link-step)); }
+.process-page[data-motion-ready="on"] .proc-start-list::after { transition: transform var(--m-reveal) var(--m-ease) var(--proc-at-collector); }
+.process-page[data-motion-ready="on"] .proc-start-list::before { transition: transform var(--m-reveal) var(--m-ease) var(--proc-at-merge-line); }
+.process-page[data-motion-ready="on"] .proc-start-merge { transition: opacity var(--m-reveal) ease var(--proc-at-merge), transform var(--m-reveal) var(--m-ease) var(--proc-at-merge), background var(--duration-fast) ease; }
 .process-page[data-motion-ready] .proc-start-flow:not([data-motion-state="on"]) :is(.start-glyph path, .start-glyph rect) { stroke-dashoffset: 1; }
 .process-page[data-motion-ready] .proc-start-flow:not([data-motion-state="on"]) .proc-start-list li::after { transform: scaleX(0); }
 .process-page[data-motion-ready] .proc-start-flow:not([data-motion-state="on"]) .proc-start-list::before { transform: scaleX(0); }
@@ -177,7 +194,7 @@
 .proc-contract-band p { max-width: 920px; margin: 0; color: var(--color-text); font-size: 16.5px; line-height: 1.6; }
 /* The chosen format's words settle in (display: none → shown restarts the animation) */
 @media (prefers-reduced-motion: no-preference) {
-  .rm-when, .rm-who, .rm-coordinator, .rm-say, .rm-out { animation: resp-in 320ms var(--m-ease); }
+  .rm-when, .rm-who, .rm-coordinator, .rm-say, .rm-out { animation: resp-in var(--proc-for-resp-in) var(--m-ease); }
 }
 @keyframes resp-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 

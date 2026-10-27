@@ -4,6 +4,41 @@
    rule states its paint in full on purpose: after a client-side navigation from a direction page that page's global
    .dsd-* rules may still be loaded. Line types as on the site's other drawings: dash-dot = an axis; long dash and two
    dots = someone else's equipment (the silo); thin solid = everything else; copper = the one accent per sheet. */
+
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* plot-in, once: the lines draw (the copper detail late), the rest fades in; the letters last */
+  --cdw-for-plot-draw: 1000ms;
+  --cdw-at-plot-draw: 200ms;
+  --cdw-curve-plot: cubic-bezier(.3, .7, .2, 1);
+  --cdw-for-plot-fade: 500ms;
+  --cdw-at-plot-fade: 150ms;
+  --cdw-at-plot-step: 90ms;
+  --cdw-at-plot-accent: 950ms;
+  --cdw-at-plot-letter: 1100ms;
+  /* its job, once per pointing: the copper does what it stands for. 01 Ангари: the clear space traced, the span and the height lit */
+  --cdw-for-angary-trace: 1300ms;
+  --cdw-for-angary-copper: 1300ms;
+  /* 02 Зерносховища: the silo comes down onto its base, the two meeting points click */
+  --cdw-for-silo-set: 900ms;
+  --cdw-curve-set: cubic-bezier(.3, .7, .2, 1);
+  --cdw-for-click: 520ms;
+  --cdw-at-silo-click: 760ms;
+  /* 03 Металоконструкції: the four bolts, one by one */
+  --cdw-for-bolt: 460ms;
+  --cdw-curve-bolt: cubic-bezier(.3, 1.6, .5, 1);
+  --cdw-at-bolt-second: 150ms;
+  --cdw-at-bolt-third: 300ms;
+  --cdw-at-bolt-fourth: 450ms;
+  /* 04 Бетонні роботи: the anchors are set, then the third one clicks and the cover letter lights */
+  --cdw-for-anchor-set: 700ms;
+  --cdw-for-letter: 520ms;
+  --cdw-at-concrete-after: 650ms;
+  /* 05 Покрівельні роботи: the rain runs off, then the gutter clicks */
+  --cdw-for-rain: 1900ms;
+  --cdw-at-roof-click: 1100ms;
+}
+
 .cdw { display: block; width: 100%; height: auto; padding: 9px 9px 5px; }
 .cdw .dsd-cut { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: var(--color-text-secondary); stroke-width: 2.4; stroke-linejoin: round; }
 /* seen in elevation, not cut: the same line without the cut fill */
@@ -35,29 +70,29 @@
 @media (prefers-reduced-motion: no-preference) {
   :where([data-motion-ready]) :is(.dcat-thumb, .dsh):not([data-motion-state="on"]) .cdw [pathLength="1"] { stroke-dashoffset: 1; }
   :where([data-motion-ready]) :is(.dcat-thumb, .dsh):not([data-motion-state="on"]) .cdw :is(path, circle, text):not([pathLength="1"], .cdw-water) { opacity: 0; }
-  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw [pathLength="1"] { transition: stroke-dashoffset 1000ms cubic-bezier(.3, .7, .2, 1) calc(200ms + var(--i, 0) * 90ms); }
-  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw :is(path, circle, text):not([pathLength="1"], .cdw-water) { transition: opacity 500ms ease calc(150ms + var(--i, 0) * 90ms); }
-  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw .dsd-accent :is(path, circle) { transition-delay: calc(950ms + var(--i, 0) * 90ms); }
-  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw .cdw-letter { transition-delay: calc(1100ms + var(--i, 0) * 90ms); }
+  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw [pathLength="1"] { transition: stroke-dashoffset var(--cdw-for-plot-draw) var(--cdw-curve-plot) calc(var(--cdw-at-plot-draw) + var(--i, 0) * var(--cdw-at-plot-step)); }
+  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw :is(path, circle, text):not([pathLength="1"], .cdw-water) { transition: opacity var(--cdw-for-plot-fade) ease calc(var(--cdw-at-plot-fade) + var(--i, 0) * var(--cdw-at-plot-step)); }
+  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw .dsd-accent :is(path, circle) { transition-delay: calc(var(--cdw-at-plot-accent) + var(--i, 0) * var(--cdw-at-plot-step)); }
+  :where([data-motion-ready="on"]) :is(.dcat-thumb, .dsh) .cdw .cdw-letter { transition-delay: calc(var(--cdw-at-plot-letter) + var(--i, 0) * var(--cdw-at-plot-step)); }
 
   /* 01 · Ангари: the clear space is traced, the span and the height light up */
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) .dsh-sheet[href="/angary"]) .cdw[data-dir="angary"] .dsd-dashed { animation: cdw-trace 1300ms linear; }
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) .dsh-sheet[href="/angary"]) .cdw[data-dir="angary"] .dsd-dim { animation: cdw-copper 1300ms ease; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) .dsh-sheet[href="/angary"]) .cdw[data-dir="angary"] .dsd-dashed { animation: cdw-trace var(--cdw-for-angary-trace) linear; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/angary"]:is(:hover, :focus-visible)) .dsh-sheet[href="/angary"]) .cdw[data-dir="angary"] .dsd-dim { animation: cdw-copper var(--cdw-for-angary-copper) ease; }
   /* 02 · Зерносховища: the silo comes down onto its base, the two meeting points click */
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) .dsh-sheet[href="/zernoskhovyshcha"]) .cdw[data-dir="zernoskhovyshcha"] .cdw-equip { animation: cdw-set 900ms cubic-bezier(.3, .7, .2, 1); }
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) .dsh-sheet[href="/zernoskhovyshcha"]) .cdw[data-dir="zernoskhovyshcha"] .dsd-accent path { animation: cdw-click 520ms ease 760ms; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) .dsh-sheet[href="/zernoskhovyshcha"]) .cdw[data-dir="zernoskhovyshcha"] .cdw-equip { animation: cdw-set var(--cdw-for-silo-set) var(--cdw-curve-set); }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/zernoskhovyshcha"]:is(:hover, :focus-visible)) .dsh-sheet[href="/zernoskhovyshcha"]) .cdw[data-dir="zernoskhovyshcha"] .dsd-accent path { animation: cdw-click var(--cdw-for-click) ease var(--cdw-at-silo-click); }
   /* 03 · Металоконструкції: the four bolts are tightened one by one */
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle { animation: cdw-bolt 460ms cubic-bezier(.3, 1.6, .5, 1) backwards; }
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(2) { animation-delay: 150ms; }
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(3) { animation-delay: 300ms; }
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(4) { animation-delay: 450ms; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle { animation: cdw-bolt var(--cdw-for-bolt) var(--cdw-curve-bolt) backwards; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(2) { animation-delay: var(--cdw-at-bolt-second); }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(3) { animation-delay: var(--cdw-at-bolt-third); }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/metalokonstruktsii"]:is(:hover, :focus-visible)) .dsh-sheet[href="/metalokonstruktsii"]) .cdw[data-dir="metalokonstruktsii"] .dsd-accent circle:nth-child(4) { animation-delay: var(--cdw-at-bolt-fourth); }
   /* 04 · Бетонні роботи: the anchors are set into the pedestal, then the cover «a» under the bars lights */
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .dsd-accent path:nth-child(-n + 2) { animation: cdw-set 700ms cubic-bezier(.3, .7, .2, 1); }
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .dsd-accent path:nth-child(3) { animation: cdw-click 520ms ease 650ms; }
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .cdw-letter-accent { animation: cdw-letter 520ms ease 650ms; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .dsd-accent path:nth-child(-n + 2) { animation: cdw-set var(--cdw-for-anchor-set) var(--cdw-curve-set); }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .dsd-accent path:nth-child(3) { animation: cdw-click var(--cdw-for-click) ease var(--cdw-at-concrete-after); }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/betonni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/betonni-roboty"]) .cdw[data-dir="betonni-roboty"] .cdw-letter-accent { animation: cdw-letter var(--cdw-for-letter) ease var(--cdw-at-concrete-after); }
   /* 05 · Покрівельні роботи: the rain runs off the slope into the gutter and down the pipe; the gutter clicks */
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/pokrivelni-roboty"]) .cdw[data-dir="pokrivelni-roboty"] .cdw-water { animation: cdw-rain 1900ms linear; }
-  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/pokrivelni-roboty"]) .cdw[data-dir="pokrivelni-roboty"] .dsd-accent path:nth-child(2) { animation: cdw-click 520ms ease 1100ms; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/pokrivelni-roboty"]) .cdw[data-dir="pokrivelni-roboty"] .cdw-water { animation: cdw-rain var(--cdw-for-rain) linear; }
+  :is(.dcat-list .route-service:is(:hover, :focus-visible), .hv2-directions .dsh-sheet:hover, .hv2-directions:has(.direction-card[href="/pokrivelni-roboty"]:is(:hover, :focus-visible)) .dsh-sheet[href="/pokrivelni-roboty"]) .cdw[data-dir="pokrivelni-roboty"] .dsd-accent path:nth-child(2) { animation: cdw-click var(--cdw-for-click) ease var(--cdw-at-roof-click); }
 }
 .cdw .dsd-accent circle, .cdw .cdw-letter-accent { transform-box: fill-box; transform-origin: center; }
 @keyframes cdw-trace { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -68; } }

@@ -1,7 +1,8 @@
 /* HOME — the five scheme sheets in the «П’ять напрямів» header (DirectionsSheets.tsx).
 
    Imported by DirectionsSheets.tsx only. Every rule is keyed to <main data-home="v2"> .hv2-directions and uses the
-   page's theme roles (this band is paper in Light, ink in Dark).
+   page's theme roles (this band is paper in Light, ink in Dark). The one exception is the :root block below: this file's own
+   motion times and curves (Motion v1).
 
    The row costs the header nothing. globals.css would give an aside a grid column of its own from 1051 px; here the
    header keeps its one column and the aside is laid OVER it at the right, as tall as the header's two rows. It is
@@ -14,6 +15,14 @@
    capitals — the eyebrow above the title (its 18.6 px line and the label → H2 rhythm, 20 px since W3-03), then .15 of
    the title's size down to the capitals (measured; the title's size is --type-h2). Between those two lines a sheet
    comes out upright, about 1 : 1.5. */
+
+/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+:root {
+  /* the row comes in once, on first view: sheet by sheet */
+  --dsh-for-in: 460ms;
+  --dsh-at-in-step: 90ms;
+}
+
 main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
 main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside { display: none; }
 @media (min-width: 1200px) {
@@ -63,7 +72,7 @@ main[data-home="v2"] .hv2-directions .dsh-sheet:hover { border-color: var(--colo
    print — the five sheets simply stand. A keyframe with a backwards fill, so the pointed lift keeps its own quick
    transition afterwards. ---- */
 main[data-home="v2"][data-motion-ready] .hv2-directions .dsh:not([data-motion-state="on"]) .dsh-sheet { opacity: 0; }
-main[data-home="v2"] .hv2-directions .dsh[data-motion-state="on"] .dsh-sheet { animation: dsh-in 460ms var(--ease-premium) calc(var(--i, 0) * 90ms) backwards; }
+main[data-home="v2"] .hv2-directions .dsh[data-motion-state="on"] .dsh-sheet { animation: dsh-in var(--dsh-for-in) var(--ease-premium) calc(var(--i, 0) * var(--dsh-at-in-step)) backwards; }
 @keyframes dsh-in { from { opacity: 0; transform: translateY(12px); } }
 @media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-directions .dsh-sheet { transition: none; } }
 
