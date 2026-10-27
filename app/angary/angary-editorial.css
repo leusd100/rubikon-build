@@ -24,12 +24,8 @@
 .angary-cost-actions .button { gap: 16px; }
 .angary-cost-actions .angary-text-link { margin-top: -10px; }
 
-/* ---------- The frame (FrameTour.tsx, frame-tour.css): a direction-node tour on the page's own ground ---------- */
-.angary-structure .direction-editorial-copy > p:not(.eyebrow) { max-width: 520px; }
-
 /* ---------- The real hangar (HangarRealObject.tsx, owner 03.10): the frame drawn above, then one built — on the same
    ground, under a rule, as the next sheet of the set ---------- */
-.angary-structure:has(+ .angary-real) { padding-bottom: clamp(48px, 5vw, 72px); }
 .angary-real { padding-top: 0; background: var(--color-surface); }
 .angary-real-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 4vw, 64px); align-items: center; padding-top: clamp(40px, 4.5vw, 64px); border-top: 1px solid var(--color-border-strong); }
 /* The record's whole frame (1536 × 788): evidence, so not cropped while there is room */
@@ -124,7 +120,6 @@
   .angary-stamp-actions { flex-direction: column; align-items: stretch; gap: 6px; }
   .angary-stamp-cta { justify-content: space-between; padding-block: 12px; text-align: left; line-height: 1.35; }
   .angary-stamp-link { align-self: flex-start; margin: 0; } /* as wide as its words: the column stretches the button, its rule would run across it */
-  .angary-structure:has(+ .angary-real) { padding-bottom: 44px; }
   .angary-real-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 36px; }
   /* Two parts, but a sentence: the note takes its own row, as HOME's proof sheet on a phone */
   .angary-real-sheet .sheet-stamp { flex-wrap: wrap; }

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { company } from '../../app/data/company';
 import { deliveryModel } from '../../app/data/deliveryModel';
@@ -10,10 +10,12 @@ import { publicTexts } from '../../app/lib/deliveryModel';
 
 // Scan public copy, including fallback service pages and metadata. The Planner's frozen statement
 // is deliberately excluded; grainPage.direction is the website boundary, not the Planner result.
+// HOME's own copy: app/page.tsx and its home-v2 components.
+const homeV2 = readdirSync('app/components/home-v2').filter((name) => name.endsWith('.tsx')).map((name) => `app/components/home-v2/${name}`);
 const publicCopy = [
   company.description, company.geography, ...publicTexts(deliveryModel),
   JSON.stringify(directionPages), JSON.stringify(directions), JSON.stringify(grainPage.direction),
-  ...['app/page.tsx', 'app/components/HomeSections.tsx', 'app/components/angary/HangarEditorialArchitecture.tsx',
+  ...['app/page.tsx', ...homeV2, 'app/components/angary/HangarEditorialArchitecture.tsx',
     'app/pro-nas/page.tsx', 'app/components/SiteChrome.tsx'].map((file) => readFileSync(file, 'utf8')),
 ].join('\n');
 

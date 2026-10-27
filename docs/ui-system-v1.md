@@ -87,7 +87,7 @@ themselves are the content). That's fine as a one-off; it's not evidence the def
 |---|---|
 | 2 | Flex/left-aligned is fine — a short, intentionally left-aligned row (see `.related-grid`'s default). Don't force a full-width stretch. |
 | 3 | Either a **fixed 3-column grid verified at every breakpoint it's used** (`.use-case-grid`, `.values-grid`), or an **explicit `data-count`/class variant** if it has to share a class family with a 4-item sibling (`.related-grid[data-count="3"]`). Never let a 3-item set silently inherit an even-column responsive override from a shared class — that produces the "2 then 1 alone" orphan bug this branch fixed twice. |
-| 4 | `repeat(4,1fr)` → `repeat(2,1fr)` at ≤1050px → `1fr` at ≤760px. Already the consistent, correct pattern (`.detail-steps`, `.cost-grid`) — the canonical 4-item rule. |
+| 4 | `repeat(4,1fr)` → `repeat(2,1fr)` at ≤1050px → `1fr` at ≤760px. Already the consistent, correct pattern (`.detail-steps`) — the canonical 4-item rule. |
 | 5 | No fixed-column grid on the site currently has 5 items, but Signature Configurator's object templates likely will. **Never feed 5 items into a 4-column grid.** Decide explicitly: `repeat(5,1fr)` with a real tablet fallback, or a deliberate asymmetric composition — per instance, not by accident. |
 
 When reusing a card-family class across a different item count (like `.values-grid` reusing
