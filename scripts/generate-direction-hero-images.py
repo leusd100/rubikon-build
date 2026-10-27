@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Generate responsive WebP variants for full-bleed hero artwork (direction pages, /yak-pratsyuiemo).
 
-The approved source images live in public/media/*-source/. The Phase 6 photo
-variant sources live in design-assets/ so they are not deployed as PNGs.
+The source images live in design-assets/, so they are not deployed with the site.
 Landscape variants preserve the complete source. The /napryamky sequence also
 gets portrait crops for tall screens, and the direction page photos get phone
 crops in WebP and AVIF; source artwork is never modified.
@@ -25,13 +24,6 @@ WIDTHS = [480, 768, 1200, 1536]
 QUALITY = 85
 # Horizontal object-position within the excess width of a 3:4 portrait crop.
 # Keep the frame, silos, reinforcement and roof detail visible on tall screens.
-SEQUENCE_PORTRAIT_POSITIONS = {
-    "angary": .66,
-    "zernoskhovyshcha": .65,
-    "metalokonstruktsii": .64,
-    "betonni-roboty": .78,
-    "pokrivelni-roboty": .67,
-}
 SEQUENCE_CONCEPT_PORTRAIT_POSITIONS = {
     # The new panoramic compositions reserve the left side for desktop copy.
     # Portrait crops move toward the structure so it remains legible on phones.
@@ -65,21 +57,7 @@ IMAGE_SETS = [
         "betonni-roboty.png",
         "pokrivelni-roboty.png",
     ]),
-    ("public/media/direction-hero-source", "direction-hero", [
-        "angary.png",
-        "zernoskhovyshcha.png",
-        "metalokonstruktsii.png",
-        "betonni-roboty.png",
-        "pokrivelni-roboty.png",
-    ]),
     ("design-assets/direction-hero-photo-variant", "direction-hero-photo-variant", [
-        "angary.png",
-        "zernoskhovyshcha.png",
-        "metalokonstruktsii.png",
-        "betonni-roboty.png",
-        "pokrivelni-roboty.png",
-    ]),
-    ("public/media/directions-sequence-source", "directions-sequence", [
         "angary.png",
         "zernoskhovyshcha.png",
         "metalokonstruktsii.png",
@@ -100,7 +78,7 @@ IMAGE_SETS = [
         "betonni-roboty.png",
         "pokrivelni-roboty.png",
     ]),
-    ("public/media/process-hero-source", "process-hero", [
+    ("design-assets/process-hero", "process-hero", [
         "yak-pratsyuiemo.webp",
     ]),
 ]
@@ -150,8 +128,7 @@ def main() -> None:
                               DIRECTION_HERO_PORTRAIT_AVIF_QUALITY[output_prefix], fmt="AVIF")
             if is_sequence:
                 crop_width = min(image.width, round(image.height * 3 / 4))
-                positions = SEQUENCE_CONCEPT_PORTRAIT_POSITIONS if output_prefix != "directions-sequence" else SEQUENCE_PORTRAIT_POSITIONS
-                left = round((image.width - crop_width) * positions[base])
+                left = round((image.width - crop_width) * SEQUENCE_CONCEPT_PORTRAIT_POSITIONS[base])
                 portrait = image.crop((left, 0, left + crop_width, image.height))
                 emit_variants(portrait, output_prefix, base + "-portrait", [320, 480, crop_width], results, quality)
 
