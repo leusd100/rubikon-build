@@ -130,8 +130,9 @@ test.describe('smooth scroll at rest (desktop)', () => {
 
     // `html { scroll-behavior: smooth }` (globals.css) and Lenis lets the click through, so the browser scrolls to the
     // fragment by itself, smoothly, and would put the section in its place without a single frame from Lenis. This
-    // listener cancels that navigation: only Lenis can move the page now (its handler ignores a cancelled click, so
-    // the order of the listeners does not matter).
+    // listener cancels that navigation: only Lenis can move the page now. It must run after the smooth-scroll layer's
+    // anchor listener, which leaves a cancelled click alone (MO-02) — and it does: both are on the window in the bubble
+    // phase, and the layer's went on with the `lenis` class openDesktop waited for, before this one.
     await page.evaluate(() => window.addEventListener('click', (event) => event.preventDefault()));
 
     await recordScrollPositions(page);

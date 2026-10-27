@@ -772,8 +772,7 @@ test.describe('«Запит надіслано» after a saved request', () => {
     await acceptOnlyEssentialCookies(page);
     await page.locator('.hc-summary').getByRole('link', { name: /Обговорити цю конфігурацію/ }).click();
     await expect(page.locator('#hc-inquiry form.inquiry-form .inquiry-config-brief')).toBeFocused();
-    // the jump to the form is a smooth one at this width — and until PDO-02 is fixed, Lenis's own jump to the end of the
-    // page runs after it, writing the scroll every frame: let the page come to rest before the form is used
+    // the jump to the form is a smooth one at this width: let the page come to rest before the form is used
     await pageAtRest(page);
     await fillForSaving(page);
     await submitSaved(page);

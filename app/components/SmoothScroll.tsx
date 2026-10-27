@@ -26,7 +26,7 @@ const CONTROLS = 'a[href], button, summary, label, input, select, textarea, [rol
 
 /**
  * A very restrained Lenis smooth-scroll layer, mounted sitewide (see app/layout.tsx) but
- * only active while the viewport matches DESKTOP_QUERY and the user hasn't asked for
+ * only active while the viewport matches DESKTOP_QUERY with a mouse or a trackpad (HOVER_QUERY) and the user hasn't asked for
  * reduced motion. Renders nothing and touches no layout: no `wrapper`/`content` options are
  * passed, so Lenis smooths the real window/document scroll in place rather than faking
  * position on a wrapper element — sticky positioning, the native scrollbar, keyboard
@@ -41,6 +41,9 @@ export function SmoothScroll() {
     if (typeof window === 'undefined') return;
 
     const desktopQuery = window.matchMedia(DESKTOP_QUERY);
+    // A touch tablet in landscape is as wide as a laptop (iPad Pro 11″ 1194 px, 13″ 1366 px): only its pointer tells it
+    // apart, and it stays on native scroll as the comment over DESKTOP_QUERY means it to (MO-03)
+    const hoverQuery = window.matchMedia(HOVER_QUERY);
     const reducedMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
     let lenis: Lenis | undefined;
     // Ends the frame loop and takes its wheel and click listeners off, once the instance they belong to is gone
@@ -63,7 +66,7 @@ export function SmoothScroll() {
     } catch {
       // storage blocked: the default stands
     }
-    const wanted = () => !forcedOff && desktopQuery.matches && !reducedMotionQuery.matches;
+    const wanted = () => !forcedOff && desktopQuery.matches && hoverQuery.matches && !reducedMotionQuery.matches;
     const destroyLenis = () => {
       stopLoop?.();
       stopLoop = undefined;
@@ -97,30 +100,52 @@ export function SmoothScroll() {
             lerp: 0.18,
             wheelMultiplier: 1,
             // Never smooth touch input — belt-and-suspenders, since this only ever mounts
-            // above DESKTOP_QUERY anyway.
+            // above DESKTOP_QUERY with a mouse or a trackpad anyway.
             syncTouch: false,
-            // Smooth anchor/CTA scrolls (e.g. "Дивитися напрямки") and cancel any in-flight
-            // inertia first so a click never fights residual momentum.
-            anchors: true,
+            // A wheel over a modal (`aria-modal`: the fullscreen 3D on /angary) is left to the browser. Lenis took it on
+            // the window and scrolled the page with `scrollTo`, which the modal's `overflow: hidden` on the body does not
+            // stop: five wheel clicks over the 3D moved the page behind it 500 px (MO-01).
+            prevent: (node) => node.getAttribute('aria-modal') === 'true',
+            // Anchor/CTA scrolls (e.g. "Дивитися напрямки") are smoothed by onAnchor below, not by Lenis's own handler:
+            // that one took every anchor click of the page, one page code had already handled included (MO-02).
+            anchors: false,
+            // Cancel any in-flight inertia before a link to another page, so a click never fights residual momentum.
             stopInertiaOnNavigate: true,
             // No frame loop of Lenis's own: it asked for a frame on every refresh, scrolling or not.
             // lenisLoop.ts drives `raf` instead, from a wheel or a click until the smoothing ends.
             autoRaf: false,
           });
           lenis = instance;
-          // Nothing here calls this instance's `scrollTo`; the wheel and Lenis's own anchor handler are what start the
-          // smoothing. Any future code that calls it must call `wake()` of this loop too, or the loop stays asleep until
-          // the next wheel or click.
+          // The wheel and onAnchor are what start the smoothing. Any other code that calls this instance's `scrollTo`
+          // must call `wake()` of this loop too, or the loop stays asleep until the next wheel or click.
           const loop = startLenisLoop(instance);
           // The frame a wake asks for runs after the event has been dispatched, so Lenis has acted on it by then
           // (`isScrolling` is 'smooth'), whatever the order of the listeners. Capture, so the wake still runs when page
           // code stops the event's propagation.
           const wake = () => loop.wake();
+          // A click on an anchor of this page glides to its target, as Lenis's `anchors: true` did — but not one page
+          // code has taken over (preventDefault: ScopeLink's «Обсязі робіт» opens its step and lands the tabs under
+          // the header; Lenis carried them 98 px above the window), nor one the browser takes elsewhere (Cmd/Ctrl/
+          // Shift: a new tab or window; Lenis scrolled this page too). The default is left alone, so the hash and the
+          // history entry are the browser's as before. On the window, in the bubble phase, as Lenis's own was: page
+          // code has had the click by then (React's listeners and the document's included).
+          const onAnchor = (event: MouseEvent) => {
+            if (event.defaultPrevented || event.button !== 0) return;
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            const link = event
+              .composedPath()
+              .find((node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement && Boolean(node.href));
+            if (!link?.hash || link.host !== window.location.host || link.pathname !== window.location.pathname) return;
+            instance.scrollTo(decodeURIComponent(link.hash));
+            loop.wake();
+          };
           window.addEventListener('wheel', wake, { capture: true, passive: true });
           window.addEventListener('click', wake, { capture: true, passive: true });
+          window.addEventListener('click', onAnchor);
           stopLoop = () => {
             window.removeEventListener('wheel', wake, { capture: true });
             window.removeEventListener('click', wake, { capture: true });
+            window.removeEventListener('click', onAnchor);
             loop.destroy();
           };
         }).catch(() => {
@@ -134,11 +159,13 @@ export function SmoothScroll() {
 
     sync();
     desktopQuery.addEventListener('change', sync);
+    hoverQuery.addEventListener('change', sync);
     reducedMotionQuery.addEventListener('change', sync);
 
     return () => {
       cancelled = true;
       desktopQuery.removeEventListener('change', sync);
+      hoverQuery.removeEventListener('change', sync);
       reducedMotionQuery.removeEventListener('change', sync);
       destroyLenis();
     };
