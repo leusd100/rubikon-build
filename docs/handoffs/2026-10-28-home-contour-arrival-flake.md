@@ -5,9 +5,9 @@
 | Дата | 2026-10-28 |
 | Виконавець | Claude Code |
 | Підстава | Пріоритет №1 власника 28.10: нестабільний HOME E2E `tests/e2e/home-proof-contour.spec.ts:2054` (Nightly 27.10; розбір `ci-triage` у `2026-10-27-claude-code-operating-model.md`) |
-| PR | PR_LINK, Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30). Мерж у `main` веде сесія «RUBIKON BUILD optimization» за чергою: #265 → #264 → CI-шарди → цей PR |
+| PR | [#266](https://github.com/leusd100/rubikon-build/pull/266), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30). Мерж у `main` веде сесія «RUBIKON BUILD optimization» за чергою: #265 → #264 → CI-шарди → цей PR |
 | Гілка / base | `test/home-contour-arrival-flake` від `main` `aa08d45` (з #259–#265) |
-| Коміти | `approach()` перед появою листа в одному тесті · цей handoff |
+| Коміти | `08bcf52` — `approach()` перед появою листа в одному тесті · handoff |
 | Змінено | `tests/e2e/home-proof-contour.spec.ts`: помічник `approach()` і його виклик у тесті `arriving with motion, the photo plots in whole, …` |
 | Не змінено | твердження й межі тесту (900 мс, `> 3` кадрів, `armed`), інші тести появи, код застосунку, CSS, `playwright.config.ts`, еталони, бюджети, залежності |
 
