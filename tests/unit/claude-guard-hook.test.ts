@@ -11,14 +11,25 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 const hook = fileURLToPath(new URL('../../.claude/hooks/guard-owner-actions.sh', import.meta.url));
 const repo = fileURLToPath(new URL('../..', import.meta.url));
 let onMain = '';
+let onBranch = '';
 
+// A checkout on `branch`, with a commit: on an unborn branch there is nothing to push, and git cannot name HEAD yet.
+function checkoutOn(branch: string) {
+  const dir = mkdtempSync(join(tmpdir(), `guard-on-${branch.replace(/\W/g, '-')}-`));
+  execFileSync('git', ['init', '-q', '-b', branch, dir]);
+  execFileSync('git', ['-C', dir, '-c', 'user.email=guard@test', '-c', 'user.name=guard', 'commit', '-q', '--allow-empty', '-m', 'init']);
+  return dir;
+}
+
+// Not the repository itself: CI checks it out on main for a push to main and detached for a pull request.
 beforeAll(() => {
-  onMain = mkdtempSync(join(tmpdir(), 'guard-on-main-'));
-  execFileSync('git', ['init', '-q', '-b', 'main', onMain]);
-  // a branch with a commit: on an unborn branch there is nothing to push, and git cannot name HEAD yet
-  execFileSync('git', ['-C', onMain, '-c', 'user.email=guard@test', '-c', 'user.name=guard', 'commit', '-q', '--allow-empty', '-m', 'init']);
+  onMain = checkoutOn('main');
+  onBranch = checkoutOn('fix/guard-test');
 });
-afterAll(() => rmSync(onMain, { recursive: true, force: true }));
+afterAll(() => {
+  rmSync(onMain, { recursive: true, force: true });
+  rmSync(onBranch, { recursive: true, force: true });
+});
 
 function decide(input: object, env: NodeJS.ProcessEnv = process.env) {
   const run = spawnSync('bash', [hook], { input: JSON.stringify(input), encoding: 'utf8', env });
@@ -79,7 +90,7 @@ describe('guard-owner-actions hook', () => {
 
   it.each(['git push', 'git push origin HEAD', 'git push -u origin HEAD'])('asks before %s on main, not on a branch', (command) => {
     expect(bash(command, onMain)).toBe('ask');
-    expect(bash(command)).toBe('allow');
+    expect(bash(command, onBranch)).toBe('allow');
   });
 
   it.each([
