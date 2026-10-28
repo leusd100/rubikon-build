@@ -85,7 +85,9 @@
   border: 1px solid var(--color-border); border-top: 2px solid var(--color-accent);
 }
 .team-about .person-info { display: block; min-height: 0; padding: 0; }
-.team-about .person-info h3 { margin: 16px 0 18px; font-size: clamp(24px, 2.35vw, 38px); white-space: nowrap; }
+/* The names fit one line at every width; they are not held to it (RA-04): under a reader's text spacing (WCAG 1.4.12) a
+   name held on one line ran past its card at 761–833 px, and widened the page at 761–766 */
+.team-about .person-info h3 { margin: 16px 0 18px; font-size: clamp(24px, 2.35vw, 38px); }
 /* More specific than globals' `.person-info p:first-of-type`, which would otherwise restyle the label */
 .team-about .person-info .person-focus-label { margin: 26px 0 12px; color: var(--color-text-muted); font: 700 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .person-focus { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
@@ -269,7 +271,6 @@
   .team-bond { flex-direction: column; gap: 12px; }
   .team-bond::before { flex: none; align-self: stretch; transform-origin: center; }
   .team-bond::after { display: none; }
-  .team-about .person-info h3 { white-space: normal; }
   .about-page .about-subhero-side { margin-top: 22px; }
   .about-hero-actions { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 28px; }
   .about-hero-actions .about-hero-cta { width: 100%; }
