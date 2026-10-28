@@ -16,7 +16,7 @@ type ResponsiveImageProps = {
  * call sites, used only for the 12 images that have pre-generated WebP variants
  * (see app/data/responsiveImageManifest.ts). Reproduces next/image's `fill` layout
  * (absolute, inset:0, 100%/100%) so the existing `.direction-card img` /
- * `.promise-visual img` / `.direction-editorial-media img` CSS (object-fit,
+ * `.direction-editorial-media img` CSS (object-fit,
  * object-position, filters, transitions) keeps working unchanged — only the
  * source-selection mechanism changes, not the visual result.
  *

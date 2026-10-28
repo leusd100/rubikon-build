@@ -676,12 +676,6 @@ main[data-home="v2"] .hv2-contour-legend [data-key="scheme"] path { stroke: var(
 main[data-home="v2"] .hv2-contour-legend [data-key="depth"] path { stroke-width: 1.4; stroke-opacity: .8; }
 main[data-home="v2"] .hv2-contour-legend [data-key="load"] path { stroke: var(--hv2-load); stroke-width: 3; stroke-linecap: round; stroke-dasharray: .5 5; }
 main[data-home="v2"] .hv2-contour-legend [data-key="wind"] path { stroke: var(--hv2-wind); stroke-width: 3; stroke-linecap: round; stroke-dasharray: .5 5; }
-/* The phone's figures (or, with the load, its chain), in one slot as tall as the taller, so nothing jumps */
-main[data-home="v2"] .hv2-contour-chips { display: flex; flex-wrap: wrap; align-content: start; gap: 6px; }
-main[data-home="v2"] .hv2-contour-chips > span {
-  padding: 5px 8px 4px; color: var(--hv2-copper-text); border: 1px solid rgba(204, 132, 85, .55);
-  font: 700 11.5px/1.1 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase;
-}
 /* A load's legend is its way, word by word in its tint (ProofContour's CHAINS) */
 /* compact, so it keeps to the title block's height on a laptop (review, 05.10: in four lines it pushed the sheet past the
    window): a size down, no key — its tint is the key */

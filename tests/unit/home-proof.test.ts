@@ -1,11 +1,12 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { HomeProofSlot } from '../../app/components/HomeSections';
+import { EngineeringSignature } from '../../app/components/home-v2/EngineeringSignature';
 import { homeProofCase, type HomeProofCase } from '../../app/data/homeProof';
 
-// The HOME proof slot is reserved for ONE real, approved project. Until then it is empty and draws nothing; once
-// filled it must carry the attribution and the confirmed scope, and never rest on a concept, stock or generated image.
+// HOME's proof (EngineeringSignature's sheet) is reserved for ONE real, approved project. Without one it draws nothing;
+// once filled it must carry the attribution and the confirmed scope, and never rest on a concept, stock or generated
+// image. Its words on the page are checked by pr-critical.spec.ts and home-proof-contour.spec.ts.
 
 // A synthetic fixture: it exists only in this test and is not a project.
 const fixture: HomeProofCase = {
@@ -19,36 +20,25 @@ const fixture: HomeProofCase = {
   context: 'Тестовий контекст.',
 };
 
-const render = (proof: HomeProofCase | null) => renderToStaticMarkup(createElement(HomeProofSlot, { proof }));
+const render = (proof: HomeProofCase | null) => renderToStaticMarkup(createElement(EngineeringSignature, { proof }));
+const text = (markup: string) => markup.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
-describe('HomeProofSlot', () => {
-  it('renders nothing while there is no approved project — no empty frame, no «coming soon»', () => {
-    expect(render(null)).toBe('');
+describe('EngineeringSignature (HOME)', () => {
+  it('draws no proof while there is no approved project — no empty frame, no «coming soon»', () => {
+    const markup = render(null);
+    expect(markup).toContain('id="engineering"');
+    expect(markup).not.toContain('id="real-object"');
+    expect(markup).not.toMatch(/<(?:figure|picture|img)\b/);
+    expect(text(markup)).not.toMatch(/об’єкт до створення|Фото об’єкта|незабаром|скоро|coming soon/i);
   });
 
-  it('shows the photo, the one-line caption, the attribution and the scope split by who did it', () => {
-    const markup = render(fixture);
-    expect(markup).toContain('class="home-proof"');
-    expect(markup).toContain('Тестовий підпис.');
-    expect(markup).toContain('Тестова атрибуція.');
-    expect(markup).toContain('Виконала наша команда');
-    expect(markup).toContain('Перший підтверджений рядок');
-    expect(markup).toContain('Виконали інші');
-    expect(markup).toContain('Роботи іншого виконавця');
-    expect(markup).toContain('Тестовий контекст.');
-    expect(markup).toContain('aspect-ratio:16 / 10');
-  });
-
-  it('identifies Serhii’s earlier work without crediting the current team', () => {
-    const markup = render({ ...fixture, provenance: 'serhii-prior' });
-    expect(markup).toContain('Роботи з попереднього досвіду Сергія');
-    expect(markup).not.toContain('Виконала наша команда');
-  });
-
-  it('omits «Виконали інші» when nobody else worked on it, and never prints the internal case id', () => {
-    const markup = render({ ...fixture, scope: { subject: ['Єдиний рядок'] } });
-    expect(markup).not.toContain('Виконали інші');
-    expect(markup).not.toContain('TEST-ONLY');
+  it('draws the approved record’s sheet, its attribution and scope, and never prints the internal case id', () => {
+    const proof = homeProofCase!;
+    const markup = render(proof);
+    expect(markup).toContain('id="real-object"');
+    expect(markup).toContain(proof.attribution);
+    for (const item of proof.scope.subject) expect(markup).toContain(item);
+    expect(markup).not.toContain(proof.caseId);
   });
 });
 

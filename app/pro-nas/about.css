@@ -153,7 +153,6 @@
    drawing under the hands, 02 numbers the order the frame goes up (base plate, column, beam), 03 rings the bolted
    joint. Overview (no step): all three marks with their numbers. A step: only its mark, drawn once the camera has
    arrived, its number in the caption instead. Without motion the camera jumps and nothing draws. */
-.about-story-section .promise-visual:hover img { transform: none; }
 .ps-stage { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
 .aqc-overlay { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
 /* Widths in the drawing's own units (no non-scaling-stroke: with pathLength, Chrome measures the dash on screen and cuts

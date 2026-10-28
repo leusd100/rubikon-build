@@ -135,9 +135,7 @@
   --site-for-card-image: .65s;
   --site-for-card-image-tint: .4s;
   --site-for-hover: .25s;
-  /* the promise photo; the disclosure arrows of the inquiry's brief and details */
-  --site-for-photo-zoom: 1s;
-  --site-for-photo-tint: .55s;
+  /* the disclosure arrows of the inquiry's brief and details */
   --site-for-chevron: .25s;
   /* the directions hero: its sequence of stills crosses over, its video fades in */
   --site-for-hero-sequence: .7s;
@@ -428,9 +426,6 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .button:active, .link-arrow:active, .text-link:active { transform: translateY(0) scale(.985); }
 .hero-actions > a > span[aria-hidden="true"] { width: 20px; height: 20px; display: inline-grid; place-items: center; flex: 0 0 20px; color: var(--color-dark-text); font-size: 16px; font-weight: 500; line-height: 1; }
 
-.services { background: var(--color-surface-alt); }
-.ghost-section { position: relative; overflow: clip; isolation: isolate; }
-.ghost-section > .shell { position: relative; z-index: 1; }
 .ghost-word {
   --ghost-fill: var(--color-ghost-fill);
   --ghost-stroke: var(--color-ghost-stroke);
@@ -580,8 +575,6 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .direction-arrow { position: absolute; right: 28px; bottom: 28px; display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid rgba(255,255,255,.68); border-radius: 50%; font-size: 22px; transition: color var(--site-for-hover) ease, background var(--site-for-hover) ease, border-color var(--site-for-hover) ease; }
 .direction-card:hover .direction-arrow, .direction-card:focus-visible .direction-arrow { color: var(--color-on-action); background: var(--color-action); border-color: var(--color-action); }
 .promise-visual { position: relative; min-height: 670px; overflow: hidden; background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: 18px 18px 0 var(--copper-offset); }
-.promise-visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.08); transition: transform var(--site-for-photo-zoom) var(--ease-premium), filter var(--site-for-photo-tint) ease; }
-.promise-visual:hover img { transform: scale(1.025); }
 .promise-visual::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(12,15,13,.04), rgba(12,15,13,.28)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); pointer-events: none; }
 
 .about-story-section { background: var(--color-bg); }
@@ -946,16 +939,9 @@ a.route-service:hover { color: var(--color-dark-text); --color-accent-strong: va
 a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-dark-text-secondary); }
 .route-service > b { justify-self: end; font: 500 22px/1 var(--font-condensed), sans-serif; }
 
-.cost-grid span { color: var(--color-accent-strong); font: 600 14px/1.4 var(--font-condensed), sans-serif; }
-.cost-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--color-border); border-left: 1px solid var(--color-border); }
-.cost-grid article { min-height: 275px; padding: 28px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
-.cost-grid h3 { font: 600 22px/1.08 var(--font-condensed), sans-serif; text-transform: none; }
-.cost-grid h3 { margin: 24px 0 14px; }
-.cost-grid p { margin: 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.7; }
 .cost-section { background: var(--color-surface-alt); }
 
-/* Cost factors on direction pages — deliberately NOT .cost-grid (that class is untouched, still
-   used by the homepage Services section). Process, right above this, is a sequence: four equal
+/* Cost factors on direction pages — deliberately NOT a box grid. Process, right above this, is a sequence: four equal
    bordered cards is the correct shape for four ordered steps. Cost factors are simultaneous
    considerations, not steps — a full-width band list reads as a technical spec sheet instead of
    a second copy of Process's card grid. Index mark stays small and de-emphasized (not a bold
@@ -969,7 +955,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 .cost-list p { margin: 0; color: var(--color-text-muted); font-size: 16px; line-height: 1.7; }
 
 /* Related directions — compact cross-navigation between adjacent stages of one object.
-   Reuses the .cost-grid hairline vocabulary (container border-top/left, cell border-right/bottom)
+   Reuses the .use-case-grid hairline vocabulary (container border-top/left, cell border-right/bottom)
    so it reads as part of the existing system; capped column width keeps it visibly lighter than
    /napryamky's full-width .route-service list. The title's one rule is in direction-template.css (Fixel); the Plex one
    here always lost to it and is gone (W3-01). */
@@ -1006,7 +992,7 @@ a.route-service:hover p, a.route-service:focus-visible p { color: var(--color-da
 /* Start and finish filled, the steps between them open rings (owner, 02.10: one filled start and an open last node read
    as unfinished) */
 .detail-steps li:is(:first-child, :last-child) span { color: var(--color-dark); background: var(--color-accent-on-dark); border-color: var(--color-accent-on-dark); }
-/* Shared icon token for .cost-grid / .use-case-grid (bordered-card families). */
+/* Shared icon token for .use-case-grid (bordered-card family); .cost-list hides it. */
 .card-icon { display: block; width: 32px; height: 32px; margin-top: 44px; color: var(--color-accent); }
 .detail-steps h3 { margin: 0 0 12px; font: 600 22px/1.15 var(--font-condensed), sans-serif; text-transform: none; }
 .detail-steps p { max-width: 300px; margin: 0 auto; color: var(--color-dark-text-secondary); font-size: 15px; line-height: 1.7; }
@@ -1167,7 +1153,6 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .detail-steps span { position: absolute; top: 0; left: 0; margin: 0; }
   .detail-steps h3 { padding-top: 10px; }
   .detail-steps p { max-width: none; margin: 0; }
-  .cost-grid { grid-template-columns: repeat(2, 1fr); }
   .page-two-col { gap: var(--grid-gap); }
   .direction-editorial-grid { grid-template-columns: minmax(360px, .9fr) minmax(0, 1.1fr); gap: var(--grid-gap); }
   .faq-grid { gap: var(--grid-gap); }
@@ -1414,10 +1399,8 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .direction-editorial-copy { padding: 0; }
   .direction-editorial-copy > p:not(.eyebrow) { margin-top: var(--rhythm-lead); font-size: 16px; }
   .direction-editorial-media { min-height: 0; aspect-ratio: 3 / 2; border-radius: 2px var(--radius-lg) 2px var(--radius-lg); box-shadow: 10px 10px 0 var(--copper-offset); }
-  .cost-grid { grid-template-columns: 1fr; }
   .use-case-grid article { min-height: 245px; }
-  .cost-grid article { min-height: 230px; }
-  .use-case-grid h3, .cost-grid h3 { margin-top: 64px; }
+  .use-case-grid h3 { margin-top: 64px; }
   .cost-list article { grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 12px; padding: 18px 0; }
   .cost-list h3 { grid-column: 2; }
   .cost-list p { grid-column: 1 / -1; margin-top: 8px; }
@@ -1633,33 +1616,6 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
   .hero-grid, .subhero-grid, .ghost-word { display: none; }
 }
 
-/* Delivery Model taxonomy. Home «Формат участі»: three format cards in the .cost-grid
-   treatment (two classes so it outranks .cost-grid's own 2- and 1-column breakpoints), plus the
-   «Що у вас уже є» axis as one quiet row under them. /napryamky: the entry points as a list beside their
-   explanation. */
-.cost-grid.format-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.entry-axis { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 12px 28px; padding: 22px 0; border-bottom: 1px solid var(--color-border); }
-.entry-axis-title { margin: 0; color: var(--color-accent-strong); font: 600 14px/1.4 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-.entry-axis ul { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 0; padding: 0; list-style: none; }
-.entry-axis li { padding: 6px 12px; border: 1px solid var(--color-border); font-size: 14px; line-height: 1.4; }
-.entry-axis-note { grid-column: 2; margin: 0; color: var(--color-text-muted); font-size: 15px; line-height: 1.7; }
-.entry-points-list { grid-column: 2; grid-row: 1 / span 2; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border); }
-.entry-points-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 16px; padding: 14px 0; border-bottom: 1px solid var(--color-border); }
-.entry-points-list b { font-weight: 600; }
-.entry-points-list span { color: var(--color-accent-strong); font: 600 12px/1.6 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-.entry-points-list small { grid-column: 1 / -1; color: var(--color-text-muted); font-size: 15px; line-height: 1.6; }
-@media (max-width: 1050px) {
-  .entry-points-list { grid-column: auto; grid-row: auto; }
-}
-@media (max-width: 760px) {
-  .cost-grid.format-grid { grid-template-columns: 1fr; }
-  .cost-grid.format-grid p { font-size: 16px; line-height: 1.65; }
-  .entry-axis { grid-template-columns: 1fr; }
-  .entry-axis li { font-size: 16px; }
-  .entry-axis-note { grid-column: auto; font-size: 16px; }
-  .entry-points-list li { grid-template-columns: 1fr; }
-}
-
 @media (max-width: 340px) {
   /* 320 px phones: the /napryamky route titles carry «МЕТАЛОКОНСТРУКЦІЇ», wider than the 288 px column at their usual
      size — size them to fit instead of breaking mid-letter or running past the card edge. (The page and privacy H1s need
@@ -1682,76 +1638,6 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 }
 @media (max-width: 760px) and (max-height: 760px) and (prefers-reduced-motion: no-preference) {
   .hero { height: auto; min-height: 100svh; }
-}
-
-/* HOME proof and contact bridge. */
-
-.contact-bridge { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px 40px; margin-top: 52px; padding-top: 28px; border-top: 1px solid var(--color-border); }
-.contact-bridge p { max-width: 620px; margin: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; }
-.contact-bridge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 32px; }
-.contact-bridge-actions .section-link { margin-top: -10px; } /* its words on the call's line (.link-arrow) */
-.contact-bridge-call { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--color-text); font: 600 22px/1 var(--font-condensed), sans-serif; letter-spacing: .02em; white-space: nowrap; }
-.contact-bridge-call svg { width: 20px; height: 20px; color: var(--color-accent-strong); }
-.contact-bridge-call:hover span { text-decoration: underline; text-underline-offset: 5px; }
-
-.home-proof { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); margin: 48px 0 0; background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
-.home-proof-media { position: relative; min-height: 320px; overflow: hidden; background: var(--color-surface); }
-.home-proof-media img { object-fit: cover; object-position: center 68%; }
-.home-proof-body { display: grid; align-content: start; gap: 18px; padding: 34px 32px; }
-.home-proof-body .eyebrow { margin: 0; }
-.home-proof-caption { margin: 0; font: 400 clamp(22px, 2vw, 28px)/1.25 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
-.home-proof-attribution, .home-proof-context { margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.65; }
-.home-proof-scope { display: grid; gap: 22px; }
-.home-proof-scope h3 { margin: 0 0 10px; color: var(--color-accent-strong); font: 600 13px/1.3 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
-.home-proof-scope ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.home-proof-scope li { position: relative; padding-left: 18px; font-size: 15px; line-height: 1.55; }
-.home-proof-scope li::before { content: ''; position: absolute; left: 0; top: .74em; width: 9px; height: 2px; background: var(--color-accent); }
-
-.first-conversation { color: var(--color-text); background: var(--color-surface); }
-.first-conversation-prepare, .first-conversation-next { scroll-margin-top: 116px; }
-.first-conversation .entry-axis { grid-template-columns: 1fr; gap: 12px; margin-top: 30px; padding: 24px 0 0; border-top: 1px solid var(--color-border); border-bottom: 0; }
-.first-conversation .entry-axis-title { white-space: normal; }
-.first-conversation .entry-axis-note { grid-column: auto; }
-.first-conversation .copy-column > p.prep-intro { margin-top: 30px; color: var(--color-text); font-weight: 600; }
-/* Two columns only where the column is wide enough to hold them: 820 px keeps this block beside the «Що буде далі» card. */
-.prep-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 22px 28px; margin: 22px 0 0; padding: 0; list-style: none; }
-.prep-list li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 0 12px; align-items: start; }
-.prep-icon { width: 24px; height: 24px; color: var(--color-accent-strong); }
-.prep-list h3 { margin: 0 0 4px; font: 600 15px/1.2 var(--font-condensed), sans-serif; letter-spacing: .04em; text-transform: none; }
-.prep-list p { margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.6; }
-.first-conversation .copy-column > p.first-conversation-call { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin-top: 34px; padding-top: 24px; border-top: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: 15px; line-height: 1.6; }
-.first-conversation-next { padding: 34px 32px 36px; background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
-.first-conversation-next h3 { margin: 0; font-family: var(--font-display), var(--font-manrope), sans-serif; font-size: clamp(26px, 2.3vw, 34px); font-weight: 400; line-height: 1.12; letter-spacing: -.02em; text-wrap: balance; }
-/* The four answers read as one sequence (owner review, 29.09: «too much text for one block»): numbered markers
-   on a single rail instead of four ruled paragraphs. Markers are drawing-style section callouts. */
-.next-list { margin: 30px 0 0; counter-reset: next-step; }
-.next-list > div { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 18px; padding: 0 0 24px; counter-increment: next-step; }
-.next-list > div:last-child { padding-bottom: 0; }
-.next-list > div::before { content: counter(next-step, decimal-leading-zero); grid-column: 1; grid-row: 1 / span 2; width: 36px; height: 36px; display: grid; place-items: center; color: var(--color-accent-strong); border: 1px solid var(--color-accent); border-radius: 50%; font: 600 13px/1 var(--font-condensed), sans-serif; letter-spacing: .04em; }
-.next-list > div:not(:last-child)::after { content: ''; position: absolute; left: 17.5px; top: 44px; bottom: 8px; width: 1px; background: var(--color-border); }
-.next-list dt, .next-list dd { grid-column: 2; }
-.next-list dt { margin: 0 0 6px; padding-top: 10px; color: var(--color-accent-strong); font: 600 14px/1.3 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
-.next-list dd { margin: 0; color: var(--color-text); font-size: 15px; line-height: 1.65; }
-.next-note { margin: 28px 0 0; padding: 14px 16px; color: var(--color-text-secondary); background: color-mix(in srgb, var(--color-accent) 7%, transparent); border-left: 2px solid var(--color-accent); font-size: 14px; line-height: 1.65; }
-@media (max-width: 1050px) {
-  .home-proof { grid-template-columns: 1fr; }
-  .home-proof-media { min-height: 0; }
-}
-@media (max-width: 760px) {
-  /* One column: the cards need no reserved height, and the block is already the longest on a phone. */
-  .cost-grid.format-grid article { min-height: 0; padding: 24px 22px 26px; }
-  .cost-grid.format-grid .card-icon { margin-top: 16px; }
-  .cost-grid.format-grid h3 { margin-top: 18px; }
-  .contact-bridge p, .home-proof-scope li { font-size: 16px; }
-  .contact-bridge { align-items: flex-start; margin-top: 44px; }
-  .contact-bridge-actions { gap: 4px 28px; }
-  .home-proof-body { padding: 26px 20px; }
-  .home-proof-attribution, .home-proof-context { font-size: 16px; }
-  .prep-list { gap: 20px; }
-  .prep-list p, .next-list dd, .next-note, .first-conversation .copy-column > p.first-conversation-call { font-size: 16px; }
-  .first-conversation .copy-column > p:not(.eyebrow) { font-size: 16px; line-height: 1.75; }
-  .first-conversation-prepare, .first-conversation-next { scroll-margin-top: 88px; }
-  .first-conversation-next { padding: 26px 20px 28px; }
 }
 
 /* Header on phones, every page (the 320 px overflow was site-wide): the logo link is the one flexible item, so the
