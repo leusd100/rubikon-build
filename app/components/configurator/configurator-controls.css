@@ -432,7 +432,7 @@
 }
 .hangar-configurator-embedded .hc-checkbox-row input[type='checkbox']:checked + span::before { opacity: 1; }
 @media (forced-colors: active) {
-  .hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] { appearance: auto; -webkit-appearance: auto; }
+  .hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] { appearance: auto; }
   .hangar-configurator-embedded .hc-checkbox-row input[type='checkbox'] + span::before { display: none; }
 }
 
