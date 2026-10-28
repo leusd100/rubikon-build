@@ -40,7 +40,7 @@ function HangarFrame() {
       {/* span between the axes; clear height */}
       <path pathLength={1} className="dsd-dim" d="M72 230 H288 M72 224 V236 M288 224 V236 M328 196 V124 M322 196 H334 M322 124 H334" />
       <g className="dsd-accent">
-        <path className="dsd-dashed" d="M98 196 V124 H262 V196" />
+        <path className="dsd-dashed dsd-mark" d="M98 196 V124 H262 V196" />
       </g>
     </>
   );
@@ -60,7 +60,7 @@ function SiloBase() {
       <path className="dsd-axis" d="M180 22 V238" />
       <path pathLength={1} className="dsd-dim" d="M113 228 H247 M113 222 V234 M247 222 V234" />
       <g className="dsd-accent">
-        <path pathLength={1} d="M101 174 H125 M113 174 V158 M235 174 H259 M247 174 V158" />
+        <path pathLength={1} className="dsd-mark" d="M101 174 H125 M113 174 V158 M235 174 H259 M247 174 V158" />
       </g>
     </>
   );

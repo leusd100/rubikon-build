@@ -81,3 +81,22 @@ test.describe('PDO-18 · one header model on the first screen', () => {
     }
   });
 });
+
+// The scrolled state is set on the header, its only reader, not on body: inherited from there, every 32 px crossing
+// restyled most of the page — 1 054 of HOME's 1 567 elements at 412 px, 36 on the header (MT-04, 27.10). The open menu's
+// rule has the same specificity and comes later, so it still wins over the scrolled state.
+test('on a phone the scrolled state is the header’s own, and the open menu still wins over it', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'a phone');
+  await page.goto('/', { waitUntil: 'load' });
+  const alphas = () => page.evaluate(() => ({
+    header: getComputedStyle(document.querySelector('.site-header')!).getPropertyValue('--phone-hero-header-alpha').trim(),
+    body: getComputedStyle(document.body).getPropertyValue('--phone-hero-header-alpha').trim(),
+  }));
+  await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'top');
+  expect(await alphas()).toEqual({ header: '92%', body: '92%' });
+  await page.evaluate(() => window.scrollTo(0, 400));
+  await expect(page.locator('html')).toHaveAttribute('data-hero-header', 'scrolled');
+  await expect.poll(alphas).toEqual({ header: '100%', body: '92%' });
+  await page.locator('.site-header details.mobile-menu').evaluate((menu) => menu.setAttribute('open', ''));
+  await expect.poll(alphas).toEqual({ header: '97%', body: '92%' });
+});

@@ -103,6 +103,31 @@ test('every card frames its own sheet in copper, by keyboard as well as by point
   await expect.poll(async () => (await frames())[0]).toBe(accent);
 });
 
+// The copper's job per sheet, shape by shape (catalog-drawing.css). Its rules name the shapes by .dsd-mark, not by tag
+// (MT-01, 27.10): this pins that each one still gets its own animation and delay — the bolts one by one, the third anchor
+// and the gutter last.
+test('a focused card gives each copper shape of its sheet its own job', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a wide-screen row');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/', { waitUntil: 'load' });
+  const jobs: Record<string, string[]> = {
+    '/angary': ['cdw-trace 0s'],
+    '/zernoskhovyshcha': ['cdw-click 0.76s'],
+    '/metalokonstruktsii': ['cdw-bolt 0s', 'cdw-bolt 0.15s', 'cdw-bolt 0.3s', 'cdw-bolt 0.45s'],
+    '/betonni-roboty': ['cdw-set 0s', 'cdw-set 0s', 'cdw-click 0.65s'],
+    '/pokrivelni-roboty': ['none 0s', 'cdw-click 1.1s', 'none 0s'],
+  };
+  const copper = (href: string) => page.locator(`${ROW} .dsh-sheet[href="${href}"] .dsd-accent > *`)
+    .evaluateAll((shapes) => shapes.map((shape) => `${getComputedStyle(shape).animationName} ${getComputedStyle(shape).animationDelay}`));
+  expect(directions.map(({ href }) => href)).toEqual(Object.keys(jobs));
+  for (const [href, job] of Object.entries(jobs)) {
+    expect(await copper(href), `${href} at rest`).toEqual(job.map(() => 'none 0s'));
+    await page.locator(`#directions a.direction-card[href="${href}"]`).focus();
+    await expect.poll(() => copper(href), href).toEqual(job);
+  }
+});
+
 // Below 1200 px the header row is not shown. On a phone the band is one scheme sheet over an index of the five directions,
 // under the header (B, owner 21.10) — home-phone-directions.spec.ts; the header itself stays as it was.
 for (const width of [1199, 768, 390]) {

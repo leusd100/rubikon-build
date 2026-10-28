@@ -220,7 +220,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
   --phone-hero-menu-alpha: 97%;
   --phone-hero-header-backdrop: none;
 }
-:root[data-hero-header="scrolled"] body { --phone-hero-header-alpha: 100%; }
+/* On the header itself, its only reader: on body each 32 px crossing restyled most of the page (MT-04). Same specificity
+   as the open menu's rule under it, which stays the later one and so still wins over the scrolled state. */
+:root[data-hero-header="scrolled"] .site-header { --phone-hero-header-alpha: 100%; }
 .site-header:has(.mobile-menu[open]) { --phone-hero-header-alpha: var(--phone-hero-menu-alpha, 90%); }
 .phone-hero-scroll { display: none; }
 /* The footage already reaches y=0. Clear only its shade behind the header, then restore the existing text contrast.
