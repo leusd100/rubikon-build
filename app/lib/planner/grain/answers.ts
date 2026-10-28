@@ -1,8 +1,8 @@
 /**
  * Grain Planner answers and capacity parsing.
  *
- * Moved verbatim from the prototype (`codex/grain-planner-v0.5 @ 819f163`, app/planner-logic.ts);
- * behaviour is pinned by tests/unit/planner/grain/golden.test.ts.
+ * Moved verbatim from the prototype (`codex/grain-planner-v0.5 @ 819f163`, app/planner-logic.ts), except the
+ * capacity range pattern (made linear, 27.10); behaviour is pinned by tests/unit/planner/grain/golden.test.ts.
  */
 
 export type SingleChoice = string | null;
@@ -36,7 +36,11 @@ export function parseCapacity(value: string): CapacityInfo {
   const normalized = value.trim();
   if (!normalized) return { kind: 'empty' };
   if (normalized === 'unknown') return { kind: 'unknown' };
-  const range = normalized.match(/^(\d[\d\s]*)\s*[–—-]\s*(\d[\d\s]*)$/);
+  // The prototype's `\d[\d\s]*\s*` could split one run of spaces two ways and backtracked quadratically on a long
+  // one (Sonar S8786); here each run of spaces sits between digits, so the match is linear. On the trimmed value it
+  // matches the same strings and, once parsePositiveInteger drops the spaces, gives the same numbers
+  // (tests/unit/planner/grain/capacity.test.ts).
+  const range = /^(\d+(?:\s+\d+)*)\s*[–—-]\s*(\d+(?:\s+\d+)*)\s*$/.exec(normalized);
   if (range) {
     const min = parsePositiveInteger(range[1]);
     const max = parsePositiveInteger(range[2]);
