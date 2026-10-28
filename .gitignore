@@ -58,3 +58,8 @@ desktop.ini
 /.lighthouseci/
 *.log
 tsconfig.tsbuildinfo
+
+# Claude Code: per-task worktrees and personal settings (team settings live in .claude/settings.json)
+/.claude/worktrees/
+/.claude/settings.local.json
+/CLAUDE.local.md
