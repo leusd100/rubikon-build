@@ -23,7 +23,9 @@ let cachedSupport: Exclude<WebglSupport, 'probing'> | null = null;
 function probe(): Exclude<WebglSupport, 'probing'> {
   try {
     const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
+    // WebGL2 only (27.10, GL-02): three r163+ draws with nothing else — its renderer asks for 'webgl2' and throws without
+    // it — so a WebGL1-only browser was offered 3D, downloaded the renderer and got an empty field
+    const gl = canvas.getContext('webgl2');
     if (!gl) return 'unavailable';
     gl.getExtension('WEBGL_lose_context')?.loseContext();
     return 'available';
