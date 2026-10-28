@@ -1,0 +1,166 @@
+# Handoff · Шарди E2E без файлів, що пропускають кожен тест проєкту · H.264 у Docker arm64
+
+| | |
+|---|---|
+| Дата | 2026-10-27 (зроблено й перевірено 2026-10-28) |
+| Виконавець | Claude Code |
+| Підстава | Engineering Excellence brief 27.10, знахідки CI-06, XB-03 (CI-08 — лише контекст, не змінювалась) |
+| PR | [#267](https://github.com/leusd100/rubikon-build/pull/267), Draft. **Merge — лише в черзі основної сесії (28.10, черга A); merge у main = production deploy через Workers Builds** |
+| Гілка / base | `ci/shard-balance` від `main` `aa08d45` (#265). Почато від `9079f47`. Між `9079f47` і `a9f0cec` main змінив `header-first-screen.spec.ts` (#262, див. «Що зроблено»). Між `a9f0cec` і `aa08d45` змінився лише `tests/unit/claude-guard-hook.test.ts`, тож списки e2e і конфіг main ті самі |
+| Коміти | **`82b9c1f`** — CI-06: конфіг, тест-запобіжник, правило в `docs/ci-tier-model.md` · **`75db2a3`** — XB-03: документація · цей коміт — handoff |
+| Змінено | `playwright.config.ts`: 17 spec-файлів у `testIgnore` проєкту `mobile-chromium` (список `phoneSkippedSpecs` із коментарем), `grain-planner-mobile.spec.ts` — у `testIgnore` проєкту `desktop-chromium`. Новий `tests/unit/e2e-project-ignore.test.ts`. `docs/ci-tier-model.md`: правило біля схеми шардів і розділ «Local runs in Docker». `docs/site-health-performance-v1.md:14` — поправка про H.264 |
+| Не змінено | Жоден e2e-тест і жоден `test.skip` у spec-файлах. Кількість шардів, `--global-timeout`, retries, workers, `failOnFlakyTests`, ліміти job, workflow-и, бюджети Lighthouse, CSP, еталони, залежності (0 нових). Код сайту не змінено: `git diff` — лише конфіг Playwright, юніт-тест і документація |
+
+## Що було
+
+**CI-06.** Playwright ділить `--shard` за кількістю тестів у списку. Тест, що пропускає себе під час прогону (`test.skip(isMobile, …)`, `test.skip(testInfo.project.name …)`), у списку теж є. На `9079f47` таких 533 із 2 110. З них 301 — у 30 файлах, де на одному проєкті пропускається кожен тест: 29 файлів на `mobile-chromium` і `grain-planner-mobile.spec.ts` на `desktop-chromium`.
+
+Ці тести займали місце в шардах, а часу майже не коштували. Тому шарди 4/6 і 6/6 Main Regression несли 185 і 166 пропущених із 352 і 351. У двох прогонах, на яких звірялась модель (40440688553 на `9079f47`, 40399217175 на `d1ec39d`), ці шарди йшли 222 / 292 і 197 / 202 с, а решта — 493–689 с. p90 кроку «Run full E2E shard» 1/6 — 678 с за 60 прогонів з 23.10, при `--global-timeout=720000`, тобто запас 42 с.
+
+Це вже пропонували: `docs/handoffs/2026-10-12-main-regression-shards.md:169` (§7.3) і `docs/handoffs/2026-10-23-main-regression-six-shards.md:149` (§7.3).
+
+**XB-03.** `docs/site-health-performance-v1.md:14` пояснював вибір Chrome так: «not headless shell, for H.264». Тобто нібито headless shell не має H.264. Це не так. У Playwright 1.62.1 і headless shell, і повний браузер для x64 Linux, macOS і Windows — Chrome for Testing, з H.264. У CI (ubuntu x64, headless shell) `hero-video.spec.ts` проходить.
+
+Без H.264 лише власна збірка Playwright для Linux arm64, тобто образ `mcr.microsoft.com/playwright` на Apple silicon. Там жоден hero-кліп не вантажиться (error 4), лишається постер, і медіа-тести «падають» через те, чого на сайті немає. Нотатки про це в репозиторії не було.
+
+## Що зроблено
+
+- **`testIgnore` замість пропуску під час прогону, але лише там, де це не змінює покриття.**
+  - Аудит пропонував усі 30 файлів. Внесено 18 — ті, що пропускають кожен тест **на рівні файлу**: верхнім `test.skip(({ isMobile }) => isMobile, …)` або `test.skip(isMobile, …)` у верхньому `beforeEach`.
+  - Для них ignore рівносильний skip-у, і для тестів, яких ще немає: будь-який тест, доданий у такий файл, на цьому проєкті теж пропустився б.
+  - На mobile таких 17 файлів (166 тестів), на desktop — `grain-planner-mobile.spec.ts` (8). Так уже зроблено для `form.spec.ts` на mobile.
+- **11 файлів не внесено, і це свідомо.** Це `action-on-graphite`, `header-hierarchy`, `words-whole`, `smooth-scroll-idle`, `ux-conversion-phase2`, `responsive-a11y-phase1`, `angary-configurator-data`, `angary-editorial`, `configurator-phase4-inquiry`, `configurator-polish`, `inquiry-brief-handoff` — 125 тестів на mobile.
+  - У них skip стоїть у describe або в кожному тесті. Тест, доданий поза таким describe чи без власного skip-у, сьогодні йде й на телефоні, а з ignore файлу він тихо зник би. Саме про цю пастку попереджав верифікатор.
+  - Це не теорія. #262 (MT-04) додав у `header-first-screen.spec.ts`, 30-й файл початкового списку, тест лише для телефона, поза describe зі skip-ом. З повним списком цей тест на `mobile-chromium` не йшов би, і CI був би зелений. Локально за конфігом main він проходить на mobile (1 passed, 3 skipped).
+- **Чому список у конфігу + юніт-тест, а не тег + `grepInvert`.** Тег на рівні skip-у (describe чи тест) зберіг би правило в самих spec-файлах і для тих 11. Але в них 77 skip-ів, 74 з них — в окремих тестах: тег стояв би в кожному такому тесті поруч зі skip-ом. Список у конфігу — механізм, який уже є (`form.spec.ts`). Пастку, про яку попереджав верифікатор, закриває тест-запобіжник:
+  - `tests/unit/e2e-project-ignore.test.ts` читає `playwright.config.ts` і всі spec-и;
+  - перевіряє обидва напрямки: кожен файл зі списку має skip на рівні файлу, і кожен файл із таким skip-ом є в списку; так само для desktop і `!isMobile`;
+  - перевірено п'ятьма мутаціями, кожна падає: файл прибрано зі списку; `header-first-screen` додано в список; skip у `angary-cost-lines` звужено (як перенесений у describe); `grain-planner-mobile` прибрано з desktop-ignore; новий spec зі skip-ом на рівні файлу;
+  - тож перейменований файл, новий файл зі skip-ом на рівні файлу або звужений skip ловляться у Fast Gate, а не губляться мовчки.
+
+  Тег для решти 11 файлів — окреме рішення власника (§ «Ризики»).
+- **`test.skip` у файлах лишились.** Для проєкту, що ігнорує файл, вони вже не спрацьовують, тобто мертві лише на ньому. Але вони пояснюють у самому файлі, чому тест іде один раз, і саме за ними тест-запобіжник впізнає файл.
+- **Nightly Full QA** (`nightly-full-qa.yml:62`) ділить ті самі два проєкти на 4 шарди, тож вирівнюється тим самим рядком конфігу. 6 шардів і global-timeout для Nightly — окрема знахідка CI-07, тут не робилась.
+- **PR Gate.**
+  - У job «Planner regression» список 2 × 61 → 2 × 57: `grain-planner-mobile` більше не значиться на desktop.
+  - Склад «Configurator regression» не змінився: його файлів у списку немає.
+  - Жоден виклик у workflow-ах не передає лише файли зі списку разом із проєктом, що їх ігнорує, тож «No tests found» не виникне. Перевірено `--list` кожної команди `pr-gate`, `main-regression`, `nightly-full-qa`, `cross-browser-keyboard` і `package.json`.
+- **XB-03.**
+  - У рядку 14 виправлено лише пояснення. Як міряли, лишилось («Chrome (not the headless shell)»), а «for H.264» замінено поправкою з датою («Corrected 28.10, XB-03»).
+  - У `docs/ci-tier-model.md` додано розділ «Local runs in Docker»: в образі arm64 Chromium не має H.264 зовсім, ні в headless shell, ні в повному браузері.
+  - Медіа- і hero-тести (`hero-video.spec.ts` і все, що чекає відтворення кліпу) — у нативному Chrome (`channel: 'chrome'`) або з `--platform linux/amd64`.
+  - В amd64 кодек є, але емуляція Rosetta додає таймінгові падіння (`docs/handoffs/2026-10-26-main-red-after-252.md`), тож еталон — CI (ubuntu x64) або нативний Chrome.
+  - Firefox і WebKit в образі arm64 H.264 декодують.
+- **CI-08 (контекст).** Darwin-еталони застарілі, і CI їх не читає. Тому visual-специфікації на Mac тут не запускались (див. «Еталони»).
+
+## До / після
+
+Склад шардів детермінований: `playwright test --list --shard=i/6 --reporter=json` на `aa08d45`, конфіг main проти конфігу гілки. Час — модель:
+- тривалості кожного тесту з логів CI, 2 workers, жадібно в порядку списку;
+- плюс 10,2 с на шард і 0,1 с на пропущений тест. Обидві поправки підібрано за 12 реальними кроками «Run full E2E shard» двох прогонів (40440688553 на `9079f47`, 40399217175 на `d1ec39d`). Відхилення моделі — від −3 до +4 с на кожному кроці, перераховано в цьому проході;
+- тести, додані після `9079f47`, у логах тих прогонів відсутні: 28 тестів, рахуються як 0 с, однаково для main і гілки.
+
+| Main Regression, шард | 1/6 | 2/6 | 3/6 | 4/6 | 5/6 | 6/6 |
+|---|---|---|---|---|---|---|
+| Тестів у списку, main | 357 | 357 | 356 | 356 | 356 | 356 |
+| з них пропускаються, main | 2 | 44 | 19 | 187 | 121 | 160 |
+| Тестів у списку, гілка | 328 | 328 | 327 | 327 | 327 | 327 |
+| з них пропускаються, гілка | 2 | 30 | 17 | 142 | 65 | 103 |
+| Модель main, с: тривалості `9079f47` / `d1ec39d` | 498 / **690** | **636** / 608 | 479 / 482 | 225 / 288 | 598 / 583 | 196 / 200 |
+| **Модель гілки, с** | 458 / **641** | 477 / 466 | 501 / 497 | 338 / 392 | **542** / 536 | 290 / 292 |
+
+| Підсумок (модель) | main `aa08d45` | гілка | для порівняння: повний список аудиту (не пропонується, див. вище) |
+|---|---|---|---|
+| Найповільніший шард, тривалості `9079f47` | 636 с | **542 с** | 487 с |
+| Найповільніший шард, тривалості `d1ec39d` | 690 с | **641 с** | 594 с |
+| Розкид шардів, `9079f47` / `d1ec39d` | 196–636 / 200–690 с | 290–542 / 292–641 с | 329–487 / 327–594 с |
+| Запас до `--global-timeout` 720 с, гірший | 30 с | 79 с | 126 с |
+| 5 шардів (для порівняння) | — | 609 / 791 с — замало, лишаємо 6 | — |
+| Nightly, 4 шарди, найповільніший (тривалості Main) | 800 / 966 с | 733 / 870 с | 698 / 842 с |
+| PR Gate planner, 2 шарди | 169 / 166 с | 166 / 162 с | — |
+| PR Gate configurator, 2 шарди | 233 / 351 с | 233 / 351 с | — |
+
+Аудит рахував 10,0 → 8,2 хв лише на тривалостях того самого прогону (in-sample). Верифікатор на `d1ec39d` отримав ≈9,7 хв. Тут повний список аудиту на `d1ec39d` дає 594 с ≈ 9,9 хв, а запропонована безпечна підмножина — 641 с ≈ 10,7 хв.
+
+Тривалості двох прогонів різняться до 196 с на шард: реальний крок 1/6 — 493 і 689 с. Реальних прогонів після зміни ще немає, тож **покращення статистично не встановлено**.
+
+Детерміновано встановлено інше: 174 тести, що не виконуються, більше не займають місця в шардах. Шарди 4/6–6/6 виконують на 16–28 тестів більше, 1/6–3/6 — на 15–29 менше.
+
+## Перевірка
+
+Production build гілки (`vinext build`, `vinext start` на 127.0.0.1), Chrome 156 (`channel: 'chrome'`: Chromium Playwright на цьому Mac не встановлено), 2 workers.
+
+| Що | Результат |
+|---|---|
+| Тестів у списку `desktop-chromium` + `mobile-chromium`, `aa08d45` (`--list`) | 2 138 → **1 964**: −174, рівно 166 на mobile з 17 файлів і 8 на desktop з одного. Нових 0, прибрано лише цілі файли |
+| Ці 18 файлів **за конфігом main**, локально | mobile: **166 skipped**, 0 виконано. Desktop, `grain-planner-mobile`: **8 skipped**, 0 виконано. Кожен із 174 прибраних тестів тут skipped |
+| Те саме в CI | прогони Main Regression на `9079f47` і `d1ec39d`: 174 / 174 skipped в обох. Ці 18 файлів не змінювались з `9079f47`. Усі тести, що в CI виконались (1 016 desktop, 561 mobile), лишаються в списку гілки |
+| Ці 18 файлів + `header-first-screen` **за конфігом гілки**, обидва проєкти | **178 passed**, 4 skipped, 0 failed (4,2 хв). Skipped — 3 desktop-тести `header-first-screen` на mobile і його тест для телефона на desktop |
+| `header-first-screen` (не в списку), mobile, конфіг main | 1 passed (новий тест #262 лише для телефона), 3 skipped. На гілці так само |
+| Набір job «Planner regression» за конфігом гілки, обидва проєкти | **95 passed**, 19 skipped (5,3 хв) |
+| `tests/unit/e2e-project-ignore.test.ts` | 3 passed; 5 мутацій — 5 падінь |
+| Шарди: об'єднання 6 і 4 шардів = повний список, без перетинів | так, main і гілка |
+| Списки `visual-chromium` (66), `firefox` (19), `webkit` (19) | main = гілка |
+| Виклики Playwright з `pr-gate`, `main-regression`, `nightly-full-qa`, `cross-browser-keyboard`, `package.json` (`--list`) | усі rc 0, тести знайдено |
+| Зібраний вихід гілки проти main | 904 файли, 858 побайтово однакові, 30 однакові після нормалізації UUID збірки й хешів імен, 2 різняться (`server/index.js`, `app-page-cache-finalizer`). Дві збірки самого main між собою дають рівно той самий результат: це випадкові токени збірки, не код |
+| `vitest run` | 103 файли, **1 639 passed** |
+| `tsc --noEmit --incremental false` · `eslint . --ignore-pattern dist --ignore-pattern .next` | чисто · чисто |
+| XB-03: Docker `mcr.microsoft.com/playwright:v1.62.1-noble`, linux/arm64, `--network none` (повтор перевірки верифікатора) | Chromium 151, і headless shell, і повний (`channel: 'chromium'`): `canPlayType` для `avc1.42E01E`, `64001F`, `640029` = `""`. Три H.264-кліпи (два hero з репозиторію і Baseline) — error 4, VP9 грає. Firefox 153 — `probably`, H.264 грає. WebKit 26.5 — `probably`, hero-кліп грає |
+| XB-03: нативний Chrome 156 на Mac (`channel: 'chrome'`, headless) | `probably` для всіх трьох профілів, усі кліпи грають |
+| XB-03: шляхи завантаження в `playwright-core` 1.62.1 | chromium і chromium-headless-shell: Chrome for Testing для `ubuntu*-x64`, `mac*`, `win64`; власна збірка `builds/chromium/…/chromium-linux-arm64.zip` для `ubuntu*-arm64` |
+| **Main Regression на гілці** (dispatch, результат не чекався) | [40682961741](https://github.com/leusd100/rubikon-build/actions/runs/40682961741) на `75db2a3`. Коміт handoff після нього змінює лише цей файл |
+
+## Еталони (DEC-18)
+
+Прогноз: **0 цілей змінюється.**
+- Код сайту не змінено, а зібраний вихід гілки відрізняється від main не більше, ніж дві збірки самого main між собою.
+- Проєкт `visual-chromium` і його 66 тестів однакові на main і на гілці.
+- Тому знімки main ↔ гілка не знімались. Локальний сервер main на цьому Mac зібраний з `9079f47`, а не з base гілки, тож різниця з ним міряла б #258–#265, а не цей PR.
+- Darwin-еталони застарілі (CI-08), тож visual-специфікації на Mac нічого б не довели.
+- Еталони не оновлювались.
+
+## Ризики
+
+- **11 файлів (125 тестів) лишаються пропущеними під час прогону** і займають місце в шардах. Щоб їх прибрати без пастки, потрібен тег на рівні їхнього skip-у (describe чи тест) і `grepInvert` проєкту. Це 77 місць у spec-файлах — **рішення власника**. Виграш за моделлю: ще −55 / −47 с найповільнішого шарду.
+- **Новий spec, що пропускає кожен тест на рівні файлу**, тепер не пройде Fast Gate, доки його не внесуть у список. Це навмисно, інакше нерівність тихо повернеться. Повідомлення тесту показує різницю списків.
+- **Локальний запуск лише файлу зі списку з його проєктом** (`--project=mobile-chromium tests/e2e/links-buttons-focus.spec.ts`) тепер дає «No tests found» і код 1 замість «N skipped». У CI такого виклику немає: перевірено `main-regression`, `nightly-full-qa`, `pr-gate`, `cross-browser-keyboard` і `package.json`.
+- **Інший склад шардів** може виявити залежність від порядку тестів. Звідси один прогін Main Regression на гілці.
+- **Запобіжник читає конфіг регулярними виразами.** Переформатування рядка `testIgnore` проєкту `mobile-chromium` зламає перший тест запобіжника. Він падає голосно, а не пропускає мовчки.
+
+## Не перевірено
+
+- Реальний час шардів після зміни: є лише модель. Один dispatch-прогін — це n = 1; для p90 потрібно ~10 прогонів після merge.
+- Nightly після зміни: модель на тривалостях Main. Реальний крок Nightly 1/4 довший (≈14 хв).
+- Повний `pnpm test:e2e` локально не запускався, хоча `CLAUDE.md` радить його при зміні `playwright.config.ts`: 1 964 тести з 2 workers на безвентиляторному Mac власника — понад годину. Замість нього весь набір проходить dispatch-прогін Main Regression на гілці (CI — авторитет), а через `playwright.config.ts` PR Gate вибере всі зони. Локально запущено всі файли, яких стосується зміна.
+- Docker linux/amd64 сьогодні не перезапускався: amd64-варіанта образу локально немає, а завантаження — кілька ГБ. Для amd64 є перевірка аудитора 27.10 (Chromium 151 x64 — `probably`, кліп грає), а CI x64 стабільно проходить `hero-video.spec.ts`.
+- Перевірку arm64 у Docker зроблено 28.10 до останнього перебазування. Тут сирий файл звірено з висновками, а сам прогін не повторювався: образ і `playwright-core` ті самі.
+- Проєкти `firefox` / `webkit` не запускались. Їхні списки не змінились.
+
+## Відкат
+
+Після squash-merge — `git revert` коміту PR. Змінюються лише конфіг Playwright, один юніт-тест і документація.
+
+## Докази (поза репозиторієм)
+
+Архів дослідження Engineering Excellence 27.10, `implementation/shard-balance/` (поточний прохід — `aa08d45/`, XB-03 — `xb03/`). `shasum -a 256 -c SHA256SUMS` → 0 помилок.
+
+| Файл | SHA-256 |
+|---|---|
+| `coverage-lists.json` | `eb377ca7831212425a07ae203567592f8d95dff52e90a8ab78c6794afa522aeb` |
+| `before-all.json` (список, конфіг main) | `7e051fbfa39227dd81b547ab7b07d2f2a86978d3e9c2c8dfa1288a11e364f335` |
+| `after-all.json` (список, конфіг гілки) | `4d6f6af1913066f6bd8dbe11efc7e932f6c064b270298d079fc22f8f7eac6821` |
+| `calls.txt` (виклики workflow-ів, `--list`) | `35116c8edb441ddba55195e61ab3de49cb1245dc27e6368edb880736d78d6589` |
+| `summary.txt` (модель шардів) | `7743219ca359ebf69b180fec3f70273a61d62d3bc041ebef17619f4b18e63ef4` |
+| `calibration.txt` | `ceb7ee9dbee06283ec0ff5a595536e89b1003325ddd1a5dcff36b083d3005bf6` |
+| `before-mobile-17-files.json` | `5b4adc5f0949fca58e08de7776c3b7d57964f742d80951e9d1f7f18b388dc4cc` |
+| `before-desktop-grain-planner-mobile.json` | `71bb9de0b5c45201655097da8a406dedcdc2d56d1715fc2f2a529f943e68e572` |
+| `before-mobile-header-first-screen.json` | `de476d0aca726e20ff81f4fb6b2b09af7889a4c51f0137ba74503dc16da76bc2` |
+| `after-18-files-plus-header-first-screen.json` | `e150408e205a52e6cd4f7fff36107137998354e7204ea7a17d665ab31f10e137` |
+| `planner-job.json` | `5a35d4e63b247a5ece82722c9197604aca750704317a910504ae3733d1ae736a` |
+| `guard-mutations.txt` | `5fe89cd7a55b60017546fbe73e09a17a664c93a307d0ffd4ca30161a0bf6491f` |
+| `vitest.txt` | `58ca95a37021edf7d8d9abc47cfd0901c146f09e312443add6fe01e4f2134f98` |
+| `dist-main-vs-branch.json` = `dist-main-vs-main.json` | `1723c5d1b280031dfbc3d656d6e0dbd3e81f10b96cf56ff6737d4d2aff694e9b` |
+| `probe-docker-arm64.json` | `e5268d8f5819375bd090cc55f657deb67a1d8747c05e82fbdc27f08b4e97004d` |
+| `probe-mac-chrome.json` | `2b7076c40a159b76ad58c58cddcd78dfbc33ae94187c82301772f85bd07b316b` |
+| `registry-download-paths.txt` | `739a63ef60765058eb8dee9e2b02f3eb51d0ed2bf9ab86ff108bdbcb94325176` |
+| `shard-sim.mjs` · `coverage.py` · `lists.sh` (скрипти) | `f1cfd142…` · `6f9fb2d4…` · `83f7d951…` |
