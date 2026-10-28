@@ -5,6 +5,32 @@ const baseURL = externalBaseURL ?? 'http://127.0.0.1:4173';
 const useProductionBuild = process.env.PLAYWRIGHT_USE_PRODUCTION_BUILD === 'true';
 const useBlobReporter = process.env.PLAYWRIGHT_BLOB_REPORT === 'true';
 
+// Specs that skip every test on the phone project at file level, in a top-level `test.skip(({ isMobile }) => …)` or
+// a top-level `beforeEach` that calls `test.skip(isMobile, …)`, so any test added to one is skipped there too.
+// `--shard` splits the listed tests by count, skipped ones included, and these 166 left Main Regression shards
+// half-empty (CI-06). The phone project ignores the files instead; the in-file skip stays as the reason. Specs that
+// skip per describe or per test are left out: a test added outside those runs on phones, and ignoring the file would
+// drop it silently. tests/unit/e2e-project-ignore.test.ts holds this list to exactly the specs with a file-level skip.
+const phoneSkippedSpecs = [
+  'angary-cost-lines.spec.ts',
+  'angary-route-phone.spec.ts',
+  'consent-pending-hero.spec.ts',
+  'decor-backgrounds.spec.ts',
+  'direction-phone-template.spec.ts',
+  'direction-tablet-template.spec.ts',
+  'direction-texts.spec.ts',
+  'drawing-tour-framing.spec.ts',
+  'grain-builder-phone.spec.ts',
+  'header-tablet-nav.spec.ts',
+  'home-landscape.spec.ts',
+  'inquiry-error-focus.spec.ts',
+  'inquiry-select.spec.ts',
+  'links-buttons-focus.spec.ts',
+  'section-rhythm.spec.ts',
+  'shorter-pro-nas-yak.spec.ts',
+  'yak-pro-nas-touch.spec.ts',
+];
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -53,7 +79,8 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-chromium',
-      testIgnore: /visual\.spec\.ts/,
+      // grain-planner-mobile skips every test off the phone project at file level: the mirror of the list above.
+      testIgnore: /visual\.spec\.ts|grain-planner-mobile\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
@@ -61,7 +88,7 @@ export default defineConfig({
     },
     {
       name: 'mobile-chromium',
-      testIgnore: /form\.spec\.ts|visual\.spec\.ts/,
+      testIgnore: [/form\.spec\.ts|visual\.spec\.ts/, ...phoneSkippedSpecs],
       use: { ...devices['Pixel 7'] },
     },
     {
