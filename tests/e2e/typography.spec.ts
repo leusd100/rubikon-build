@@ -143,6 +143,45 @@ test.describe('accent phrase kept on one line (≥ 761 px)', () => {
   }
 });
 
+// RA-04 · /pro-nas: the team's names fit one line at a tablet's width, and stay there; a reader's spacing makes them longer
+// than their card, and then they wrap in it. Held on one line, «Дмитро Сергійович Леус» ran 29 px past its card at 768 and
+// widened the page at 761.
+test.describe('/pro-nas team names under text spacing (WCAG 1.4.12)', () => {
+  test.skip(({ isMobile }) => isMobile, 'viewports are set explicitly; one project is enough');
+  test('761–1024 px: each name on one line, and inside its card under the override', async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await consent(page);
+    const problems: string[] = [];
+    for (const spacing of [false, true]) for (const width of [761, 768, 820, 1024]) {
+      await page.setViewportSize({ width, height: 1024 });
+      await page.goto('/pro-nas', { waitUntil: 'load' });
+      if (spacing) await page.addStyleTag({ content: TEXT_SPACING });
+      await page.evaluate(() => document.fonts.ready);
+      problems.push(...await page.evaluate(({ label, spacing }) => {
+        const out: string[] = [];
+        const names = [...document.querySelectorAll('.team-about .person-info h3')];
+        if (names.length !== 2) out.push(`${label} ${names.length} names`);
+        for (const name of names) {
+          const range = document.createRange();
+          range.selectNodeContents(name);
+          const rects = [...range.getClientRects()];
+          const right = Math.max(...rects.map((r) => r.right));
+          const lines = new Set(rects.map((r) => Math.round(r.top))).size;
+          const heading = name.getBoundingClientRect();
+          const card = name.closest('.person-story')!.getBoundingClientRect();
+          if (!spacing && lines !== 1) out.push(`${label} «${name.textContent}» on ${lines} lines`);
+          if (right > heading.right + 1) out.push(`${label} «${name.textContent}» ends ${Math.round(right - heading.right)}px past its heading`);
+          if (right > card.right) out.push(`${label} «${name.textContent}» ends ${Math.round(right - card.right)}px past its card`);
+        }
+        if (document.documentElement.scrollWidth > document.documentElement.clientWidth) out.push(`${label} page scrolls sideways`);
+        return out;
+      }, { label: `${width}px${spacing ? ' + text spacing' : ''}`, spacing }));
+    }
+    expect(problems).toEqual([]);
+  });
+});
+
 test.describe('text spacing on phones (WCAG 1.4.12)', () => {
   // The phone project: overlay scrollbars, as on a phone (a desktop window's 15 px scrollbar is not a 320 px phone).
   test.skip(({ isMobile }) => !isMobile, 'a phone check; the mobile project runs it');

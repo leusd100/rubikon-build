@@ -343,6 +343,39 @@ test('each size is shown once, in its field, with its metre inside the field —
   }
 });
 
+// RA-03: iOS zooms the page into a field under 16 px — on a phone held sideways or a tablet as on an upright phone. A touch
+// screen wider than 760 px gets the phone's 16 px, the metre with it at the value's size; a mouse keeps the 15 px.
+test('a touch screen wider than 760 px: the fields and their metre at 16 px, a mouse keeps 15 px (RA-03)', async ({ browser, baseURL }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'explicit touch and mouse contexts run once');
+  test.setTimeout(60_000);
+  for (const { touch, width, height, size } of [
+    { touch: true, width: 844, height: 390, size: '16px' },
+    { touch: true, width: 1024, height: 768, size: '16px' },
+    { touch: false, width: 1024, height: 768, size: '15px' },
+  ]) {
+    const label = `${width}×${height} ${touch ? 'touch' : 'mouse'}`;
+    const context = await browser.newContext({ baseURL, viewport: { width, height }, isMobile: touch, hasTouch: touch, locale: 'uk-UA' });
+    try {
+      await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
+      await context.addInitScript(() => {
+        localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
+      });
+      const page = await context.newPage();
+      await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+      await page.goto('/angary', { waitUntil: 'load' });
+      expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches), label).toBe(touch);
+      for (const id of ['hc-object-region', 'hc-dimension-width', 'hc-dimension-length', 'hc-dimension-height', 'hc-dimension-ridge']) {
+        await expect(page.locator(`#${id}`), `${label} #${id}`).toHaveCSS('font-size', size);
+      }
+      const units = page.locator('#configurator .hc-field-unit');
+      expect(await units.count(), label).toBeGreaterThanOrEqual(3);
+      for (const unit of await units.all()) await expect(unit, `${label} metre`).toHaveCSS('font-size', size);
+    } finally {
+      await context.close();
+    }
+  }
+});
+
 test('the frame tour’s progress bars show only while it plays (F115)', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the tour is viewport-independent');
   await openHangarPage(page, { width: 1440, height: 900 }, 'no-preference');

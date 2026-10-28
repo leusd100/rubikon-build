@@ -108,6 +108,24 @@ test.describe('W2-14 · the mobile menu on a phone', () => {
   }
 });
 
+// RA-01 · the phone layout's widest windows: the column stops at 620 px, and a window-wide panel hanging from «Меню» at the
+// column's right edge ran past the window's left edge from 685 px (−30 px at 744, an iPad mini held upright; −38 at 760),
+// cutting the numbers and the icons. Both projects: a touch tablet, and a desktop window at 175–200 % zoom.
+test.describe('RA-01 · the menu panel between the phone column and the tablet', () => {
+  for (const { width, height } of [{ width: 744, height: 1133 }, { width: 760, height: 800 }]) {
+    test(`${width}×${height}: the panel is the column's 620 px, inside the window`, async ({ page }) => {
+      const panel = await openMenu(page, width, height);
+      const box = (await panel.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(width);
+      expect(Math.round(box.width)).toBe(620);
+      const column = (await page.locator('.site-header .nav-wrap').boundingBox())!;
+      expect(Math.abs(box.x - column.x)).toBeLessThanOrEqual(1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    });
+  }
+});
+
 test.describe('W2-14 · the menu on a tablet', () => {
   test.skip(({ isMobile }) => isMobile, 'explicit tablet viewports');
 

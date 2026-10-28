@@ -1153,7 +1153,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .team-about .person-story-reverse { grid-template-columns: 1fr; align-content: start; }
   .team-about .person-info { min-height: 0; padding: 34px 4px 8px; }
   .team-about .person-info > span { font-size: 12px; }
-  .team-about .person-info h3 { margin: 16px 0 18px; font-size: clamp(23px, 2.55vw, 28px); letter-spacing: -.025em; white-space: nowrap; }
+  .team-about .person-info h3 { margin: 16px 0 18px; font-size: clamp(23px, 2.55vw, 28px); letter-spacing: -.025em; }
   .team-about .person-info p,
   .team-about .person-info p:first-of-type { font-size: 15px; line-height: 1.7; }
   .steps { grid-template-columns: repeat(6, 1fr); }
@@ -1308,8 +1308,10 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
      place; computed output is unchanged). */
   /* «Меню» is 12 px (W2-14): the button keeps its width by a tighter inside, so the logo beside it keeps its 188 px */
   .mobile-menu summary { min-width: 92px; height: 42px; gap: 9px; padding-inline: 10px; }
-  /* the panel the width of the column (it was 310 px in a 358 px column, with a strip of the hero beside it) */
-  .mobile-menu nav { width: calc(100vw - 32px); }
+  /* the panel the width of the column (it was 310 px in a 358 px column, with a strip of the hero beside it), and no wider:
+     the column stops at 620 px, so from 685 px a window-wide panel hanging from «Меню» ran past the window's left edge,
+     and from 727 px it cut the numbers and the icons (RA-01; 744 is an iPad mini held upright) */
+  .mobile-menu nav { width: min(100vw - 32px, 620px); }
   .mobile-call { width: 44px; height: 42px; }
   .hero-action-row { display: grid; justify-items: start; gap: 14px; margin-top: 30px; }
   .hero { min-height: 790px; height: auto; }
@@ -1356,7 +1358,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .person-info { justify-content: flex-start; padding: 28px 20px 20px; border-bottom: 0; }
   .person-info > span { max-width: none; line-height: 1.45; } /* the UI label at every width (W3-02: .09em on a phone before) */
   .person-info h3 { margin: 18px 0; font-size: clamp(32px, 8.4vw, 38px); line-height: 1.02; }
-  .team-about .person-info h3 { font-size: clamp(30px, 8.2vw, 38px); letter-spacing: normal; white-space: normal; }
+  .team-about .person-info h3 { font-size: clamp(30px, 8.2vw, 38px); letter-spacing: normal; }
   .person-info p, .person-info p:first-of-type { font-size: 16px; line-height: 1.65; }
   .team-home .person-info p, .team-home .person-info p:first-of-type { font-size: 16px; }
   .steps { grid-template-columns: 1fr; }
@@ -1853,8 +1855,10 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 
 /* ── UX pass 2026-10 · Phone fields at 16 px ─────────────────────────────────────────────────────────────────────────
    iOS Safari zooms the page into any field whose text is under 16 px. Every text field, select and textarea on a phone
-   gets 16 px (the inquiry form, the configurator's number fields, the planner's tonnage). */
-@media (max-width: 760px) {
+   gets 16 px (the inquiry form, the configurator's number fields, the planner's tonnage) — and on any touch screen wider
+   than 760 px too, a phone held sideways or a tablet, where the zoom is the same (RA-03: 15 px on the configurator at
+   844×390). A mouse keeps the 15 px. */
+@media (max-width: 760px), (pointer: coarse) {
   :root body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) { font-size: 16px; }
 }
 

@@ -408,8 +408,8 @@
   position: absolute; top: 50%; right: 11px; color: var(--color-text-muted); font: 500 15px/1 var(--font-manrope), sans-serif;
   transform: translateY(-50%); pointer-events: none;
 }
-/* …at the value's size on a phone, whose fields are 16 px (globals.css: iOS zooms into smaller ones) */
-@media (max-width: 760px) { .hc-field-unit { font-size: 16px; } }
+/* …at the value's size on a phone and on any touch screen, whose fields are 16 px (globals.css: iOS zooms into smaller ones) */
+@media (max-width: 760px), (pointer: coarse) { .hc-field-unit { font-size: 16px; } }
 .hangar-configurator-embedded .hc-field-controls input[type='text']:hover:not(:focus) { border-color: var(--color-text-secondary); }
 
 /* The boxes as the answers are drawn (10.10, audit F113): an 18 px square, filled when ticked, with the chips' copper
