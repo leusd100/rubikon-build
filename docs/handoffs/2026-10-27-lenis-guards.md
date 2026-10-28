@@ -5,7 +5,7 @@
 | Дата | 2026-10-27 – 28 |
 | Виконавець | Claude Code |
 | Підстава | Engineering Excellence brief 27.10, знахідки MO-01, MO-02, MO-03 (`06_SCROLL_AND_MOTION_ANALYSIS.md`, підтверджені перевіркою). MO-04 — лише контекст, не змінено |
-| PR | [#261](https://github.com/leusd100/rubikon-build/pull/261), Draft. Merge — за вказівкою Дмитра 28.10, лише коли перевірки PR зелені; **production deploy — лише з окремого OK Дмитра** |
+| PR | [#261](https://github.com/leusd100/rubikon-build/pull/261), Draft. **Merge і production deploy — лише з окремого OK Дмитра**: push у `main` запускає Workers Builds на production-скрипті (так було з `9079f47`, #256), тож merge — це й деплой |
 | Гілка / base | `fix/lenis-guards` від `main` `9079f47` |
 | Коміти | **`2ee652e`** — код і тести · цей коміт — handoff |
 | Змінено | `app/components/SmoothScroll.tsx`: опція `prevent` (вузол з `aria-modal="true"`), `anchors: false` і власний слухач якорів, `HOVER_QUERY` в умові запуску та його `change`. Коментарі в минулому часі там, де вони описували старий обробник якорів Lenis: `HangarConfigurator.tsx`, `revealAttachedBrief.ts`, `configurator-phase4-inquiry.spec.ts`, `form.spec.ts`; у `smooth-scroll-idle.spec.ts` коментар називає порядок слухачів, на який спирається тест якоря. Тести: 8 нових e2e у `tests/e2e/smooth-scroll.spec.ts` |
