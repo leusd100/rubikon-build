@@ -227,8 +227,8 @@ function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElem
       if (!link || !layout || !section || !tabs || event.defaultPrevented || event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       if (link.hasAttribute('data-open-steps')) {
-        // handled here: the desktop's smooth scrolling (Lenis, SmoothScroll.tsx) takes anchor clicks on the window too,
-        // read the page mid-jump and carried it back down to the form
+        // handled here: the desktop's smooth scrolling (Lenis, SmoothScroll.tsx) took anchor clicks on the window too
+        // (until MO-02), read the page mid-jump and carried it back down to the form
         event.preventDefault();
         event.stopPropagation();
         window.history.replaceState(window.history.state, '', '#configurator');
@@ -250,7 +250,7 @@ function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElem
       if (!link || !target || event.defaultPrevented || event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      // the desktop's smooth scrolling (Lenis) would make the same jump again from the window
+      // the desktop's smooth scrolling (Lenis) made the same jump again from the window (until MO-02)
       event.stopPropagation();
       window.history.replaceState(window.history.state, '', link.hash);
       target.scrollIntoView({ block: 'start' });

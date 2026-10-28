@@ -19,8 +19,8 @@ const CAPTURING_PHASE = 1;
 type LinkClick = Pick<Event, 'preventDefault' | 'stopPropagation' | 'eventPhase'>;
 
 /**
- * A jump taken over is not made again from the window. From 1181 px the desktop scrolls through Lenis (SmoothScroll.tsx,
- * `anchors: true`), whose click listener on the window takes every anchor of the page, prevented or not: it carried the
+ * A jump taken over is not made again from the window. From 1181 px the desktop scrolls through Lenis (SmoothScroll.tsx),
+ * whose click listener on the window took every anchor of the page, prevented or not, until MO-02: it carried the
  * visitor to #inquiry at the end of the page after the form had opened under the stamp, the brief focused 4 800 px above
  * the window (review 18.10, PDO-02). The click stops at the document — where React and the page's own listeners have
  * it — as HangarConfigurator's #configurator links do. A capture listener (ConversationFormToggle) sees the click before

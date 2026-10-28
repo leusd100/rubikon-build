@@ -93,10 +93,10 @@ test('the line in the closing block, the route node and the cost CTA take the vi
   }
 });
 
-// From 1181 px, without reduced motion, the desktop scrolls through Lenis (SmoothScroll.tsx), which takes every anchor
-// click on this page at the window — prevented or not — and made the jump to #inquiry, the end of the page, after the
-// form had opened under the stamp: the brief focused 4 800 px above the window (review 18.10, PDO-02). The tests above
-// run with reduced motion, where Lenis never starts, and could not see it.
+// From 1181 px, without reduced motion, the desktop scrolls through Lenis (SmoothScroll.tsx), which took every anchor
+// click on this page at the window — prevented or not, until MO-02 — and made the jump to #inquiry, the end of the
+// page, after the form had opened under the stamp: the brief focused 4 800 px above the window (review 18.10, PDO-02).
+// The tests above run with reduced motion, where Lenis never starts, and could not see it.
 const briefTop = (page: Page) => brief(page).evaluate((element) => Math.round(element.getBoundingClientRect().top));
 const headerBottom = (page: Page) => page.locator('.site-header').evaluate((header) => Math.round(header.getBoundingClientRect().bottom));
 
