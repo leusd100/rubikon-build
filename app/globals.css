@@ -1843,4 +1843,4 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 .island-fallback-note p { margin: 0; }
 .island-fallback-photo { margin: 0; display: grid; gap: 10px; }
 .island-fallback-photo img { display: block; width: 100%; height: auto; }
-.island-fallback-photo figcaption { font-size: 14px; color: var(--color-muted, currentColor); }
+.island-fallback-photo figcaption { font-size: 14px; color: var(--color-text-muted); }

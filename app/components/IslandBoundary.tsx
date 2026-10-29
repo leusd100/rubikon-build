@@ -1,6 +1,6 @@
 'use client';
 
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, Suspense, type ErrorInfo, type ReactNode } from 'react';
 
 /**
  * An optional interactive block (HOME's X-Ray, the /angary configurator) is an enhancement of a page that has already
@@ -26,7 +26,10 @@ export class IslandBoundary extends Component<
   }
 
   render() {
-    if (!this.state.failed) return this.props.children;
+    // Suspense keeps a failure during hydration inside this block: without it React gave up hydrating the whole root and
+    // rendered every node of the page again on the client (review 29.10: the h1 and the form were new nodes), so focus,
+    // video and form state were lost and the rest of the page waited for the island's chunk to hydrate
+    if (!this.state.failed) return <Suspense fallback={null}>{this.props.children}</Suspense>;
     return <div className="island-fallback" data-island-fallback={this.props.name}>{this.props.fallback}</div>;
   }
 }
