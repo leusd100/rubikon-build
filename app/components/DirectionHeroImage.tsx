@@ -24,7 +24,7 @@ type DirectionHeroImageProps = {
 export function DirectionHeroImage({ asset }: DirectionHeroImageProps) {
   // The server cannot know the theme, so its markup is the System one: the dark sources carry the OS dark media query
   // and the browser picks one art on the first parse. Rendering the daylight art there made every dark visitor fetch the
-  // daylight hero (high priority) and then the dark one after hydration (MD-01, 29.10: +50…230 KB at 390, +242…446 KB at
+  // daylight hero (high priority) and then the dark one after hydration (MD-01, 29.10: +52…230 KB at 390, +162…446 KB at
   // 1440). Only a stored Light or Dark swaps to an explicit picture on the client.
   const preference = useSyncExternalStore(subscribeTheme, readPreference, () => 'system' as const);
   const theme = preference === 'system' ? null : preference;

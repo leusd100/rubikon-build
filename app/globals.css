@@ -874,15 +874,12 @@ body:has(main:is([data-home="v2"], .about-page)) {
   .direction-hero-image { mask-image: linear-gradient(180deg, transparent var(--direction-hero-image-top), #000 calc(var(--direction-hero-image-top) + 44px)); }
 }
 .service-subhero-media .direction-hero-image[data-art-theme="dark"] { filter: saturate(.88) contrast(1.02); }
-@media (prefers-color-scheme: dark) {
-  .service-subhero-media .direction-hero-image[data-art-theme="system"] { filter: saturate(.88) contrast(1.02); }
-}
+:root[data-theme="dark"] .service-subhero-media .direction-hero-image[data-art-theme="system"] { filter: saturate(.88) contrast(1.02); }
 /* Conceal art that disagrees with the shown theme until the client selects the matching picture. The server's System
-   art follows the OS, so it only disagrees when a stored Light or Dark differs from the OS theme. */
+   art needs no rule: HERO_THEME_SCRIPT points it at a stored theme before the img picks a source, so it is shown at
+   once (hiding it until hydration made a stored theme's hero appear ~1 s later, review 29.10). */
 :root[data-theme="dark"] .direction-hero-image[data-art-theme="light"],
 :root[data-theme="light"] .direction-hero-image[data-art-theme="dark"] { visibility: hidden; opacity: 0; }
-@media (prefers-color-scheme: light) { :root[data-theme="dark"] .direction-hero-image[data-art-theme="system"] { visibility: hidden; opacity: 0; } }
-@media (prefers-color-scheme: dark) { :root[data-theme="light"] .direction-hero-image[data-art-theme="system"] { visibility: hidden; opacity: 0; } }
 .service-subhero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,9,10,.95), rgba(8,9,10,.72) 52%, rgba(8,9,10,.18)), linear-gradient(0deg, rgba(8,9,10,.72), transparent 64%); }
 .service-subhero-content { position: relative; z-index: 2; padding-top: var(--hero-pad-top); padding-bottom: var(--hero-pad-bottom); }
 .service-subhero-content h1 { max-width: 1040px; }

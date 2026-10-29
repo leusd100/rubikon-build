@@ -30,8 +30,6 @@
 /* The theme is set before paint; hide the SSR fallback until React selects the matching art. */
 :root[data-theme="dark"] .directions-page .directions-hero-sequence-image[data-art-theme="light"],
 :root[data-theme="light"] .directions-page .directions-hero-sequence-image[data-art-theme="dark"] { visibility: hidden; opacity: 0; }
-@media (prefers-color-scheme: light) { :root[data-theme="dark"] .directions-page .directions-hero-sequence-image[data-art-theme="system"] { visibility: hidden; opacity: 0; } }
-@media (prefers-color-scheme: dark) { :root[data-theme="light"] .directions-page .directions-hero-sequence-image[data-art-theme="system"] { visibility: hidden; opacity: 0; } }
 /* Dark under the words on the left, the slide open on the right, a little shade at the top for the slide caption */
 .directions-page .directions-subhero .subhero-overlay {
   background:

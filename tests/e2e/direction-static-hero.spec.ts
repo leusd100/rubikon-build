@@ -291,10 +291,11 @@ for (const viewport of [
         const image = document.querySelector<HTMLImageElement>(
           '.direction-hero-image, .directions-hero-sequence-image',
         );
-        (window as Window & { __heroFirstFrame?: { theme?: string; art?: string | null; visibility?: string } }).__heroFirstFrame = {
+        (window as Window & { __heroFirstFrame?: { theme?: string; art?: string | null; visibility?: string; darkMedia?: string[] } }).__heroFirstFrame = {
           theme: document.documentElement.dataset.theme,
           art: image?.dataset.artTheme,
           visibility: image ? getComputedStyle(image).visibility : undefined,
+          darkMedia: [...(image?.parentElement?.querySelectorAll('source[data-dark]') ?? [])].map((source) => source.getAttribute('media') ?? ''),
         };
       }, { once: true });
     });
@@ -302,12 +303,15 @@ for (const viewport of [
     for (const path of [...directions, '/napryamky']) {
       await page.goto(path, { waitUntil: 'load' });
       const firstFrame = await page.evaluate(() =>
-        (window as Window & { __heroFirstFrame?: { theme?: string; art?: string | null; visibility?: string } }).__heroFirstFrame,
+        (window as Window & { __heroFirstFrame?: { theme?: string; art?: string | null; visibility?: string; darkMedia?: string[] } }).__heroFirstFrame,
       );
       expect(firstFrame?.theme, path).toBe('dark');
-      // The server's System art follows the OS (light here), so under a stored Dark it must stay hidden like daylight art
+      // The server's System picture is shown at once: by DOMContentLoaded its inline script must already have pointed
+      // every blue-hour source at the stored Dark (no OS condition left); daylight art must still be hidden
       expect(firstFrame?.art, path).toMatch(/^(light|dark|system)$/);
-      if (firstFrame?.art !== 'dark') expect(firstFrame?.visibility, path).toBe('hidden');
+      if (firstFrame?.art === 'light') expect(firstFrame.visibility, path).toBe('hidden');
+      if (firstFrame?.art === 'system') expect(firstFrame.darkMedia?.length, path).toBeGreaterThan(0);
+      if (firstFrame?.art === 'system') expect(firstFrame.darkMedia?.filter((media) => media.includes('prefers-color-scheme')), path).toEqual([]);
 
       const image = page.locator('.direction-hero-image, .directions-hero-sequence-image').first();
       await expect(image).toHaveAttribute('data-art-theme', 'dark');
