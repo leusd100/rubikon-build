@@ -715,6 +715,34 @@ async function arrivalOf(page: Page) {
   return page.evaluate(() => (window as unknown as { arrival: Arrival }).arrival);
 }
 
+/** Brings the sheet up as a visitor's scroll does before the arrival: a fifth of it into the window — under the arrival's
+ *  threshold (DrawingSheet, 0.35), so it stays armed — until the page draws its frames at pace again. Jumped to from the
+ *  top of the page, the whole new window was rastered (in software: headless Chromium has no GPU) as the sheet arrived:
+ *  the main thread waited twice for the commit (150–240 ms), the cover's transition started 490–680 ms after the arrival
+ *  instead of ~200 and the plotting ran into the sweep past its 900 ms (Nightly 27.10: 909.9 ms; here 993–1026). With the
+ *  sheet a fifth in view first: the cover at 210–250 ms, the plotting 746–777 ms into the sweep, at most one frame over
+ *  50 ms (73) at the arrival (desktop 1440 × 900, trace and Long Animation Frames, 28.10) */
+async function approach(page: Page) {
+  await page.evaluate(async () => {
+    const sheet = document.querySelector('#real-object .hv2-contour')!;
+    const box = sheet.getBoundingClientRect();
+    scrollBy({ top: box.top - (innerHeight - box.height * 0.2), behavior: 'instant' });
+    // At pace: five frames in a row, each within 50 ms of the one before
+    await new Promise<void>((resolve) => {
+      let last = performance.now();
+      let calm = 0;
+      const tick = (now: number) => {
+        calm = now - last < 50 ? calm + 1 : 0;
+        last = now;
+        if (calm >= 5) resolve();
+        else requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  });
+  await expect(page.locator('#real-object .hv2-contour')).toHaveAttribute('data-sheet-state', 'armed');
+}
+
 test('the sheet says in one line what the two halves are, the retouch and the provenance under it, and carries the outline — one solid line, no «виміряно» or «наближено»', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { sheet, stage, layers } = await open(page);
@@ -2064,6 +2092,7 @@ test('arriving with motion, the photo plots in whole, then the seam passes once 
   await expectWindow(stage, 100);
   await recordArrival(page);
   await page.evaluate(() => Promise.all([...document.querySelectorAll<HTMLImageElement>('.hv2-contour img')].map((image) => { image.loading = 'eager'; return image.decode().catch(() => undefined); })));
+  await approach(page);
   // The stage itself into view (a phone's sheet is taller than the window): the sheet arrives, and the sweep sees it
   await centre(stage);
   const { frames, on, run, ended, shifts } = await arrivalOf(page);
