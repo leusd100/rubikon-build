@@ -256,19 +256,19 @@ test('direction static heroes use responsive images: a phone never fetches the l
     const file = request.url().match(/\/media-responsive\/(direction-hero-[^/?#]+)/)?.[1];
     if (file) requests.push(file);
   });
-  const heroReady = (theme: 'light' | 'dark') => expect.poll(() => page.locator('.service-subhero img.direction-hero-image').evaluateAll(
+  const heroReady = (theme: 'light' | 'dark' | 'system') => expect.poll(() => page.locator('.service-subhero img.direction-hero-image').evaluateAll(
     (nodes, wanted) => nodes.length === 1 && (nodes[0] as HTMLImageElement).complete && (nodes[0] as HTMLImageElement).naturalWidth > 0
       && (nodes[0] as HTMLImageElement).dataset.artTheme === wanted, theme)).toBe(true);
 
-  // 1. The server's light hero, then a theme change, which mounts a new img on the client
+  // 1. The server's System hero (light OS here), then a theme change, which mounts a new img on the client
   await page.goto('/angary', { waitUntil: 'load' });
-  await heroReady('light');
+  await heroReady('system');
   const menu = page.locator('.mobile-menu');
   await menu.locator('summary').click();
   await menu.locator('.theme-options').getByLabel('Темна', { exact: true }).check();
   await heroReady('dark');
 
-  // 2. The next page with the stored dark choice: the server's light hero gives way to a client-made dark one
+  // 2. The next page with the stored dark choice: the server's System hero gives way to a client-made dark one
   await page.goto('/pokrivelni-roboty', { waitUntil: 'load' });
   await heroReady('dark');
 
@@ -305,8 +305,9 @@ for (const viewport of [
         (window as Window & { __heroFirstFrame?: { theme?: string; art?: string | null; visibility?: string } }).__heroFirstFrame,
       );
       expect(firstFrame?.theme, path).toBe('dark');
-      expect(firstFrame?.art, path).toMatch(/^(light|dark)$/);
-      if (firstFrame?.art === 'light') expect(firstFrame.visibility, path).toBe('hidden');
+      // The server's System art follows the OS (light here), so under a stored Dark it must stay hidden like daylight art
+      expect(firstFrame?.art, path).toMatch(/^(light|dark|system)$/);
+      if (firstFrame?.art !== 'dark') expect(firstFrame?.visibility, path).toBe('hidden');
 
       const image = page.locator('.direction-hero-image, .directions-hero-sequence-image').first();
       await expect(image).toHaveAttribute('data-art-theme', 'dark');
@@ -319,4 +320,44 @@ for (const viewport of [
       expect(src, path).toContain(family);
     }
   });
+}
+
+// MD-01 (29.10): the dark theme used to fetch the daylight hero (the server's markup, high priority) and then the dark one.
+// The server now renders the System picture and an inline script points it at a stored theme, so every theme mode
+// fetches exactly one hero file — the one it shows. /napryamky also loads its second slide ahead, so only the first
+// slide's files are counted there.
+for (const viewport of [
+  { name: 'desktop', width: 1440, height: 900 },
+  { name: 'phone', width: 390, height: 844 },
+] as const) {
+  for (const mode of [
+    { name: 'OS dark', scheme: 'dark', stored: null, shown: 'dark' },
+    { name: 'OS light', scheme: 'light', stored: null, shown: 'light' },
+    { name: 'stored Dark under a light OS', scheme: 'light', stored: 'dark', shown: 'dark' },
+    { name: 'stored Light under a dark OS', scheme: 'dark', stored: 'light', shown: 'light' },
+  ] as const) {
+    test(`${mode.name}: one hero download, the art it shows, at ${viewport.name}`, async ({ page }) => {
+      test.setTimeout(60_000);
+      await page.setViewportSize(viewport);
+      await page.emulateMedia({ colorScheme: mode.scheme });
+      if (mode.stored) await page.addInitScript((value) => localStorage.setItem('rubikon-theme', value), mode.stored);
+      for (const path of [...directions, '/napryamky']) {
+        const requests: string[] = [];
+        const record = (request: { url(): string }) => {
+          const file = request.url().match(/\/media-responsive\/((?:direction-hero|directions-sequence|mobile-directions)-[^/?#]+)/)?.[1];
+          if (file && (path !== '/napryamky' || /-angary-/.test(file))) requests.push(file);
+        };
+        page.on('request', record);
+        await page.goto(path, { waitUntil: 'load' });
+        const image = page.locator('.direction-hero-image, .directions-hero-sequence-image').first();
+        await expect.poll(() => image.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0)).toBe(true);
+        await page.waitForTimeout(500);
+        page.off('request', record);
+        const shown = await image.evaluate((node: HTMLImageElement) => node.currentSrc.split('/').pop() ?? '');
+        expect(requests, `${path}: hero files fetched`).toHaveLength(1);
+        expect(shown, `${path}: the art shown is the one fetched`).toBe(requests[0]);
+        expect(shown, `${path}: ${mode.shown} art`).toMatch(mode.shown === 'dark' ? /blue-hour|-dark-/ : /photo-variant|daylight|-light-/);
+      }
+    });
+  }
 }
