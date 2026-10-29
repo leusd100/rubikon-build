@@ -41,10 +41,11 @@ checks the build result before downloading or merging browser reports, and the f
 visual and Lighthouse success. Failed Lighthouse profiles retain hidden files from `.lighthouseci/` as diagnostics.
 
 `--shard` splits the listed tests by count, and a test that skips itself at run time is listed too. A spec that skips
-every test on one project at file level (a top-level `test.skip`, or a skip in a top-level `beforeEach`) is therefore
-also in that project's `testIgnore` in `playwright.config.ts`, its in-file skip kept as the reason, so those tests take
-no place in the Main Regression and Nightly shards; `tests/unit/e2e-project-ignore.test.ts` holds the list to exactly
-such specs. A skip per describe or per test stays a skip: ignoring that file would also hide a test added outside it.
+every test on one project at file level (a top-level `test.skip`, or a skip as the first statement of a top-level
+`beforeEach`) is therefore also in that project's `testIgnore` in `playwright.config.ts`, its in-file skip kept as the
+reason, so those tests take no place in the Main Regression and Nightly shards; `tests/unit/e2e-project-ignore.test.ts`
+holds the list to exactly the specs with one of these two forms. A skip per describe or per test stays a skip: ignoring
+that file would also hide a test added outside it.
 
 SonarQube and GitHub-managed CodeQL continue to report on pull requests but are not part of the
 single aggregate merge gate.

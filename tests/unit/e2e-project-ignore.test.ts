@@ -13,9 +13,10 @@ const specs = readdirSync(E2E_DIR)
   .sort()
   .map((file) => ({ file, source: readFileSync(new URL(file, E2E_DIR), 'utf8') }));
 
-// A top-level `test.skip(({ isMobile }) => isMobile, …)`, or `test.skip(isMobile, …)` among the statements of a
-// top-level `beforeEach` (its body is indented, and its closing `});` at column 0 ends the match)
-const PHONE_SKIP = /^test\.skip\(\(\{ isMobile \}\) => isMobile,|^test\.beforeEach\(async \(\{[^}\n]*\bisMobile\b[^}\n]*\}\) => \{\n(?:(?: {2}.*)?\n)*? {2}test\.skip\(isMobile,/m;
+// A top-level `test.skip(({ isMobile }) => isMobile, …)`, or `test.skip(isMobile, …)` as the first statement of a
+// top-level `beforeEach` (only comment lines before it): a statement ahead of the skip, such as an early return,
+// could let some tests run on phones, and the ignored file would drop them silently
+const PHONE_SKIP = /^test\.skip\(\(\{ isMobile \}\) => isMobile,|^test\.beforeEach\(async \(\{[^}\n]*\bisMobile\b[^}\n]*\}\) => \{\n(?: {2}\/\/.*\n)* {2}test\.skip\(isMobile,/m;
 const DESKTOP_SKIP = /^test\.skip\(\(\{ isMobile \}\) => !isMobile,/m;
 
 const phoneSkippedSpecs = [...(/const phoneSkippedSpecs = \[([^\]]*)\]/.exec(config)?.[1] ?? '').matchAll(/'([^']+)'/g)]
