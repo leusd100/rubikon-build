@@ -7,7 +7,7 @@
 | Підстава | Engineering Excellence brief 27.10, знахідки GL-02, GL-03, GL-04 (звіт «WebGL / 3D / інтерактив», з поправками незалежної перевірки); GL-01 — контекст |
 | PR | [#264](https://github.com/leusd100/rubikon-build/pull/264), готовий до перевірки (не Draft). **Merge — лише в черзі основної сесії (28.10, черга A); merge у main = production deploy через Workers Builds.** |
 | Гілка / base | `fix/webgl-fallback-leak` від `main` `9079f47`. 29.10 `origin/main` = `aa08d45`: файлів цієї гілки після `9079f47` там не змінювали, GitHub — `MERGEABLE` / `CLEAN` |
-| Коміти | **`b9d266e`** — код і тести · `1660320` — handoff · цей коміт — handoff після повторної перевірки 29.10 (код не змінено) |
+| Коміти | **`b9d266e`** — код і тести · `1660320` — handoff · `00eede5` — handoff після повторної перевірки 29.10 · цей коміт — CI 29.10 і перелік доказів (код після `b9d266e` не змінено) |
 | Змінено | `three/useWebglSupport.ts`: перевірка лише `webgl2` (GL-02). `three/ThreeHangarView.tsx`: рендерер робить сам компонент через gl-фабрику R3F і переводить його збій на креслення (GL-02); `ContextLossRecovery` — кадр після відновлення контексту, креслення після 3 с втрати (GL-03); `SharedResourceRelease` / `disposeSharedResources` — `dispose()` спільних об'єктів при закритті (GL-04). `three/proceduralTextures.ts`: `disposeRepeatedNoiseTextures()`. `HangarPreviewModes.tsx`: виправлено коментар про «звільнення браузером». Тести: `configurator-3d.spec.ts` (+5) |
 | Не змінено | Геометрія, матеріали та їхні значення, світло, камера, тіні, параметри рендерера (`antialias`, `preserveDrawingBuffer`, `alpha`), `frameloop="demand"`, момент і місце перевірки WebGL (GL-01), `ThreeErrorBoundary`, бюджети Lighthouse, CSP, еталони DEC-18, залежності (0 нових) |
 
@@ -90,7 +90,7 @@
 | Нові тести, гілка, desktop + mobile chromium, 2 workers | 28.10 `--repeat-each=3`: **15 passed**; 29.10 `--repeat-each=2`: **10 passed**; mobile — skipped за задумом |
 | Ті самі тести на збірці main | 28.10 `--repeat-each=2`: 10 failed; 29.10: **5 failed** з 5 — чип є; креслення не повертається; 0 пікселів після відновлення; креслення не повертається; 4 контексти |
 | Пов'язані e2e, гілка, desktop + mobile chromium, 2 workers: `configurator-3d`, `configurator-3d-buildup`, `configurator-3d-enhancements`, `configurator-behaviour`, `configurator-fullscreen-accessibility`, `configurator-inquiry-handoff`, `configurator-palette-accessibility`, `configurator-phase4-inquiry`, `configurator-polish`, `configurator-sheet`, `configurator`, `angary-interactive`, `angary-configurator-data`, `r3f-spike` | 28.10 і 29.10: **333 passed**, 107 skipped, 0 failed, 0 flaky |
-| CI PR #264 (PR Fast Gate, гілка злита з `main` `a9f0cec`, Linux, Playwright Chromium із програмним GL; retries 2 + `failOnFlakyTests`) | Configurator regression 1/2 — 136 passed, 2/2 — 101 passed, 35 skipped (разом із 5 новими тестами); Changed-area visual regression — 21 passed проти еталонів репозиторію; PR Gate — success |
+| CI PR #264 (PR Fast Gate, Linux, Playwright Chromium із програмним GL; retries 2 + `failOnFlakyTests`): 28.10 — гілка злита з `main` `a9f0cec`, 29.10 — з `main` `aa08d45` | обидва рази: Configurator regression 1/2 — 136 passed, 2/2 — 101 passed, 35 skipped (разом із 5 новими тестами); Changed-area visual regression — 21 passed проти еталонів репозиторію; PR Gate — success |
 | `vitest run` | 98 файлів, 1542 passed |
 | `tsc --noEmit`, `eslint` | чисто |
 
@@ -120,8 +120,9 @@
 | `rerun-2910/pxdiff-main-branch.txt` (28.10 — той самий вміст) | `7f4db797015ec08b99bb3b80b74df3dc3e727f1b5616aac38366af06a1d1c6e7` |
 | `rerun-2910/pxdiff-main2810-main2910.txt` (28.10 `pxdiff-main1-main2.txt` — той самий вміст) | `9c0f952579cf30b143e783c9035def8d8e8129acf5e870cc43d1f3a58039aa2a` |
 | `rerun-2910/chunk-sizes.txt` | `76bb4253ade70c15e1399bf9625f031a719ac3d702de48deb82589340bb64e43` |
-| `rerun-2810/ci-and-build-summary.txt` (CI PR #264) | `e5564d8ccfe8d470c63962fae68a12257538bef558487538c0061cb57af25c5b` |
-| `SHA256SUMS` (279 файлів: заміри 28.10 і 29.10, 100 знімків прогнозу, скрипти, відкладені спроби 27.10; `shasum -a 256 -c` — 0 помилок) | `6024b4f96c8572f6c5454341ecd1f360decd7058f8b7c9f8da0015880efdc8ad` |
+| `rerun-2810/ci-and-build-summary.txt` (CI PR #264, 28.10) | `e5564d8ccfe8d470c63962fae68a12257538bef558487538c0061cb57af25c5b` |
+| `rerun-2910/ci-pr264-00eede5.txt` (CI PR #264, 29.10) | `f86fd6fb5985b744c1acde6e108023b17696616003c145744a87d93056e2f962` |
+| `SHA256SUMS` (280 файлів: заміри 28.10 і 29.10, 100 знімків прогнозу, скрипти, відкладені спроби 27.10; `shasum -a 256 -c` — 0 помилок) | `f7f178b5edbe6aba81423f36f32572ba6424831b724aa7fc7972604fdbe49048` |
 
 ## Еталони (DEC-18)
 
