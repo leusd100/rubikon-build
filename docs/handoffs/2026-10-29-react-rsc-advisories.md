@@ -39,13 +39,14 @@
 
 | Перевірка | Результат |
 |---|---|
+| Незалежне рев'ю (окремий агент) | **ok**: lockfile, одна копія React, копія RSC у Worker, правильність 19.2.9, відсутність Next.js у runtime підтверджено його власними командами; SSR HTML `/`, `/angary`, `/pro-nas`, `/zernoskhovyshcha` до/після — без різниць, крім UUID збірки. Дві поправки в документах виправлено в `bfba9348` |
 | `pnpm install --frozen-lockfile` | ок; diff lockfile — лише react / react-dom / react-server-dom-webpack і їхні peer-рядки. `pnpm update` заодно підтягував `legacy-javascript` і `third-party-web` (інструменти Lighthouse) — повернуто до версій `main` |
 | `pnpm lint` · `pnpm typecheck` | чисто · чисто |
 | `pnpm test:unit` | 103 файли, **1 639 passed** |
 | `vinext build` | ок, 12 с |
 | Worker у локальному workerd (`wrangler dev --local` на зібраному `dist/server/wrangler.json`, D1 локальна) | 8 сторінок 200, `/does-not-exist` 404. Chrome 156: HOME, `/angary`, `/pro-nas`, `/napryamky`, `/metalokonstruktsii`, `/zernoskhovyshcha` — 0 помилок React і гідрації; X-Ray вмикається (`data-sheet-state="on"`); 3D на `/angary` вантажить chunk (200) і малює `canvas`; Back / Forward між сторінками працюють |
-| Targeted e2e (Chrome 156, desktop + mobile, `--retries=0`) | <!-- E2E --> |
-| CI: PR Gate, CodeQL, SonarCloud, Workers Builds | після push |
+| Targeted e2e на production-збірці гілки (Chrome 156, desktop + mobile, 2 workers, `--retries=0`): pr-critical, smoke, form, inquiry-error-focus, inquiry-select, configurator, configurator-behaviour, configurator-3d, configurator-inquiry-handoff, home-proof-contour, theme (зокрема «no hydration or theme-init errors»), not-found, consent | **524 passed, 0 failed**, 40 skipped (тести іншого проєкту), 13,8 хв |
+| CI: PR Gate, CodeQL, SonarCloud, Workers Builds | у перевірках PR; на `66749998` Fast Gate, CodeQL, обидва Sonar і Workers Builds — pass |
 
 ## Ризики
 
