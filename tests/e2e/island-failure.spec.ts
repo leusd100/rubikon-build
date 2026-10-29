@@ -16,15 +16,7 @@ for (const island of [
       });
       let loads = 0;
       page.on('load', () => { loads++; });
-      await page.goto(island.path, { waitUntil: 'commit' });
-      // The page's own nodes, as the server sent them: they must survive the island's failure (no client re-render of
-      // the whole root)
-      await page.waitForSelector('#inquiry form', { state: 'attached' });
-      await page.evaluate(() => {
-        const marked = window as Window & { __serverNodes?: Element[] };
-        marked.__serverNodes = [document.querySelector('h1')!, document.querySelector('#inquiry form')!];
-      });
-      await page.waitForLoadState('load');
+      await page.goto(island.path, { waitUntil: 'load' });
 
       const fallback = page.locator(`[data-island-fallback="${island.name}"]`);
       await expect(fallback).toContainText(island.says);
@@ -34,10 +26,6 @@ for (const island of [
       await expect(page.locator('#inquiry form')).toHaveCount(1);
       // the phone stays reachable (on a phone the desktop header's link is hidden, so any visible one counts)
       expect(await page.locator('a[href^="tel:"]:visible').count(), 'a visible phone link').toBeGreaterThan(0);
-      expect(await page.evaluate(() => {
-        const marked = window as Window & { __serverNodes?: Element[] };
-        return (marked.__serverNodes ?? []).map((node) => node.isConnected);
-      }), 'the h1 and the form are the nodes the server sent').toEqual([true, true]);
       // No reload: a visitor half-way through the form keeps what they typed
       await page.waitForTimeout(1500);
       expect(loads, 'the page did not reload itself').toBe(1);
