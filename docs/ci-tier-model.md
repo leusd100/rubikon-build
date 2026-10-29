@@ -40,6 +40,13 @@ and `configurator-palette-accessibility.spec.ts`; Nightly does not run a duplica
 checks the build result before downloading or merging browser reports, and the final aggregate requires build, E2E,
 visual and Lighthouse success. Failed Lighthouse profiles retain hidden files from `.lighthouseci/` as diagnostics.
 
+`--shard` splits the listed tests by count, and a test that skips itself at run time is listed too. A spec that skips
+every test on one project at file level (a top-level `test.skip`, or a skip as the first statement of a top-level
+`beforeEach`) is therefore also in that project's `testIgnore` in `playwright.config.ts`, its in-file skip kept as the
+reason, so those tests take no place in the Main Regression and Nightly shards; `tests/unit/e2e-project-ignore.test.ts`
+holds the list to exactly the specs with one of these two forms. A skip per describe or per test stays a skip: ignoring
+that file would also hide a test added outside it.
+
 SonarQube and GitHub-managed CodeQL continue to report on pull requests but are not part of the
 single aggregate merge gate.
 
@@ -132,3 +139,14 @@ Playwright fails CI when a test passes only after a retry (`failOnFlakyTests` in
 remain available to collect evidence; they do not turn an unstable test into a green gate. Normal local runs keep their
 existing zero-retry behavior. Fix readiness waits against the observed state; do not replace baselines or disable
 assertions to hide a retry-only pass.
+
+## Local runs in Docker
+
+On Apple silicon the Playwright image (`mcr.microsoft.com/playwright`) runs as linux/arm64, and there Playwright's
+Chromium is its own build with no H.264 decoder at all — the headless shell and the full browser alike. On x64 Linux,
+macOS and Windows it is Chrome for Testing, which has H.264. In the arm64 image every hero clip fails to load
+(`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`) and the poster stays, so `hero-video.spec.ts` and any test that waits for a
+clip to play fail for a reason the site does not have. Run media and hero tests in native Chrome (`channel: 'chrome'`)
+or in the image with `--platform linux/amd64`; the latter has the codec, but Rosetta emulation adds timing failures
+(`docs/handoffs/2026-10-26-main-red-after-252.md`), so hero playback is judged by CI (ubuntu x64) or native Chrome.
+Firefox and WebKit in the arm64 image do decode H.264.

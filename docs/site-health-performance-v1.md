@@ -11,9 +11,11 @@ next pass needs. No business copy, P01 boundary, Delivery Model meaning, analyti
   `/zernoskhovyshcha`, `/napryamky`. **Field data (CrUX): none on any route** — not a failure, low traffic.
 - **Lighthouse 12.6 locally** through `scripts/perf/lhci-server.mjs` (see below), mobile, median of 3, `main` and this
   branch side by side. Run-to-run spread on LCP is ±0.5–1 s; only byte and accessibility differences are claimed.
-- **Network**: Chrome (not headless shell, for H.264), CDP transfer sizes, 390×844 (DPR 3) and 1440×900, no cache,
-  4 s + scroll + 15 s dwell. With the HTTP cache **enabled**, re-attached hero videos are served from cache (206, 0 B):
-  a cache-disabled probe double-counts them.
+- **Network**: Chrome (not the headless shell), CDP transfer sizes, 390×844 (DPR 3) and 1440×900, no cache,
+  4 s + scroll + 15 s dwell. (Corrected 28.10, XB-03: not for H.264 — the headless shell decodes it too; the build with
+  no H.264 at all is Playwright's Linux arm64 Chromium, see "Local runs in Docker" in `docs/ci-tier-model.md`.) With
+  the HTTP cache **enabled**, re-attached hero videos are served from cache (206, 0 B): a cache-disabled probe
+  double-counts them.
 - **axe-core 4.13** (the version in PSI) on 11 routes × 390/1440 × Light/Dark, before scrolling (what Lighthouse sees)
   and after every scroll-reveal block has fired.
 - **Computed-style diff**: every element's box and 28 computed properties, `main` vs branch, 10 routes × 3 sizes ×
