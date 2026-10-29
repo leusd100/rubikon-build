@@ -2,6 +2,7 @@ import type { HomeProofCase } from '../../data/homeProof';
 import { siteRoutes } from '../../data/navigation';
 import { leadership } from '../../data/people';
 import { ProofContour } from './ProofContour';
+import { IslandBoundary } from '../IslandBoundary';
 import { ScopeCells } from './ScopeCells';
 import { keepHeadingWords } from '../../lib/typography';
 import { Arrow } from '../Arrow';
@@ -26,7 +27,19 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
   const { photo, scope } = proof;
   return (
     <div className="hv2-proof" id="real-object">
-      <ProofContour photo={photo} />
+      {/* The sheet is HOME's enhancement: if its code fails to load, the photo it traces stands in its place (CC-02) */}
+      <IslandBoundary
+        name="proof-contour"
+        fallback={(
+          <figure className="island-fallback-photo">
+            {/* eslint-disable-next-line @next/next/no-img-element -- as ResponsiveImage: next/image resizing is a no-op in this build */}
+            <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" />
+            <figcaption>Креслення не завантажилось — оновіть сторінку, щоб відкрити його.</figcaption>
+          </figure>
+        )}
+      >
+        <ProofContour photo={photo} />
+      </IslandBoundary>
 
       <div className="hv2-proof-facts">
         <div className="hv2-evidence-lead">
