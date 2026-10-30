@@ -107,8 +107,8 @@
 
   /* Motion v1 (docs/ui-system-v1.md §6 «Motion v1»): the durations, curves and travel a transition or an animation takes from
      here, never as a number. What no token covers (a file's own times and delays) is that file's choreography block:
-     `--<prefix>-for|at-*` in a top-level :root at the top of the file. The pages' own --m-reveal / --m-draw (about.css,
-     delivery.css, direction-template.css) keep their values: moving them onto these changes their pace (W3-10). */
+     `--<prefix>-for|at-*` in a top-level :root at the top of the file. The pages' --m-reveal reads --motion-enter (M1-2); their
+     --m-draw (delivery.css, direction-template.css) keeps its value: moving it onto a token changes its pace. */
   --motion-micro: 200ms;
   --motion-ui: 360ms;
   --motion-enter: 700ms;
@@ -119,7 +119,7 @@
   --motion-rise: 16px;
   --ease-premium: cubic-bezier(.2, .7, .1, 1);
   --ease-plot: cubic-bezier(.55, 0, .25, 1);      /* an even pen: the sheets' plotter, the region map, the node lines */
-  --ease-standard: cubic-bezier(.4, 0, .2, 1);    /* media fades and crossfades, the HOME chips' glint */
+  --ease-standard: cubic-bezier(.4, 0, .2, 1);    /* media fades and crossfades, colour, the HOME chips' glint */
   --ease-signature: cubic-bezier(.3, 1.5, .5, 1);
   --duration-fast: var(--motion-micro);
   --duration-medium: var(--motion-ui);
@@ -130,7 +130,6 @@
   --site-for-nav-underline: .25s;
   --site-for-theme-switch: .28s;
   /* the direction cards: the card lifts, its photo zooms and changes tint; a card's or a row's hover answer */
-  --site-for-card-lift: .45s;
   --site-for-card-image: .65s;
   --site-for-card-image-tint: .4s;
   --site-for-hover: .25s;
@@ -539,7 +538,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 
 .directions { color: var(--color-dark-text); background: var(--color-dark); }
 .direction-grid { display: grid; grid-template-columns: 1.15fr .85fr; grid-template-rows: 360px 360px 330px; gap: 18px; }
-.direction-card { position: relative; min-height: 320px; overflow: hidden; background: var(--color-dark-surface); transition: transform var(--site-for-card-lift) var(--ease-premium), box-shadow var(--site-for-card-lift) var(--ease-standard); }
+.direction-card { position: relative; min-height: 320px; overflow: hidden; background: var(--color-dark-surface); }
 .direction-card:nth-child(1) { border-radius: var(--radius-lg) 0 0; }
 .direction-card:nth-child(2) { border-radius: 0 var(--radius-lg) 0 0; }
 .direction-card:nth-child(4) { border-radius: 0 0 0 var(--radius-lg); }
@@ -551,7 +550,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .direction-card.compact img { object-position: center 48%; }
 .direction-card.concrete img { object-position: center 42%; }
 .direction-card:hover img, .direction-card:focus-visible img { transform: scale(1.035); filter: saturate(.8) contrast(1.05); }
-.direction-card:hover, .direction-card:focus-visible { z-index: 2; transform: translateY(-7px); box-shadow: 0 24px 48px rgba(0,0,0,.26); }
+.direction-card:hover, .direction-card:focus-visible { z-index: 2; }
 .direction-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(23, 25, 24, .62) 0, rgba(23, 25, 24, 0) 30%), linear-gradient(180deg, rgba(8, 9, 11, .08), rgba(8, 9, 11, .86)); }
 .direction-card.roof .direction-shade { background: linear-gradient(180deg, rgba(23, 25, 24, .62) 0, rgba(23, 25, 24, 0) 30%), linear-gradient(180deg, rgba(8, 9, 11, .42), rgba(8, 9, 11, .9)); }
 .direction-card.roof img { object-position: center 48%; }

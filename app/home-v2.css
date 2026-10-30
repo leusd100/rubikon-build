@@ -227,7 +227,6 @@ main[data-home="v2"] .hv2-directions .section-header-inverse .section-header-sup
 main[data-home="v2"] .hv2-directions .eyebrow.light { color: var(--color-text-muted); }
 /* The cards stay dark images with light type, exactly as on main */
 main[data-home="v2"] .hv2-directions .direction-card { color: var(--color-dark-text); }
-main[data-home="v2"] .hv2-directions .direction-card:is(:hover, :focus-visible) { box-shadow: 0 24px 48px rgba(20, 22, 21, .22); }
 main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-color: var(--color-focus); }
 
 /* On a phone (≤ 760 px; PDO-42 a, owner 20.10) the five directions are a list of their scheme sheets
