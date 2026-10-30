@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceManifest';
 import { directions } from '../data/directions';
-import { readEffectiveTheme, subscribeTheme } from '../lib/theme';
+import { readPreference, subscribeTheme } from '../lib/theme';
+import { HERO_THEME_SCRIPT, darkMedia } from '../lib/heroThemeSources';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
 import { useHeroControlPlacement } from './useHeroControlPlacement';
 
@@ -13,7 +14,8 @@ const FADE_DURATION_MS = 2000;
 // heavily stretched landscape on tall screens. Portrait sources keep a native-height crop.
 const LANDSCAPE_SIZES = '(min-aspect-ratio: 23/10) 100vw, 230svh';
 const PORTRAIT_SIZES = '100vw';
-const ON_SERVER = typeof window === 'undefined';
+const PHONE = '(max-width: 760px)';
+const PORTRAIT_TABLET = '(min-width: 761px) and (max-width: 1050px) and (orientation: portrait)';
 const pad = (value: number) => String(value).padStart(2, '0');
 
 /** The slide order follows the five direction records. */
@@ -33,11 +35,15 @@ export function DirectionsHeroImageSequence() {
   // as activeIndex wraps back around the cycle, so nothing re-toggles its <source> and re-fetches
   // every loop.
   const [maxUnlockedIndex, setMaxUnlockedIndex] = useState(1);
-  const theme = useSyncExternalStore(subscribeTheme, readEffectiveTheme, () => 'light' as const);
+  // As in DirectionHeroImage: the server's markup is the System one, its blue-hour sources under the OS dark media
+  // query, so a dark visitor no longer fetches the daylight first slide before the dark one (MD-01, 29.10). Only a stored
+  // Light or Dark swaps to explicit pictures on the client.
+  const preference = useSyncExternalStore(subscribeTheme, readPreference, () => 'system' as const);
+  const theme = preference === 'system' ? null : preference;
   const firstImageRef = useRef<HTMLImageElement>(null);
   const { isVisible, shouldLoadMedia } = useDeferredMedia(firstImageRef, {
     // Theme changes replace the image nodes; observe the new first slide.
-    observeKey: `directions-static-hero-sequence-${theme}`,
+    observeKey: `directions-static-hero-sequence-${preference}`,
   });
   // The slides change on their own, so they can be paused (the same round control as the hero videos); the active
   // bar restarts with every slide and every resume
@@ -68,6 +74,7 @@ export function DirectionsHeroImageSequence() {
       {directionsHeroSequenceAssets.map((asset, index) => {
         const art = theme === 'dark' ? asset.dark : asset.daylight;
         const shouldAttachSource = index === 0 || (shouldLoadMedia && index <= maxUnlockedIndex);
+        const system = !theme && shouldAttachSource;
         const style = {
           '--directions-hero-image-position': asset.focalPosition,
           '--directions-hero-image-position-mobile': asset.mobileFocalPosition,
@@ -76,23 +83,28 @@ export function DirectionsHeroImageSequence() {
 
         return (
           // Keep decoded pixels scoped to their theme, including during hydration.
-          <picture key={`${asset.id}-${theme}`}>
-            {shouldAttachSource && <source media="(max-width: 760px)" type="image/avif" srcSet={art.mobile.avif} sizes="100vw" />}
-            {shouldAttachSource && <source media="(max-width: 760px)" type="image/webp" srcSet={art.mobile.webp} sizes="100vw" />}
-            {shouldAttachSource && <source media="(min-width: 761px) and (max-width: 1050px) and (orientation: portrait)" type="image/webp" srcSet={art.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
+          <picture key={`${asset.id}-${preference}`}>
+            {system && <source data-dark="" media={darkMedia(PHONE)} suppressHydrationWarning type="image/avif" srcSet={asset.dark.mobile.avif} sizes="100vw" />}
+            {system && <source data-dark="" media={darkMedia(PHONE)} suppressHydrationWarning type="image/webp" srcSet={asset.dark.mobile.webp} sizes="100vw" />}
+            {shouldAttachSource && <source media={PHONE} type="image/avif" srcSet={art.mobile.avif} sizes="100vw" />}
+            {shouldAttachSource && <source media={PHONE} type="image/webp" srcSet={art.mobile.webp} sizes="100vw" />}
+            {system && <source data-dark="" media={darkMedia(PORTRAIT_TABLET)} suppressHydrationWarning type="image/webp" srcSet={asset.dark.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
+            {shouldAttachSource && <source media={PORTRAIT_TABLET} type="image/webp" srcSet={art.portraitSrcSet} sizes={PORTRAIT_SIZES} />}
+            {system && <source data-dark="" media={darkMedia()} suppressHydrationWarning type="image/webp" srcSet={asset.dark.srcSet} sizes={LANDSCAPE_SIZES} />}
             {shouldAttachSource && <source type="image/webp" srcSet={art.srcSet} sizes={LANDSCAPE_SIZES} />}
+            {system && <script dangerouslySetInnerHTML={{ __html: HERO_THEME_SCRIPT }} />}
             <img
               ref={(image) => {
                 if (index === 0) firstImageRef.current = image;
                 // Give client-created images their fallback only after the picture sources are in place.
                 // Otherwise WebKit can fetch the landscape fallback as well as the mobile source on a theme change.
                 if (image && !shouldAttachSource) image.removeAttribute('src');
-                else if (image && !image.hasAttribute('src')) image.src = art.fallbackSrc;
+                // The System picture has no src: see DirectionHeroImage (the inline script ends the preload scanner's view)
+                else if (image && theme && !image.hasAttribute('src')) image.src = art.fallbackSrc;
               }}
               aria-hidden="true"
               className={`directions-hero-sequence-image${index === visibleIndex ? ' is-active' : ''}`}
-              data-art-theme={theme}
-              src={ON_SERVER && shouldAttachSource ? art.fallbackSrc : undefined}
+              data-art-theme={theme ?? 'system'}
               suppressHydrationWarning
               alt=""
               width={art.width}

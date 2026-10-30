@@ -8,6 +8,14 @@ const sequenceNames = [
   'pokrivelni-roboty',
 ];
 
+// Which art a slide is wired to: its src, or — the server's System picture has no src (MD-01) — its daylight landscape
+// source; null while the slide has no source at all
+function attachedArt(images: Element[]) {
+  return images.map((image) => image.getAttribute('src')
+    ?? image.parentElement?.querySelector('source:not([data-dark]):not([media])')?.getAttribute('srcset')?.split(' ')[0]
+    ?? null);
+}
+
 test('directions static hero sequence crossfades in the approved order without video', async ({ page }) => {
   const mediaRequests: string[] = [];
   page.on('request', (request) => {
@@ -35,7 +43,7 @@ test('directions static hero sequence crossfades in the approved order without v
   // Progressive loading, one slide ahead of whatever's active — not all 5 at once. Only the
   // active slide (0) and the next one up (1) should have a real source this early.
   await expect.poll(
-    () => frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))),
+    () => frames.evaluateAll(attachedArt),
     { timeout: 2_000 },
   ).toEqual([
     expect.stringContaining(`directions-sequence-daylight-${sequenceNames[0]}`),
@@ -54,7 +62,7 @@ test('directions static hero sequence crossfades in the approved order without v
   // By the time slide 1 becomes active, slide 2 should already be unlocked one step ahead of
   // it (same monotonic rule) — slides 3/4 still shouldn't have loaded yet.
   await expect.poll(
-    () => frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))),
+    () => frames.evaluateAll(attachedArt),
   ).toEqual([
     expect.stringContaining(`directions-sequence-daylight-${sequenceNames[0]}`),
     expect.stringContaining(`directions-sequence-daylight-${sequenceNames[1]}`),
@@ -83,7 +91,7 @@ test('directions static hero sequence remains on the first image for reduced mot
   await page.clock.runFor(7_500);
   expect(await frames.evaluateAll((images) => images.map((image) => image.classList.contains('is-active'))))
     .toEqual([true, false, false, false, false]);
-  expect(await frames.evaluateAll((images) => images.map((image) => image.getAttribute('src'))))
+  expect(await frames.evaluateAll(attachedArt))
     .toEqual([
       expect.stringContaining('directions-sequence-daylight-angary'),
       null,
