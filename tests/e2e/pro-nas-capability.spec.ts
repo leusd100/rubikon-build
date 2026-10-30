@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 
 // /pro-nas «Що робимо самі, а що організовуємо» — the calm section scheme (owner, 04.10: the axonometric drawing was
 // overloaded; the spoil heap and the depth mark had to go) and its legend of name tags (owner, 05.10: too much text —
@@ -8,6 +8,11 @@ import { expect, test } from '@playwright/test';
 // a much shorter block, and a phone that is not asked to tap at a drawing off screen.
 
 const FIGURE = '.about-cap .cap-fig';
+/** A few pixels off the middle of an element: a second, real move of the pointer */
+const middleOf = async (locator: Locator): Promise<[number, number]> => {
+  const box = (await locator.boundingBox())!;
+  return [box.x + box.width / 2 + 3, box.y + box.height / 2 + 1];
+};
 
 test('the scheme draws only works that the ledger lists, and stays out of the accessibility tree', async ({ page }) => {
   await page.goto('/pro-nas', { waitUntil: 'load' });
@@ -78,9 +83,11 @@ test('pointing ends the walk, and no walk starts with reduced motion', async ({ 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.reload({ waitUntil: 'load' });
   await page.locator(FIGURE).scrollIntoViewIfNeeded();
-  // Two moves: the first after a load has no distance in the browser, and only a pointer that really moves is an action
-  await page.locator('.about-ledger li[data-cap="gates"]').hover({ position: { x: 20, y: 8 } });
-  await page.locator('.about-ledger li[data-cap="gates"]').hover({ position: { x: 24, y: 10 } });
+  // Two moves: the first after a load has no distance in the browser, and only a pointer that really moves is an action.
+  // In the row's middle: at its edge the row's own reveal can carry it out from under the pointer.
+  const gates = page.locator('.about-ledger li[data-cap="gates"]');
+  await gates.hover();
+  await page.mouse.move(...(await middleOf(gates)));
   await expect(lit).toHaveAttribute('data-cap', 'gates');
   // …and once the pointer has left, nothing lights by itself: the walk is over for good
   await page.mouse.move(2, 2);
@@ -93,8 +100,8 @@ test('pointing at a work lights its part of the scheme', async ({ page, isMobile
   const row = page.locator('.about-ledger li[data-cap="steel"]');
   await row.scrollIntoViewIfNeeded();
   // Two moves, or the walk goes on: only a pointer that really moves is an action, and the first move after a load has no distance
-  await row.hover({ position: { x: 20, y: 8 } });
-  await row.hover({ position: { x: 24, y: 10 } });
+  await row.hover();
+  await page.mouse.move(...(await middleOf(row)));
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).not.toHaveCount(0);
   await page.mouse.move(2, 2);
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).toHaveCount(0);
