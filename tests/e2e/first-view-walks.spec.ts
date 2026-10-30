@@ -34,10 +34,16 @@ const watch = (page: Page, selector: string, name: string) => page.locator(selec
 }, name);
 const changes = (page: Page) => page.evaluate(() => (window as unknown as { __walk: { at: number; value: string | null }[] }).__walk);
 
-/** A few pixels off an element's middle: the second, real move a person's hand makes */
-const nudged = async (locator: Locator): Promise<[number, number]> => {
+/**
+ * The pointer onto an element by its coordinates, in two real moves: the first move after a load has no distance in the
+ * browser, and only a pointer that really moves is an action. Not `hover()`: when it retries it scrolls again, this site
+ * scrolls smoothly, and the pointer lands wherever the page has carried it (pro-nas-capability.spec.ts).
+ */
+const pointAt = async (page: Page, locator: Locator) => {
+  await locator.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
   const box = (await locator.boundingBox())!;
-  return [box.x + box.width / 2 + 3, box.y + box.height / 2 + 1];
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.move(box.x + box.width / 2 + 3, box.y + box.height / 2 + 1);
 };
 
 /** Fake time in short runs, so that each step's render lands in the log at its own moment */
@@ -74,9 +80,7 @@ test('/pro-nas capability walks at 2200 ms a step; pointing ends it for good', a
   const [one, two] = await changes(page);
   expect(two.at - one.at).toBeGreaterThanOrEqual(STEP_MS - 250);
   expect(two.at - one.at).toBeLessThanOrEqual(STEP_MS + 500);
-  // Two moves: the first after a load has no distance in the browser, and a person's hand makes many
-  await page.locator('.cap-fig').hover({ position: { x: 40, y: 40 } });
-  await page.locator('.cap-fig').hover({ position: { x: 44, y: 42 } });
+  await pointAt(page, page.locator('.cap-fig'));
   await page.mouse.move(2, 2);
   await page.clock.runFor(STEP_MS * 3);
   expect(await block.getAttribute('data-cap')).toBeNull();
@@ -145,8 +149,9 @@ test('/yak-pratsyuiemo a mouse that crosses the change sheets before the first s
     window.scrollTo({ top: window.scrollY + top + 300 - window.innerHeight, behavior: 'instant' }); // under half in view: the walk has not started
   });
   await expect(sheets).toHaveAttribute('data-reached', '');
-  await sheets.hover({ position: { x: 300, y: 120 } });
-  await page.mouse.move(300, 860);
+  const box = (await sheets.boundingBox())!;
+  await page.mouse.move(300, box.y + 120);
+  await page.mouse.move(304, box.y + 124);
   await expect(sheets).toHaveAttribute('data-reached', '1 2 3 4');
 });
 
@@ -278,8 +283,7 @@ for (const action of ['pointing at', 'keyboard focus on'] as const) {
     await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
     const option = grid.locator('.dfmt-option').last();
     if (action === 'pointing at') {
-      await option.hover();
-      await page.mouse.move(...(await nudged(option)));
+      await pointAt(page, option);
     } else await option.focus();
     // Mid-walk, on purpose: left alone, the walk comes back to the first format by itself and proves nothing
     await page.clock.runFor(1800);
@@ -298,8 +302,7 @@ test('/yak-pratsyuiemo a mouse crossing the drawing mid-walk leaves one format o
   const drawing = grid.locator('svg.fs');
   await grid.scrollIntoViewIfNeeded();
   await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
-  await drawing.hover();
-  await page.mouse.move(...(await nudged(drawing)));
+  await pointAt(page, drawing);
   await page.clock.runFor(1800);
   const checked = await page.locator('input[name="resp-format"]:checked').getAttribute('value');
   await expect(drawing).toHaveAttribute('data-format', checked!);
