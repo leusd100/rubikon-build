@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { customPropertyDeclarations, motionDeclarations, stripComments, timeLiterals } from '../../scripts/motion/css-motion.mjs';
+import { colourOnEase, customPropertyDeclarations, motionDeclarations, stripComments, timeLiterals } from '../../scripts/motion/css-motion.mjs';
 
 // Motion v1 (M1-1): a transition or an animation takes its time and its curve from a token, never from a literal. The
 // tokens live in app/globals.css :root; each stylesheet's own choreography (its times and delays that no token
@@ -235,10 +235,6 @@ describe('Motion v1 tokens (M1-1)', () => {
   });
 });
 
-/** A transition list split on its top-level commas: `color 1s ease, opacity calc(var(--i, 0) * 1s)` is two parts */
-const transitionParts = (value: string) => value.split(/,(?![^(]*\))/).map((part) => part.trim());
-/** The colour family of ui-system 6.2: `stroke` and `fill` themselves, not `stroke-width` or `stroke-dashoffset` */
-const COLOUR_PROPERTY = /^(?:color|background(?:-color)?|border(?:-(?:top|right|bottom|left))?-color|outline-color|text-decoration-color|fill|stroke|box-shadow)(?![-\w])/;
 const EASE_KEYWORD = /(?<![-\w])ease(?![-\w])/;
 const EASE_IN_OR_OUT = /(?<![-\w])ease-(?:in-out|out|in)(?![-\w])/;
 
@@ -257,11 +253,10 @@ describe('Motion v1 pace by roles (M1-2)', () => {
 
   it('uses the standard curve for colour', () => {
     const offenders = names.flatMap((file) =>
-      motionDeclarations(sheets[file])
-        .filter((declaration) => declaration.property === 'transition')
-        .flatMap((declaration) => transitionParts(declaration.value)
-          .filter((part) => COLOUR_PROPERTY.test(part) && EASE_KEYWORD.test(part))
-          .map((part) => `${file} | ${declaration.selector} | ${part}`)),
+      motionDeclarations(sheets[file]).flatMap((declaration) => {
+        if (declaration.property === 'transition') return colourOnEase(declaration.value).map((item) => `${file} | ${declaration.selector} | ${item}`);
+        return declaration.property === 'transition-timing-function' && EASE_KEYWORD.test(declaration.value) ? [row(file, declaration)] : [];
+      }),
     );
     expect(offenders).toEqual([]);
   });

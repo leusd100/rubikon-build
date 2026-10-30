@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  customProperties, customPropertyDeclarations, motionDeclarations, normalizeMotion, resolveVars, stripComments, timeLiterals,
+  colourOnEase, customProperties, customPropertyDeclarations, motionDeclarations, normalizeMotion, resolveVars, stripComments, timeLiterals,
 } from '../../scripts/motion/css-motion.mjs';
 import { diffLists, fileDefs, globalCollisions, motionKeys, sharedDefs } from '../../scripts/motion/motion-diff.mjs';
 
@@ -555,5 +555,33 @@ describe('motion-diff CLI', () => {
 
     expect(result.stdout).toContain('+ .a | transition | opacity var(--x-for-rwo)');
     expect(result.status).toBe(1);
+  });
+});
+
+describe('colourOnEase', () => {
+  it('finds a colour on the keyword, whatever the order and the nesting', () => {
+    expect(colourOnEase('color var(--a) ease')).toEqual(['color var(--a) ease']);
+    expect(colourOnEase('color var(--a, var(--b)) ease')).toEqual(['color var(--a, var(--b)) ease']);
+    expect(colourOnEase('var(--a) ease color')).toEqual(['var(--a) ease color']);
+    expect(colourOnEase('opacity 1s ease, fill 1s ease')).toEqual(['fill 1s ease']);
+  });
+
+  it('treats a colour with no curve as the default ease', () => {
+    expect(colourOnEase('color var(--a)')).toEqual(['color var(--a)']);
+    expect(colourOnEase('background-color 1s 2s')).toEqual(['background-color 1s 2s']);
+  });
+
+  it('counts the shorthands and the less common colours, and everything when no property is named', () => {
+    for (const property of ['border', 'outline', 'all', 'caret-color', 'stop-color', 'border-inline-color', 'text-decoration']) {
+      expect(colourOnEase(`${property} 1s ease`), property).toEqual([`${property} 1s ease`]);
+    }
+    expect(colourOnEase('1s ease')).toEqual(['1s ease']);
+  });
+
+  it('leaves a colour on a curve token, and what is not a colour', () => {
+    expect(colourOnEase('color var(--a) var(--ease-standard), border-color var(--a) var(--ease-premium) 1s')).toEqual([]);
+    expect(colourOnEase('color 1s linear')).toEqual([]);
+    expect(colourOnEase('color var(--a) var(--m-ease)')).toEqual([]);
+    expect(colourOnEase('opacity 1s ease, transform 1s, stroke-width 1s ease, stroke-dashoffset 1s ease')).toEqual([]);
   });
 });
