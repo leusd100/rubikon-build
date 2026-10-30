@@ -4,6 +4,8 @@ import { HangarMobileInquiryCta } from '../components/angary/HangarMobileInquiry
 import { HangarRealObject } from '../components/angary/HangarRealObject';
 import { HangarConfigurator } from '../components/configurator/HangarConfigurator';
 import { HangarInquiryProvider } from '../components/configurator/HangarInquiryContext';
+import { IslandBoundary } from '../components/IslandBoundary';
+import { company, companyContactLinks } from '../data/company';
 import { InquiryAttachmentProvider } from '../components/inquiry/InquiryAttachmentProvider';
 import { InquiryFormHost } from '../components/inquiry/InquiryFormHost';
 import { createDirectionMetadata, getDirectionPage } from '../lib/directions';
@@ -62,7 +64,24 @@ export default function HangarsPage() {
         <DirectionPage
           config={config}
           // «Що далі» under the configurator's last step: the route's first three steps, up to the estimate (10.10, owner)
-          signatureExperience={<HangarConfigurator embedded nextSteps={editorial.route.steps.slice(0, 3).map((step) => step.title)} />}
+          signatureExperience={(
+            // The configurator is the page's enhancement: if its code fails to load, the page keeps its text, its form
+            // and its contacts, and this block says where to go instead (CC-02)
+            <IslandBoundary
+              name="hangar-configurator"
+              fallback={(
+                <div className="shell island-fallback-note">
+                  <p>Конфігуратор ангара не завантажився — так буває при обриві зв’язку або під час оновлення сайту. Оновіть сторінку або опишіть ангар у заявці.</p>
+                  <p className="hero-action-row">
+                    <a className="button button-primary" href="#inquiry" data-open-inquiry="">До заявки</a>
+                    <a className="text-link" href={companyContactLinks.phone}>{company.phone.display}</a>
+                  </p>
+                </div>
+              )}
+            >
+              <HangarConfigurator embedded nextSteps={editorial.route.steps.slice(0, 3).map((step) => step.title)} />
+            </IslandBoundary>
+          )}
           editorialArchitecture={(
             <HangarEditorialArchitecture
               content={editorial}
