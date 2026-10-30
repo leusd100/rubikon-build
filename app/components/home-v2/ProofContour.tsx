@@ -205,8 +205,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
-    const seen = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) delete stage.dataset.offscreen;
+    // The newest entry: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
+    const seen = new IntersectionObserver((entries) => {
+      if (entries.at(-1)!.isIntersecting) delete stage.dataset.offscreen;
       else stage.dataset.offscreen = '';
     });
     seen.observe(stage);

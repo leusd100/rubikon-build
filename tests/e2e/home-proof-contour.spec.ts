@@ -2079,6 +2079,40 @@ test('on a phone the title block keeps its height whichever layer is on, and bel
   }
 });
 
+test('a sheet that comes into view while the browser still holds its report «out of view» plots in, sweeps and runs all the same', async ({ page }) => {
+  test.setTimeout(45_000);
+  // An observer's reports go out in a task of their own, and on a busy page a frame can get in first: one call then says
+  // «out of view, in view» (recorded in Chrome, 30.10). Reading only the first left the sheet armed under its cover for
+  // good with the sheet in the middle of the window (Main Regression 41027903583, `open()` timing out). When that task
+  // runs cannot be forced, so the sheet's reports here are held until one says «in view», and go out together
+  await page.addInitScript(() => {
+    const Native = window.IntersectionObserver;
+    window.IntersectionObserver = class extends Native {
+      constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+        let held: IntersectionObserverEntry[] = [];
+        super((entries, observer) => {
+          const reports = [...held, ...entries];
+          if (entries[0].target.closest('.hv2-contour') && !entries.some((entry) => entry.isIntersecting)) {
+            held = reports;
+            (window as unknown as { heldReports: number }).heldReports = ((window as unknown as { heldReports?: number }).heldReports ?? 0) + 1;
+            return;
+          }
+          held = [];
+          callback(reports, observer);
+        }, options);
+      }
+    };
+  });
+  const { sheet, stage } = await arrive(page);
+  // The first report of all three of the sheet's observers is in hand: the plot's, the sweep's, the loops'
+  await page.waitForFunction(() => (window as unknown as { heldReports?: number }).heldReports! >= 3);
+  await expect(sheet).toHaveAttribute('data-sheet-state', 'armed');
+  await centre(stage);
+  await expect(sheet).toHaveAttribute('data-sheet-state', 'on');
+  await expect(stage, 'the seam swept and rests').not.toHaveAttribute('data-sweep', /.*/, { timeout: 15_000 });
+  await expect(stage, 'the frame counts as on the screen').not.toHaveAttribute('data-offscreen', /.*/);
+});
+
 test('arriving with motion, the photo plots in whole, then the seam passes once from the edge to its rest — one way, no turn — the drawing whole behind it, and nothing else plays', async ({ page }, testInfo) => {
   test.setTimeout(45_000);
   const phone = testInfo.project.name !== 'desktop-chromium';

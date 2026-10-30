@@ -50,8 +50,10 @@ export function DrawingSheet({
     if (!sheet || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     // Set on the node, not through state: nothing re-renders, and the server markup stays the complete sheet
     sheet.dataset.sheetState = 'armed';
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
+    // Every entry, not the first: a busy page can get "out of view, in view" in one call, and the observer reports no more
+    // until the sheet leaves, so reading the first left the picture under its cover (Main Regression 41027903583, 30.10)
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
       sheet.dataset.sheetState = 'on';
       observer.disconnect();
     }, { threshold: 0.35 });
