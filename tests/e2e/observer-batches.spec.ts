@@ -159,6 +159,22 @@ for (const { site, path, target, into, top, wide, armed, arrived } of SITES) {
   });
 }
 
+// The other way round: gone again by the time the reports go out, so the newest one counts, not any «in view» among them
+test('useDeferredMedia: a hero that left again in the same call counts as out of view, and its clip pauses', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await holdReports(page, 'video.direction-hero-video');
+  await page.goto('/#real-object', { waitUntil: 'load' });
+  const anyPlaying = () => page.locator('video.direction-hero-video').evaluateAll((videos) => videos.some((video) => !(video as HTMLVideoElement).paused));
+  await expect.poll(anyPlaying).toBe(true);
+  await expect.poll(() => held(page)).toContainEqual(false);
+  await scrollTop(page);
+  await expect.poll(() => held(page)).toContainEqual(true);
+  await centre(page, '#real-object');
+  await expect.poll(async () => (await held(page)).at(-1)).toBe(false);
+  await letGo(page);
+  await expect.poll(anyPlaying).toBe(false);
+});
+
 // Passed straight through: the visitor was there, so the arrival holds, but what is true now is «out of view»
 test('GrainComplexBuilder: a drawing passed in one call has arrived and does not count as in view', async ({ page }) => {
   await holdReports(page, '#kompleks .gc-scroll');
