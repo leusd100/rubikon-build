@@ -148,7 +148,7 @@ stands:
   the nine public pages, at 390 and 1440 px, are the same before and after (`scripts/motion/motion-diff.mjs`,
   `scripts/motion/computed-motion.mjs`).
 - **In the code (M1-2).** The pace by roles: the reveals of 360 / 420 ms read `--motion-enter`, the keyword `ease` on colour
-  reads `--ease-standard`, the literal curves are the four tokens of 6.2, and the HOME direction sheets no longer lift.
+  reads `--ease-standard`, the literal curves are the four tokens of 6.2, and HOME's direction cards and sheets no longer lift.
 - **In the code (M1-3).** Lenis at rest (rule 8).
 - **Next (M1-4).** One rule for the auto-shows (rule 7).
 - **Then (M2, M3).** The five gestures of 6.3 and the controller of 6.5, the three signature moments.
@@ -183,8 +183,10 @@ them breaks. `--motion-reveal` (420 ms) had no use and is gone. M1-2 moved the t
 | `--ease-signature` | `cubic-bezier(.3, 1.5, .5, 1)` | a slight overshoot: the signature moments (M3) and the three existing «clicks» of a mark | `(.3,1.5,.5,1)` ×2, `(.3,1.6,.5,1)` ×1 (`catalog-drawing.css`, `resp-matrix.css`, `change-sheets.css`) |
 
 `linear` stays where the motion is mechanical by meaning (the formats' march, a progress bar). `ease-out` / `ease-in-out`
-became `--ease-premium` / `--ease-standard` by role. `cubic-bezier(` now appears only in `globals.css` `:root`, and no file
-has a curve variable of its own. The keyword `ease` stays on `opacity` and `transform`.
+became `--ease-premium` / `--ease-standard` by role. In the stylesheets `cubic-bezier(` now appears only in `globals.css`
+`:root`, and no file has a curve variable of its own; the X-Ray hooks keep theirs in script (`useFirstSweep.ts`,
+`useNodeDetail.ts`). The keyword `ease` stays on what is not a colour: `opacity`, `transform`, `stroke-width`,
+`stroke-dashoffset`, `d`, `filter`.
 
 ### 6.3 The five gestures
 
@@ -221,7 +223,7 @@ without motion. They arrive with M2-1; the table is the contract.
    `1.4s linear 3`, not `infinite`). Pending (M1-4).
 8. **Lenis at rest (W4-02, PDO-95 only):** `autoRaf: false` and an own rAF loop only while moving; `wake()` on `wheel`, on an
    anchor click and after `scrollTo`; before the first frame after a rest `lenis.time = t − 1000/60`; `lerp .18`, the anchors
-   and `stopInertiaOnNavigate` unchanged. The keyboard part of X-Ray (PDO-37) is not in it. Pending (M1-3).
+   and `stopInertiaOnNavigate` unchanged. The keyboard part of X-Ray (PDO-37) is not in it. In the code (M1-3).
 9. **Reduced motion:** the end state at once. The sitewide `@media (prefers-reduced-motion: reduce)` block in
    `globals.css` (it sets every animation and transition to `.01ms !important` and `scroll-behavior: auto`) is already
    correct and does not change. It catches CSS only: any JS-driven motion (a `setTimeout` stagger, a timer-driven tour)
@@ -291,7 +293,7 @@ time, and stays a choreography variable.
 
 - a `transition*` or `animation*` declaration holds a time literal or a `cubic-bezier(`;
 - a `cubic-bezier(` stands outside `globals.css` `:root`, or a file declares a `--<prefix>-curve-*` variable;
-- a `transition` runs a colour property on the keyword `ease`, or any motion declaration uses `ease-out` / `ease-in-out`;
+- a `transition` runs a colour on `ease`, written or implied, or any motion declaration uses `ease-out` / `ease-in-out`;
 - a Motion v1 token is missing, has another value, or is declared twice or outside `globals.css` `:root` (the one other
   declaration allowed is the phone `--motion-rise`); any other `--motion-*`, `--ease-*` or `--duration-*` declaration;
   `--motion-reveal` comes back;
