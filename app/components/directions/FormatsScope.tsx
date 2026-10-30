@@ -139,7 +139,8 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
   useEffect(() => {
     const root = figureRef.current;
     if (!root) return undefined;
-    const observer = new IntersectionObserver(([entry]) => setInView(Boolean(entry?.isIntersecting)));
+    // The newest entry: one call can hold several, and the first of them may be a stale «out of view» (DrawingSheet)
+    const observer = new IntersectionObserver((entries) => setInView(Boolean(entries.at(-1)?.isIntersecting)));
     observer.observe(root);
     return () => observer.disconnect();
   }, []);

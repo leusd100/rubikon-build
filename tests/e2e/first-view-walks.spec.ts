@@ -319,3 +319,59 @@ for (const [width, height] of [[844, 390], [932, 430]]) {
     await expect(sheets).not.toHaveAttribute('data-armed', /.*/);
   });
 }
+
+/**
+ * One call can hold «out of view, in view» for one target, and no more come until it leaves (recorded in Chrome, 30.10:
+ * docs/handoffs/2026-10-30-home-contour-open-flake.md). When that happens cannot be forced, so the page's observers keep the
+ * target's real reports until they are let go, in one call.
+ */
+const holdReports = (page: Page, target: string) => page.addInitScript((selector) => {
+  const Native = window.IntersectionObserver;
+  const sends: (() => void)[] = [];
+  const heldReports: boolean[] = [];
+  let holding = true;
+  Object.assign(window, { heldReports, letReportsGo: () => { holding = false; sends.splice(0).forEach((send) => send()); } });
+  window.IntersectionObserver = class extends Native {
+    constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+      const reports: IntersectionObserverEntry[] = [];
+      super((entries, observer) => {
+        if (!holding || !entries[0].target.matches(selector)) {
+          callback(entries, observer);
+          return;
+        }
+        if (!reports.length) sends.push(() => callback(reports, observer));
+        reports.push(...entries);
+        heldReports.push(...entries.map((entry) => entry.isIntersecting));
+      }, options);
+    }
+  };
+}, target);
+
+test('/pro-nas a block reported «out of view, in view» in one call still walks', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await holdReports(page, '.cap-fig');
+  await page.goto('/pro-nas', { waitUntil: 'load' });
+  const held = () => page.evaluate(() => (window as unknown as { heldReports: boolean[] }).heldReports);
+  await expect.poll(held).toContainEqual(false);
+  await expect.poll(async () => {
+    await page.locator('.cap-fig').evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    return held();
+  }).toContainEqual(true);
+  await page.evaluate(() => (window as unknown as { letReportsGo: () => void }).letReportsGo());
+  expect(await firstStep(page, () => page.locator('.about-cap').getAttribute('data-cap'))).not.toBeNull();
+});
+
+test('/yak-pratsyuiemo a formats block reported «out of view, in view» in one call counts as on screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await holdReports(page, '.dfmt-figure');
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  const held = () => page.evaluate(() => (window as unknown as { heldReports: boolean[] }).heldReports);
+  await expect.poll(held).toContainEqual(false);
+  const figure = page.locator('.dfmt-figure');
+  await expect.poll(async () => {
+    await figure.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    return held();
+  }).toContainEqual(true);
+  await page.evaluate(() => (window as unknown as { letReportsGo: () => void }).letReportsGo());
+  await expect(figure).toHaveAttribute('data-live', 'true');
+});

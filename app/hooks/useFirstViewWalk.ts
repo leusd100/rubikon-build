@@ -60,7 +60,9 @@ export function useFirstViewWalk<T>(
     const move = (event: PointerEvent) => {
       if (event.pointerType === 'mouse' && (event.movementX !== 0 || event.movementY !== 0)) stop();
     };
-    const observer = new IntersectionObserver(([entry]) => {
+    // The newest entry: one call can hold several, and the first of them may be a stale «out of view» (DrawingSheet)
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries.at(-1);
       current.see(entry?.isIntersecting ? entry.intersectionRatio : 0);
     }, { threshold: [0, WALK_VIEW_RATIO] });
     observer.observe(watched);
