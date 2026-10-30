@@ -5,9 +5,9 @@
 | Дата | 2026-10-30 |
 | Виконавець | Claude Code |
 | Підстава | План Motion v1, частина D. Рішення власника 30.10: OD-PX-34 (a), крок 2,2 с |
-| PR | Draft після OK власника у брифі. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#277](https://github.com/leusd100/rubikon-build/pull/277), Draft, мітка `visual-freeze`. Власник підтвердив поведінку 30.10. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `design/m1-4-first-view-walks` від `main` `c3ba022b`, влито `e6458d01` |
-| Коміти | `3c141de3` планувальник · `0d502dee` хук · `73d7d3f3` три покази · `1dd9a803` формати · `be8bc206` знахідки рев'ю · `b168f3ac` ui-system · `3a220ce2` наведення в тестах |
+| Коміти | `3c141de3` планувальник · `0d502dee` хук · `73d7d3f3` три покази · `1dd9a803` формати · `be8bc206` знахідки рев'ю · `b168f3ac` ui-system · `3a220ce2` наведення в тестах · `e4908830` найновіший запис спостерігача |
 | Змінено | нові `app/lib/firstViewWalk.ts`, `app/hooks/useFirstViewWalk.ts`; `CostFactorsFigure`, `CapabilityFigure`, `ChangeSheets`, `FormatsScope`, `formats-scope.css`; `docs/ui-system-v1.md` правило 7; нові `tests/unit/first-view-walk.test.ts`, `tests/e2e/first-view-walks.spec.ts`; `pro-nas-capability.spec.ts`, `yak-formats-scope.spec.ts` |
 | Не змінено | Тексти, еталони, бюджети, залежності, тури креслень, X-Ray, 3D-збірка |
 
