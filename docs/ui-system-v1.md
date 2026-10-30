@@ -151,6 +151,8 @@ stands:
   `--ease-standard`, the literal curves → the table of 6.2, the HOME cards no longer lift), Lenis at rest (rule 8), one
   rule for the auto-shows (rule 7).
 - **Then (M2, M3).** The five gestures of 6.3 and the controller of 6.5, the three signature moments.
+- **Allowed, not built (30.10).** Drawings whose lines follow the scroll, under the rules of 6.8. Nothing on the site uses
+  this yet.
 
 ### 6.1 Duration and distance tokens
 
@@ -302,11 +304,34 @@ time, and stays a choreography variable until a visible step (M1-2) decides it.
 a base ref, so a refactor that moves values proves it moved none; `scripts/motion/computed-motion.mjs --base <url> --head <url>`
 compares what the browser computes for every element of the nine public pages (390 and 1440 px) in two builds.
 
-### 6.8 Out of scope
+### 6.8 Scroll-linked drawings
 
-A new motion library; parallax; cursor effects; animating text by line or by word; scroll-scrubbed animation; the phone menu;
-«the drawing becomes the building». The choreography of the tours, X-Ray and the 3D build-up is not changed: only its numbers
-move into the blocks of 6.6.
+The owner's decision, 30.10: scroll-scrub is allowed on vector drawings, without a pin. It lifts the earlier ban only this
+far; a pinned scrub stays out of scope (6.9).
+
+1. **No pin.** No `position: sticky`, no added scroll distance. The page keeps moving and the section keeps its height.
+2. **Vector drawings only.** The SVG lines of the site's own drawings. No scrubbed video, image sequence, canvas or WebGL,
+   and nothing over a photograph.
+3. **The end state is the still state.** At the end of its range the drawing is exactly what a visitor sees without motion.
+   Nothing that has to be read depends on the scroll position.
+4. **CSS only.** `animation-timeline` with `animation-range`, inside `@supports (animation-timeline: view())` and
+   `@media (prefers-reduced-motion: no-preference)`. No scroll listener, no library. A browser without support, `reduce`,
+   print and no JS all show the finished drawing.
+5. **`cover` ranges.** An `entry` range depends on the drawing's height and finishes too fast on a phone. The last line ends
+   by about `cover 56%`, while the whole drawing is still on screen.
+6. **One per page.** A drawing has either a scroll-linked pen or a timed one, never both, and a page has at most one.
+7. **Frozen choreography stays frozen.** This does not change the tours, X-Ray or the 3D build-up (6.9). The first candidate
+   is the cost drawing on /angary (`CostFactorsFigure`), which has no tour of its own on that page.
+
+Before the first use ships, its PR measures LoAF during a scripted scroll against `main` (`stroke-dashoffset` runs on the
+main thread), checks it with Lenis on desktop, and checks Safari and the owner's iPhone. Support per MDN data, 30.10:
+Chrome 115, Safari 26, Firefox 159. The DEC-18 baselines are shot under `reduce`, so they should not change.
+
+### 6.9 Out of scope
+
+A new motion library; parallax; cursor effects; animating text by line or by word; a pinned scroll-scrub, and any scrub
+outside 6.8; the phone menu; «the drawing becomes the building». The choreography of the tours, X-Ray and the 3D build-up is
+not changed: only its numbers move into the blocks of 6.6.
 
 ## 7. Footer
 
