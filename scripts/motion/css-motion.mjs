@@ -81,6 +81,35 @@ function topLevelCommas(text) {
   return at;
 }
 
+/** `text` split on its top-level commas, each item trimmed */
+function topLevelList(text) {
+  const items = [];
+  let from = 0;
+  for (const at of topLevelCommas(text)) {
+    items.push(text.slice(from, at).trim());
+    from = at + 1;
+  }
+  items.push(text.slice(from).trim());
+  return items;
+}
+
+/** The space-separated words of `text`, a call with its parentheses staying one word */
+function topLevelWords(text) {
+  const words = [];
+  let word = '';
+  let depth = 0;
+  for (const ch of text) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth = Math.max(0, depth - 1);
+    if (depth === 0 && /\s/.test(ch)) {
+      if (word) words.push(word);
+      word = '';
+    } else word += ch;
+  }
+  if (word) words.push(word);
+  return words;
+}
+
 /** Calls of the function `name(...)` in `text`, each replaced by `rewrite(inner, whole)` (nested parentheses respected) */
 function rewriteCalls(text, name, rewrite) {
   const call = new RegExp(`(?<![\\w-])${name}\\(`, 'gi');
@@ -327,4 +356,25 @@ export function timeLiterals(value) {
       return ms !== 0 && Math.abs(ms - 0.01) > 1e-9;
     })
     .map(([literal]) => literal);
+}
+
+const CURVE_KEYWORD = /^(?:ease|ease-in|ease-out|ease-in-out|linear|step-start|step-end)$/;
+/** A curve written out, or read from a variable named for one: `--ease-*`, and the pages' `--m-ease` and `--region-ease` */
+const CURVE_CALL = /^(?:cubic-bezier|steps|linear)\(|^var\(\s*--(?:[\w-]*-)?ease\b/;
+/** What animates a colour (ui-system 6.2): `all`, the colour longhands and the shorthands that carry one */
+const COLOUR_PROPERTY = /^(?:all|color|background(?:-color)?|border(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?(?:-color)?|outline(?:-color)?|text-decoration(?:-color)?|column-rule(?:-color)?|caret-color|accent-color|fill|stroke|stop-color|flood-color|lighting-color|box-shadow)$/;
+
+/**
+ * The items of a `transition` value that animate a colour on `ease`: the keyword, or no curve at all, which is the same
+ * thing in the browser. An item that names no property animates everything. A motion token or a curve variable passes.
+ * @param {string} value
+ * @returns {string[]}
+ */
+export function colourOnEase(value) {
+  return topLevelList(value).filter((item) => {
+    const words = topLevelWords(item);
+    const property = words.find((word) => /^[a-z-]+$/.test(word) && !CURVE_KEYWORD.test(word)) ?? 'all';
+    if (!COLOUR_PROPERTY.test(property)) return false;
+    return words.includes('ease') || !words.some((word) => CURVE_KEYWORD.test(word) || CURVE_CALL.test(word));
+  });
 }

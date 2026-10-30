@@ -5,11 +5,10 @@
    their new columns (the track is the three party columns; a mark is one column wide). Theme tokens, light and dark;
    «Робимо» wears the site's action pair (button colours). */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* a format switch: the words slide to their new columns row by row, their tint follows the format, the rows that changed are lit for a moment */
   --rm-for-slide: 640ms;
-  --rm-curve-slide: cubic-bezier(.3, .7, .2, 1);
   --rm-for-slide-fade: 360ms;
   --rm-at-row-step: 22ms;
   --rm-for-mark-tint: 300ms;
@@ -18,7 +17,6 @@
   --rm-for-arrive: 420ms;
   --rm-at-arrive-step: 45ms;
   --rm-for-pop: 420ms;
-  --rm-curve-pop: cubic-bezier(.3, 1.5, .5, 1);
   --rm-at-pop: 220ms;
 }
 
@@ -57,7 +55,7 @@
    head script has run, a button that folds the group (MatrixGroupToggle, Phase 3 PROPOSED; below) */
 .rm-group > span { display: block; padding: 26px 0 10px; color: var(--color-accent-strong); border-bottom: 1px solid var(--color-border-strong); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .rm-group-toggle { display: none; }
-.rm-row { position: relative; min-height: 46px; border-bottom: 1px solid var(--color-border); transition: background-color var(--duration-fast) ease; }
+.rm-row { position: relative; min-height: 46px; border-bottom: 1px solid var(--color-border); transition: background-color var(--duration-fast) var(--ease-standard); }
 @media (hover: hover) { .rm-row:hover { background: color-mix(in srgb, var(--color-accent) 5%, transparent); } }
 .rm-work { grid-column: 1; grid-row: 1; padding: 11px 20px 11px 0; color: var(--color-text); font-size: 16px; line-height: 1.4; }
 /* each party cell: its word on top (drawn by the track), the model's note under it */
@@ -67,7 +65,7 @@
 .rm-cell:nth-child(4) { grid-column: 4; }
 .rm-say small { display: block; color: var(--color-text-muted); font-size: 13.5px; line-height: 1.4; }
 .rm-out { grid-column: 2 / -1; grid-row: 1; padding: 13px 0 11px 16px; color: var(--color-text-muted); font-size: 14px; font-style: italic; }
-.rm-row[data-out] .rm-work { transition: color var(--duration-fast) ease; }
+.rm-row[data-out] .rm-work { transition: color var(--duration-fast) var(--ease-standard); }
 
 /* The words: a track over the three party columns, one column-wide box per word, the word at the top of its cell */
 .rm-track { position: relative; grid-row: 1; grid-column: 2 / -1; align-self: start; height: 44px; pointer-events: none; }
@@ -75,12 +73,12 @@
   --c: var(--c-comprehensive); --o: var(--o-comprehensive); --f: var(--f-comprehensive); --l: var(--l-comprehensive); --s: var(--s-comprehensive); --k: var(--k-comprehensive); --t: var(--t-comprehensive);
   position: absolute; top: 0; left: 0; width: calc(100% / 3); height: 100%; padding: 10px 0 0 16px;
   opacity: var(--o); transform: translateX(calc(var(--c) * 100%));
-  transition: transform var(--rm-for-slide) var(--rm-curve-slide) calc(var(--i, 0) * var(--rm-at-row-step)), opacity var(--rm-for-slide-fade) ease calc(var(--i, 0) * var(--rm-at-row-step));
+  transition: transform var(--rm-for-slide) var(--ease-premium) calc(var(--i, 0) * var(--rm-at-row-step)), opacity var(--rm-for-slide-fade) ease calc(var(--i, 0) * var(--rm-at-row-step));
 }
 .rm-mark::before {
   content: var(--t); display: inline-block; padding: 6px 9px 5px; color: var(--k); background: var(--f); border: 1.5px var(--s) var(--l);
   font: 700 11.5px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
-  transition: background-color var(--rm-for-mark-tint) ease, border-color var(--rm-for-mark-tint) ease, color var(--rm-for-mark-tint) ease;
+  transition: background-color var(--rm-for-mark-tint) var(--ease-standard), border-color var(--rm-for-mark-tint) var(--ease-standard), color var(--rm-for-mark-tint) var(--ease-standard);
 }
 .proc-responsibility:has(input[value="work-package"]:checked) .rm-mark { --c: var(--c-work-package); --o: var(--o-work-package); --f: var(--f-work-package); --l: var(--l-work-package); --s: var(--s-work-package); --k: var(--k-work-package); --t: var(--t-work-package); }
 .proc-responsibility:has(input[value="subcontract"]:checked) .rm-mark { --c: var(--c-subcontract); --o: var(--o-subcontract); --f: var(--f-subcontract); --l: var(--l-subcontract); --s: var(--s-subcontract); --k: var(--k-subcontract); --t: var(--t-subcontract); }
@@ -91,16 +89,16 @@
 /* After a switch, the rows whose parties changed are lit for a moment (FormatSwitchSync) */
 .rm-row[data-fresh] { background: color-mix(in srgb, var(--color-accent) 11%, transparent); }
 @media (prefers-reduced-motion: no-preference) {
-  .rm-row[data-fresh] { animation: rm-fresh var(--rm-for-fresh) ease-out forwards; }
+  .rm-row[data-fresh] { animation: rm-fresh var(--rm-for-fresh) var(--ease-premium) forwards; }
 }
 @keyframes rm-fresh { 0%, 40% { background: color-mix(in srgb, var(--color-accent) 11%, transparent); } 100% { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .rm-mark { transition: none; } }
 
 /* Arriving: the rows rise in one by one, their words pop onto them */
-.process-page[data-motion-ready="on"] .rm-row { transition: background-color var(--duration-fast) ease, opacity var(--rm-for-arrive) ease calc(var(--i, 0) * var(--rm-at-arrive-step)), transform var(--rm-for-arrive) var(--m-ease) calc(var(--i, 0) * var(--rm-at-arrive-step)); }
+.process-page[data-motion-ready="on"] .rm-row { transition: background-color var(--duration-fast) var(--ease-standard), opacity var(--rm-for-arrive) ease calc(var(--i, 0) * var(--rm-at-arrive-step)), transform var(--rm-for-arrive) var(--m-ease) calc(var(--i, 0) * var(--rm-at-arrive-step)); }
 .process-page[data-motion-ready] .resp-matrix-wrap:not([data-motion-state="on"]) .rm-row { opacity: 0; transform: translateY(8px); }
 .process-page[data-motion-ready] .resp-matrix-wrap:not([data-motion-state="on"]) .rm-mark::before { transform: scale(0); }
-.process-page[data-motion-ready="on"] .rm-mark::before { transition: background-color var(--rm-for-mark-tint) ease, border-color var(--rm-for-mark-tint) ease, transform var(--rm-for-pop) var(--rm-curve-pop) calc(var(--rm-at-pop) + var(--i, 0) * var(--rm-at-arrive-step)); }
+.process-page[data-motion-ready="on"] .rm-mark::before { transition: background-color var(--rm-for-mark-tint) var(--ease-standard), border-color var(--rm-for-mark-tint) var(--ease-standard), transform var(--rm-for-pop) var(--ease-signature) calc(var(--rm-at-pop) + var(--i, 0) * var(--rm-at-arrive-step)); }
 
 .resp-matrix-wrap .proc-contract-band { margin-top: 44px; }
 

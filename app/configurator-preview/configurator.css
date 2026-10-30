@@ -2,7 +2,7 @@
    globals.css so pages without the configurator do not download its component styles. Built
    entirely from the site's existing design tokens (:root in ../globals.css) — no new palette. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the preview's loading bar sweeps while the 3D loads */
   --hcp-for-loading-sweep: 1.1s;
@@ -189,7 +189,7 @@
      figures keep the digits from shifting as the value changes. */
   text-align: right;
   font-variant-numeric: tabular-nums;
-  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 /* The inquiry form's focus, as the select's (25.10, W3-07 · PDO-24, configurator-controls.css): a copper border and a
@@ -1319,7 +1319,7 @@
   to { background-color: transparent; box-shadow: inset 0 -2px transparent; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .hc-stamp-row .is-changed { animation: hc-changed var(--hcp-for-changed) ease-out; }
+  .hc-stamp-row .is-changed { animation: hc-changed var(--hcp-for-changed) var(--ease-premium); }
   .hc-stamp-row .hc-sketch :is(path, rect) { transition: d var(--hcp-for-sketch) var(--ease-premium), x var(--hcp-for-sketch) var(--ease-premium), y var(--hcp-for-sketch) var(--ease-premium), width var(--hcp-for-sketch) var(--ease-premium), height var(--hcp-for-sketch) var(--ease-premium); }
 }
 @media (max-width: 1180px) {

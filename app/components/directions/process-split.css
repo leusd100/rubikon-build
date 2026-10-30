@@ -4,7 +4,7 @@
    the /angary route and /yak-pratsyuiemo «Від задачі до будівництва» (owner 06.10: «спростити… з вау ефектом»). Always on a
    dark band, so the inks are the band's in both themes. ── */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* arriving: the rail draws step by step, each drawing plots in on its stretch, the outcome follows, then the light runs */
   --ps-at-step: 340ms;

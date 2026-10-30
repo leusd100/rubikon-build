@@ -1,7 +1,7 @@
 /* The configurator's controls: «Об’єкт» and the three steps (07.10). Imported by ConfiguratorControls.tsx only. The
    shared look of fields, cards and notes stays in configurator-preview/configurator.css. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* a chosen answer: its tick is drawn, and a chip or the slider's handle presses in under the pointer */
   --hcc-for-tick: 160ms;
@@ -27,7 +27,7 @@
   background: var(--color-bg);
   color: var(--color-text);
   font: 600 15px/1.2 var(--font-manrope), sans-serif;
-  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 /* Its focus is the inquiry form's, a copper border and a 3 px halo (25.10, W3-07 · PDO-24): a 2 px copper outline here
    and the halo in the form under it were two looks of a field's focus on one page. The outline stays, transparent, for

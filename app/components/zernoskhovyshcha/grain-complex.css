@@ -3,7 +3,7 @@
    building part RUBIKON does, long dash the specialists' equipment, the grain in --color-grain; the dotted golden lines
    are the grain moving. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the elevation: a module out of the chain stays as a ghost; the storage grows, the incline and the grain follow; the flows fade in once it stands */
   --gc-for-ghost: .5s;
@@ -79,10 +79,10 @@
 /* The drawing answers a pointer (owner, 06.10): a module under it is lit and named in a tip; a press changes it and the
    changed module flashes. Pointer only — the chips are the same choices for a keyboard and a screen reader. */
 /* touch-action: a second tap on a module is a press, not iOS's double-tap zoom (PDO-100) */
-.gc-drawing .gc-hit { fill: transparent; stroke: none; cursor: pointer; pointer-events: all; touch-action: manipulation; transition: fill var(--motion-micro) ease; }
+.gc-drawing .gc-hit { fill: transparent; stroke: none; cursor: pointer; pointer-events: all; touch-action: manipulation; transition: fill var(--motion-micro) var(--ease-standard); }
 .gc-drawing .gc-hit.is-hover { fill: color-mix(in srgb, var(--color-accent) 7%, transparent); }
 @keyframes gc-flash { from { fill: color-mix(in srgb, var(--color-accent) 26%, transparent); } to { fill: transparent; } }
-.gc-drawing .gc-hit.is-flash { animation: gc-flash var(--gc-for-flash) ease-out; }
+.gc-drawing .gc-hit.is-flash { animation: gc-flash var(--gc-for-flash) var(--ease-premium); }
 .gc-mod.is-hot .gc-own { stroke-width: 4.4; }
 .gc-mod.is-hot .gc-partner { stroke: var(--color-text-secondary); }
 .gc-mod.is-off.is-hot { opacity: .42; }
@@ -146,7 +146,7 @@
 .gc-chip span {
   display: inline-flex; align-items: center; min-height: 42px; padding: 0 16px; color: var(--color-text); background: var(--color-surface-elevated);
   border: 1px solid var(--color-border-control); font: 600 15px/1 var(--font-condensed), sans-serif; letter-spacing: .03em;
-  transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .gc-chip:hover input:not(:checked) + span { border-color: var(--color-accent); }
 /* a chosen option is graphite, as in /angary's configurator and the form: copper is left for the action and for RUBIKON's
@@ -175,7 +175,7 @@
 }
 /* a line the last change brought in lights for a moment */
 @keyframes gc-new { from { background-color: color-mix(in srgb, var(--color-accent) 24%, transparent); } to { background-color: transparent; } }
-.gc-scope-col li.is-new { animation: gc-new var(--gc-for-new) ease-out; }
+.gc-scope-col li.is-new { animation: gc-new var(--gc-for-new) var(--ease-premium); }
 
 @media (max-width: 1050px) {
   .gc-scope { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

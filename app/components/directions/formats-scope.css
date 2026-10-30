@@ -5,7 +5,7 @@
    Imported by the page (app/yak-pratsyuiemo/page.tsx), never by the client component: a CSS file imported by two
    client modules becomes an empty chunk under vinext. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the drawing follows the format in focus: its parts and frames, the frames' names and the packages' tags */
   --dfmt-for-format: 320ms;
@@ -20,7 +20,7 @@
 /* (the row's button and its pressed state: .step-option, globals.css; a lighter tint here) */
 .dfmt-option { --step-tint: 9%; --step-hover-tint: 5%; grid-template-columns: 48px minmax(0, 1fr); gap: 8px 16px; padding: 22px 16px 24px; }
 .dfmt-num { grid-row: span 2; padding-top: 6px; color: var(--color-accent-strong); font: 700 13px/1.6 var(--font-condensed), sans-serif; letter-spacing: .12em; }
-.dfmt-title { color: var(--color-text); font: 400 var(--type-h3)/1.05 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; transition: color var(--duration-fast) ease; }
+.dfmt-title { color: var(--color-text); font: 400 var(--type-h3)/1.05 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; transition: color var(--duration-fast) var(--ease-standard); }
 .dfmt-text { max-width: 520px; color: var(--color-text-secondary); font-size: 15.5px; line-height: 1.6; }
 .dfmt-option[aria-pressed="true"] .dfmt-title { color: var(--color-accent-strong); }
 .dfmt-figure { margin: 0; padding: clamp(18px, 2.4vw, 30px) clamp(18px, 2.4vw, 32px) clamp(16px, 2vw, 24px); background: var(--color-surface-elevated); border: 1px solid var(--color-border); }
@@ -30,7 +30,7 @@
 .dfmt-grid .fs-axis { stroke: var(--color-text-muted); stroke-width: .8; stroke-dasharray: 12 3 2 3; opacity: .6; }
 /* A part of the building: thin graphite while it is another participant's, copper and heavier while it is RUBIKON's.
    The delay runs in build order, so a whole complex lights from the footings up. */
-.dfmt-grid .fs-layer { stroke: var(--color-text-muted); stroke-width: 1.2; transition: stroke var(--dfmt-for-format) ease, stroke-width var(--dfmt-for-format) ease, fill var(--dfmt-for-format) ease; transition-delay: calc(var(--i, 0) * var(--dfmt-at-layer-step)); }
+.dfmt-grid .fs-layer { stroke: var(--color-text-muted); stroke-width: 1.2; transition: stroke var(--dfmt-for-format) var(--ease-standard), stroke-width var(--dfmt-for-format) ease, fill var(--dfmt-for-format) var(--ease-standard); transition-delay: calc(var(--i, 0) * var(--dfmt-at-layer-step)); }
 .dfmt-grid .fs-layer[data-layer="frame"] { stroke-width: 1.8; }
 .dfmt-grid .fs path.fs-layer[data-layer="foundation"] { fill: color-mix(in srgb, var(--color-text) 5%, transparent); }
 .dfmt-grid .fs-layer[data-scope] { stroke: var(--color-accent); stroke-width: 2; }
@@ -39,7 +39,7 @@
 /* Whose object it is. The inner frame is the object: the customer's (graphite) or, when RUBIKON coordinates it, the
    agreed scope (copper). The outer one appears for a general contractor's project — long dash and two dots, the
    site's line for what is someone else's. */
-.dfmt-grid .fs-frame { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 6 5; transition: stroke var(--dfmt-for-format) ease, stroke-width var(--dfmt-for-format) ease, opacity var(--dfmt-for-format) ease; }
+.dfmt-grid .fs-frame { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 6 5; transition: stroke var(--dfmt-for-format) var(--ease-standard), stroke-width var(--dfmt-for-format) ease, opacity var(--dfmt-for-format) ease; }
 .dfmt-grid .fs-outer { stroke-dasharray: 12 3 2 3 2 3; opacity: 0; }
 .dfmt-grid .fs[data-format="subcontract"] .fs-outer { opacity: 1; }
 .dfmt-grid .fs[data-format="comprehensive"] .fs-inner { stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 8 6; }
@@ -54,7 +54,7 @@
 /* Under it: the packages as tags (the one in RUBIKON's scope in copper), then the two facts */
 .dfmt-facts { display: grid; gap: 16px; margin-top: 18px; }
 .dfmt-packages { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.dfmt-packages li { padding: 7px 12px; color: var(--color-text-secondary); border: 1px solid var(--color-border-strong); font: 600 14px/1.2 var(--font-manrope), sans-serif; transition: color var(--dfmt-for-format) ease, border-color var(--dfmt-for-format) ease, background-color var(--dfmt-for-format) ease; }
+.dfmt-packages li { padding: 7px 12px; color: var(--color-text-secondary); border: 1px solid var(--color-border-strong); font: 600 14px/1.2 var(--font-manrope), sans-serif; transition: color var(--dfmt-for-format) var(--ease-standard), border-color var(--dfmt-for-format) var(--ease-standard), background-color var(--dfmt-for-format) var(--ease-standard); }
 .dfmt-packages li[data-scope] { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 12%, transparent); border-color: var(--color-accent); }
 .dfmt-packages li.dfmt-packages-note { padding-inline: 4px; color: var(--color-text-muted); border: 0; font-weight: 500; }
 .dfmt-terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; margin: 0; padding-top: 14px; border-top: 1px solid var(--color-border); }

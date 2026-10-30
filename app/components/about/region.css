@@ -5,7 +5,7 @@
    promised. On fine-pointer devices with motion a soft copper light follows the cursor and brings the nearest rings up.
    Motion runs once inside a ProcessMotion root; without it every part stands complete. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the cursor's light, and the rings it brings up */
   --region-for-light: 320ms;
@@ -22,7 +22,7 @@
 .region-block {
   --region-draw: var(--ease-plot); /* an even pen: no rush at the start, no crawl at the end */
   --region-ease: var(--m-ease, var(--ease-premium));
-  --region-reveal: var(--m-reveal, .36s);
+  --region-reveal: var(--m-reveal, var(--motion-enter));
 }
 .region-bond { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0; }
 .region-bond::before, .region-bond::after { content: ''; flex: 1; height: 1px; background: var(--color-accent); }
@@ -63,7 +63,7 @@
 :where([data-motion-ready="on"]) .region-bond::after { transition: transform var(--region-for-bond) var(--region-ease) var(--region-at-bond); }
 :where([data-motion-ready="on"]) .arm-ring-line { transition: stroke-dashoffset var(--region-for-rings) var(--region-draw) calc(var(--region-at-rings) + var(--k, 0) * var(--region-at-rings-step)); }
 @keyframes arm-pulse { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
-:where([data-motion-ready="on"]) .region-block[data-motion-state="on"] .arm-pulse { animation: arm-pulse var(--region-for-pulse) ease-out var(--region-at-pulse) 2; }
+:where([data-motion-ready="on"]) .region-block[data-motion-state="on"] .arm-pulse { animation: arm-pulse var(--region-for-pulse) var(--ease-premium) var(--region-at-pulse) 2; }
 :where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .region-bond::before,
 :where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .region-bond::after { transform: scaleX(0); }
 :where([data-motion-ready]) .region-block:not([data-motion-state="on"]) .arm-ring-line { stroke-dashoffset: 1; }

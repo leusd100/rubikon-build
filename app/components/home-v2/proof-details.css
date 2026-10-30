@@ -2,7 +2,7 @@
    paper colour, the connection in copper, hatches faint, the names in Manrope. Butt caps and miter joins, as a drawing's
    lines are; no glow, no shadow, no gradient. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the load's way through the node fades in as the drawing under it steps back */
   --hv2d-for-flow-fade: 240ms;
@@ -11,12 +11,10 @@
   /* put together before the eye: from the moment the panel has grown out of its ring, each part in, one after another, the names last */
   --hv2d-at-assemble: 360ms;
   --hv2d-for-part-in: 620ms;
-  --hv2d-curve-part-in: cubic-bezier(.2, .8, .25, 1);
   --hv2d-for-names-in: 360ms;
   --hv2d-at-names-after: 260ms;
   /* taken apart: the drawing steps back, each part moves along where it came from, the parts' names give way to the step names */
   --hv2d-for-zoom: 600ms;
-  --hv2d-curve-explode: cubic-bezier(.3, .7, .2, 1);
   --hv2d-for-shift: 650ms;
   --hv2d-at-shift-step: 80ms;
   --hv2d-for-part-name-out: 180ms;
@@ -79,7 +77,7 @@ main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-assembly { opacity: .55;
    length: the step between them shortens past six */
 @media (prefers-reduced-motion: no-preference) {
   main[data-home="v2"] .hv2-detail .hv2-detail-drawing { --step: min(260ms, 1560ms / var(--parts, 6)); }
-  main[data-home="v2"] .hv2-detail .hv2-detail-part { animation: hv2-detail-part var(--hv2d-for-part-in) var(--hv2d-curve-part-in) both; animation-delay: calc(var(--hv2d-at-assemble) + var(--n, 0) * var(--step)); }
+  main[data-home="v2"] .hv2-detail .hv2-detail-part { animation: hv2-detail-part var(--hv2d-for-part-in) var(--ease-premium) both; animation-delay: calc(var(--hv2d-at-assemble) + var(--n, 0) * var(--step)); }
   main[data-home="v2"] .hv2-detail .hv2-detail-callouts { animation: hv2-detail-names var(--hv2d-for-names-in) ease both; animation-delay: calc(var(--hv2d-at-assemble) + var(--parts, 4) * var(--step) + var(--hv2d-at-names-after)); }
   main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-flow-way { animation: hv2-detail-flow var(--motion-draw) linear infinite; }
 }
@@ -90,10 +88,10 @@ main[data-home="v2"] .hv2-detail[data-flow] .hv2-detail-assembly { opacity: .55;
 /* «Розібрати» (ProofContour, data-exploded): each part drawn back half way along where it came from — the top ones first —
    the drawing stepping back to make room, the names on the drawing giving way to each part's step and name; «Зібрати»
    puts it back from the bottom up */
-main[data-home="v2"] .hv2-detail .hv2-detail-zoom { transform-box: view-box; transform-origin: 50% 50%; transition: transform var(--hv2d-for-zoom) var(--hv2d-curve-explode); }
+main[data-home="v2"] .hv2-detail .hv2-detail-zoom { transform-box: view-box; transform-origin: 50% 50%; transition: transform var(--hv2d-for-zoom) var(--ease-premium); }
 main[data-home="v2"] .hv2-detail[data-exploded] .hv2-detail-zoom { transform: scale(.8); }
 main[data-home="v2"] .hv2-detail .hv2-detail-part-shift {
-  transition: transform var(--hv2d-for-shift) var(--hv2d-curve-explode); transition-delay: calc(var(--n, 0) * var(--hv2d-at-shift-step));
+  transition: transform var(--hv2d-for-shift) var(--ease-premium); transition-delay: calc(var(--n, 0) * var(--hv2d-at-shift-step));
 }
 main[data-home="v2"] .hv2-detail[data-exploded] .hv2-detail-part-shift {
   transform: translate(var(--ex, 0px), var(--ey, 0px)); transition-delay: calc((var(--parts, 6) - 1 - var(--n, 0)) * var(--hv2d-at-shift-step));
