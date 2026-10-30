@@ -5,7 +5,7 @@ import { directions } from '../../app/data/directions';
 // (owner, 05.10: the sheets of the /napryamky catalogue belong here; the key plan went there). These pin what the row
 // promises: it costs the header nothing, it shows only where a sheet is large enough to read, the sheets are set to
 // the header's own lines (top of the title's capitals, bottom of the note — «вирівняємо їх по висоті») and so stand
-// upright, each names its direction, every card lifts and frames its own sheet — walked from the data, because the
+// upright, each names its direction, every card frames its own sheet — walked from the data, because the
 // link is by route — and the row stays out of the accessibility tree and the tab order, the cards saying everything.
 
 const HEADER = '#directions .section-header';

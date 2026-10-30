@@ -147,9 +147,10 @@ stands:
   choreography variable, with the **value unchanged** — the computed `transition-*` / `animation-*` of every element of
   the nine public pages, at 390 and 1440 px, are the same before and after (`scripts/motion/motion-diff.mjs`,
   `scripts/motion/computed-motion.mjs`).
-- **Next (M1-2 … M1-4).** The pace by roles (the reveals of 360 / 420 ms → `--motion-enter`, the keyword `ease` on colour →
-  `--ease-standard`, the literal curves → the table of 6.2, the HOME cards no longer lift), Lenis at rest (rule 8), one
-  rule for the auto-shows (rule 7).
+- **In the code (M1-2).** The pace by roles: the reveals of 360 / 420 ms read `--motion-enter`, the keyword `ease` on colour
+  reads `--ease-standard`, the literal curves are the four tokens of 6.2, and the HOME direction sheets no longer lift.
+- **In the code (M1-3).** Lenis at rest (rule 8).
+- **Next (M1-4).** One rule for the auto-shows (rule 7).
 - **Then (M2, M3).** The five gestures of 6.3 and the controller of 6.5, the three signature moments.
 
 ### 6.1 Duration and distance tokens
@@ -168,14 +169,13 @@ stands:
 | Distance | `--motion-rise` | 16 px; 10 px up to 760 px | the lift of a reveal |
 
 `--duration-fast` (= `--motion-micro`) and `--duration-medium` (= `--motion-ui`) stay as aliases, so nothing that reads
-them breaks. `--motion-reveal` (420 ms) had no use and is gone. The pages' own variables keep their values for now: in
-M1-2 only the three `--m-reveal` (`about.css`, `delivery.css`, `direction-template.css`) and `--region-reveal` move onto
-`--motion-enter`; `--m-draw` (the pen: 900 ms on /yak, 1100 ms on the direction pages) and the rest of `--region-*` are
-decided in M1-2, not moved by default.
+them breaks. `--motion-reveal` (420 ms) had no use and is gone. M1-2 moved the three `--m-reveal` (`about.css`,
+`delivery.css`, `direction-template.css`) and `--region-reveal` onto `--motion-enter`; `--m-draw` (the pen: 900 ms on /yak,
+1100 ms on the direction pages) and the rest of `--region-*` keep their values.
 
 ### 6.2 Curves
 
-| Token | Value | Role | Literals that move onto it (M1-2) |
+| Token | Value | Role | Literals that moved onto it (M1-2) |
 |---|---|---|---|
 | `--ease-premium` | `cubic-bezier(.2, .7, .1, 1)` | reveals, response, a camera that «arrives» | `(.3,.7,.2,1)` ×12, `(.2,.7,.2,1)` ×1, `(.2,.8,.25,1)` ×1, `(.3,.6,.3,1)` ×1 |
 | `--ease-plot` | `cubic-bezier(.55, 0, .25, 1)` | an even pen, the wipe, the camera's move between steps | `(.45,0,.2,1)` ×6, `(.65,0,.25,1)` ×2 |
@@ -183,8 +183,8 @@ decided in M1-2, not moved by default.
 | `--ease-signature` | `cubic-bezier(.3, 1.5, .5, 1)` | a slight overshoot: the signature moments (M3) and the three existing «clicks» of a mark | `(.3,1.5,.5,1)` ×2, `(.3,1.6,.5,1)` ×1 (`catalog-drawing.css`, `resp-matrix.css`, `change-sheets.css`) |
 
 `linear` stays where the motion is mechanical by meaning (the formats' march, a progress bar). `ease-out` / `ease-in-out`
-become `--ease-premium` / `--ease-standard` by role. Until M1-2 each of the eight literal curves lives, with its value, in
-the `--<prefix>-curve-*` variable of the file that uses it; M1-2 re-points those variables, one place per file.
+became `--ease-premium` / `--ease-standard` by role. `cubic-bezier(` now appears only in `globals.css` `:root`, and no file
+has a curve variable of its own. The keyword `ease` stays on `opacity` and `transform`.
 
 ### 6.3 The five gestures
 
@@ -249,7 +249,8 @@ without motion. They arrive with M2-1; the table is the contract.
 
 ### 6.6 A number: a token, or the file's choreography
 
-A time, a delay or a curve in a `transition*` / `animation*` declaration is never a literal. It is one of two things.
+A time or a delay in a `transition*` / `animation*` declaration is never a literal, and a curve is always a token of 6.2. A
+time or a delay is one of two things.
 
 **A token** (6.1, 6.2), only where the **value and the animated property** both match the table. For `animation*` the animated
 property is the properties of its `@keyframes`.
@@ -263,22 +264,20 @@ property is the properties of its `@keyframes`.
 | anything else | the file's choreography variable | — |
 
 The same number on another property (a `.2s` on `transform`, a `.9s` on `opacity`) is **not** the token: it is the file's own
-time, and stays a choreography variable until a visible step (M1-2) decides it.
+time, and stays a choreography variable.
 
 **Choreography** — a block at the top of the file (after the header comment), in a top-level `:root` (`globals.css` has one `:root` only, so its `--site-*` variables sit at the end of it, after the tokens):
 
 ```css
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* a format switch: the words slide to their new columns row by row, their tint follows the format */
   --rm-for-slide: 640ms;                         /* a duration */
-  --rm-curve-slide: cubic-bezier(.3, .7, .2, 1); /* a curve no token carries yet (until M1-2) */
   --rm-at-row-step: 22ms;                        /* the step of a cascade: calc(var(--i, 0) * var(--rm-at-row-step)) */
 }
 ```
 
-- Names are `--<prefix>-for-<what>` (durations), `--<prefix>-at-<what>` (delays, and the steps of cascades) and
-  `--<prefix>-curve-<what>` (curves). Delays and steps are always `--<prefix>-at-*`, whatever their value (a delay is a
+- Names are `--<prefix>-for-<what>` (durations) and `--<prefix>-at-<what>` (delays, and the steps of cascades). Delays and steps are always `--<prefix>-at-*`, whatever their value (a delay is a
   moment of the file's own timeline, not a role).
 - The prefix is the file's own — short, and used by no other file. One name is one value, declared once, read only in its file.
 - Values move over word for word (`.3s` stays `.3s`, `300ms` stays `300ms`), so a reverse substitution of the variables gives
@@ -291,6 +290,8 @@ time, and stays a choreography variable until a visible step (M1-2) decides it.
 `tests/unit/motion-tokens.test.ts` scans every `app/**/*.css` and fails when:
 
 - a `transition*` or `animation*` declaration holds a time literal or a `cubic-bezier(`;
+- a `cubic-bezier(` stands outside `globals.css` `:root`, or a file declares a `--<prefix>-curve-*` variable;
+- a `transition` runs a colour property on the keyword `ease`, or any motion declaration uses `ease-out` / `ease-in-out`;
 - a Motion v1 token is missing, has another value, or is declared twice or outside `globals.css` `:root` (the one other
   declaration allowed is the phone `--motion-rise`); any other `--motion-*`, `--ease-*` or `--duration-*` declaration;
   `--motion-reveal` comes back;
