@@ -5,7 +5,7 @@
 | Дата | 2026-10-30 |
 | Виконавець | Claude Code |
 | Підстава | Main Regression [41027903583](https://github.com/leusd100/rubikon-build/actions/runs/41027903583), `main` `a4183464`, шард 3/6, спроба 1: `home-proof-contour.spec.ts:1156` — таймаут 45 с в `open()`; пройшов із повтору, `failOnFlakyTests` зробив шард червоним |
-| PR | PR_PLACEHOLDER, Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#276](https://github.com/leusd100/rubikon-build/pull/276), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `test/home-contour-open-flake` від `main` `c3ba022b` (стенд гонки — на `a4183464`; #275 цих файлів не чіпав) |
 | Коміти | `4bbfd3fd` — виправлення і регресійний тест · handoff |
 | Змінено | `app/components/DrawingSheet.tsx`, `app/components/home-v2/proof-contour/useFirstSweep.ts`, `app/components/home-v2/ProofContour.tsx` — колбеки IntersectionObserver читають усі записи пакета, а не перший. `tests/e2e/home-proof-contour.spec.ts` — один новий регресійний тест |
