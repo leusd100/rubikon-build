@@ -131,3 +131,10 @@ export function getRepeatedNoiseTexture(kind: 'roughness' | 'normal', repeat: nu
   repeatedVariants.set(cacheKey, variant);
   return variant;
 }
+
+/** As a 3D view closes (ThreeHangarView's `disposeSharedResources`): frees the variants' GPU side and the closed
+ *  renderer's hold on them. They stay cached, and the next renderer uploads them again. The two base textures need no
+ *  such call: only their variants are ever uploaded. */
+export function disposeRepeatedNoiseTextures() {
+  for (const variant of repeatedVariants.values()) variant.dispose();
+}

@@ -5,9 +5,9 @@
 | Дата | 2026-10-27 – 28 |
 | Виконавець | Claude Code |
 | Підстава | Engineering Excellence brief 27.10, знахідки MO-01, MO-02, MO-03 (`06_SCROLL_AND_MOTION_ANALYSIS.md`, підтверджені перевіркою). MO-04 — лише контекст, не змінено |
-| PR | [#261](https://github.com/leusd100/rubikon-build/pull/261), Draft. **Merge і production deploy — лише з окремого OK Дмитра**: push у `main` запускає Workers Builds на production-скрипті (так було з `9079f47`, #256), тож merge — це й деплой |
+| PR | [#261](https://github.com/leusd100/rubikon-build/pull/261), злито 28.10 (squash `68363afc`); доопрацювання — `fix/lenis-guards-followup`, handoff `docs/handoffs/2026-10-28-lenis-guards-followup.md` |
 | Гілка / base | `fix/lenis-guards` від `main` `9079f47` |
-| Коміти | **`2ee652e`** — код і тести · цей коміт — handoff |
+| Коміти | у `main` — squash **`68363afc`**; на гілці — `2ee652e` (код і тести) і коміт handoff |
 | Змінено | `app/components/SmoothScroll.tsx`: опція `prevent` (вузол з `aria-modal="true"`), `anchors: false` і власний слухач якорів, `HOVER_QUERY` в умові запуску та його `change`. Коментарі в минулому часі там, де вони описували старий обробник якорів Lenis: `HangarConfigurator.tsx`, `revealAttachedBrief.ts`, `configurator-phase4-inquiry.spec.ts`, `form.spec.ts`; у `smooth-scroll-idle.spec.ts` коментар називає порядок слухачів, на який спирається тест якоря. Тести: 8 нових e2e у `tests/e2e/smooth-scroll.spec.ts` |
 | Не змінено | Параметри Lenis (`lerp: 0.18`, `wheelMultiplier: 1`, `syncTouch: false`, `stopInertiaOnNavigate: true`, `autoRaf: false`), поріг 1181 px, reduced motion, `?lenis=off`, `lenisLoop.ts`, щит прокрутки (другий ефект `SmoothScroll`, MO-04), обхідні `stopPropagation` у `HangarConfigurator` і `revealAttachedBrief`, CSS, розмітка, тексти, залежності (0 нових), еталони |
 
@@ -100,7 +100,7 @@
 
 ## Еталони (DEC-18)
 
-Прогноз: 42 цілі visual-chromium (`visual`, `brand-logo-visual`, `configurator-visual`, `grain-planner-visual`), зняті з main і з гілки з налаштуваннями специфікацій (reduced motion, світла тема, DPR 1, ті самі елементи) і порівняні компаратором Playwright з допуском специфікацій (threshold 0,25, maxDiffPixelRatio 0,02): **0 з 42 змінюються** (40 побайтно однакові, 2 — `homepage-real-object-mobile-375`, `homepage-hero-desktop-1440` — у межах допуску). Так і має бути: усі візуальні специфікації вмикають reduced motion, за якого Lenis не запускається ні на main, ні на гілці, тож змінений код у кадрах не виконується. Еталони не оновлено; остаточно покаже Main Regression на CI (Linux).
+Прогноз: 42 цілі visual-chromium (`visual`, `brand-logo-visual`, `configurator-visual`, `grain-planner-visual`; п'ята специфікація проєкту, `configurator-3d-visual` з 5 цілями, теж емулює reduced motion — Lenis там не запускається на жодній збірці, тож її не зачеплено: разом 0 з 47), зняті з main і з гілки з налаштуваннями специфікацій (reduced motion, світла тема, DPR 1, ті самі елементи) і порівняні компаратором Playwright з допуском специфікацій (threshold 0,25, maxDiffPixelRatio 0,02): **0 з 42 змінюються** (40 побайтно однакові, 2 — `homepage-real-object-mobile-375`, `homepage-hero-desktop-1440` — у межах допуску). Так і має бути: усі візуальні специфікації вмикають reduced motion, за якого Lenis не запускається ні на main, ні на гілці, тож змінений код у кадрах не виконується. Еталони не оновлено; остаточно покаже Main Regression на CI (Linux).
 
 ## Ризики
 
@@ -118,4 +118,4 @@
 
 ## Відкат
 
-Після squash-merge — `git revert` коміту PR. Код — один файл (`SmoothScroll.tsx`); решта змін — коментарі й тести.
+`git revert 68363afc` (squash-коміт PR у `main`; `2ee652e` — лише посилання на гілку). Код — один файл (`SmoothScroll.tsx`); решта змін — коментарі й тести.

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type {
@@ -17,7 +17,7 @@ import type { ParametricBuildingModel } from '../../../lib/configurator/parametr
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../../lib/configurator/buildUpSequence';
 import { hasLayerSettled } from '../../../lib/configurator/layerLifecycle';
 import { INK, MATERIALS } from './materials';
-import { getRepeatedNoiseTexture } from './proceduralTextures';
+import { disposeRepeatedNoiseTextures, getRepeatedNoiseTexture } from './proceduralTextures';
 import { boxEdges, creaseEdges, faceRectangle, outlineSides, polygonAtZ, pushSegments, surfaceOutline, type Segments } from './inkOutlines';
 import { InkLines } from './InkLines';
 import {
@@ -471,6 +471,29 @@ function envelopeGeometryFor(widthM: number, heightM: number, thicknessM: number
   }
 
   return geometry;
+}
+
+/**
+ * Frees the shared GPU objects as a 3D view closes (27.10, GL-04). Every renderer that draws them hangs a 'dispose'
+ * listener on each, and R3F's unmount only forces the context lost — so the unit box, the cached materials, the brace
+ * material, the envelope geometries, the noise variants and three's own DFG lookup texture held on to every closed
+ * renderer, its lost context and its detached canvas: one more per open (8 opens, 8 live contexts, ~0.3 MB of heap and
+ * 37 DOM nodes each). dispose() frees their GPU side and drops those listeners; the objects themselves stay as they
+ * are, cached, and the next renderer uploads them again — as a new context has to anyway.
+ *
+ * The lookup texture is three's (r185 makes one per page, at first use, for every lit material) and has no export: it
+ * is found on a material this renderer drew, before the materials' dispose clears the renderer's record of them.
+ */
+function disposeSharedResources(gl: THREE.WebGLRenderer) {
+  const dfgLookup = [...MATERIAL_CACHE.values()]
+    .map((material) => (gl.properties.get(material) as { uniforms?: { dfgLUT?: { value: THREE.Texture | null } } }).uniforms?.dfgLUT?.value)
+    .find(Boolean);
+  UNIT_BOX.dispose();
+  for (const material of MATERIAL_CACHE.values()) material.dispose();
+  braceMaterial?.dispose();
+  for (const geometry of ENVELOPE_GEOMETRY_CACHE.values()) geometry.dispose();
+  disposeRepeatedNoiseTextures();
+  dfgLookup?.dispose();
 }
 
 /**
@@ -1006,6 +1029,60 @@ function InvalidateOnChange({ scene }: Readonly<{ scene: ThreeSceneModel }>) {
   return null;
 }
 
+/** `disposeSharedResources` as the view closes. Inside the Canvas for its renderer; R3F has stopped drawing by then (its
+ *  unmount marks the root inactive first), and the context is still there for the GPU side to be freed — R3F forces it
+ *  lost 500 ms later. */
+function SharedResourceRelease() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => () => disposeSharedResources(gl), [gl]);
+  return null;
+}
+
+/** How long a lost context may stay lost, with the page on screen, before the 3D gives way to the drawing */
+const CONTEXT_RESTORE_GRACE_MS = 3000;
+
+/**
+ * A lost WebGL context (a GPU reset, memory pressure, a phone letting the page's GPU go in the background). Three
+ * rebuilds its own state when the browser gives the context back, but frameloop="demand" draws nothing until asked, so
+ * the field stayed empty until the next change (27.10, GL-03): the frame is asked for here. A context still lost after
+ * CONTEXT_RESTORE_GRACE_MS on screen is a renderer failure like any other (`onLost`, the drawing). Hidden time does not
+ * count: a phone gives a backgrounded page its context back as the page is shown again.
+ */
+function ContextLossRecovery({ onLost }: Readonly<{ onLost: (error: Error) => void }>) {
+  const gl = useThree((s) => s.gl);
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    const canvas = gl.domElement;
+    let lost = false;
+    let timer: number | undefined;
+    const wait = () => {
+      window.clearTimeout(timer);
+      if (!lost || document.visibilityState === 'hidden') return;
+      timer = window.setTimeout(() => onLost(new Error('WebGL context lost and not restored')), CONTEXT_RESTORE_GRACE_MS);
+    };
+    const handleLost = () => {
+      lost = true;
+      wait();
+    };
+    // after three's own handler, which was added with the renderer: its state is rebuilt by the time this asks to draw
+    const handleRestored = () => {
+      lost = false;
+      window.clearTimeout(timer);
+      invalidate();
+    };
+    canvas.addEventListener('webglcontextlost', handleLost);
+    canvas.addEventListener('webglcontextrestored', handleRestored);
+    document.addEventListener('visibilitychange', wait);
+    return () => {
+      window.clearTimeout(timer);
+      canvas.removeEventListener('webglcontextlost', handleLost);
+      canvas.removeEventListener('webglcontextrestored', handleRestored);
+      document.removeEventListener('visibilitychange', wait);
+    };
+  }, [gl, invalidate, onLost]);
+  return null;
+}
+
 /**
  * Phase 3F.1 — test-only render/compositor synchronisation, root-caused during Phase 3F's own
  * visual-regression work: a screenshot taken immediately after `invalidate()` can capture a STALE
@@ -1230,6 +1307,27 @@ export function ThreeHangarView({
   const wallPanels = useMemo(() => scene.panels.filter((p) => p.material === 'wall-profiled' || p.material === 'wall-sandwich'), [scene]);
   const roofPanels = useMemo(() => scene.panels.filter((p) => p.material === 'roof-profiled' || p.material === 'roof-sandwich'), [scene]);
 
+  // A renderer that could not be made, or a context lost for good (27.10, GL-02/GL-03): thrown while rendering this
+  // component, inside ThreeErrorBoundary, so it ends as any renderer failure does — on the drawing (HangarPreviewModes).
+  // Not thrown inside the Canvas: R3F's own boundary passes what it catches to reportError, an uncaught error.
+  const [failure, setFailure] = useState<Error | null>(null);
+  // The renderer R3F would make from props, with the same parameters — made here so its failure is seen. R3F builds it in
+  // an async setup with no catch: three's «Error creating WebGL context» was an unhandled rejection, no boundary saw it,
+  // and the field stayed empty. On failure the setup is left waiting rather than given nothing (R3F would then make a
+  // renderer of its own, and throw the same way); it goes with the Canvas. Made once: the setup awaits this, and a render
+  // of the Canvas in that pause would set up again, and ask for a second renderer on the same canvas.
+  const renderer = useRef<THREE.WebGLRenderer | null>(null);
+  const createRenderer = useCallback(async (defaults: THREE.WebGLRendererParameters) => {
+    try {
+      renderer.current ??= new THREE.WebGLRenderer({ ...defaults, antialias: true, preserveDrawingBuffer: true, alpha: true });
+      return renderer.current;
+    } catch (error) {
+      setFailure(error instanceof Error ? error : new Error(String(error)));
+      return new Promise<never>(() => {});
+    }
+  }, []);
+  if (failure) throw failure;
+
   return (
     <Canvas
       // No sizing class here: R3F puts inline `width/height: 100%` on its own wrapper div, which
@@ -1243,7 +1341,7 @@ export function ThreeHangarView({
       dpr={[1, maxDpr]}
       // Transparent (10.10): the page's own field shows through — /angary's sheet, the research card, the expanded
       // view — so the 3D sits on the same dark field as the line drawings beside it, in both themes (materials.ts)
-      gl={{ antialias: true, preserveDrawingBuffer: true, alpha: true }}
+      gl={createRenderer}
       // No tone mapping (10.10): ACES shifted the steel's hues and flattened the lid against the walls; with the light
       // tuned for it, the surfaces keep the values materials.ts gives them and the ink stays the drawings' own colours
       flat
@@ -1254,6 +1352,8 @@ export function ThreeHangarView({
     >
       <FitOrthographicCamera scene={scene} bottomInsetPx={bottomInsetPx} topInsetPx={topInsetPx} />
       <InvalidateOnChange scene={scene} />
+      <ContextLossRecovery onLost={setFailure} />
+      <SharedResourceRelease />
       <TestRenderSyncAPI />
       <SceneLighting scene={scene} shadows={shadows} shadowMapSize={shadowMapSize} />
       {/* Phase 3F: 'wall-profiled'/'roof-profiled' default colours are the same values the old

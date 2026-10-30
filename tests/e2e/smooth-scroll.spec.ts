@@ -275,6 +275,7 @@ test.describe('smooth scroll leaves alone an anchor that is not its own', () => 
     context.on('page', (opened) => void opened.close());
 
     await link.click({ modifiers: ['ControlOrMeta'] });
+    // A span, not a sync point: what is checked is that nothing happens in it (Lenis's glide takes about 0.9 s)
     await page.waitForTimeout(1500);
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
@@ -338,6 +339,7 @@ test('a wheel over the fullscreen 3D leaves the page behind it where it was', as
   expect(await page.evaluate(() => Boolean(document.elementFromPoint(720, 450)?.closest('[aria-modal="true"]')))).toBe(true);
   for (let tick = 0; tick < 5; tick += 1) {
     await page.mouse.wheel(0, 100);
+    // Wheel clicks paced as a hand turns them; the scroll is awaited after the loop
     await page.waitForTimeout(100);
   }
   await waitForScrollSettled(page);

@@ -226,3 +226,174 @@ test.describe('configurator 3D — responsive', () => {
     expect(Math.abs(after!.height - before!.height)).toBeLessThanOrEqual(1);
   });
 });
+
+// 27.10 (Engineering Excellence, GL-02 / GL-03 / GL-04): the ways a WebGL context fails, or outlives its view, on
+// /angary's sheet, where 3D is a chip on the drawing. 3D must still never become a dependency: every failure ends on the
+// drawing, with no uncaught error, and a closed view must not keep its renderer.
+test.describe('configurator 3D — WebGL failures and teardown', () => {
+  test.skip(({ isMobile }) => isMobile, 'the renderer\'s failure paths and teardown are viewport-independent');
+
+  async function openSheet(page: Page) {
+    await page.goto('/angary', { waitUntil: 'load' });
+    await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click({ timeout: 15000 }).catch(() => {});
+    // The sheet in full view, at once, as configurator-sheet.spec.ts does: left to the click's own scrolling, under load
+    // the chip moved between the aim and the click, and 3D never opened
+    await page.evaluate(() => {
+      const layout = document.querySelector('#configurator .hc-layout');
+      const header = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0;
+      if (layout) window.scrollTo({ top: window.scrollY + layout.getBoundingClientRect().top - header - 12, behavior: 'instant' });
+    });
+  }
+  const pictureOf = (page: Page) => page.locator('#configurator .hc-preview-image');
+  const threeChipOf = (page: Page) => pictureOf(page).getByRole('button', { name: 'Подивитися в 3D', exact: true });
+  const drawingChipOf = (page: Page) => pictureOf(page).getByRole('button', { name: /Креслення$/ });
+  const generalViewOf = (page: Page) => pictureOf(page).locator('svg.gv');
+  // three's canvas once its renderer has the context (three marks it `data-engine` as it asks): asked for any earlier,
+  // `getContext('webgl2')` here would make the context itself, with the browser's defaults — no preserveDrawingBuffer —
+  // and three would draw into that one, a buffer read back empty
+  const canvasOf = (page: Page) => page.locator('#configurator .hc-preview-canvas canvas[data-engine]');
+  const settledOf = (page: Page) => page.locator('#configurator .hc-preview-canvas [data-build-up="settled"]');
+  const pageErrors = (page: Page) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    return errors;
+  };
+  /** Pixels the model left in the drawing buffer (the canvas keeps it: preserveDrawingBuffer), read through WebGL */
+  const drawnPixels = (page: Page) => canvasOf(page).evaluate((canvas: HTMLCanvasElement) => {
+    const gl = canvas.getContext('webgl2');
+    if (!gl || gl.isContextLost()) return 0;
+    const pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+    gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    let drawn = 0;
+    for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 0) drawn += 1;
+    return drawn;
+  });
+
+  test('a browser with WebGL1 only is not offered 3D: three needs WebGL2', async ({ page }) => {
+    const errors = pageErrors(page);
+    const threeRequests: string[] = [];
+    page.on('request', (r) => { if (isThreeLibrary(r.url())) threeRequests.push(r.url()); });
+    await page.addInitScript(() => {
+      const original = HTMLCanvasElement.prototype.getContext;
+      const asked: string[] = [];
+      (window as unknown as { __webglAsked: string[] }).__webglAsked = asked;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: any[]) {
+        if (type.includes('webgl')) asked.push(type);
+        if (type === 'webgl2') return null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (original as any).call(this, type, ...rest);
+      } as typeof HTMLCanvasElement.prototype.getContext;
+    });
+
+    await openSheet(page);
+    // the probe has answered (it asks once the page has hydrated), and the render it asks for is on screen
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __webglAsked: string[] }).__webglAsked.slice())).toContain('webgl2');
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+    await expect(threeChipOf(page)).toHaveCount(0);
+    await expect(generalViewOf(page)).toBeVisible();
+    expect(threeRequests, 'the renderer was downloaded for a browser it cannot draw in').toHaveLength(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('a renderer that cannot get its context falls back to the drawing, with no uncaught error', async ({ page }) => {
+    const errors = pageErrors(page);
+    await page.addInitScript(() => {
+      // The probe's canvas (never in the page) gets its context, the 3D view's does not: the probe passed, the renderer
+      // fails — a driver refusing a second context, or the page out of context slots
+      const original = HTMLCanvasElement.prototype.getContext;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: any[]) {
+        if (type === 'webgl2' && this.isConnected) return null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (original as any).call(this, type, ...rest);
+      } as typeof HTMLCanvasElement.prototype.getContext;
+    });
+
+    await openSheet(page);
+    await threeChipOf(page).click();
+
+    // the drawing again, and 3D no longer offered: it failed once and would again
+    await expect(generalViewOf(page)).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('#configurator canvas')).toHaveCount(0);
+    await expect(pictureOf(page).locator('.hc-sheet-tools')).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('a lost context that comes back draws the model again, without waiting for a change', async ({ page }) => {
+    const errors = pageErrors(page);
+    await openSheet(page);
+    await threeChipOf(page).click();
+    await expect(settledOf(page)).toBeAttached({ timeout: 20_000 });
+    await expect.poll(() => drawnPixels(page)).toBeGreaterThan(0);
+
+    await canvasOf(page).evaluate((canvas: HTMLCanvasElement) => new Promise<void>((resolve) => {
+      const extension = canvas.getContext('webgl2')!.getExtension('WEBGL_lose_context')!;
+      // given back once three has taken the loss (its handler keeps the context restorable), well inside the grace
+      canvas.addEventListener('webglcontextlost', () => setTimeout(() => {
+        extension.restoreContext();
+        resolve();
+      }, 500), { once: true });
+      extension.loseContext();
+    }));
+
+    await expect.poll(() => drawnPixels(page), { timeout: 20_000 }).toBeGreaterThan(0);
+    await expect(drawingChipOf(page)).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('a context lost for good gives way to the drawing', async ({ page }) => {
+    const errors = pageErrors(page);
+    await openSheet(page);
+    await threeChipOf(page).click();
+    await expect(settledOf(page)).toBeAttached({ timeout: 20_000 });
+    // on screen first: the view listens for the loss from its first render
+    await expect.poll(() => drawnPixels(page)).toBeGreaterThan(0);
+
+    await canvasOf(page).evaluate((canvas: HTMLCanvasElement) => {
+      canvas.getContext('webgl2')!.getExtension('WEBGL_lose_context')!.loseContext();
+    });
+
+    // an empty field for the grace period (ThreeHangarView, 3 s), then the drawing
+    await expect(generalViewOf(page)).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#configurator canvas')).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('closing 3D lets its renderer go: at most one WebGL context left after four opens', async ({ page }) => {
+    // four builds of the scene: on CI's software GL each new context blocks 1.3–1.7 s linking its shaders
+    test.setTimeout(90_000);
+    await openSheet(page);
+    for (let open = 0; open < 4; open += 1) {
+      await threeChipOf(page).click();
+      await expect(settledOf(page)).toBeAttached({ timeout: 20_000 });
+      // drawn, not only settled: the sheet's 3D opens settled, before its renderer is even made, and a renderer that
+      // never drew holds none of the shared objects — closed that early, main's leak did not show either
+      await expect.poll(() => drawnPixels(page), { timeout: 20_000 }).toBeGreaterThan(0);
+      await drawingChipOf(page).click();
+      await expect(page.locator('#configurator canvas')).toHaveCount(0);
+    }
+
+    // Counted by the debugger after a full GC, holding nothing of the page: an ElementHandle would keep its canvas, and
+    // the canvas its context, alive. At most one: R3F keeps the last closed renderer until the next open.
+    const cdp = await page.context().newCDPSession(page);
+    const liveContexts = async () => {
+      await cdp.send('HeapProfiler.collectGarbage');
+      await cdp.send('HeapProfiler.collectGarbage');
+      const objectGroup = 'webgl-contexts';
+      const { result: prototype } = await cdp.send('Runtime.evaluate', { expression: 'WebGL2RenderingContext.prototype', objectGroup });
+      const { objects } = await cdp.send('Runtime.queryObjects', { prototypeObjectId: prototype.objectId!, objectGroup });
+      const { result } = await cdp.send('Runtime.callFunctionOn', {
+        objectId: objects.objectId!,
+        functionDeclaration: 'function () { return this.length; }',
+        returnByValue: true,
+        objectGroup,
+      });
+      await cdp.send('Runtime.releaseObjectGroup', { objectGroup });
+      return result.value as number;
+    };
+    // polled: R3F lets the last context go 500 ms after its Canvas
+    await expect.poll(liveContexts, { timeout: 10_000 }).toBeLessThanOrEqual(1);
+  });
+});
