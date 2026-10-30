@@ -97,8 +97,9 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
         }, HINT_AT);
       };
     };
-    const seen = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
+    // The newest entry: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
+    const seen = new IntersectionObserver((entries) => {
+      visible = entries.at(-1)!.isIntersecting;
       run();
     // a third of the frame in view, as the sheet's own plot (DrawingSheet): seen arriving, not only once it is there
     }, { threshold: 0.35 });
