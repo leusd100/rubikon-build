@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useFirstViewWalk } from '../../hooks/useFirstViewWalk';
 import { useHoverStep } from '../useHoverStep';
 import './change-sheets.css';
 
@@ -18,8 +19,8 @@ import './change-sheets.css';
 export type ChangeStepItem = { title: string; detail: string };
 type Term = { title: string; text: string };
 
-const STEP_MS = 2300;
 const LAST = 4;
+const WALK = [1, 2, 3, LAST] as const;
 
 /** A step's place against the one shown: shown now, already passed, or still ahead (no attribute). */
 function stateOf(value: number, shown: number): 'now' | 'done' | undefined {
@@ -91,32 +92,25 @@ export function ChangeSheets({ rows, estimate, schedule, principle, steps, back 
   const [step, setStep] = useState(LAST);
   const [armed, setArmed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const timer = useRef(0);
+  // no tour without motion, nor on a phone, where the sheets stand first in their final state (PDO-100 A)
+  const [wide, setWide] = useState(false);
+  useFirstViewWalk(rootRef, {
+    steps: WALK,
+    onStep: setStep,
+    // A person acted before the first step: the held-back marks come to the whole story, never stay hidden
+    onStop: () => setStep((shown) => shown || LAST),
+    startDelayMs: 700,
+    enabled: wide,
+  });
 
   useEffect(() => {
-    const root = rootRef.current;
-    // no tour without motion, nor on a phone, where the sheets stand first in their final state (PDO-100 A)
-    if (!root || window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)').matches) return undefined;
+    if (window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)').matches) return undefined;
     // Hold the marks back until the block is seen, then walk the procedure once
-    const arm = window.requestAnimationFrame(() => { setArmed(true); setStep(0); });
-    const walk = (next: number) => {
-      setStep(next);
-      if (next < LAST) timer.current = window.setTimeout(() => walk(next + 1), STEP_MS);
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting || entry.intersectionRatio < 0.45) return;
-      observer.disconnect();
-      timer.current = window.setTimeout(() => walk(1), 700);
-    }, { threshold: [0, 0.45] });
-    observer.observe(root);
-    return () => { window.cancelAnimationFrame(arm); observer.disconnect(); window.clearTimeout(timer.current); };
+    const arm = window.requestAnimationFrame(() => { setArmed(true); setStep(0); setWide(true); });
+    return () => window.cancelAnimationFrame(arm);
   }, []);
 
-  const choose = (value: number) => {
-    window.clearTimeout(timer.current);
-    setStep(value);
-  };
-  const hover = useHoverStep(step, choose);
+  const hover = useHoverStep(step, setStep);
   const reached = Array.from({ length: step }, (_, index) => index + 1).join(' ');
 
   return (
@@ -195,7 +189,7 @@ export function ChangeSheets({ rows, estimate, schedule, principle, steps, back 
         <ol className="cs-steps">
           {steps.map((item, index) => (
             <li key={item.title} data-state={stateOf(index + 1, step)}>
-              <button type="button" aria-pressed={index + 1 === step} onClick={() => choose(index + 1)} {...hover(index + 1)}>
+              <button type="button" aria-pressed={index + 1 === step} onClick={() => setStep(index + 1)} {...hover(index + 1)}>
                 <span className="cs-node" aria-hidden="true">{index + 1}</span>
                 <b>{item.title}</b>
                 <span className="cs-detail">{item.detail}</span>

@@ -5,8 +5,12 @@ import { createFirstViewWalk, WALK_VIEW_RATIO, type FirstViewWalk } from '../lib
 
 /**
  * One auto-show on one block, by the site's rule (app/lib/firstViewWalk.ts). Off under reduced motion and when `enabled`
- * is false. A person's action on the block stops it for good: a press, a key, focus, or a mouse pointing at it. `steps`
- * must keep its identity between renders: a new array is a new walk. The callbacks may change freely.
+ * is false. A person's action on the block stops it for good: a press, a tap, a key, focus, or a mouse that really moves
+ * over it. Passing by is not an action: a cursor the page scrolls under (as in useHoverStep) and a finger that lands on the
+ * block to swipe past it both leave the walk alone, or most visitors would never see it (30.10, first-view-walks.spec.ts).
+ * Actions count on `actionsRef` when the block that reacts is wider than the one that is watched. `onStop` runs once, when
+ * a person stops the walk: what the walk left on show is the component's to clear. `steps` must keep its identity between
+ * renders: a new array is a new walk. The callbacks may change freely.
  */
 export function useFirstViewWalk<T>(
   ref: RefObject<HTMLElement | null>,
@@ -14,12 +18,14 @@ export function useFirstViewWalk<T>(
     steps: readonly T[];
     onStep: (step: T) => void;
     onDone?: () => void;
+    onStop?: () => void;
     startDelayMs?: number;
     stepMs?: number;
     enabled?: boolean;
+    actionsRef?: RefObject<HTMLElement | null>;
   }>,
 ) {
-  const { steps, startDelayMs, stepMs, enabled = true } = options;
+  const { steps, startDelayMs, stepMs, enabled = true, actionsRef } = options;
   const latest = useRef(options);
   const walk = useRef<FirstViewWalk | null>(null);
   // A stop can come before the walk exists (a format the browser restored) or between two of them (new steps)
@@ -29,9 +35,17 @@ export function useFirstViewWalk<T>(
     latest.current = options;
   });
 
+  const stop = useCallback(() => {
+    if (stopped.current) return;
+    stopped.current = true;
+    walk.current?.stop();
+    latest.current.onStop?.();
+  }, []);
+
   useEffect(() => {
-    const root = ref.current;
-    if (!root || !enabled || stopped.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const watched = ref.current;
+    const root = actionsRef?.current ?? watched;
+    if (!watched || !root || !enabled || stopped.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     const current = createFirstViewWalk({
       steps,
       startDelayMs,
@@ -40,36 +54,32 @@ export function useFirstViewWalk<T>(
       onDone: () => latest.current.onDone?.(),
     });
     walk.current = current;
-    const stop = () => {
-      stopped.current = true;
-      current.stop();
+    const press = (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') stop();
     };
-    const mouse = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse') stop();
+    const move = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && (event.movementX !== 0 || event.movementY !== 0)) stop();
     };
     const observer = new IntersectionObserver(([entry]) => {
       current.see(entry?.isIntersecting ? entry.intersectionRatio : 0);
     }, { threshold: [0, WALK_VIEW_RATIO] });
-    observer.observe(root);
-    root.addEventListener('pointerdown', stop);
+    observer.observe(watched);
+    root.addEventListener('pointerdown', press);
+    root.addEventListener('click', stop);
     root.addEventListener('focusin', stop);
     root.addEventListener('keydown', stop);
-    root.addEventListener('pointerenter', mouse);
+    root.addEventListener('pointermove', move);
     return () => {
       observer.disconnect();
-      root.removeEventListener('pointerdown', stop);
+      root.removeEventListener('pointerdown', press);
+      root.removeEventListener('click', stop);
       root.removeEventListener('focusin', stop);
       root.removeEventListener('keydown', stop);
-      root.removeEventListener('pointerenter', mouse);
+      root.removeEventListener('pointermove', move);
       current.dispose();
       walk.current = null;
     };
-  }, [ref, steps, enabled, startDelayMs, stepMs]);
-
-  const stop = useCallback(() => {
-    stopped.current = true;
-    walk.current?.stop();
-  }, []);
+  }, [ref, actionsRef, steps, enabled, startDelayMs, stepMs, stop]);
 
   return { stop };
 }

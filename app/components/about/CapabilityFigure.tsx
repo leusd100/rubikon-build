@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type FocusEvent, type PointerEvent } from 'react';
+import { useMemo, useRef, useState, type CSSProperties, type FocusEvent, type PointerEvent } from 'react';
+import { useFirstViewWalk } from '../../hooks/useFirstViewWalk';
 import type { CapabilityLedgerColumn } from '../../lib/deliveryModelPresentation';
 import { keepHeadingWords } from '../../lib/typography';
 import { Arrow } from '../Arrow';
@@ -48,47 +49,34 @@ const TAGS: readonly { cap: string; leader: string; dot: readonly [number, numbe
 
 type Pointed = { tier: Tier; cap?: string; rows?: readonly string[] } | null;
 
-/** One step of the first-view walk, as on «Що враховуємо в розрахунку» (CostFactorsFigure) but a little quicker: the
- *  names are short */
-const TOUR_STEP_MS = 1300;
-
 export function CapabilityFigure({ columns }: Readonly<{ columns: readonly CapabilityLedgerColumn[] }>) {
   const [byPointer, setByPointer] = useState<Pointed>(null);
   const [tour, setTour] = useState<Pointed>(null);
   const figureRef = useRef<HTMLElement>(null);
-  const toured = useRef(false);
-  const pointed = byPointer ?? tour;
-  // Pointing ends the walk for good
-  const setPointed = (next: Pointed) => { toured.current = true; setTour(null); setByPointer(next); };
-
-  useEffect(() => {
-    const figure = figureRef.current;
-    if (!figure || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    // The works the scheme has a part for, in the list's order
-    const steps = columns.flatMap((column) => column.items.filter((item) => DRAWN.has(item.id)).map((item) => ({ tier: column.id, cap: item.id, rows: [item.id] })));
-    let timer = 0;
-    let index = -1;
-    const step = () => {
-      index += 1;
-      if (toured.current || index >= steps.length) { setTour(null); return; }
-      setTour(steps[index]);
-      timer = window.setTimeout(step, TOUR_STEP_MS);
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting || entry.intersectionRatio < 0.5) return;
-      observer.disconnect();
-      timer = window.setTimeout(step, 1200); // after the scheme has drawn itself
-    }, { threshold: [0, 0.5] });
-    observer.observe(figure);
-    return () => { observer.disconnect(); window.clearTimeout(timer); };
-  }, [columns]);
+  const blockRef = useRef<HTMLDivElement>(null);
+  // The walk leads while it runs: a cursor the page scrolled under lights its work only when the walk has passed
+  const pointed = tour ?? byPointer;
+  // The works the scheme has a part for, in the list's order
+  const steps = useMemo(
+    () => columns.flatMap((column) => column.items.filter((item) => DRAWN.has(item.id)).map((item) => ({ tier: column.id, cap: item.id, rows: [item.id] }))),
+    [columns],
+  );
+  // Starts when the scheme is in view (after it has drawn itself); pointing anywhere in the block ends it for good
+  useFirstViewWalk<Pointed>(figureRef, {
+    steps,
+    onStep: setTour,
+    onDone: () => setTour(null),
+    onStop: () => setTour(null),
+    startDelayMs: 1200,
+    actionsRef: blockRef,
+  });
 
   const columnOf = (cap: string) => columns.findIndex((column) => column.items.some((item) => item.id === cap));
   const number = (index: number) => String(index + 1).padStart(2, '0');
   const row = (tier: Tier, id: string): Pointed => ({ tier, rows: [id], cap: DRAWN.has(id) ? id : undefined });
   // Only a real mouse points: a tap emulates hover and never leaves, which would keep a tag lit on a phone — where the
   // scheme is a legend between the groups, not beside the tag
-  const mouse = (next: Pointed) => (event: PointerEvent) => { if (event.pointerType === 'mouse') setPointed(next); };
+  const mouse = (next: Pointed) => (event: PointerEvent) => { if (event.pointerType === 'mouse') setByPointer(next); };
 
   const ledgerColumn = (column: CapabilityLedgerColumn, index: number) => (
     <section
@@ -113,8 +101,8 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
             onPointerLeave={mouse({ tier: column.id })}
             // The keyboard gets the same on a linked work (focus bubbles from its link) — the keyboard only: a tap
             // focuses the link too, and would light a scheme that is off the screen
-            onFocus={(event: FocusEvent<HTMLLIElement>) => { if (event.target.matches(':focus-visible')) setPointed(row(column.id, item.id)); }}
-            onBlur={() => setPointed(null)}
+            onFocus={(event: FocusEvent<HTMLLIElement>) => { if (event.target.matches(':focus-visible')) setByPointer(row(column.id, item.id)); }}
+            onBlur={() => setByPointer(null)}
           >
             {item.href
               ? <b><a href={item.href}>{item.short} <Arrow to="up-right" /></a></b>
@@ -131,7 +119,7 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
 
   return (
     // One element is both the block's grid and the ledger (.about-ledger holds all three columns, in the model's order)
-    <div className="about-cap about-ledger" data-motion data-tier={pointed?.tier} data-cap={pointed?.cap}>
+    <div className="about-cap about-ledger" ref={blockRef} data-motion data-tier={pointed?.tier} data-cap={pointed?.cap}>
       {ledgerColumn(own, 0)}
       <figure className="cap-fig" aria-hidden="true" data-motion ref={figureRef}>
         <svg viewBox="0 24 360 184" focusable="false">

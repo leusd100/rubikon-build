@@ -58,7 +58,7 @@ test('the scheme walks once through the works it draws when it first comes into 
   const first = await lit.getAttribute('data-cap');
   // A tag and its part of the scheme light together
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).toHaveCount(1);
-  await page.clock.runFor(1300);
+  await page.clock.runFor(2200);
   await expect(lit).not.toHaveAttribute('data-cap', first!);
   // …and after the last work it rests, with nothing lit
   await page.clock.runFor(20_000);
@@ -78,7 +78,9 @@ test('pointing ends the walk, and no walk starts with reduced motion', async ({ 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.reload({ waitUntil: 'load' });
   await page.locator(FIGURE).scrollIntoViewIfNeeded();
-  await page.locator('.about-ledger li[data-cap="gates"]').hover();
+  // Two moves: the first after a load has no distance in the browser, and only a pointer that really moves is an action
+  await page.locator('.about-ledger li[data-cap="gates"]').hover({ position: { x: 20, y: 8 } });
+  await page.locator('.about-ledger li[data-cap="gates"]').hover({ position: { x: 24, y: 10 } });
   await expect(lit).toHaveAttribute('data-cap', 'gates');
   // …and once the pointer has left, nothing lights by itself: the walk is over for good
   await page.mouse.move(2, 2);
@@ -90,7 +92,9 @@ test('pointing at a work lights its part of the scheme', async ({ page, isMobile
   await page.goto('/pro-nas', { waitUntil: 'load' });
   const row = page.locator('.about-ledger li[data-cap="steel"]');
   await row.scrollIntoViewIfNeeded();
-  await row.hover();
+  // Two moves, or the walk goes on: only a pointer that really moves is an action, and the first move after a load has no distance
+  await row.hover({ position: { x: 20, y: 8 } });
+  await row.hover({ position: { x: 24, y: 10 } });
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).not.toHaveCount(0);
   await page.mouse.move(2, 2);
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).toHaveCount(0);
