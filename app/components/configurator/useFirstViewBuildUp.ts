@@ -53,8 +53,9 @@ export function useFirstViewBuildUp(drawingRef: RefObject<HTMLElement | null>, e
     const reach = (event: Event) => {
       if (event.target instanceof Element && event.target.closest(CONTROL)) finish();
     };
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry || entry.intersectionRatio < 0.5) return;
+    // Any entry, not the first: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.intersectionRatio >= 0.5)) return;
       observer.disconnect();
       shownThisLoad = true;
       delete drawing.dataset.build;

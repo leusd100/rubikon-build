@@ -186,8 +186,9 @@ export function CostFactorsFigure({
       setTour(factors[index].key);
       timer = window.setTimeout(step, TOUR_STEP_MS);
     };
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting || entry.intersectionRatio < 0.5) return;
+    // Any entry, not the first: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) return;
       observer.disconnect();
       timer = window.setTimeout(step, 400);
     }, { threshold: [0, 0.5] });

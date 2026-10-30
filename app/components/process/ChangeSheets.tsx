@@ -103,8 +103,9 @@ export function ChangeSheets({ rows, estimate, schedule, principle, steps, back 
       setStep(next);
       if (next < LAST) timer.current = window.setTimeout(() => walk(next + 1), STEP_MS);
     };
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry?.isIntersecting || entry.intersectionRatio < 0.45) return;
+    // Any entry, not the first: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.45)) return;
       observer.disconnect();
       timer.current = window.setTimeout(() => walk(1), 700);
     }, { threshold: [0, 0.45] });

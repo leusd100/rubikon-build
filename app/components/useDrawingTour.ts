@@ -93,7 +93,9 @@ export function useDrawingTour(
       setRun((value) => value + 1);
       setTouring(true);
     };
-    const observer = new IntersectionObserver(([entry]) => {
+    // The newest entry: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries.at(-1)!;
       if (entry.intersectionRatio >= 0.5 && auto.current && cycles.current < loops) {
         // from the first step after the overview's beat, or again from the one it stopped on (its bar restarts) —
         // only when it was stopped: crossing half-way while it plays must not restart the step

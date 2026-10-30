@@ -70,8 +70,9 @@ export function ScopeCells({ items, linked = false }: Readonly<{ items: readonly
     const list = listRef.current;
     if (!list || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     list.dataset.draw = 'armed';
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
+    // Any entry, not the first: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
       list.dataset.draw = 'on';
       observer.disconnect();
     }, { threshold: 0.6 });
