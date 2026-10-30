@@ -5,7 +5,7 @@
 | Дата | 2026-10-30 |
 | Виконавець | Claude Code |
 | Підстава | Ризик із [`2026-10-30-home-contour-open-flake.md`](2026-10-30-home-contour-open-flake.md): шаблон `([entry])` лишився в дев'яти місцях; завдання власника |
-| PR | PR_LINK, Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#278](https://github.com/leusd100/rubikon-build/pull/278), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `fix/intersection-observer-entries` від `main` `e6458d01` |
 | Коміти | `17471458` — виправлення і тест · handoff |
 | Змінено | Дев'ять колбеків IntersectionObserver (таблиця нижче); новий `tests/e2e/observer-batches.spec.ts` |
