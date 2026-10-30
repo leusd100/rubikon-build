@@ -61,7 +61,8 @@ test.describe('HOME directions', () => {
     await expect.poll(() => lift(page), 'hover').toEqual({ transform: 'none', boxShadow: 'none' });
     await page.mouse.move(0, 0);
     await page.locator(card).focus();
-    await expect.poll(() => lift(page), 'focus').toEqual({ transform: 'none', boxShadow: 'none' });
+    // Focus keeps the site's own ring (0 0 0 2px): the old lift's shadow used to hide it on these cards
+    await expect.poll(() => lift(page), 'focus').toEqual({ transform: 'none', boxShadow: expect.stringMatching(/ 0px 0px 0px 2px$/) });
   });
 
   for (const target of [sheet, card]) {
