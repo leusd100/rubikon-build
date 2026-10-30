@@ -282,9 +282,12 @@ export function HangarPreviewModes({
    * that must be provably paused, and the loss of the guarantee that a visitor who never opens 3D
    * pays nothing for it.
    *
-   * What IS real, and accepted: one WebGL context per switch (20 cycles -> 20 contexts, 1 canvas
-   * node). The browser evicts the stale ones — 11 of 12 observed being reclaimed — so this is
-   * bounded by the browser rather than by us, and each rebuild costs the 62 ms above.
+   * What IS real, and accepted: one WebGL context per switch, each rebuild costing the 62 ms above.
+   * R3F forces the old one lost as its Canvas goes, which frees its GPU side, but that is all it
+   * does: the browser does NOT reclaim the rest (27.10, GL-04 — the old note here said it did). The
+   * shared geometries, materials and textures held every closed renderer, its lost context and its
+   * detached canvas — 8 opens, 8 live contexts after GC. ThreeHangarView now disposes them as it
+   * closes (`disposeSharedResources`), and at most the last closed renderer stays, until the next.
    */
   const threeCanvas = showThree ? (
     <div className="hc-preview-canvas">
