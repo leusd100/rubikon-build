@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { useFirstViewWalk } from '../../hooks/useFirstViewWalk';
+import { WALK_VIEW_RATIO } from '../../lib/firstViewWalk';
 import { useHoverStep } from '../useHoverStep';
 import './change-sheets.css';
 
@@ -104,9 +105,16 @@ export function ChangeSheets({ rows, estimate, schedule, principle, steps, back 
   });
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)').matches) return undefined;
-    // Hold the marks back until the block is seen, then walk the procedure once
-    const arm = window.requestAnimationFrame(() => { setArmed(true); setStep(0); setWide(true); });
+    const root = rootRef.current;
+    if (!root || window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)').matches) return undefined;
+    // Hold the marks back until the block is seen, then walk the procedure once. Unless half of the block can never fit the
+    // window (a phone on its side, 30.10): the walk would never start and the marks would stay hidden for good.
+    const arm = window.requestAnimationFrame(() => {
+      if (root.offsetHeight * WALK_VIEW_RATIO > window.innerHeight) return;
+      setArmed(true);
+      setStep(0);
+      setWide(true);
+    });
     return () => window.cancelAnimationFrame(arm);
   }, []);
 

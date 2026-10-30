@@ -71,6 +71,7 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
   const [turn, setTurn] = useState(0);
   const [inView, setInView] = useState(false);
   const figureRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const current = formats.find((format) => format.id === active) ?? formats[0];
   const whole = active === 'comprehensive';
 
@@ -86,11 +87,24 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
     return () => cancelAnimationFrame(wide);
   }, []);
   const order = useMemo(() => [...formats.slice(1), formats[0]].map((format) => format.id), [formats]);
-  const { stop: stopWalk } = useFirstViewWalk(figureRef, { steps: order, onStep: select, startDelayMs: 1600, stepMs: TOUR_MS, enabled: walks });
+  const { stop: stopWalk } = useFirstViewWalk(figureRef, {
+    steps: order,
+    onStep: select,
+    // Stopped between formats: back to the page's one choice, not the format the walk happened to show («The walk is not a
+    // choice»). A press, the mirrored group and a restored format each set theirs right after.
+    onStop: () => {
+      const chosen = mirror && document.querySelector<HTMLInputElement>(`input[name="${mirror}"]:checked`)?.value;
+      select(formats.find((format) => format.id === chosen)?.id ?? formats[0].id);
+    },
+    startDelayMs: 1600,
+    stepMs: TOUR_MS,
+    enabled: walks,
+    actionsRef: gridRef,
+  });
 
   const choose = (id: DeliveryFormatId) => {
     stopWalk();
-    if (id !== active) select(id);
+    select(id);
     if (!mirror) return;
     const twin = document.querySelector<HTMLInputElement>(`input[name="${mirror}"][value="${id}"]`);
     if (twin && !twin.checked) {
@@ -148,7 +162,7 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
   const scoped = (layer: Layer) => whole || PACKAGES[turn][0] === layer;
 
   return (
-    <div className="dfmt-grid" data-motion>
+    <div className="dfmt-grid" data-motion ref={gridRef}>
       <ol className="dfmt-list" aria-label="Формат участі">
         {formats.map((format) => (
           <li key={format.id}>

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 // Motion v1 rule 7 (docs/ui-system-v1.md §6.4, PDO-55, OD-PX-34 a): the auto-shows of /yak-pratsyuiemo and /pro-nas walk
 // once at 2.2 s a step, end for good on a person's action, and play one at a time. The page's clock is ours; the observer
@@ -33,6 +33,12 @@ const watch = (page: Page, selector: string, name: string) => page.locator(selec
     .observe(element, { attributes: true, attributeFilter: [attribute] });
 }, name);
 const changes = (page: Page) => page.evaluate(() => (window as unknown as { __walk: { at: number; value: string | null }[] }).__walk);
+
+/** A few pixels off an element's middle: the second, real move a person's hand makes */
+const nudged = async (locator: Locator): Promise<[number, number]> => {
+  const box = (await locator.boundingBox())!;
+  return [box.x + box.width / 2 + 3, box.y + box.height / 2 + 1];
+};
 
 /** Fake time in short runs, so that each step's render lands in the log at its own moment */
 const run = async (page: Page, ms: number) => {
@@ -230,3 +236,83 @@ test('/yak-pratsyuiemo a format the browser restored stops the walk', async ({ p
   await page.clock.runFor(20_000);
   await expect(drawing).toHaveAttribute('data-format', 'subcontract');
 });
+
+test('/pro-nas a walk pauses out of view and goes on from the next step', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/pro-nas', { waitUntil: 'load' });
+  await watch(page, '.about-cap', 'data-cap');
+  const figure = page.locator('.cap-fig');
+  await figure.scrollIntoViewIfNeeded();
+  await expect.poll(async () => { await page.clock.runFor(200); return (await changes(page)).length; }, { timeout: 15_000 }).toBeGreaterThan(0);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await page.waitForTimeout(200);
+  const before = (await changes(page)).length;
+  await run(page, STEP_MS * 3);
+  expect((await changes(page)).length).toBe(before);
+  await figure.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
+  await run(page, STEP_MS + 400);
+  expect((await changes(page)).length).toBe(before + 1);
+});
+
+test('/yak-pratsyuiemo keyboard focus on a step ends the change sheets\' walk', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  const sheets = page.locator('.cs');
+  await sheets.scrollIntoViewIfNeeded();
+  const reached = async () => (await sheets.getAttribute('data-reached')) ?? '';
+  await expect.poll(async () => { await page.clock.runFor(300); return reached(); }, { timeout: 15_000 }).toBe('1');
+  await page.locator('.cs-steps button').first().focus();
+  await page.clock.runFor(STEP_MS * 4);
+  expect(await reached()).toBe('1');
+});
+
+for (const action of ['pointing at', 'keyboard focus on'] as const) {
+  test(`/yak-pratsyuiemo ${action} the format list ends the walk and keeps one format`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+    await closeBanner(page);
+    const grid = page.locator('.dfmt-grid');
+    const drawing = grid.locator('svg.fs');
+    await grid.scrollIntoViewIfNeeded();
+    await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
+    const option = grid.locator('.dfmt-option').last();
+    if (action === 'pointing at') {
+      await option.hover();
+      await page.mouse.move(...(await nudged(option)));
+    } else await option.focus();
+    // Mid-walk, on purpose: left alone, the walk comes back to the first format by itself and proves nothing
+    await page.clock.runFor(1800);
+    await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
+    await expect(grid.locator('.dfmt-option').first()).toHaveAttribute('aria-pressed', 'true');
+    await page.clock.runFor(3600);
+    await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
+  });
+}
+
+test('/yak-pratsyuiemo a mouse crossing the drawing mid-walk leaves one format on the page', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  await closeBanner(page);
+  const grid = page.locator('.dfmt-grid');
+  const drawing = grid.locator('svg.fs');
+  await grid.scrollIntoViewIfNeeded();
+  await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
+  await drawing.hover();
+  await page.mouse.move(...(await nudged(drawing)));
+  await page.clock.runFor(1800);
+  const checked = await page.locator('input[name="resp-format"]:checked').getAttribute('value');
+  await expect(drawing).toHaveAttribute('data-format', checked!);
+});
+
+for (const [width, height] of [[844, 390], [932, 430]]) {
+  test(`/yak-pratsyuiemo at ${width}×${height} half of the change sheets cannot fit: they show the whole story`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+    const sheets = page.locator('.cs');
+    await sheets.scrollIntoViewIfNeeded();
+    await page.clock.runFor(1000);
+    await expect(sheets).toHaveAttribute('data-reached', '1 2 3 4');
+    await expect(sheets).not.toHaveAttribute('data-armed', /.*/);
+  });
+}
