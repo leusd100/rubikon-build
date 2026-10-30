@@ -5,7 +5,7 @@
 | Дата | 2026-10-30 |
 | Виконавець | Claude Code |
 | Підстава | План Motion v1, частина B. Рішення власника 26.10 про підйом карток. OK власника на темп 700 мс після брифу із записами, 30.10 |
-| PR | Цей PR, Draft, мітка `visual-freeze`. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#275](https://github.com/leusd100/rubikon-build/pull/275), Draft, мітка `visual-freeze`. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `design/m1-2-motion-tempo` від `main` `a4183464` |
 | Коміти | `92279cdd` криві на токени · `98b64bbc` поява 700 мс · `9fcb78d7` аркуші без підйому · `67ea5d9b` картки без підйому · `0a1d4239` сторож кольору · `c1c77d1a` ui-system §6 · `49cf5719` тест фокусу |
 | Змінено | 29 CSS-файлів `app/`, `scripts/motion/css-motion.mjs`, `tests/unit/motion-tokens.test.ts`, `tests/unit/css-motion.test.ts`, новий `tests/e2e/motion-tempo.spec.ts`, коментар у `home-directions-sheets.spec.ts`, `docs/ui-system-v1.md` §6 |
@@ -47,7 +47,7 @@
 | Вага CSS, gzip | сума таблиць стилів сторінки, обидві збірки | /angary 56 933 → 56 871 байт, / 46 708 → 46 479 байт |
 | Записи до/після | Playwright, 1440×900 і 390×844, 7 пар | у брифі власника |
 
-Звіт власника: `RUBIKON-Bryf-M1-2-Temp-rukhu-2026-10-30.pdf`, SHA-256 `e5b99d2bcdf2d927f9f876dbc8d3fb8a0436311d2b1e68a8611cae6a23a11eed`.
+Звіт власника: `RUBIKON-Bryf-M1-2-Temp-rukhu-2026-10-30.pdf`, SHA-256 `e242b2729e9d4482bfd43dc4d3890a33095397e7af8aaef5c5300c922eb992c3`.
 
 Не перевірено: Safari, реальний iPhone, Lighthouse. CI на момент handoff ще не бігав.
 
