@@ -1,16 +1,16 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { customPropertyDeclarations, motionDeclarations, timeLiterals } from '../../scripts/motion/css-motion.mjs';
+import { customPropertyDeclarations, motionDeclarations, stripComments, timeLiterals } from '../../scripts/motion/css-motion.mjs';
 
 // Motion v1 (M1-1): a transition or an animation takes its time and its curve from a token, never from a literal. The
-// tokens live in app/globals.css :root; each stylesheet's own choreography (its times, delays and curves that no token
-// covers) is a block of `--<prefix>-for|at|curve-*` variables at the top of that file. The guard runs over every stylesheet
+// tokens live in app/globals.css :root; each stylesheet's own choreography (its times and delays that no token
+// covers) is a block of `--<prefix>-for|at-*` variables at the top of that file. The guard runs over every stylesheet
 // under app/: a new literal in any transition* or animation* declaration fails it, and a name outside the families fails
 // it too. scripts/motion/motion-diff.mjs proves a move changed no value; this file proves it stays moved.
 //
 // Scope: the transition*/animation* declarations of the app's CSS files, and the custom properties of the token
-// (`--motion|ease|duration-*`) and choreography (`--<prefix>-for|at|curve-*`) families they take their values from. A
+// (`--motion|ease|duration-*`) and choreography (`--<prefix>-for|at-*`) families they take their values from. A
 // variable of any other name that a declaration reads must be declared by some app stylesheet or be set by a component's
 // inline style (INLINE below), so a misspelt name cannot silently drop a whole transition or animation. Out of scope: the
 // value an intermediate custom property of another name holds (`--x: .3s` read by `transition: opacity var(--x)`), and the
@@ -41,10 +41,10 @@ const walkSources = (dir: string) => {
 };
 walkSources(app);
 
-/** A choreography variable: a file's own time, delay or curve — `--rm-for-row`, `--ft-at-step`, `--fd-curve-draw` */
-const CHOREOGRAPHY = /^--[a-z0-9]+-(?:for|at|curve)-/;
+/** A choreography variable: a file's own time or delay — `--rm-for-row`, `--ft-at-step`. Curves are tokens only (M1-2) */
+const CHOREOGRAPHY = /^--[a-z0-9]+-(?:for|at)-/;
 /** A variable a motion declaration may take: a token (`--motion-*`, `--ease-*`, `--duration-*`) or a choreography variable */
-const MOTION_VARIABLE = /^--(?:(?:motion|ease|duration)-|[a-z0-9]+-(?:for|at|curve)-)/;
+const MOTION_VARIABLE = /^--(?:(?:motion|ease|duration)-|[a-z0-9]+-(?:for|at)-)/;
 
 /** The token families: a declaration of one of these names belongs in globals.css :root and nowhere else */
 const TOKEN_FAMILY = /^--(?:motion|ease|duration)-/;
@@ -232,5 +232,46 @@ describe('Motion v1 tokens (M1-1)', () => {
       }
     }
     expect(withFallback).toEqual([]);
+  });
+});
+
+/** A transition list split on its top-level commas: `color 1s ease, opacity calc(var(--i, 0) * 1s)` is two parts */
+const transitionParts = (value: string) => value.split(/,(?![^(]*\))/).map((part) => part.trim());
+/** The colour family of ui-system 6.2: `stroke` and `fill` themselves, not `stroke-width` or `stroke-dashoffset` */
+const COLOUR_PROPERTY = /^(?:color|background(?:-color)?|border(?:-(?:top|right|bottom|left))?-color|outline-color|text-decoration-color|fill|stroke|box-shadow)(?![-\w])/;
+const EASE_KEYWORD = /(?<![-\w])ease(?![-\w])/;
+const EASE_IN_OR_OUT = /(?<![-\w])ease-(?:in-out|out|in)(?![-\w])/;
+
+describe('Motion v1 pace by roles (M1-2)', () => {
+  it('keeps curves in the tokens', () => {
+    const literals = names.flatMap((file) => {
+      const count = stripComments(sheets[file]).split('cubic-bezier(').length - 1;
+      return count > 0 ? [`${file}: ${count}`] : [];
+    });
+    expect(literals).toEqual(['globals.css: 4']);
+    const curveVariables = names.flatMap((file) =>
+      propertyDeclarations(file).filter((entry) => /-curve-/.test(entry.name)).map((entry) => `${file} | ${entry.name}`),
+    );
+    expect(curveVariables).toEqual([]);
+  });
+
+  it('uses the standard curve for colour', () => {
+    const offenders = names.flatMap((file) =>
+      motionDeclarations(sheets[file])
+        .filter((declaration) => declaration.property === 'transition')
+        .flatMap((declaration) => transitionParts(declaration.value)
+          .filter((part) => COLOUR_PROPERTY.test(part) && EASE_KEYWORD.test(part))
+          .map((part) => `${file} | ${declaration.selector} | ${part}`)),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('has no ease-out or ease-in-out', () => {
+    const offenders = names.flatMap((file) =>
+      motionDeclarations(sheets[file])
+        .filter((declaration) => EASE_IN_OR_OUT.test(declaration.value))
+        .map((declaration) => row(file, declaration)),
+    );
+    expect(offenders).toEqual([]);
   });
 });

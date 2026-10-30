@@ -3,7 +3,7 @@
 
    Imported by DirectionsKey.tsx only. Every rule is keyed to .dkey-host — the section that holds the header with the
    plan and the links it is the key to — and uses the page's theme roles, so Light and Dark need no rules of their own.
-   The one exception is the :root block below: this file's own motion times and curves (Motion v1).
+   The one exception is the :root block below: this file's own motion times (Motion v1).
 
    globals.css would give an aside a grid column of its own from 1051 px; here the header keeps its one column and
    the aside is laid OVER it, spanning both rows at the right edge, with the figure absolutely positioned inside. The
@@ -14,7 +14,7 @@
    below that the header is as it was.
    No frame, no rule and no title strip: the plan stands free and is named in its own corner. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the draw-in, once, on first view: the axes and the bubbles fade in first, then the two solid outlines draw, the frame and its footings, the roof, and the numbers last */
   --dkey-for-fade: 400ms;
@@ -59,7 +59,7 @@
 .dkey-host .dkey-dot { fill: var(--color-text-secondary); }
 .dkey-host .dkey-num { fill: var(--dkey-number); font: 600 13px var(--font-condensed), sans-serif; letter-spacing: .08em; }
 
-.dkey-host .dkey-part :is(path, circle, rect) { transition: stroke var(--duration-fast) ease, stroke-width var(--duration-fast) ease, fill var(--duration-fast) ease; }
+.dkey-host .dkey-part :is(path, circle, rect) { transition: stroke var(--duration-fast) var(--ease-standard), stroke-width var(--duration-fast) ease, fill var(--duration-fast) var(--ease-standard); }
 /* 01 · the building: its outline with the gate's jambs, a faint floor */
 .dkey-host .dkey-fill { fill: color-mix(in srgb, var(--k1, transparent) 12%, color-mix(in srgb, var(--color-text) 4%, transparent)); }
 .dkey-host .dkey-wall { fill: none; stroke: var(--k1, var(--color-text-secondary)); stroke-width: calc(1.4px * var(--k1x, 1)); stroke-linejoin: round; }

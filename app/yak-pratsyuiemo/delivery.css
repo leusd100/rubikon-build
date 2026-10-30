@@ -4,7 +4,7 @@
    time (paper over a faint drawing sheet) → FAQ → the site-wide conversation block. Colours are theme roles only
    (app/theme.css), so Light and Dark need no rules of their own here. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the hero's trace: its lines, then the dimension line, then the node */
   --proc-at-hero-trace: 250ms;
@@ -97,7 +97,7 @@
    run into, its padding and tint — and takes the link's type, hover and arrow */
 .proc-start-merge {
   display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; --link-ink: var(--color-text);
-  background: var(--color-surface-elevated); border: 1px solid var(--color-accent); transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+  background: var(--color-surface-elevated); border: 1px solid var(--color-accent); transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .proc-start-merge span[aria-hidden] { font-size: 18px; }
 .proc-start-merge:hover { background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-elevated)); }
@@ -113,7 +113,7 @@
 .process-page[data-motion-ready="on"] .proc-start-list li::after { transition: transform var(--m-reveal) var(--m-ease) calc(var(--proc-at-row-link) + var(--i, 0) * var(--proc-at-row-link-step)); }
 .process-page[data-motion-ready="on"] .proc-start-list::after { transition: transform var(--m-reveal) var(--m-ease) var(--proc-at-collector); }
 .process-page[data-motion-ready="on"] .proc-start-list::before { transition: transform var(--m-reveal) var(--m-ease) var(--proc-at-merge-line); }
-.process-page[data-motion-ready="on"] .proc-start-merge { transition: opacity var(--m-reveal) ease var(--proc-at-merge), transform var(--m-reveal) var(--m-ease) var(--proc-at-merge), background var(--duration-fast) ease; }
+.process-page[data-motion-ready="on"] .proc-start-merge { transition: opacity var(--m-reveal) ease var(--proc-at-merge), transform var(--m-reveal) var(--m-ease) var(--proc-at-merge), background var(--duration-fast) var(--ease-standard); }
 .process-page[data-motion-ready] .proc-start-flow:not([data-motion-state="on"]) :is(.start-glyph path, .start-glyph rect) { stroke-dashoffset: 1; }
 .process-page[data-motion-ready] .proc-start-flow:not([data-motion-state="on"]) .proc-start-list li::after { transform: scaleX(0); }
 .process-page[data-motion-ready] .proc-start-flow:not([data-motion-state="on"]) .proc-start-list::before { transform: scaleX(0); }
@@ -177,7 +177,7 @@
 .proc-resp-switch label { position: relative; cursor: pointer; }
 .proc-resp-switch label + label { border-left: 1px solid var(--color-border-control); }
 .proc-resp-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.proc-resp-switch span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) ease, background var(--duration-fast) ease; }
+.proc-resp-switch span { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 8px 22px; color: var(--color-text-secondary); font: 700 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .06em; text-align: center; text-transform: uppercase; transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
 .proc-resp-switch label:hover span { color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
 .proc-resp-switch input:checked + span { color: var(--color-bg); background: var(--color-text); }
 .proc-resp-switch input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: -4px; } /* a segment: the inner ring */

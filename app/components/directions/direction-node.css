@@ -4,11 +4,10 @@
    only its mark, drawn once the camera has arrived. Without motion the camera jumps and nothing draws. The pictures
    are light concept drawings, so the marks are copper with a white-ringed number. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the camera and the marks */
   --dn-for-camera: 1100ms;
-  --dn-curve-camera: cubic-bezier(.65, 0, .25, 1);
   --dn-for-mark-fade: 400ms;
   /* the progress bar, as long as its step when the tour sets none (--dn-step-ms) */
   --dn-for-step-bar: 5200ms;
@@ -95,7 +94,7 @@
 
 @keyframes dn-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: no-preference) {
-  .dn-stage { transition: transform var(--dn-for-camera) var(--dn-curve-camera); }
+  .dn-stage { transition: transform var(--dn-for-camera) var(--ease-plot); }
   .dn[data-step="1"] .dn-mark-1 .dn-line,
   .dn[data-step="2"] .dn-mark-2 .dn-line,
   .dn[data-step="3"] .dn-mark-3 .dn-line,
@@ -161,7 +160,7 @@
 .node-drawing .nd-hatch-fill { fill: color-mix(in srgb, var(--color-text) 8%, transparent); stroke: var(--color-text-muted); stroke-width: 1.6; }
 .node-drawing .nd-text { fill: var(--color-text-muted); font: italic 500 40px var(--font-manrope), sans-serif; }
 .node-drawing .nd-title { fill: var(--color-text-secondary); font: 700 34px var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; }
-.node-drawing .nd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke var(--dn-for-step-light) ease, opacity var(--dn-for-step-light) ease; }
+.node-drawing .nd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke var(--dn-for-step-light) var(--ease-standard), opacity var(--dn-for-step-light) ease; }
 .node-drawing .nd-part circle { fill: color-mix(in srgb, var(--color-text) 10%, transparent); }
 .node-drawing .nd-weld path { fill: color-mix(in srgb, var(--color-text) 30%, transparent); }
 .node-drawing .nd-weld .nd-leader { fill: none; stroke-width: 2.4; }

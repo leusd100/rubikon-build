@@ -3,7 +3,7 @@
    editorial and process sections, tightened so the whole page — planner included — stays within the
    height of the page it replaces (Implementation Spec v1: 7.3 screens at 1440×900, 11.7 at 390×844). */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the grain store's drawing: the equipment and a step's notes follow the step shown */
   --ge-for-equip: .3s;
@@ -75,7 +75,7 @@
 .node-drawing-grain-store pattern circle { fill: var(--color-grain); stroke: none; opacity: .5; }
 .node-drawing-grain-store .gsd-grain-line { stroke: var(--color-grain); stroke-width: 3; }
 .node-drawing-grain-store .gsd-grate { stroke-dasharray: 10 8; }
-.node-drawing-grain-store .gsd-equip :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 3; stroke-dasharray: 34 10; transition: stroke var(--ge-for-equip) ease, opacity var(--ge-for-equip) ease; }
+.node-drawing-grain-store .gsd-equip :is(path, circle) { stroke: var(--color-text-muted); stroke-width: 3; stroke-dasharray: 34 10; transition: stroke var(--ge-for-equip) var(--ease-standard), opacity var(--ge-for-equip) ease; }
 .node-drawing-grain-store .nd-axis-letter { fill: var(--color-text-muted); font: 600 36px var(--font-condensed), sans-serif; text-anchor: middle; }
 .node-drawing-grain-store .gsd-press { stroke: var(--color-grain); stroke-width: 3.4; }
 .node-drawing-grain-store .gsd-air { stroke: var(--color-air); stroke-width: 9; stroke-dasharray: 1 26; }
@@ -110,7 +110,7 @@
   .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(5) { animation-delay: var(--ge-at-press-fifth); }
   .dn[data-step="1"] .node-drawing-grain-store .gsd-press path:nth-child(6) { animation-delay: var(--ge-at-press-sixth); }
   .dn[data-step="4"] .node-drawing-grain-store .gsd-air path { animation: gsd-air var(--ge-for-air) linear var(--ge-at-air) 7; }
-  .dn[data-step="4"] .node-drawing-grain-store .gsd-joint circle { animation: gsd-ping var(--ge-for-ping) ease-in-out var(--ge-at-ping) 2; }
+  .dn[data-step="4"] .node-drawing-grain-store .gsd-joint circle { animation: gsd-ping var(--ge-for-ping) var(--ease-standard) var(--ge-at-ping) 2; }
 }
 
 /* ---------- 02–03 The complex on a drawing and the situations (since 06.10) ---------- */
@@ -134,7 +134,7 @@
   .grain-page .direction-entry-list li:nth-child(odd) .gs-drawing { width: calc(100% - 26px); }
 }
 /* Each situation over a drawing of itself (GrainSituations); the whole card is the way into the form */
-.gs-card { position: relative; transition: background-color var(--duration-fast) ease; }
+.gs-card { position: relative; transition: background-color var(--duration-fast) var(--ease-standard); }
 .gs-card .direction-entry-link::after { position: absolute; inset: 0; content: ''; }
 /* No press scale (.link-arrow:active, W3-06): a transform makes the link the containing block of its own ::after, the
    overlay shrinks to the link's box under the finger, and a press on the card no longer reaches the link */
@@ -160,7 +160,7 @@
   .direction-page[data-motion-ready] .gs-list:not([data-motion-state="on"]) .gs-own { stroke-dashoffset: 1; }
   .direction-page[data-motion-ready="on"] .gs-list .gs-own { transition: stroke-dashoffset var(--motion-draw) var(--ease-premium) calc(var(--i, 0) * var(--ge-at-own-step) + var(--ge-at-own)); }
   .gs-card:is(:hover, :focus-within) .gs-own { animation: gs-draw var(--ge-for-own-redraw) var(--ease-premium) both; }
-  .gs-card:is(:hover, :focus-within) .gs-press path { animation: gs-push var(--ge-for-push) ease-in-out 2; }
+  .gs-card:is(:hover, :focus-within) .gs-press path { animation: gs-push var(--ge-for-push) var(--ease-standard) 2; }
   .gs-card .gs-press .gs-press-left { --push: -3px; }
   .gs-card .gs-press .gs-press-right { --push: 3px; }
 }

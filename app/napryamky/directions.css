@@ -2,7 +2,7 @@
    directions as a catalogue (paper: a key plan, then five rows with their scheme sheets) → how we take the work on, in
    short (charcoal) → the region → the site-wide conversation block. Theme roles only (app/theme.css). */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the hero's slide indicator: the current bar fills for the slide's 6 s */
   --dcat-for-slide-bar: 6000ms;
@@ -73,7 +73,7 @@
 .dcat-list a.route-service > div { grid-area: body; }
 .dcat-list a.route-service > b { grid-area: arrow; }
 /* the «Креслення» sheet's small echo: the scheme, then its title block; its own paper in both row states */
-.dcat-list .dcat-thumb { display: flex; flex-direction: column; grid-area: thumb; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color var(--dcat-for-row-hover) ease; }
+.dcat-list .dcat-thumb { display: flex; flex-direction: column; grid-area: thumb; background: var(--color-surface-elevated); border: 1px solid var(--color-border-strong); transition: border-color var(--dcat-for-row-hover) var(--ease-standard); }
 .dcat-list a.route-service:is(:hover, :focus-visible) .dcat-thumb { border-color: var(--color-accent); }
 .dcat-list .dcat-kinds-row { display: flex; margin-top: 16px; }
 /* On the row's dark state (pointer or keyboard) the kinds turn light with it */
@@ -86,7 +86,7 @@
 .dcat-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; color: var(--color-text-muted); border-top: 1px solid var(--color-border-strong); font: 600 12px/1.2 var(--font-condensed), sans-serif; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .dcat-strip span:first-child { color: var(--color-text); }
 @media (prefers-reduced-motion: no-preference) {
-  .dcat-list a.route-service { transition: color var(--dcat-for-row-hover) ease; }
+  .dcat-list a.route-service { transition: color var(--dcat-for-row-hover) var(--ease-standard); }
 }
 
 /* ---------------------------------------------------------------- 3 · How we take the work on (charcoal band) */

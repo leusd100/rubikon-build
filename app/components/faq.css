@@ -3,7 +3,7 @@
    questions, a round toggle that turns into × and fills copper, the answer on a copper rule; the list rises row by row
    when the page's motion controller sees it, and an answer slides open where the browser can animate it. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the toggle turns into ×, an answer slides open, the rows rise one by one */
   --faq-for-toggle-turn: .25s;
@@ -19,10 +19,10 @@
 .faq-list summary::marker { content: ''; }
 .faq-list summary:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 .faq-number { color: var(--color-accent-strong); font: 600 13px/1 var(--font-condensed), sans-serif; letter-spacing: .08em; }
-.faq-list summary h3 { margin: 0; font: 600 clamp(18px, 1.7vw, 23px)/1.25 var(--font-condensed), sans-serif; text-transform: none; transition: color var(--duration-fast) ease; }
-.faq-toggle { position: relative; width: 34px; height: 34px; border: 1px solid var(--color-border-strong); border-radius: 50%; transition: background-color var(--motion-micro) ease, border-color var(--motion-micro) ease; }
+.faq-list summary h3 { margin: 0; font: 600 clamp(18px, 1.7vw, 23px)/1.25 var(--font-condensed), sans-serif; text-transform: none; transition: color var(--duration-fast) var(--ease-standard); }
+.faq-toggle { position: relative; width: 34px; height: 34px; border: 1px solid var(--color-border-strong); border-radius: 50%; transition: background-color var(--motion-micro) var(--ease-standard), border-color var(--motion-micro) var(--ease-standard); }
 /* The cross turns into × inside the ring (turning the ring itself widened its box past a 360 px screen's edge) */
-.faq-toggle::before, .faq-toggle::after { content: ''; position: absolute; top: 50%; left: 50%; width: 12px; height: 1.5px; margin: -.75px 0 0 -6px; background: var(--color-accent-strong); transition: background-color var(--motion-micro) ease, transform var(--faq-for-toggle-turn) var(--ease-premium); }
+.faq-toggle::before, .faq-toggle::after { content: ''; position: absolute; top: 50%; left: 50%; width: 12px; height: 1.5px; margin: -.75px 0 0 -6px; background: var(--color-accent-strong); transition: background-color var(--motion-micro) var(--ease-standard), transform var(--faq-for-toggle-turn) var(--ease-premium); }
 .faq-toggle::after { transform: rotate(90deg); }
 .faq-list details[open] .faq-toggle { background: var(--color-accent); border-color: var(--color-accent); }
 .faq-list details[open] .faq-toggle::before { transform: rotate(45deg); }

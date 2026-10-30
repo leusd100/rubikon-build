@@ -3,10 +3,10 @@
    in its title block. The image field stays dark in both themes, as photos on sheets do, so the technical palette is
    untouched and Технічний ↔ 3D never flips paper ↔ dark. Imported by HangarConfigurator.tsx only; every rule is scoped
    to .hangar-configurator-embedded, so /configurator-preview keeps its card — save the :root block of this file's own
-   times and curves (Motion v1), the deliberate exception: custom properties only, no style of any element. Selectors are
+   times (Motion v1), the deliberate exception: custom properties only, no style of any element. Selectors are
    as specific as the configurator.css and drawing-sheet.css rules they replace — neither file's order is promised. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the nodes on the frame's step: the bubbles fade in, their marks follow the camera's zoom, and until one is opened they pulse three times */
   --hcs-for-nodes: .3s;
@@ -362,14 +362,14 @@
 .ft-node { cursor: pointer; }
 .ft-node-hit { fill: transparent; stroke: none; }
 .ft-node-mark { transform: scale(var(--ft-k)); transition: transform var(--hcs-for-nodes) ease; }
-.ft-drawing .ft-node-ring { fill: var(--color-surface-alt); stroke: var(--color-accent); stroke-width: 1.6px; transition: fill var(--motion-micro) ease; }
-.ft-node-number { fill: var(--color-accent-strong); font: 700 10.5px var(--font-condensed), sans-serif; text-anchor: middle; pointer-events: none; transition: fill var(--motion-micro) ease; }
+.ft-drawing .ft-node-ring { fill: var(--color-surface-alt); stroke: var(--color-accent); stroke-width: 1.6px; transition: fill var(--motion-micro) var(--ease-standard); }
+.ft-node-number { fill: var(--color-accent-strong); font: 700 10.5px var(--font-condensed), sans-serif; text-anchor: middle; pointer-events: none; transition: fill var(--motion-micro) var(--ease-standard); }
 /* filled in the copper of text, as the pressed button under the drawing (09.10, audit F47): on --color-accent the 10.5 px
    number read 4.11:1 */
 .ft-node:hover .ft-node-ring, .ft-node[data-on] .ft-node-ring { fill: var(--color-accent-strong); }
 .ft-node:hover .ft-node-number, .ft-node[data-on] .ft-node-number { fill: var(--color-surface-alt); }
 @media (prefers-reduced-motion: no-preference) {
-  .hc-frame[data-step="2"]:not([data-node]) .ft-node-mark { animation: hc-node-pulse var(--hcs-for-pulse) ease-in-out var(--hcs-at-pulse) 3; }
+  .hc-frame[data-step="2"]:not([data-node]) .ft-node-mark { animation: hc-node-pulse var(--hcs-for-pulse) var(--ease-standard) var(--hcs-at-pulse) 3; }
 }
 @keyframes hc-node-pulse { 0%, 100% { transform: scale(var(--ft-k)); } 50% { transform: scale(calc(var(--ft-k) * 1.25)); } }
 /* pushed in on a node: its bubble against the camera's zoom, the others back, and the frame's names away — they named
@@ -531,7 +531,7 @@
    the posts at their jambs and the wall purlins between them glide to their new places where the browser eases a
    path's shape (the same commands, other numbers); where it does not, or where the posts change in number, they are
    simply there. Under reduced motion nothing eases (globals.css). */
-.hc-frame .ft-drawing :is(.ft-opening, .ft-post, .ft-thin) { transition: stroke var(--hcs-for-glide-tint) ease, opacity var(--hcs-for-glide-tint) ease, d var(--hcs-for-glide) var(--ease-premium); }
+.hc-frame .ft-drawing :is(.ft-opening, .ft-post, .ft-thin) { transition: stroke var(--hcs-for-glide-tint) var(--ease-standard), opacity var(--hcs-for-glide-tint) ease, d var(--hcs-for-glide) var(--ease-premium); }
 
 /* The 3D with nothing in the request (10.10, QA): a line in the middle of the field instead of an empty shadow */
 .hc-three-empty {

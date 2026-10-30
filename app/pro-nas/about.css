@@ -5,7 +5,7 @@
    Theme roles only (app/theme.css): Light and Dark need no rules of their own. Motion (ProcessMotion, root
    .about-page) plays once; without it — or with reduced motion — every block shows its final state. */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the two people: the second card follows the first, then the line between them draws out and its words come */
   --about-at-person-second: 160ms;
@@ -18,7 +18,6 @@
   --about-at-principle-reveal-step: 150ms;
   /* the practice tour: the camera, the marks, the progress bar */
   --about-for-camera: 1100ms;
-  --about-curve-camera: cubic-bezier(.65, 0, .25, 1);
   --about-for-mark-fade: 400ms;
   --about-for-step-bar: 5200ms;
   --about-at-mark-draw: 650ms;
@@ -202,7 +201,7 @@
 @keyframes ps-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes ps-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: no-preference) {
-  .ps-stage { transition: transform var(--about-for-camera) var(--about-curve-camera); }
+  .ps-stage { transition: transform var(--about-for-camera) var(--ease-plot); }
   .ps[data-step="1"] .aqc-mark-1 .aqc-line,
   .ps[data-step="2"] .aqc-mark-2 .aqc-line,
   .ps[data-step="3"] .aqc-mark-3 .aqc-line { animation: ps-draw var(--motion-draw) var(--ease-plot) var(--about-at-mark-draw) backwards; }
@@ -322,7 +321,7 @@
 .ps[data-step="1"] .practice-drawing [data-view="1"], .ps[data-step="2"] .practice-drawing [data-view="2"], .ps[data-step="3"] .practice-drawing [data-view="3"] { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) { .practice-drawing [data-view] { transition: opacity var(--about-for-step-light) ease; } }
 .practice-drawing .pd-paper { fill: color-mix(in srgb, var(--color-text) 4%, transparent); stroke: var(--color-border-strong); stroke-width: 2; }
-.practice-drawing .pd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke var(--about-for-step-light) ease, opacity var(--about-for-step-light) ease; }
+.practice-drawing .pd-part { stroke: var(--color-text); stroke-width: 3.2; transition: stroke var(--about-for-step-light) var(--ease-standard), opacity var(--about-for-step-light) ease; }
 .practice-drawing .pd-part circle { fill: color-mix(in srgb, var(--color-text) 12%, transparent); }
 .ps[data-step] .practice-drawing .pd-part { opacity: .38; }
 .ps[data-step="1"] .practice-drawing [data-part="1"], .ps[data-step="2"] .practice-drawing [data-part="2"], .ps[data-step="3"] .practice-drawing [data-part="3"] { opacity: 1; stroke: var(--color-accent); }

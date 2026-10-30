@@ -3,12 +3,12 @@
  *
  * Every rule is scoped to .grain-planner-root, built on the site's tokens (globals.css :root) and
  * free of !important. Motion lives only under `prefers-reduced-motion: no-preference`, so reduced
- * motion needs no overrides. The :root block below (this file's own motion times and curves, Motion v1) is the one
+ * motion needs no overrides. The :root block below (this file's own motion times, Motion v1) is the one
  * exception to the scoping. Breakpoints are the site's: 1050/1051 for the two-column layout,
  * 760 for the phone tier (docs/ui-system-v1.md).
  */
 
-/* Choreography (Motion v1, ui-system §6): this file's own times and curves */
+/* Choreography (Motion v1, ui-system §6): this file's own times */
 :root {
   /* the overview's three draw in once in view, card by card: copper and the grain's slope plot, the grain and the specialists' lines fade in */
   --planner-for-approach-draw: 1100ms;
@@ -484,11 +484,11 @@
 /* ── Motion: only for visitors who have not asked for less ──────────────────────────── */
 @media (prefers-reduced-motion: no-preference) {
   .grain-planner-root .planner-synthesis, .grain-planner-root .planner-live-strip b { animation: planner-rise var(--planner-for-synthesis) var(--ease-premium); }
-  .grain-planner-root .planner-facts li, .grain-planner-root .planner-live-strip span { animation: planner-rise var(--planner-for-fact) ease-out; }
-  .grain-planner-root .planner-question { animation: planner-rise var(--planner-for-question) ease-out; }
+  .grain-planner-root .planner-facts li, .grain-planner-root .planner-live-strip span { animation: planner-rise var(--planner-for-fact) var(--ease-premium); }
+  .grain-planner-root .planner-question { animation: planner-rise var(--planner-for-question) var(--ease-premium); }
   .grain-planner-root .planner-choice-row, .grain-planner-root .planner-check-option, .grain-planner-root .planner-drivers button,
-  .grain-planner-root .planner-approach > button, .grain-planner-root .planner-reset { transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, color var(--duration-fast) ease; }
-  .grain-planner-root .planner-diagram .zone, .grain-planner-root .planner-diagram .node rect { transition: fill var(--planner-for-diagram) ease, stroke var(--planner-for-diagram) ease; }
+  .grain-planner-root .planner-approach > button, .grain-planner-root .planner-reset { transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+  .grain-planner-root .planner-diagram .zone, .grain-planner-root .planner-diagram .node rect { transition: fill var(--planner-for-diagram) var(--ease-standard), stroke var(--planner-for-diagram) var(--ease-standard); }
 }
 
 @keyframes planner-rise {
