@@ -70,8 +70,8 @@
 @keyframes dfmt-march { to { stroke-dashoffset: -14; } }
 @keyframes dfmt-rise { from { opacity: 0; transform: translateY(14px); } }
 @media (prefers-reduced-motion: no-preference) {
-  /* RUBIKON's own frame runs round the object while the block is on screen (data-live: FormatsScope) */
-  .dfmt-figure[data-live] .fs[data-format="comprehensive"] .fs-inner { animation: dfmt-march var(--motion-draw-long) linear infinite; }
+  /* RUBIKON's own frame runs round the object three times when the block comes on screen (data-live: FormatsScope; rule 7) */
+  .dfmt-figure[data-live] .fs[data-format="comprehensive"] .fs-inner { animation: dfmt-march var(--motion-draw-long) linear 3; }
   /* The sheet arrives once (the page's ProcessMotion) */
   [data-motion-ready] .dfmt-grid:not([data-motion-state="on"]) .dfmt-figure { opacity: 0; }
   .dfmt-grid[data-motion-state="on"] .dfmt-figure { animation: dfmt-rise var(--dfmt-for-rise) var(--ease-premium) backwards; }
