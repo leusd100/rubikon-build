@@ -49,7 +49,7 @@
 }
 
 .about-page {
-  --m-reveal: var(--duration-medium);
+  --m-reveal: var(--motion-enter);
   --m-ease: var(--ease-premium);
 }
 .about-page [id] { scroll-margin-top: 96px; }

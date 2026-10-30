@@ -266,6 +266,14 @@ describe('Motion v1 pace by roles (M1-2)', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('points every page reveal at the enter token', () => {
+    const values = (file: string, name: string) => propertyDeclarations(file).filter((entry) => entry.name === name).map((entry) => entry.value);
+    for (const file of ['pro-nas/about.css', 'yak-pratsyuiemo/delivery.css', 'components/directions/direction-template.css']) {
+      expect(values(file, '--m-reveal'), file).toEqual(['var(--motion-enter)']);
+    }
+    expect(values('components/about/region.css', '--region-reveal')).toEqual(['var(--m-reveal, var(--motion-enter))']);
+  });
+
   it('has no ease-out or ease-in-out', () => {
     const offenders = names.flatMap((file) =>
       motionDeclarations(sheets[file])

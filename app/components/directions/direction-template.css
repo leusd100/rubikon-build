@@ -111,7 +111,7 @@
 /* ── Motion on the direction pages (UX pass 2026-10, owner: «більше анімацій … з головою») ─────────────────────────
    ProcessMotion (DirectionDetail) arms each [data-motion] block once, when it is meaningfully in view; nothing replays.
    Without JavaScript or with reduced motion the final state shows at once (nothing below applies unarmed). */
-.direction-page { --m-ease: var(--ease-premium); --m-reveal: 420ms; --m-draw: 1100ms; }
+.direction-page { --m-ease: var(--ease-premium); --m-reveal: var(--motion-enter); --m-draw: 1100ms; }
 
 /* «Переріз»: the cut and its lines draw, then the hatching and the dimensions, the copper detail last */
 .dsd :is(.dsd-cut, .dsd-line, .dsd-dim, .dsd-hatch, .dsd-insulation, .dsd-accent path, .dsd-accent circle) { stroke-dasharray: 1; stroke-dashoffset: 0; }

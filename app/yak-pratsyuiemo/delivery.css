@@ -32,7 +32,7 @@
    Only transform, opacity, fill-opacity and stroke-dashoffset animate — and clip-path on the small contract chip. */
 .process-page {
   --m-draw: 900ms;
-  --m-reveal: var(--duration-medium);
+  --m-reveal: var(--motion-enter);
   --m-step: 240ms;
   --m-ease: var(--ease-premium);
 }
