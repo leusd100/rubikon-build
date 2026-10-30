@@ -355,7 +355,8 @@ for (const viewport of [
         await page.goto(path, { waitUntil: 'load' });
         const image = page.locator('.direction-hero-image, .directions-hero-sequence-image').first();
         await expect.poll(() => image.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0)).toBe(true);
-        await page.waitForTimeout(500);
+        // Quiet network, so a second hero file would be counted: the old daylight + dark pair came right after hydration
+        await page.waitForLoadState('networkidle');
         page.off('request', record);
         const shown = await image.evaluate((node: HTMLImageElement) => node.currentSrc.split('/').pop() ?? '');
         expect(requests, `${path}: hero files fetched`).toHaveLength(1);
