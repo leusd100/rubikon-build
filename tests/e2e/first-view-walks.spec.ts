@@ -46,6 +46,16 @@ const pointAt = async (page: Page, locator: Locator) => {
   await page.mouse.move(box.x + box.width / 2 + 3, box.y + box.height / 2 + 1);
 };
 
+/** Done once the browser has told observers where a block stands: one created now hears after the page's own */
+const reported = (page: Page, selector: string, inView: boolean) => page.locator(selector).evaluate((element, wanted) => new Promise<void>((resolve) => {
+  const observer = new IntersectionObserver((entries) => {
+    if (entries.at(-1)?.isIntersecting !== wanted) return;
+    observer.disconnect();
+    resolve();
+  });
+  observer.observe(element);
+}), inView);
+
 /** Fake time in short runs, so that each step's render lands in the log at its own moment */
 const run = async (page: Page, ms: number) => {
   for (let left = ms; left > 0; left -= 200) await page.clock.runFor(200);
@@ -127,9 +137,15 @@ for (const [route, block, read] of [
     // A wheel, as a person scrolls: the pointer rests and the block comes to it
     for (let left = await distance(); Math.abs(left) > 40; left = await distance()) {
       await page.mouse.wheel(0, Math.sign(left) * Math.min(400, Math.abs(left)));
-      await page.waitForTimeout(160);
+      // The smooth scroll has moved and come to rest: two reads the same, and not where it began
+      let seen = left;
+      await expect.poll(async () => {
+        const now = await distance();
+        const resting = now === seen && now !== left;
+        seen = now;
+        return resting;
+      }, { intervals: [100] }).toBe(true);
     }
-    await page.waitForTimeout(400);
     await expect.poll(() => figure.evaluate((element) => element.matches(':hover'))).toBe(true);
     const attribute = route === '/pro-nas' ? 'data-cap' : 'data-active';
     const shown = () => page.locator(read).getAttribute(attribute);
@@ -231,7 +247,7 @@ test('/yak-pratsyuiemo a format the browser restored stops the walk', async ({ p
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   // A real press: the browser restores only what a person changed
-  await page.locator('input[name="resp-format"][value="subcontract"]').check({ force: true });
+  await page.locator('label').filter({ has: page.locator('input[name="resp-format"][value="subcontract"]') }).click();
   // Back, not a reload: automated Chromium restores a radio only on a history navigation
   await page.goto('/pro-nas', { waitUntil: 'load' });
   await page.goBack({ waitUntil: 'load' });
@@ -250,14 +266,14 @@ test('/pro-nas a walk pauses out of view and goes on from the next step', async 
   await figure.scrollIntoViewIfNeeded();
   await expect.poll(async () => { await page.clock.runFor(200); return (await changes(page)).length; }, { timeout: 15_000 }).toBeGreaterThan(0);
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
-  await page.waitForTimeout(200);
+  await reported(page, '.cap-fig', false);
   const before = (await changes(page)).length;
   await run(page, STEP_MS * 3);
-  expect((await changes(page)).length).toBe(before);
+  expect(await changes(page)).toHaveLength(before);
   await figure.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(200);
+  await reported(page, '.cap-fig', true);
   await run(page, STEP_MS + 400);
-  expect((await changes(page)).length).toBe(before + 1);
+  expect(await changes(page)).toHaveLength(before + 1);
 });
 
 test('/yak-pratsyuiemo keyboard focus on a step ends the change sheets\' walk', async ({ page }) => {
