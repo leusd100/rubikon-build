@@ -24,10 +24,18 @@ const WHEEL_SCROLL_MS = 150;
 /** What a press caught by the scroll shield is passed on to */
 const CONTROLS = 'a[href], button, summary, label, input, select, textarea, [role="button"]';
 
+/** The link a click went through, if any: the nearest `<a href>` on the event's path */
+function anchorOf(event: Event) {
+  return event
+    .composedPath()
+    .find((node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement && Boolean(node.href));
+}
+
 /**
  * A very restrained Lenis smooth-scroll layer, mounted sitewide (see app/layout.tsx) but
- * only active while the viewport matches DESKTOP_QUERY with a mouse or a trackpad (HOVER_QUERY) and the user hasn't asked for
- * reduced motion. Renders nothing and touches no layout: no `wrapper`/`content` options are
+ * only active while the viewport matches DESKTOP_QUERY with a mouse or a trackpad
+ * (HOVER_QUERY) and the user hasn't asked for reduced motion. Renders nothing and
+ * touches no layout: no `wrapper`/`content` options are
  * passed, so Lenis smooths the real window/document scroll in place rather than faking
  * position on a wrapper element — sticky positioning, the native scrollbar, keyboard
  * scrolling, and scroll restoration all keep working. Lenis does not drive its own frame
@@ -132,9 +140,7 @@ export function SmoothScroll() {
           const onAnchor = (event: MouseEvent) => {
             if (event.defaultPrevented || event.button !== 0) return;
             if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-            const link = event
-              .composedPath()
-              .find((node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement && Boolean(node.href));
+            const link = anchorOf(event);
             if (!link?.hash || link.host !== window.location.host || link.pathname !== window.location.pathname) return;
             instance.scrollTo(decodeURIComponent(link.hash));
             loop.wake();
