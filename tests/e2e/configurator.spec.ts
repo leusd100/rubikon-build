@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { backToDrawing, chooseSeparateWorks, openControlGroup, openThree } from './configurator.helpers';
+import { nextFrames } from './frames.helpers';
 
 async function openConfigurator(page: Page) {
   await page.goto('/configurator-preview', { waitUntil: 'load' });
@@ -16,6 +17,25 @@ function scopeBox(page: Page, name: 'Фундамент' | 'Каркас' | 'С�
 /** The gate count's option card («0», «1», «2») — the step's other option cards carry words, not bare digits */
 function gateCount(page: Page, count: 0 | 1 | 2) {
   return page.locator('label.hc-option-card', { has: page.locator('input[name="hc-gates"]'), hasText: new RegExp(`^${count}$`) });
+}
+
+/**
+ * Every class the drawing's `selector` elements take from now on, as each commit changes the drawing: a phase a layer
+ * enters and leaves between two looks at it is on the list too. Read the list with `classesTaken`.
+ */
+async function recordClasses(page: Page, selector: string) {
+  await page.evaluate((target) => {
+    const taken = new Set<string>();
+    (window as unknown as { __classesTaken: Set<string> }).__classesTaken = taken;
+    const drawing = document.querySelector('.hc-preview-svg')!;
+    new MutationObserver(() => {
+      for (const element of drawing.querySelectorAll(target)) taken.add(element.getAttribute('class') ?? '');
+    }).observe(drawing, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+  }, selector);
+}
+
+function classesTaken(page: Page) {
+  return page.evaluate(() => [...(window as unknown as { __classesTaken: Set<string> }).__classesTaken]);
 }
 
 /** «Для заїзду техніки · 5 × 5 м»: the type's size is in its name since 07.10 */
@@ -468,10 +488,13 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2A)', () =>
     const before = await firstColumnClass(page);
     expect(before).toMatch(/hc-phase-visible/);
 
+    await recordClasses(page, '.hc-columns line');
     await scopeBox(page, 'Стіни').click(); // walls, not frame
-    await page.waitForTimeout(50);
+    // the toggle has run its course: the walls have left (their own ~250 ms; headroom as in the walls' test below)
+    await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-hidden/, { timeout: 2500 });
     const after = await firstColumnClass(page);
-    expect(after).toBe(before); // no transitional class was ever entered
+    expect(after).toBe(before);
+    expect(await classesTaken(page)).toEqual([before]); // no transitional class was ever entered
   });
 
   test('rapid ON/OFF/ON settles cleanly on the final requested state', async ({ page }) => {
@@ -551,12 +574,14 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
     await openControlGroup(page, 'openings');
 
-    // 1 → 2 gates: never touches the gate layer's phase.
+    // 1 → 2 gates: never touches the gate layer's phase. The lifecycle answers in the commit's effects: 50 ms at 60 Hz
+    await recordClasses(page, '.hc-gate');
     await gateCount(page, 2).click();
     await expect(page.locator('.hc-gate')).toHaveCount(2);
-    await page.waitForTimeout(50);
+    await nextFrames(page, 3);
     await expect(page.locator('.hc-gate').first()).toHaveAttribute('class', /hc-phase-visible/);
     await expect(page.locator('.hc-gate').first()).not.toHaveAttribute('class', /hc-phase-materializing/);
+    expect((await classesTaken(page)).filter((name) => !name.includes('hc-phase-visible'))).toEqual([]);
 
     // some → 0: a real discrete toggle. The gate layer's FSM does receive a REQUEST_HIDDEN, but
     // gate geometry (unlike foundation/frame) isn't geometry-safe — position depends on the count

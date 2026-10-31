@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
+import { chooseSeparateWorks, installDrawCallCounter, openControlGroup, waitForBuildUpToSettle } from './configurator.helpers';
 
 // Visual regression for the 3D mode. Deliberately a SMALL set (Phase 3A brief §15): WebGL
 // snapshots are the most expensive kind to maintain, so this covers the states whose geometry or
@@ -58,6 +58,7 @@ import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
 const SCREENSHOT_OPTIONS = { threshold: 0.02, maxDiffPixels: 16 } as const;
 
 async function openConfigurator(page: Page) {
+  await installDrawCallCounter(page);
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
   await page.goto('/configurator-preview', { waitUntil: 'load' });
   const essentialCookiesButton = page.getByRole('button', { name: 'Лише необхідні', exact: true });
@@ -81,8 +82,9 @@ async function openConfigurator(page: Page) {
  * real triggered render — never a busy-poll) and then two further animation frames for the browser
  * compositor to catch up, before resolving. Still strictly better than an arbitrary timeout for a
  * `frameloop="demand"` canvas: deterministic rather than hoping a fixed delay was long enough.
- * Falls back to the previous timeout if the test API is ever unavailable (e.g. a production-mode
- * build under test), so this helper degrades gracefully rather than hanging.
+ * A production-mode build under test (every CI run) has no test API, and nothing to ask for a new
+ * frame with: there it waits for the demand loop to have drawn and stopped, 54 frames in a row
+ * without a draw (900 ms at 60 Hz, the blind timeout this path used to be).
  */
 async function waitForSettledFrame(page: Page) {
   const synced = await page.evaluate(async () => {
@@ -96,7 +98,7 @@ async function waitForSettledFrame(page: Page) {
     await api.invalidateAndWaitForFrame();
     return true;
   });
-  if (!synced) await page.waitForTimeout(900);
+  if (!synced) await waitForBuildUpToSettle(page, 54);
 }
 
 async function enterThreeMode(page: Page) {

@@ -70,8 +70,8 @@ describe.each(fixtureNames)('prototype UI parity — %s', (name) => {
     }
   });
 
-  it('comparison cells match the side-by-side matrix', () => {
-    if (!comparison) return;
+  it('comparison cells match the side-by-side matrix', ({ skip }) => {
+    if (!comparison) skip('no comparison in this fixture');
     const candidates = buildCandidates(answers);
     expect('matrix' in dom.result).toBe(true);
     if (!('matrix' in dom.result)) return;
@@ -84,7 +84,7 @@ describe.each(fixtureNames)('prototype UI parity — %s', (name) => {
   it('the diagram model reproduces every label of the prototype diagram', () => {
     const model = grainDiagramModel(answers);
     expect(diagramTexts(model)).toEqual(dom.diagram.texts);
-    expect(model.zoneLetters.length).toBe(dom.diagram.zoneCount);
+    expect(model.zoneLetters).toHaveLength(dom.diagram.zoneCount);
     expect(model.phases.some((phase) => phase.kind === 'second')).toBe(dom.diagram.phaseTwoBox);
   });
 });

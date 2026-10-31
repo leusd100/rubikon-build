@@ -4,8 +4,8 @@ import { expect, test } from '@playwright/test';
 // chunk that is gone. The whole page used to reload and then show «Щось пішло не так» in place of its text, its form and
 // its contacts. Now only the island gives way to its server-rendered fallback, and the page does not reload.
 for (const island of [
-  { path: '/', chunk: /\/_next\/static\/chunks\/ProofContour-[^/]+\.js$/, name: 'proof-contour', says: 'Креслення не завантажилось' },
-  { path: '/angary', chunk: /\/_next\/static\/chunks\/HangarConfigurator-[^/]+\.js$/, name: 'hangar-configurator', says: 'Конфігуратор ангара не завантажився' },
+  { path: '/', chunk: /\/_next\/static\/chunks\/ProofContour-[^/]+\.js$/, name: 'proof-contour', says: 'Креслення не завантажилось', sheet: '.hv2-contour' },
+  { path: '/angary', chunk: /\/_next\/static\/chunks\/HangarConfigurator-[^/]+\.js$/, name: 'hangar-configurator', says: 'Конфігуратор ангара не завантажився', sheet: '#configurator .hc-preview-sheet' },
 ] as const) {
   for (const failure of ['404', 'dropped connection'] as const) {
     test(`${island.path}: a missing ${island.name} chunk (${failure}) leaves the page, its form and its contacts`, async ({ page }) => {
@@ -36,7 +36,8 @@ for (const island of [
     const errors: string[] = [];
     page.on('console', (message) => { if (message.type() === 'error' && message.text().includes('[island:')) errors.push(message.text()); });
     await page.goto(island.path, { waitUntil: 'load' });
-    await page.waitForTimeout(1000);
+    // The island's code has run: its sheet takes its state in an effect (DrawingSheet); the server's markup has none
+    await expect(page.locator(island.sheet)).toHaveAttribute('data-sheet-state', /^(armed|on)$/);
     await expect(page.locator('[data-island-fallback]')).toHaveCount(0);
     expect(errors).toEqual([]);
   });

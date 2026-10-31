@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { chooseSeparateWorks, openControlGroup, openThree, scrollToMiniHold } from './configurator.helpers';
+import { nextFrames } from './frames.helpers';
 
 async function openHangarPage(page: Page, dismissCookies = true) {
   await page.goto('/angary', { waitUntil: 'load' });
@@ -263,7 +264,9 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   await page.locator('#hc-step-frame').scrollIntoViewIfNeeded();
   await items.nth(4).click();
   await expect(frame.locator('.ft-chain[data-load="wind"]')).toBeVisible();
-  await page.waitForTimeout(1500);
+  // Past the step's own time (7.6 s) every timer of the page has fired; a loop counts as soon as its rule applies, through
+  // its delay too
+  await page.clock.runFor(8000);
   expect(await looping()).toBe(0);
 });
 
@@ -646,7 +649,8 @@ for (const safeTop of [0, 47]) test(`on a phone the model stays under the header
   const summary = page.locator('.hc-summary-flagship');
   const summaryTop = await summary.evaluate((element) => element.getBoundingClientRect().top);
   expect(await stage.evaluate((element) => element.getBoundingClientRect().bottom)).toBeLessThanOrEqual(summaryTop);
-  await page.waitForTimeout(300);
+  // what would move it is the mini drawing letting go: observers and a frame (useMiniPreview), so a span in frames, 300 ms at 60 Hz
+  await nextFrames(page, 18);
   expect(await summary.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(summaryTop, 0);
   // Back above the controls it lets go, and the model grows in view
   await page.evaluate(() => window.scrollTo(0, 0));
