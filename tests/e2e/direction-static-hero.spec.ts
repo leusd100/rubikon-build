@@ -165,6 +165,8 @@ test('direction static heroes use responsive images: a hero whose HTML arrives i
     const stalls = [
       ...directions.map((path) => ({ path, before: '<p class="eyebrow light">', where: 'after the crumbs' })),
       { path: '/angary', before: '<span><strong>', where: 'inside the header phone' },
+      // the last of the hero: a network packet can end between the stamp's start tag and its word (seen 31.10, run 41227775652)
+      { path: '/angary', before: 'Ілюстрація</span>', where: 'inside the stamp' },
     ];
     for (const { path, before, where } of stalls) {
       const served = await getFromServer(page.request, path);

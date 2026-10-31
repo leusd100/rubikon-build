@@ -113,8 +113,9 @@ function DirectionHero({
           stream stalls (a cold or busy server, a slow network) and the browser paints the crumbs alone, they are drawn low
           and jump up as the heading and buttons arrive — 0.25 of the screen at 1280 × 800 — and a half-parsed header
           moves its nav. React hoists the link into <head>; Chromium lifts the block once it parses the element named
-          by href (its start tag), so that is the stamp after the copy. WebKit honours it too; Firefox ignores it and
-          paints as before. direction-static-hero.spec.ts stalls the HTML on purpose. */}
+          by href (its start tag), so that is an empty mark after all the hero paints. On the stamp itself, a packet
+          ending between its tag and its word painted the box empty, and it grew 14 px up from its bottom edge. WebKit
+          honours it too; Firefox ignores it and paints as before. direction-static-hero.spec.ts stalls the HTML on purpose. */}
       <link rel="expect" href={`#${HERO_COPY_END_ID}`} blocking="render" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
       <div className="service-subhero-media">
@@ -155,7 +156,8 @@ function DirectionHero({
         {!actions?.legacyCallLink && <PhoneHeroScroll href={nextHref} />}
       </div>
       {/* Every direction hero is a concept image: said in the same quiet stamp as /yak-pratsyuiemo and the HOME phone hero */}
-      <span className="hero-provenance" id={HERO_COPY_END_ID}>Ілюстрація</span>
+      <span className="hero-provenance">Ілюстрація</span>
+      <span id={HERO_COPY_END_ID} hidden />
     </section>
   );
 }
