@@ -443,6 +443,8 @@ test('direction heroes keep the call on a phone\'s first screen and the full lea
 // direction they show and can be paused.
 test('/napryamky rows carry their scheme sheets; hero slides name their direction and pause', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
+  // the page's timers on a clock the test can run ahead: time flows as usual until it does
+  await page.clock.install();
   await page.goto('/napryamky', { waitUntil: 'load' });
   const rows = page.locator('#directions-list .route-service');
   await expect(rows).toHaveCount(directions.length);
@@ -454,8 +456,13 @@ test('/napryamky rows carry their scheme sheets; hero slides name their directio
   await pause.click();
   await expect(hero.getByRole('button', { name: 'Відтворити показ напрямів', exact: true })).toBeVisible();
   const paused = await hero.locator('.dhs-caption').textContent();
-  await page.waitForTimeout(3600);
+  // Two slides' time (6 s each) on the page's own clock: every timer due in it fires, however busy the machine
+  await page.clock.runFor(12_000);
   await expect(hero.locator('.dhs-caption')).toHaveText(paused!);
+  // Not vacuous: played again on the same clock, the slides move on
+  await hero.getByRole('button', { name: 'Відтворити показ напрямів', exact: true }).click();
+  await page.clock.runFor(6000);
+  await expect(hero.locator('.dhs-caption')).not.toHaveText(paused!);
 
   // Since 05.10 a wide screen has no preview panel either: every row carries its scheme sheet and its kinds of work
   await expect(page.locator('.dcat-preview')).toHaveCount(0);
