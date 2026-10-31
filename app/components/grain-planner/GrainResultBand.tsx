@@ -50,7 +50,7 @@ export function GrainResultBand({ generic }: { generic: ReactNode }) {
       <section id="result" className="page-section grain-planner-root grain-result-band is-generic" aria-labelledby="grain-overview-title">
         <div className="shell">
           {editingResult && (
-            <p className="planner-editing-note" role="status">Ви змінюєте відповіді. Результат оновиться, щойно ви натиснете «Продовжити».</p>
+            <output className="planner-editing-note">Ви змінюєте відповіді. Результат оновиться, щойно ви натиснете «Продовжити».</output>
           )}
           {generic}
         </div>

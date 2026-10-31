@@ -252,10 +252,9 @@ export default function AnalyticsConsent() {
   if (!showBanner) return null;
 
   return (
-    <aside
+    <section
       ref={bannerRef}
       className="cookie-banner"
-      role="region"
       aria-live="polite"
       aria-labelledby="analytics-consent-title"
     >
@@ -309,6 +308,6 @@ export default function AnalyticsConsent() {
           </>
         )}
       </div>
-    </aside>
+    </section>
   );
 }
