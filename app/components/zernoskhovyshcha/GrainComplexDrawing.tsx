@@ -42,7 +42,7 @@ function storageGeometry({ state, silos, floorLength }: GrainComplexModel) {
 /** A module's group: its turn in the arrival (--o) and whether the visitor has it in the chain */
 function Mod({ name, order, on = true, hot = false, children }: Readonly<{ name: string; order: number; on?: boolean; hot?: boolean; children: ReactNode }>) {
   return (
-    <g className={`gc-mod gc-mod-${name}${on ? '' : ' is-off'}${hot ? ' is-hot' : ''}`} style={{ '--o': order } as CSSProperties}>
+    <g className={`gc-mod gc-mod-${name}${on ? '' : ' is-off'}${hot ? ' is-hot' : ''}`} style={{ '--gc-turn': order } as CSSProperties}>
       {children}
     </g>
   );

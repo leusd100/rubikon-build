@@ -71,7 +71,7 @@
 @media (min-width: 761px) and (max-width: 1023px) { .gc-drawing .gc-label { font-size: 40px; } }
 .gc-drawing .gc-flow { stroke: var(--color-grain); stroke-width: 11; stroke-linecap: round; stroke-dasharray: 1 24; }
 /* A module out of the chain stays as a ghost, so the chain keeps its places */
-.gc-mod { transition: opacity var(--gc-for-ghost) ease; }
+.gc-mod { --o: var(--gc-turn); transition: opacity var(--gc-for-ghost) ease; }
 .gc-mod.is-off { opacity: .16; }
 /* The storage grows to the right; the incline and the grain follow it (Chrome animates the path, others jump) */
 .gc-mod-shipping .gc-partner, .gc-flow { transition: d var(--gc-for-grow) ease; }
@@ -114,8 +114,9 @@
   .gc-sheet .sheet-action { margin-left: auto; }
 }
 
-/* Arriving: the complex assembles module by module (--o is each module's turn), the grain starts once it stands. Without
-   motion none of this applies: the finished complex, still. */
+/* Arriving: the complex assembles module by module (--o is each module's turn, read from --gc-turn set on it, so the
+   rule below can zero it, as it could not an inline --o), the grain starts once it stands. Without motion none of this
+   applies: the finished complex, still. */
 @keyframes gc-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes gc-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes gc-flow { to { stroke-dashoffset: -25; } }
@@ -129,7 +130,7 @@
 }
 .gc[data-gc]:not([data-gc="armed"]) .gc-drawing > .gc-label { animation: gc-fade var(--gc-for-labels-fade) ease var(--gc-at-labels) both; }
 /* After the arrival a module that comes into the chain draws in at once */
-.gc[data-gc="assembled"] .gc-mod { --o: 0 !important; }
+.gc[data-gc="assembled"] .gc-mod { --o: 0; }
 .gc-flows { transition: opacity var(--gc-for-flows) ease; }
 .gc[data-gc]:not([data-gc="assembled"]) .gc-flows { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {

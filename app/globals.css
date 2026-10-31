@@ -144,7 +144,7 @@
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
-  visibility: visible !important;
+  visibility: visible;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-manrope), Arial, sans-serif;
@@ -737,7 +737,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-details-body { display: grid; gap: 18px; padding: 2px 0 24px; }
 .inquiry-form-section-submit { background: color-mix(in srgb, var(--color-surface-elevated) 55%, var(--color-surface)); }
 .inquiry-form-submit-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, .72fr); align-items: start; gap: clamp(20px, 2.3vw, 32px); }
-.inquiry-consent { grid-template-columns: 18px 1fr; align-items: start; gap: 10px !important; margin-top: 0; }
+/* Under .inquiry-form: .inquiry-form label and .inquiry-form label > span set the form's labels' gap and type, and outrank a
+   class alone. The sentence keeps its own (the honeypot's .form-trap below likewise stays out of any label rule) */
+.inquiry-form .inquiry-consent { grid-template-columns: 18px 1fr; align-items: start; gap: 10px; margin-top: 0; }
 .inquiry-consent input { width: 18px; min-height: 18px; margin: 1px 0 0; accent-color: var(--color-accent-strong); }
 /* The fields' focus is a copper border plus a faint halo; the checkbox has no border to recolour, and the halo alone
    measured 1,5 : 1 around an 18 × 50 box (sweep 03.10). It takes the site's ring instead, on its own 18 px square — the
@@ -745,7 +747,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-form .inquiry-consent input { height: 18px; min-height: 18px; padding: 0; }
 .inquiry-consent input:focus { box-shadow: none; }
 .inquiry-consent input:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
-.inquiry-consent > span { color: var(--color-text-muted) !important; font-size: 13px !important; font-weight: 500 !important; line-height: 1.55; letter-spacing: 0 !important; text-transform: none !important; }
+.inquiry-form .inquiry-consent > span { color: var(--color-text-muted); font-size: 13px; font-weight: 500; line-height: 1.55; letter-spacing: 0; text-transform: none; }
 .inquiry-consent a { color: var(--color-accent-strong); font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
 /* the message spans both columns, mirroring them: its «!» (W3-07, beside .inquiry-field-error) under the box, its words
    under the text at their full width */
@@ -774,7 +776,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-status-actions a, .inquiry-status-actions button { display: inline-flex; align-items: center; gap: 7px; min-height: var(--control-min-height); padding: 8px 11px; color: inherit; border: 1px solid color-mix(in srgb, currentColor 55%, transparent); background: transparent; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
 .inquiry-status-actions a:hover, .inquiry-status-actions button:hover { border-color: currentColor; background: color-mix(in srgb, currentColor 8%, transparent); }
 .inquiry-status-actions svg { width: 15px; height: 15px; }
-.form-trap { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
+.inquiry-form .form-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 
 .inner-page { background: var(--color-bg); }
 .subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
@@ -864,7 +866,8 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .service-subhero-media { position: absolute; inset: var(--header-h) 0 0; } /* under the fixed header: /zernoskhovyshcha ≥1100 px until W2-12; every other hero starts at y 0 behind it (PDO-18, «One header model») */
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
-.direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%) !important; }
+/* Under .service-subhero-media: its `img` rule above sets the hero's default position, and each picture's focal point wins here */
+.service-subhero-media .direction-hero-image { z-index: 0; object-position: var(--direction-hero-image-position, center 60%); }
 /* Art set down under the header (artTop: /angary, /metalokonstruktsii) fades in over the 44 px under its top edge: the strip
    above it is the hero's own graphite, 4 levels darker through the 92 % header than the sky beside it, and a hard edge
    there read as a band inside the header. Where no artTop is given the gradient is invalid and no mask applies. */
@@ -1320,7 +1323,6 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   /* Form helper text that tells the visitor what to type or agree to: 10–11 px was too small to read on a phone. */
   .inquiry-required-note, .inquiry-submit-note, .inquiry-consent > small { font-size: 13px; }
   .inquiry-field-hint { font-size: 13px; line-height: 1.45; }
-  .inquiry-consent > span { font-size: 13px !important; }
   .about-hero-media > :is(img, video) { filter: saturate(.58) contrast(1.08) brightness(.84); }
   .about-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.86), rgba(10,11,12,.58)), linear-gradient(0deg, rgba(10,11,12,.78), transparent 66%); }
   .section-header { grid-template-columns: 1fr; }
@@ -1386,7 +1388,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .subhero h1, .service-subhero h1 { font-size: min(var(--type-h1), calc(100cqi / var(--display-fit))); }
   .subhero-side > p { font-size: 15px; }
   .service-subhero-content { padding-top: 126px; padding-bottom: 58px; } /* the crumbs sit 49 px under the 77 px header, as on /angary */
-  .direction-hero-image { object-position: var(--direction-hero-image-position-mobile, center 60%) !important; }
+  .service-subhero-media .direction-hero-image { object-position: var(--direction-hero-image-position-mobile, center 60%); }
   .service-subhero-content > p:last-child { margin-top: 26px; font-size: var(--hero-lead); }
   /* A phone: the shorter lead keeps the hero's call on the first screen; a boundary it moved goes under the actions */
   .service-subhero-lead:has(.lead-phone) .lead-full { display: none; }
@@ -1602,12 +1604,14 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  /* sonar-important-begin: the reduced-motion reset has to beat every animation and transition on the site */
   *, *::before, *::after {
     scroll-behavior: auto !important;
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+  /* sonar-important-end */
 }
 
 /* Accessibility refinements shared by every page. */
@@ -1824,10 +1828,10 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
 @media (max-width: 760px) { .inquiry-form :is(input, select, textarea) { scroll-margin-top: 118px; } }
 
 /* After a saved request (08.10, audit F155): a calm panel in place of the filled form — what went out and how we reply */
-.inquiry-sent { display: grid; gap: 10px; padding: 22px clamp(24px, 2.5vw, 36px); border-left: 3px solid var(--color-success); background: var(--color-success-surface); color: var(--color-status-text); }
-/* Brought into view and focused by script once the request is saved (PDO-03): under the header, as the attached brief
-   lands; not interactive, so no ring — but a keyboard user sees where the focus went, as on the brief (F135) */
-.inquiry-sent { scroll-margin-top: 117px; }
+.inquiry-sent { display: grid; gap: 10px; padding: 22px clamp(24px, 2.5vw, 36px); border-left: 3px solid var(--color-success); background: var(--color-success-surface); color: var(--color-status-text); scroll-margin-top: 117px; }
+/* Its scroll-margin and the focus below: brought into view and focused by script once the request is saved (PDO-03): under
+   the header, as the attached brief lands; not interactive, so no ring — but a keyboard user sees where the focus went, as on
+   the brief (F135) */
 @media (max-width: 760px) { .inquiry-sent { scroll-margin-top: 93px; } }
 .inquiry-sent:focus { outline: none; }
 .inquiry-sent:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; }

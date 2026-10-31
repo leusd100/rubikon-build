@@ -136,7 +136,9 @@
 /* In Tailwind's base layer, beside its own `[hidden] { display: none !important }`: an important rule in a layer beats an
    unlayered one whatever its specificity, so outside the layer this never applied and only «Задача» showed (08.10) */
 @layer base {
+  /* sonar-important-begin: only an important rule in this layer beats Tailwind's layered [hidden] */
   :root:not([data-theme]) .hc-step-panel[hidden] { display: block !important; }
+  /* sonar-important-end */
 }
 :root:not([data-theme]) :is(.hc-steps, .hc-step-nav) { display: none; }
 
