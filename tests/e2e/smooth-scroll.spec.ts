@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { chooseSeparateWorks, openControlGroup, openThree } from './configurator.helpers';
+import { nextFrames } from './frames.helpers';
 
 // `window.lenis` is a one-way marker (Lenis sets it on construction but never clears it on
 // destroy — confirmed by reading node_modules/lenis/dist/lenis.mjs), so it can't tell "was
@@ -50,11 +51,14 @@ function lenisChunkRequests(page: Page) {
   return requests;
 }
 
-/** Once the scroll shield is on the page, SmoothScroll's effects have run: the smooth-scroll layer has decided by then */
+/**
+ * Once the scroll shield is on the page, SmoothScroll's effects have run, in order: the first has asked for Lenis's chunk
+ * if this visitor is to have it, and it asks once. A request the page sends after that reaches the test after the chunk's
+ * would have, so a chunk asked for has been noted by the time this one is answered.
+ */
 async function smoothScrollDecided(page: Page) {
   await expect(page.locator('.scroll-shield')).toBeAttached();
-  // a chunk asked for is on its way by now, and Lenis constructs as it arrives
-  await page.waitForTimeout(1000);
+  await page.evaluate(() => fetch('/robots.txt', { cache: 'no-store' }));
 }
 
 test.describe('smooth scroll (sitewide, desktop-only)', () => {
@@ -262,8 +266,9 @@ test.describe('smooth scroll leaves alone an anchor that is not its own', () => 
     }, { capture: true }));
 
     await link.click();
-    // Lenis's glide takes about 0.9 s; the page has not moved at all, and the link's default was taken over
-    await page.waitForTimeout(1500);
+    // The page has not moved at all, and the link's default was taken over. Lenis moves the page in frames, from the first
+    // one after the click: 90 of them are 1.5 s at 60 Hz, and its whole glide takes about 0.9 s
+    await nextFrames(page, 90);
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
     await expect(page).not.toHaveURL(/#inquiry$/);
   });
@@ -275,8 +280,9 @@ test.describe('smooth scroll leaves alone an anchor that is not its own', () => 
     context.on('page', (opened) => void opened.close());
 
     await link.click({ modifiers: ['ControlOrMeta'] });
-    // A span, not a sync point: what is checked is that nothing happens in it (Lenis's glide takes about 0.9 s)
-    await page.waitForTimeout(1500);
+    // A span, not a sync point: what is checked is that nothing happens in it. In frames, as Lenis moves the page: 90 of
+    // them are 1.5 s at 60 Hz, and its whole glide takes about 0.9 s
+    await nextFrames(page, 90);
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 
@@ -339,8 +345,8 @@ test('a wheel over the fullscreen 3D leaves the page behind it where it was', as
   expect(await page.evaluate(() => Boolean(document.elementFromPoint(720, 450)?.closest('[aria-modal="true"]')))).toBe(true);
   for (let tick = 0; tick < 5; tick += 1) {
     await page.mouse.wheel(0, 100);
-    // Wheel clicks paced as a hand turns them; the scroll is awaited after the loop
-    await page.waitForTimeout(100);
+    // Wheel clicks paced as a hand turns them, 100 ms apart at 60 Hz; the scroll is awaited after the loop
+    await nextFrames(page, 6);
   }
   await waitForScrollSettled(page);
   expect(await page.evaluate(() => window.scrollY), 'the page behind the modal').toBe(before);
