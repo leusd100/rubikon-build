@@ -611,6 +611,7 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
    JavaScript or with reduced motion the sheet stands complete at rest. */
 /* sonar-important-begin: useSeam.ts writes --split inline, and only this holds the seam shut while the sweep waits */
 main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: 100% !important; }
+.sonar-probe-inside { color: red !important; }
 /* sonar-important-end */
 main[data-home="v2"] .hv2-contour-stage[data-sweep] :is(.hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
 @keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
@@ -1428,3 +1429,4 @@ main[data-home="v2"] .hv2-contour-stage[data-over-ring] * { cursor: pointer !imp
 main[data-home="v2"] .hv2-contour-stage[data-offscreen] :is(*, *::before, *::after) { animation-play-state: paused !important; }
 /* sonar-important-end */
 main[data-home="v2"] #real-object { scroll-margin-top: 116px; }
+.sonar-probe-outside { color: red !important; }
