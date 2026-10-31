@@ -150,8 +150,8 @@ stands:
 - **In the code (M1-2).** The pace by roles: the reveals of 360 / 420 ms read `--motion-enter`, the keyword `ease` on colour
   reads `--ease-standard`, the literal curves are the four tokens of 6.2, and HOME's direction cards and sheets no longer lift.
 - **In the code (M1-3).** Lenis at rest (rule 8).
-- **Next (M1-4).** One rule for the auto-shows (rule 7).
-- **Then (M2, M3).** The five gestures of 6.3 and the controller of 6.5, the three signature moments.
+- **In the code (M1-4).** One rule for the auto-shows (rule 7).
+- **Next (M2, M3).** The five gestures of 6.3 and the controller of 6.5, the three signature moments.
 - **Allowed, not built (30.10).** Drawings whose lines follow the scroll, under the rules of 6.8. Nothing on the site uses
   this yet.
 
@@ -219,10 +219,12 @@ without motion. They arrive with M2-1; the table is the contract.
    (a `calc()` from the tokens only where a later step makes the time a token's multiple). It is the one place a number is
    allowed.
 7. **Auto-shows (W4-04, PDO-55):** one hook, `app/hooks/useFirstViewWalk.ts`, for `CostFactorsFigure`, `CapabilityFigure`,
-   `ChangeSheets` and the formats walk of `FormatsScope`: it starts when at least 50 % of the block is in the window, runs
-   once, a step of at least 2.2 s (OD-PX-34 (a)) or 3 s (OD-PX-34 (b), the owner decides in the M1 brief); any action of a
+   `ChangeSheets` and the formats walk of `FormatsScope`, over the pure `app/lib/firstViewWalk.ts`: it starts when at least
+   50 % of the block is in the window, runs once, a step of at least 2.2 s (OD-PX-34 (a), the owner, 30.10); any action of a
    person stops the show for good; it pauses off screen; one show plays at a time; no endless loops (`dfmt-march` is
-   `1.4s linear 3`, not `infinite`). Pending (M1-4).
+   `1.4s linear 3`, not `infinite`). An action is a press, a tap, a key, focus, or a mouse that really moves over the block.
+   A cursor the page scrolls under and a finger that lands on the block to swipe past it are not actions. A block whose
+   half cannot fit the window shows its final state. In the code (M1-4).
 8. **Lenis at rest (W4-02, PDO-95 only):** `autoRaf: false` and an own rAF loop only while moving; `wake()` on `wheel`, on an
    anchor click and after `scrollTo`; before the first frame after a rest `lenis.time = t − 1000/60`; `lerp .18`, the anchors
    and `stopInertiaOnNavigate` unchanged. The keyboard part of X-Ray (PDO-37) is not in it. In the code (M1-3).

@@ -1,6 +1,7 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useFirstViewWalk } from '../../hooks/useFirstViewWalk';
 import { FormatPrefillLink } from '../process/FormatPrefillLink';
 import type { FormatCard } from '../../lib/deliveryModelPresentation';
 import type { DeliveryFormatId } from '../../types/deliveryModel';
@@ -43,6 +44,7 @@ const LAYERS: readonly (readonly [Layer, string])[] = [
 /** The packages that take turns as «one package»: the model's summary names the foundation, the frame, the roof */
 const PACKAGES: readonly (readonly [Layer, string])[] = [['foundation', 'Фундамент'], ['frame', 'Каркас'], ['roof', 'Покрівля']];
 const STEP_MS = 1150;
+/** A format's turn in the walk: its words are read as well, so it runs longer than the site's 2.2 s */
 const TOUR_MS = 3600;
 
 /** Every variant of a changing line laid in one place, only the one on show visible: the line is as tall as its longest
@@ -69,7 +71,7 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
   const [turn, setTurn] = useState(0);
   const [inView, setInView] = useState(false);
   const figureRef = useRef<HTMLElement>(null);
-  const touched = useRef(false);
+  const gridRef = useRef<HTMLDivElement>(null);
   const current = formats.find((format) => format.id === active) ?? formats[0];
   const whole = active === 'comprehensive';
 
@@ -77,9 +79,32 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
     setTurn(0);
     setActive(id);
   };
+  // On a wide screen only (read once, on mount): at ≤ 1050 px the formats are a row above the drawing and change only when
+  // tapped. The order ends where it began, on the first format.
+  const [walks, setWalks] = useState(false);
+  useEffect(() => {
+    const wide = requestAnimationFrame(() => setWalks(!window.matchMedia('(max-width: 1050px)').matches));
+    return () => cancelAnimationFrame(wide);
+  }, []);
+  const order = useMemo(() => [...formats.slice(1), formats[0]].map((format) => format.id), [formats]);
+  const { stop: stopWalk } = useFirstViewWalk(figureRef, {
+    steps: order,
+    onStep: select,
+    // Stopped between formats: back to the page's one choice, not the format the walk happened to show («The walk is not a
+    // choice»). A press, the mirrored group and a restored format each set theirs right after.
+    onStop: () => {
+      const chosen = mirror && document.querySelector<HTMLInputElement>(`input[name="${mirror}"]:checked`)?.value;
+      select(formats.find((format) => format.id === chosen)?.id ?? formats[0].id);
+    },
+    startDelayMs: 1600,
+    stepMs: TOUR_MS,
+    enabled: walks,
+    actionsRef: gridRef,
+  });
+
   const choose = (id: DeliveryFormatId) => {
-    touched.current = true;
-    if (id !== active) select(id);
+    stopWalk();
+    select(id);
     if (!mirror) return;
     const twin = document.querySelector<HTMLInputElement>(`input[name="${mirror}"][value="${id}"]`);
     if (twin && !twin.checked) {
@@ -96,52 +121,49 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
     const restore = requestAnimationFrame(() => {
       const restored = document.querySelector<HTMLInputElement>(`input[name="${mirror}"]:checked`)?.value;
       if (!restored || restored === formats[0].id || !formats.some((format) => format.id === restored)) return;
-      touched.current = true;
+      stopWalk();
       select(restored as DeliveryFormatId);
     });
     const follow = (event: Event) => {
       const input = event.target;
       if (!(input instanceof HTMLInputElement) || input.name !== mirror || !input.checked) return;
       if (!formats.some((format) => format.id === input.value)) return;
-      touched.current = true;
+      stopWalk();
       select(input.value as DeliveryFormatId);
     };
     document.addEventListener('change', follow);
     return () => { cancelAnimationFrame(restore); document.removeEventListener('change', follow); };
-  }, [mirror, formats]);
+  }, [mirror, formats, stopWalk]);
 
-  // On screen or not; and, the first time half of the drawing is, one walk through the formats — on a wide screen
-  // only (read once, on mount): at ≤ 1050 px the formats are a row above the drawing and change only when tapped.
+  // On screen or not, for the packages below and the drawing's own life
   useEffect(() => {
     const root = figureRef.current;
     if (!root) return undefined;
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let timers: number[] = [];
-    let walked = still || window.matchMedia('(max-width: 1050px)').matches;
-    // One call can hold several entries (DrawingSheet): the newest says whether it is on screen now, and any that reached
-    // half starts the walk, as it would have one call at a time
-    const observer = new IntersectionObserver((entries) => {
-      setInView(entries.at(-1)!.isIntersecting);
-      if (walked || !entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) return;
-      walked = true;
-      const order = [...formats.slice(1), formats[0]];
-      timers = order.map((format, index) => window.setTimeout(() => { if (!touched.current) select(format.id); }, 1600 + index * TOUR_MS));
-    }, { threshold: [0, 0.5] });
+    // The newest entry: one call can hold several, and the first of them may be a stale «out of view» (DrawingSheet)
+    const observer = new IntersectionObserver((entries) => setInView(Boolean(entries.at(-1)?.isIntersecting)));
     observer.observe(root);
-    return () => { observer.disconnect(); timers.forEach((timer) => window.clearTimeout(timer)); };
-  }, [formats]);
+    return () => observer.disconnect();
+  }, []);
 
-  // «One package»: the packages take turns while such a format is shown and the block is on screen
+  // «One package»: the packages take one turn each and rest on the first (rule 7: nothing loops while the block is on
+  // screen). A new format, or the block coming back into view, walks them again.
   useEffect(() => {
     if (whole || !inView || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    const timer = window.setInterval(() => setTurn((value) => (value + 1) % PACKAGES.length), STEP_MS);
-    return () => window.clearInterval(timer);
-  }, [whole, inView]);
+    let left = PACKAGES.length;
+    let timer = 0;
+    const next = () => {
+      left -= 1;
+      setTurn((value) => (left > 0 ? (value + 1) % PACKAGES.length : 0));
+      if (left > 0) timer = window.setTimeout(next, STEP_MS);
+    };
+    timer = window.setTimeout(next, STEP_MS);
+    return () => window.clearTimeout(timer);
+  }, [whole, inView, active]);
 
   const scoped = (layer: Layer) => whole || PACKAGES[turn][0] === layer;
 
   return (
-    <div className="dfmt-grid" data-motion>
+    <div className="dfmt-grid" data-motion ref={gridRef}>
       <ol className="dfmt-list" aria-label="Формат участі">
         {formats.map((format) => (
           <li key={format.id}>

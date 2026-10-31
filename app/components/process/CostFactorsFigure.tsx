@@ -1,7 +1,8 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Fragment, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { DrawingSheet } from '../DrawingSheet';
+import { useFirstViewWalk } from '../../hooks/useFirstViewWalk';
 import './cost-factors.css';
 
 // /yak-pratsyuiemo «Що враховуємо в розрахунку» (UX pass 2026-10, owner: «цей блок можна поцікавіше обіграти»): the seven
@@ -152,8 +153,6 @@ const BADGES: Record<string, readonly [number, number]> = {
   timeline: [schedule.x + 132, schedule.y + 2],
 };
 
-const TOUR_STEP_MS = 1500;
-
 export function CostFactorsFigure({
   factors,
   title = 'Що враховуємо в розрахунку',
@@ -173,33 +172,18 @@ export function CostFactorsFigure({
   const [pointed, setPointed] = useState<string | null>(null);
   const [tour, setTour] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const active = pointed ?? tour;
+  // The walk leads while it runs: a cursor the page scrolled under lights its factor only when the walk has passed
+  const active = tour ?? pointed;
 
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root || !tourEnabled || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    let timer = 0;
-    let index = -1;
-    const step = () => {
-      index += 1;
-      if (index >= factors.length) { setTour(null); return; }
-      setTour(factors[index].key);
-      timer = window.setTimeout(step, TOUR_STEP_MS);
-    };
-    // Any entry, not the first: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) return;
-      observer.disconnect();
-      timer = window.setTimeout(step, 400);
-    }, { threshold: [0, 0.5] });
-    observer.observe(root);
-    return () => { observer.disconnect(); window.clearTimeout(timer); };
-  }, [factors, tourEnabled]);
-
-  const point = (key: string | null) => {
-    setTour(null);
-    setPointed(key);
-  };
+  const steps = useMemo(() => factors.map((factor) => factor.key), [factors]);
+  useFirstViewWalk(rootRef, {
+    steps,
+    onStep: setTour,
+    onDone: () => setTour(null),
+    onStop: () => setTour(null),
+    startDelayMs: 400,
+    enabled: tourEnabled,
+  });
 
   const activeIndex = factors.findIndex((factor) => factor.key === active);
   // 306 tall: room under the sizes' badge 1 for a phone's larger badge, which the edge cut flat (04.10)
@@ -280,10 +264,10 @@ export function CostFactorsFigure({
               style={{ '--i': index } as CSSProperties}
               // The mouse lights the factor on hover. A tap's compatibility mouse events are left out: lighting a factor
               // retitles the sheet above the list, the list moves under the finger and the browser's mouseleave put it out
-              onPointerEnter={(event) => { if (event.pointerType === 'mouse') point(factor.key); }}
-              onPointerLeave={(event) => { if (event.pointerType === 'mouse') point(null); }}
+              onPointerEnter={(event) => { if (event.pointerType === 'mouse') setPointed(factor.key); }}
+              onPointerLeave={(event) => { if (event.pointerType === 'mouse') setPointed(null); }}
               // A tap lights the factor's part (the mouse already does on hover); the drawing is decorative
-              onPointerUp={(event) => { if (event.pointerType !== 'mouse') point(pointed === factor.key ? null : factor.key); }}
+              onPointerUp={(event) => { if (event.pointerType !== 'mouse') setPointed(pointed === factor.key ? null : factor.key); }}
             >
               <span className="cf-number" aria-hidden="true">{index + 1}</span>
               <b>{factor.title}</b>

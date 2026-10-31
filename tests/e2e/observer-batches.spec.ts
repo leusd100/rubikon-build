@@ -189,7 +189,7 @@ test('GrainComplexBuilder: a drawing passed in one call has arrived and does not
   await expect(builder).not.toHaveAttribute('data-inview');
 });
 
-test('FormatsScope: a block passed in one call still walks and does not count as on screen', async ({ page }) => {
+test('FormatsScope: a block passed in one call is not on screen, waits out of view, and walks when it comes back', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await holdReports(page, '#obsiah .dfmt-figure');
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
@@ -197,6 +197,9 @@ test('FormatsScope: a block passed in one call still walks and does not count as
   await scrollTop(page);
   await expect.poll(async () => (await held(page)).at(-1)).toBe(false);
   await letGo(page);
-  await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'work-package');
   await expect(page.locator('#obsiah .dfmt-figure')).not.toHaveAttribute('data-live');
+  // Rule 7 (ui-system §6.4): a walk stands out of view. It is not lost: it starts when the block is back
+  await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'comprehensive');
+  await centre(page, '#obsiah .dfmt-figure');
+  await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'work-package', { timeout: 10_000 });
 });

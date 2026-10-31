@@ -46,7 +46,7 @@ test('each format redraws the section: the whole complex, one package, one packa
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
-test('the block walks through the formats once on first view and comes back to the first; in «one package» the packages take turns', async ({ page }) => {
+test('the block walks through the formats once on first view and comes back to the first', async ({ page }) => {
   // The walk is a wide screen's: at ≤ 1050 px it is off (PDO-06), so every project checks it at 1440
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.clock.install();
@@ -57,12 +57,27 @@ test('the block walks through the formats once on first view and comes back to t
   await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
   // (the observer that arms the walk is not on the clock, so its first step is polled for)
   await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
-  const scoped = () => drawing.locator('.fs-layer[data-scope]').getAttribute('data-layer');
-  const first = await scoped();
-  await page.clock.runFor(1200);
-  expect(await scoped()).not.toBe(first);
   await page.clock.runFor(20_000);
   await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
+});
+
+test('in «one package» the packages take one turn each and rest on the first', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.clock.install();
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  const grid = page.locator(GRID);
+  await grid.scrollIntoViewIfNeeded();
+  await grid.locator('.dfmt-option').nth(1).click();
+  const scoped = () => grid.locator('svg.fs .fs-layer[data-scope]').getAttribute('data-layer');
+  await expect.poll(scoped).toBe('foundation');
+  const seen = [];
+  for (let turn = 0; turn < 3; turn += 1) {
+    await page.clock.runFor(1150);
+    seen.push(await scoped());
+  }
+  expect(seen).toEqual(['frame', 'roof', 'foundation']);
+  await page.clock.runFor(5000);
+  expect(await scoped()).toBe('foundation');
 });
 
 test('a press ends the walk', async ({ page }) => {

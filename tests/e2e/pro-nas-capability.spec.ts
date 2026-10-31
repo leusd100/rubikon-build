@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 // /pro-nas «Що робимо самі, а що організовуємо» — the calm section scheme (owner, 04.10: the axonometric drawing was
 // overloaded; the spoil heap and the depth mark had to go) and its legend of name tags (owner, 05.10: too much text —
@@ -8,6 +8,17 @@ import { expect, test } from '@playwright/test';
 // a much shorter block, and a phone that is not asked to tap at a drawing off screen.
 
 const FIGURE = '.about-cap .cap-fig';
+/**
+ * The pointer onto an element by its coordinates, in two real moves: the first move after a load has no distance in the
+ * browser, and only a pointer that really moves is an action. Not `hover()`: when it retries it scrolls again, this site
+ * scrolls smoothly, and the pointer lands on whichever row the page has carried there (it failed 10 runs of 24 on main).
+ */
+const pointAt = async (page: Page, locator: Locator) => {
+  await locator.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  const box = (await locator.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.move(box.x + box.width / 2 + 3, box.y + box.height / 2 + 1);
+};
 
 test('the scheme draws only works that the ledger lists, and stays out of the accessibility tree', async ({ page }) => {
   await page.goto('/pro-nas', { waitUntil: 'load' });
@@ -58,7 +69,7 @@ test('the scheme walks once through the works it draws when it first comes into 
   const first = await lit.getAttribute('data-cap');
   // A tag and its part of the scheme light together
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).toHaveCount(1);
-  await page.clock.runFor(1300);
+  await page.clock.runFor(2200);
   await expect(lit).not.toHaveAttribute('data-cap', first!);
   // …and after the last work it rests, with nothing lit
   await page.clock.runFor(20_000);
@@ -78,7 +89,9 @@ test('pointing ends the walk, and no walk starts with reduced motion', async ({ 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.reload({ waitUntil: 'load' });
   await page.locator(FIGURE).scrollIntoViewIfNeeded();
-  await page.locator('.about-ledger li[data-cap="gates"]').hover();
+  // The walk is under way first: moves made before the page has hydrated reach no listener, and they are not what this tests
+  await expect.poll(async () => { await page.clock.runFor(400); return lit.count(); }, { timeout: 15_000 }).toBe(1);
+  await pointAt(page, page.locator('.about-ledger li[data-cap="gates"]'));
   await expect(lit).toHaveAttribute('data-cap', 'gates');
   // …and once the pointer has left, nothing lights by itself: the walk is over for good
   await page.mouse.move(2, 2);
@@ -90,7 +103,7 @@ test('pointing at a work lights its part of the scheme', async ({ page, isMobile
   await page.goto('/pro-nas', { waitUntil: 'load' });
   const row = page.locator('.about-ledger li[data-cap="steel"]');
   await row.scrollIntoViewIfNeeded();
-  await row.hover();
+  await pointAt(page, row);
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).not.toHaveCount(0);
   await page.mouse.move(2, 2);
   await expect(page.locator(`${FIGURE} .cap-part[data-on]`)).toHaveCount(0);
