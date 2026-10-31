@@ -153,7 +153,6 @@
 .hc-door-options .hc-option-card { min-width: 68px; }
 
 /* A typed size the field had to change says so here; empty, it takes no room */
-.hc-field-note-live { display: block; text-wrap: pretty; }
 .hc-field-note-live:empty { margin: 0; }
 
 /* «Обсязі робіт» in a step's hint: the way to that step, underlined as a link in the hint's own colour (10.10, audit F32) */
