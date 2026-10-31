@@ -7,7 +7,7 @@ import { stubTurnstile } from './turnstile.helpers';
 // visitor set it or it is the example's; the configuration prints on one A4 sheet.
 
 const NBSP = ' ';
-type Lead = { direction: string; sourcePage: string; details: { configuration?: string; dimensions?: string } };
+type Lead = { direction: string; sourcePage: string; turnstileToken: string; details: { configuration?: string; dimensions?: string } };
 
 async function openHangarPage(page: Page) {
   await page.goto('/angary', { waitUntil: 'load' });
@@ -91,6 +91,26 @@ test('the line in the closing block, the route node and the cost CTA take the vi
     await expect.poll(() => brief(page).evaluate((element) => Math.round(element.getBoundingClientRect().top)), { timeout: 5_000 }).toBeLessThan(160);
     await expect(page.locator('#inquiry-brief-status')).toHaveText(/^Додано до заявки: /);
   }
+});
+
+// The form under the stamp is a new form: Turnstile starts with it, by the focus the brief takes, not by being near it.
+test('«Обговорити» starts Turnstile in the form under the stamp, and its first submit carries a token', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the handoff contract runs once');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const leads = await interceptLeads(page);
+  await openHangarPage(page);
+  await expect(page.locator('.inquiry-turnstile')).toHaveAttribute('data-turnstile-state', 'idle');
+  await discuss(page).click();
+  await expect(brief(page)).toBeFocused();
+  await expect(page.locator('#hc-inquiry .inquiry-turnstile')).toHaveAttribute('data-turnstile-state', 'ready');
+
+  const form = page.locator('#hc-inquiry form.inquiry-form');
+  await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
+  await form.getByLabel(/Телефон/).fill('+380671234567');
+  await form.getByLabel(/Погоджуюся на обробку персональних даних/).check();
+  await form.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+  await expect.poll(() => leads.length).toBe(1);
+  expect(leads[0].turnstileToken).toBe('stub-token-1');
 });
 
 // From 1181 px, without reduced motion, the desktop scrolls through Lenis (SmoothScroll.tsx), which took every anchor
