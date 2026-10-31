@@ -343,11 +343,7 @@ test('a wheel over the fullscreen 3D leaves the page behind it where it was', as
   await page.mouse.move(720, 450);
   // Not vacuous: the wheel lands on the modal
   expect(await page.evaluate(() => Boolean(document.elementFromPoint(720, 450)?.closest('[aria-modal="true"]')))).toBe(true);
-  for (let tick = 0; tick < 5; tick += 1) {
-    await page.mouse.wheel(0, 100);
-    // Wheel clicks paced as a hand turns them, 100 ms apart at 60 Hz; the scroll is awaited after the loop
-    await nextFrames(page, 6);
-  }
+  for (let tick = 0; tick < 5; tick += 1) await page.mouse.wheel(0, 100);
   await waitForScrollSettled(page);
   expect(await page.evaluate(() => window.scrollY), 'the page behind the modal').toBe(before);
 
