@@ -46,8 +46,9 @@ export function useDeferredMedia(
     const target = targetRef.current;
     if (!target || typeof IntersectionObserver === 'undefined') return;
 
+    // The newest entry: one call can hold several (DrawingSheet), and the first of them may be a stale «out of view»
     const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
+      (entries) => setIsVisible(entries.at(-1)!.isIntersecting),
       { rootMargin, threshold: 0.01 },
     );
     observer.observe(target);

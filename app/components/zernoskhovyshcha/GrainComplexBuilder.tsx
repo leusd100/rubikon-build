@@ -129,10 +129,12 @@ export function GrainComplexBuilder() {
     scroller.addEventListener('wheel', stopGlide, { passive: true });
     // The drawing itself is watched, not the whole block: on a low screen (a phone on its side, a laptop at 200 %) the
     // block never shows a third of itself at once, and the complex would stay unassembled
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) root.dataset.inview = '';
+    // One call can hold several entries (DrawingSheet): the newest says whether it is in view now, and any that reached a
+    // third is the arrival, as it would have been one call at a time
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.at(-1)!.isIntersecting) root.dataset.inview = '';
       else delete root.dataset.inview;
-      if (entry.intersectionRatio >= 0.35 && root.dataset.gc === 'armed') {
+      if (entries.some((entry) => entry.intersectionRatio >= 0.35) && root.dataset.gc === 'armed') {
         root.dataset.gc = 'on';
         glide();
         // the grain starts once the last module (shipping) has drawn in
