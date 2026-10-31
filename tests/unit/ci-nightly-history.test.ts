@@ -95,7 +95,7 @@ describe('the history', () => {
     const record = buildRecord({
       env: {
         NIGHT_DATE: '2026-11-01', GITHUB_RUN_ID: '42', GITHUB_SHA: 'abc', GITHUB_EVENT_NAME: 'schedule',
-        RESULT_BUILD: 'success', RESULT_E2E: 'failure', RESULT_VISUAL: 'success', RESULT_LIGHTHOUSE: 'success',
+        RESULT_BUILD: 'success', RESULT_E2E: 'failure', RESULT_VISUAL: 'success', RESULT_LIGHTHOUSE: 'success', RESULT_REPORT: 'success',
       },
     });
 
@@ -124,6 +124,20 @@ describe('summaryMarkdown', () => {
 
     expect(markdown).toContain('lighthouse: failure');
     expect(markdown).toContain('89 · 3.10 s');
+  });
+
+  it('names a report job that failed on its own', () => {
+    const markdown = summaryMarkdown([night(1, {
+      result: { build: 'success', e2e: 'success', visual: 'success', lighthouse: 'success', report: 'failure' },
+    })]);
+
+    expect(markdown).toContain('report: failure');
+  });
+
+  it('draws a profile that crashed without numbers as a gap', () => {
+    const markdown = summaryMarkdown([night(1, { lighthouse: { standard: { score: null, lcp: null } } })]);
+
+    expect(markdown).not.toContain('0 · 0.00 s');
   });
 
   it('draws what did not run as a gap, never as a zero', () => {

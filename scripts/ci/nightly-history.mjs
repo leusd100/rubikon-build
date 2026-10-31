@@ -86,7 +86,7 @@ export function buildRecord({ env, tests = null, lighthouse = {} }) {
     run: Number(env.GITHUB_RUN_ID),
     sha: env.GITHUB_SHA,
     event: env.GITHUB_EVENT_NAME,
-    result: { build: env.RESULT_BUILD, e2e: env.RESULT_E2E, visual: env.RESULT_VISUAL, lighthouse: env.RESULT_LIGHTHOUSE },
+    result: { build: env.RESULT_BUILD, e2e: env.RESULT_E2E, visual: env.RESULT_VISUAL, lighthouse: env.RESULT_LIGHTHOUSE, report: env.RESULT_REPORT },
     tests,
     lighthouse,
   };
@@ -99,7 +99,8 @@ export function appendRecord(history, record) {
   return [...history.filter((night) => night.run !== record.run), record];
 }
 
-const cell = (profile) => (profile ? `${Math.round(profile.score * 100)} · ${(profile.lcp / 1000).toFixed(2)} s` : '—');
+// A report with a runtime error has a profile but no numbers: also a gap
+const cell = (profile) => (profile?.score != null && profile.lcp != null ? `${Math.round(profile.score * 100)} · ${(profile.lcp / 1000).toFixed(2)} s` : '—');
 
 export function summaryMarkdown(history) {
   const nights = history.slice(-SUMMARY_NIGHTS).reverse();

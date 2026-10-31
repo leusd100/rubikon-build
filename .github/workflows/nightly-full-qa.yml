@@ -135,11 +135,13 @@ jobs:
       # On every night, not only a failed one: a green night is the baseline a later regression is read against.
       - name: Keep the night's Lighthouse numbers
         if: ${{ !cancelled() }}
+        continue-on-error: true
         env:
           LHCI_PROFILE: ${{ matrix.profile }}
         run: node scripts/ci/nightly-history.mjs lighthouse --profile "$LHCI_PROFILE" --dir .lighthouseci --out "nightly-metrics/lighthouse-$LHCI_PROFILE.json"
       - name: Upload the night's Lighthouse numbers
         if: ${{ !cancelled() }}
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: nightly-metrics-${{ matrix.profile }}
@@ -175,12 +177,15 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: nightly-tests.json
         run: pnpm exec playwright merge-reports --reporter=html,json ./all-blob-reports
       - name: Keep the night's test counts
+        continue-on-error: true
         run: node scripts/ci/nightly-history.mjs tests --report nightly-tests.json --out nightly-metrics/tests.json
       - name: Upload the night's test counts
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: nightly-metrics-tests
           path: nightly-metrics/
+          if-no-files-found: ignore
           retention-days: 7
       - name: Upload merged report
         uses: actions/upload-artifact@v4
@@ -206,6 +211,7 @@ jobs:
     name: Nightly history
     if: ${{ !cancelled() }}
     needs: [build, e2e, visual, lighthouse, report]
+    continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -239,6 +245,7 @@ jobs:
           RESULT_E2E: ${{ needs.e2e.result }}
           RESULT_VISUAL: ${{ needs.visual.result }}
           RESULT_LIGHTHOUSE: ${{ needs.lighthouse.result }}
+          RESULT_REPORT: ${{ needs.report.result }}
         run: |
           NIGHT_DATE="$(date -u +%F)" node scripts/ci/nightly-history.mjs record \
             --metrics nightly-metrics --history history/nightly-history.ndjson --out history/nightly-history.ndjson
