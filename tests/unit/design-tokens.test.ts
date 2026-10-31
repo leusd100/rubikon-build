@@ -136,7 +136,7 @@ describe('type scale and labels (W3-02)', () => {
     expect(globals).toMatch(/\.person-info > span \{[^}]*font-size: var\(--type-label-ui-size\); font-weight: var\(--type-label-ui-weight\);[^}]*letter-spacing: var\(--type-label-ui-track\)/);
     expect(globals).not.toMatch(/\.person-info > span \{[^}]*letter-spacing: \.09em/);
     // the consent sentence keeps its own sentence case
-    expect(globals).toMatch(/\.inquiry-consent > span \{[^}]*text-transform: none !important/);
+    expect(globals).toMatch(/\.inquiry-form \.inquiry-consent > span \{[^}]*text-transform: none/);
   });
 
   it('keeps the floor: fields 16 px at every width, the crumbs and eyebrow of a phone hero on the UI label', () => {

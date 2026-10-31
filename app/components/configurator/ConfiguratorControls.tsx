@@ -228,7 +228,7 @@ function NumericField({
         <span className="hc-visually-hidden" id={`${inputId}-hint`}>{range}</span>
       )}
       {/* Rendered empty, so the live region exists before it has something to say */}
-      <p className="hc-field-hint hc-field-note-live" id={`${inputId}-note`} role="status">{note}</p>
+      <output className="hc-field-hint hc-field-note-live" id={`${inputId}-note`}>{note}</output>
       {children}
     </div>
   );

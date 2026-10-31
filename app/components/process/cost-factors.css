@@ -16,7 +16,7 @@
 .cf-part rect { fill: color-mix(in srgb, var(--color-text) 6%, transparent); stroke: inherit; stroke-width: 1; }
 .cf-axis { stroke-width: 1; }
 .cf-network, .cf-road-centre, .cf-pad { stroke-dasharray: 6 5; }
-.cf-badge circle { fill: var(--color-bg); stroke: var(--color-accent); stroke-width: 1.4 !important; transition: fill var(--duration-fast) var(--ease-standard); }
+.cf-badge circle { fill: var(--color-bg); stroke: var(--color-accent); stroke-width: 1.4; transition: fill var(--duration-fast) var(--ease-standard); }
 .cf-badge text { fill: var(--color-accent-strong); stroke: none; font: 700 13px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill var(--duration-fast) var(--ease-standard); }
 .proc-factors ul { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border); }
 .proc-factors li { display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 14px; align-items: baseline; padding: 11px 10px 12px 0; border-bottom: 1px solid var(--color-border); cursor: default; transition: background-color var(--duration-fast) var(--ease-standard); }
