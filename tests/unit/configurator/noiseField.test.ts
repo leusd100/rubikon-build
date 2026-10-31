@@ -35,7 +35,7 @@ describe('mulberry32', () => {
 describe('buildNoiseField', () => {
   it('returns exactly size*size values', () => {
     const field = buildNoiseField(8, 1);
-    expect(field.length).toBe(64);
+    expect(field).toHaveLength(64);
   });
 
   it('is deterministic — same size and seed produce an identical field', () => {

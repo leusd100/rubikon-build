@@ -93,7 +93,8 @@ describe('a stored configuration is read through the controls’ bounds', () => 
       sizesUnknown: 'yes',
     });
     expect(read.dimensions.width).toBe(50);
-    expect(read.dimensions.length).toBe(DEFAULT_CONFIGURATOR_STATE.dimensions.length);
+    // the hangar's length in metres, not the size of a list: toHaveLength would read as one
+    expect(read.dimensions).toHaveProperty('length', DEFAULT_CONFIGURATOR_STATE.dimensions.length);
     expect(read.dimensions.height).toBeGreaterThan(0);
     expect(read.ridgeHeightM).toBeLessThan(99);
     expect(read.envelope).toBe(DEFAULT_CONFIGURATOR_STATE.envelope);

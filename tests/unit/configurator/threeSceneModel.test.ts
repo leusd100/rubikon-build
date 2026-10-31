@@ -166,7 +166,7 @@ describe('buildThreeScene', () => {
     expect(undecided.visible).toMatchObject({ slab: true, footings: false });
 
     // Geometry itself is unconditional — same "fact vs. renderer choice" rule as slab/scope above.
-    expect(isolated.footings.length).toBe(slab.footings.length);
+    expect(isolated.footings).toHaveLength(slab.footings.length);
     expect(isolated.footings.length).toBeGreaterThan(0);
   });
 
