@@ -40,6 +40,13 @@ and `configurator-palette-accessibility.spec.ts`; Nightly does not run a duplica
 checks the build result before downloading or merging browser reports, and the final aggregate requires build, E2E,
 visual and Lighthouse success. Failed Lighthouse profiles retain hidden files from `.lighthouseci/` as diagnostics.
 
+Every night, green or red, adds one line to the `nightly-history` artifact: the job results, the test counts, the tests
+that failed or passed only on retry, and each Lighthouse profile's medians with every run's LCP
+(`scripts/ci/nightly-history.mjs`). The `history` job carries the file from the previous night's artifact, so it outlives
+GitHub's 90-day limit as long as one night runs within those 90 days, and it needs no write access to the repository. The
+run's Step Summary shows the last 14 nights. To read all of it: `gh run download <run> -n nightly-history`. Reporting only:
+the job never changes the night's verdict, and a run dispatched on a branch keeps a history of that branch.
+
 `--shard` splits the listed tests by count, and a test that skips itself at run time is listed too. A spec that skips
 every test on one project at file level (a top-level `test.skip`, or a skip as the first statement of a top-level
 `beforeEach`) is therefore also in that project's `testIgnore` in `playwright.config.ts`, its in-file skip kept as the
