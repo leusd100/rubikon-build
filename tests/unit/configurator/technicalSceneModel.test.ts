@@ -91,7 +91,7 @@ describe('buildTechnicalScene', () => {
     const off = sceneFor({ scopeMode: 'partial', scope: [] });
 
     for (const kind of ['frame-column', 'frame-rafter', 'wall-girt', 'roof-purlin', 'roof-brace'] as const) {
-      expect(kinds(off, kind).length).toBe(kinds(on, kind).length);
+      expect(kinds(off, kind)).toHaveLength(kinds(on, kind).length);
       expect(kinds(off, kind).length).toBeGreaterThan(0);
       expect(kinds(off, kind).every((p) => p.visible === false)).toBe(true);
       expect(kinds(on, kind).every((p) => p.visible === true)).toBe(true);
@@ -198,7 +198,7 @@ describe('Phase 3E structural primitives — parity with ParametricBuildingModel
   it('internal-column-prop exists per column for portalRafter, is absent for truss', () => {
     const portal = sceneForStructural({ scheme: 'centerSupport', roofStructure: 'portalRafter' });
     const truss = sceneForStructural({ scheme: 'centerSupport', roofStructure: 'truss' });
-    expect(kinds(portal, 'internal-column-prop').length).toBe(kinds(portal, 'internal-column').length);
+    expect(kinds(portal, 'internal-column-prop')).toHaveLength(kinds(portal, 'internal-column').length);
     expect(kinds(truss, 'internal-column-prop')).toHaveLength(0);
   });
 

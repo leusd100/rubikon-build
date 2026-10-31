@@ -77,3 +77,62 @@ export async function scrollToMiniHold(page: Page, past = 40) {
   }, past);
   await expect(layout).toHaveAttribute('data-configuring', '');
 }
+
+/** Instruments the canvas's WebGL context to count draw calls, without touching app code — the
+ *  same technique `docs/hangar-3d-view-phase-3a.md`'s own draw-call measurements used manually,
+ *  wired up here so it runs on every future change instead of being a one-off DevTools session. */
+export async function installDrawCallCounter(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __drawCalls: number };
+    w.__drawCalls = 0;
+    const patch = (proto: typeof WebGLRenderingContext.prototype | typeof WebGL2RenderingContext.prototype) => {
+      const drawArrays = proto.drawArrays;
+      const drawElements = proto.drawElements;
+      proto.drawArrays = function (this: WebGLRenderingContext, ...args: Parameters<typeof drawArrays>) {
+        w.__drawCalls += 1;
+        return drawArrays.apply(this, args);
+      };
+      proto.drawElements = function (this: WebGLRenderingContext, ...args: Parameters<typeof drawElements>) {
+        w.__drawCalls += 1;
+        return drawElements.apply(this, args);
+      };
+    };
+    patch(WebGLRenderingContext.prototype);
+    if (typeof WebGL2RenderingContext !== 'undefined') patch(WebGL2RenderingContext.prototype);
+  });
+}
+
+/**
+ * Where an idle check can start: the build-up has caught up with the configuration, and the frames that change asked
+ * for have been drawn. Waits on both events, not on a guessed duration. On CI a 600 ms wait for a 250 ms roof transition was not
+ * always enough: the transition ends on its lifecycle timer, and the frame that end asks for came whenever the browser
+ * next gave one out. Under software WebGL that was up to 1.8 s after the click locally, and over 2 s after it in the
+ * CI run that failed. That frame then fell inside the idle window.
+ *
+ * 1. `data-build-up="settled"` on the canvas's wrapper (ThreeHangarView): every layer is at rest on the side its scope
+ *    asks for. It reads 'running' from the render where the scope changes, so it cannot be a stale 'settled' from
+ *    before the click.
+ * 2. Two animation frames in a row with no draw call. While R3F's demand loop runs it draws in every frame, so a whole
+ *    frame without one means the loop has stopped. Two, not one: in the first frame the probe can run before a loop that
+ *    was asked for a frame just after it. A loop that never stops fails here, by the deadline, not at the test's timeout.
+ *    `quietFramesNeeded` asks for a longer run of them, for a test that needs the canvas to have idled. The canvas must
+ *    have drawn at all: before its first frame it is quiet too. Needs installDrawCallCounter before the page opens.
+ */
+export async function waitForBuildUpToSettle(page: Page, quietFramesNeeded = 2) {
+  await expect(page.locator('.hc-preview-surface [data-build-up]')).toHaveAttribute('data-build-up', 'settled', { timeout: 15_000 });
+  const stopped = await page.evaluate((needed) => new Promise<boolean>((resolve) => {
+    const w = window as unknown as { __drawCalls: number };
+    const deadline = performance.now() + 15_000;
+    let last = w.__drawCalls;
+    let quietFrames = 0;
+    const tick = () => {
+      quietFrames = w.__drawCalls === last ? quietFrames + 1 : 0;
+      last = w.__drawCalls;
+      if (quietFrames >= needed && w.__drawCalls > 0) resolve(true);
+      else if (performance.now() > deadline) resolve(false);
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }), quietFramesNeeded);
+  expect(stopped, '15 s after the build-up settled the render loop had not drawn, or was still drawing — frameloop="demand" never returned to idle').toBe(true);
+}
