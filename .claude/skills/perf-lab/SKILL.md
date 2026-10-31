@@ -11,7 +11,8 @@ description: Як міряти продуктивність RUBIKON після D
   відсутні: трафіку замало, тож поля CrUX порожні.
 - **Production після 27.10** — `pagespeed-monitor.yml`: HOME після кожного деплою; щодня по сторінці на шаблон (артефакт
   `pagespeed-*`, Step Summary). PSI — Lighthouse 13, симульоване тротлінгування.
-- **Бюджет-воротар** — `pnpm test:lighthouse` (Nightly, `lighthouserc.cjs`): Lighthouse 12.6, simulate, 5 прогонів, медіана.
+- **Бюджет-воротар** — `pnpm test:lighthouse` (Nightly, `lighthouserc.cjs`): Lighthouse 12.6, simulate, 5 прогонів, медіана, по
+  HTTP/2 (`lhci-server.mjs --http2`). Лабораторні команди нижче йдуть по HTTP/1.1: їхні числа з бюджетами не порівнюй.
 
 ## Локальний вимір (до і після — однаково)
 

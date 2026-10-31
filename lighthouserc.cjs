@@ -1,11 +1,13 @@
 const median = 'median';
 const profileName = process.env.LHCI_PROFILE;
 const port = process.env.LHCI_PORT || '4174';
-const baseUrl = `http://127.0.0.1:${port}`;
+const baseUrl = `https://127.0.0.1:${port}`;
 
 const profiles = {
   home: {
+    maxLcp: 3_600,
     maxTotalBytes: 6_000_000,
+    minPerformance: 0.85,
     url: `${baseUrl}/`,
     // Reported, not enforced, on HOME. Lighthouse 12 scores uses-responsive-images pass/fail: one image wasting more
     // than 12 KiB fails it, and it counts what object-fit: cover crops away as waste. HOME v2 crops on purpose (the
@@ -14,12 +16,16 @@ const profiles = {
     responsiveImages: 'warn',
   },
   standard: {
+    maxLcp: 4_700,
     maxTotalBytes: 900_000,
+    minPerformance: 0.76,
     url: `${baseUrl}/angary`,
   },
   // The Grain Planner composition on its production route (Phase 5).
   grain: {
+    maxLcp: 4_100,
     maxTotalBytes: 900_000,
+    minPerformance: 0.82,
     url: `${baseUrl}/zernoskhovyshcha`,
   },
 };
@@ -33,9 +39,9 @@ const profile = profiles[profileName];
 module.exports = {
   ci: {
     collect: {
-      // `vinext start` behind a compressing proxy: Cloudflare serves JS and CSS with brotli, `vinext start` does not,
+      // `vinext start` behind a compressing HTTP/2 proxy: Cloudflare serves JS and CSS with brotli and multiplexes them,
       // and the byte and LCP budgets below are only meaningful against what visitors receive (scripts/perf/lhci-server.mjs).
-      startServerCommand: `node scripts/perf/lhci-server.mjs --port ${port}`,
+      startServerCommand: `node scripts/perf/lhci-server.mjs --port ${port} --http2`,
       startServerReadyPattern: 'Production server running',
       startServerReadyTimeout: 120_000,
       url: [profile.url],
@@ -46,13 +52,16 @@ module.exports = {
       // which is the standard Lighthouse CI mitigation for this kind of CI-noise variance.
       numberOfRuns: 5,
       settings: {
-        chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage',
+        // The server's certificate is self-signed and lives for this run
+        chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage --ignore-certificate-errors',
         maxWaitForLoad: 90_000,
       },
     },
     assert: {
       assertions: {
-        'categories:performance': ['error', { minScore: 0.7, aggregationMethod: median }],
+        // Per page since the move to HTTP/2 (31.10.2026): the shared 0.7 and 6.1 s would catch nothing there. Each sits about
+        // 6 % past the page's own medians on Linux CI, two runs of 32967214: performance 0.91 / 0.81 / 0.87, LCP 3.34 / 4.41 / 3.82 s
+        'categories:performance': ['error', { minScore: profile.minPerformance, aggregationMethod: median }],
         'categories:accessibility': ['error', { minScore: 0.95, aggregationMethod: median }],
         'categories:best-practices': ['error', { minScore: 0.95, aggregationMethod: median }],
         'categories:seo': ['error', { minScore: 0.95, aggregationMethod: median }],
@@ -60,18 +69,9 @@ module.exports = {
           'error',
           { maxNumericValue: 0.05, aggregationMethod: median },
         ],
-        // Raised from 5_750 alongside the three-category consent model (Necessary/Analytics/
-        // Advertising): measured on the same machine, back-to-back, against origin/main
-        // (4a336de) vs this branch — main: 5707-5714ms (median ~5710, already only ~40ms under
-        // the old ceiling, essentially zero headroom for any future change of any size); this
-        // branch: 5787-5900ms across two 5-run sets (median ~5795) from ~4.3KB more client
-        // CSS+JS for the new consent architecture. Tried code-splitting AnalyticsConsent via
-        // next/dynamic first — no measurable change, confirming this is the throttled-CPU cost
-        // of a small necessary size increase, not avoidable critical-path bloat. New ceiling
-        // clears the worst run observed here with real margin, not just this exact median.
         'largest-contentful-paint': [
           'error',
-          { maxNumericValue: 6_100, aggregationMethod: median },
+          { maxNumericValue: profile.maxLcp, aggregationMethod: median },
         ],
         'total-byte-weight': [
           'error',

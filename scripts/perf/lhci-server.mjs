@@ -8,15 +8,31 @@
 // the site. So this starts `vinext start` on port + 1000 and answers on --port, compressing whatever the upstream left
 // uncompressed (brotli when accepted, else gzip). Nothing else changes: same status, headers and bytes.
 // Prints "Production server running" only once the proxy is listening (lighthouserc.cjs waits for that line).
-import { spawn } from 'node:child_process';
+//
+//   node scripts/perf/lhci-server.mjs --port 4174 --http2
+//
+// --http2 answers over HTTP/2 with a throwaway self-signed certificate, as Nightly does. Cloudflare multiplexes; over
+// HTTP/1.1 Lighthouse's model queues all ~76 requests on six connections. And it counts every request started before the
+// observed paint as blocking LCP, which at ~250 ms on loopback is nearly all of them. /angary stood at LCP 6.2 s and 69
+// against production's 2.3 s and 92 (PSI, 31.10.2026), and a 49 KB low-priority image starting just before or after that
+// paint moved it 450 ms across the 6.1 s budget: 12 of the 13 nights to 31.10 were red on that. The same build over HTTP/2:
+// LCP 4.5 s, 81, runs within 42 ms. The two give different numbers, so never compare across them.
+import { execFileSync, spawn } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { createServer, request } from 'node:http';
+import { createSecureServer } from 'node:http2';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { constants, createBrotliCompress, createGzip } from 'node:zlib';
 
 const argPort = process.argv.indexOf('--port');
 const port = Number(argPort > -1 ? process.argv[argPort + 1] : process.env.LHCI_PORT || 4174);
+const useHttp2 = process.argv.includes('--http2');
 const upstreamPort = port + 1000;
 const COMPRESSIBLE = /^(text\/|application\/(javascript|json|manifest\+json|xml)|image\/svg\+xml)/;
+// Connection-specific headers are invalid in HTTP/2, and the pseudo-headers (`:path` …) do not exist in HTTP/1.1
+const NOT_FORWARDED = /^(:.*|connection|keep-alive|proxy-connection|transfer-encoding|upgrade|http2-settings)$/;
+const forwardable = (headers) => Object.fromEntries(Object.entries(headers).filter(([name]) => !NOT_FORWARDED.test(name)));
 
 const upstream = spawn(join(process.cwd(), 'node_modules', '.bin', 'vinext'), ['start', '--hostname', '127.0.0.1', '--port', String(upstreamPort)], {
   stdio: ['ignore', 'pipe', 'inherit'],
@@ -30,10 +46,23 @@ function encodingFor(acceptEncoding = '') {
   return null;
 }
 
+/** A key and certificate for this run only: RSA, as LibreSSL's EC keys fail the TLS handshake. Nothing is kept. */
+function throwawayCertificate() {
+  const dir = mkdtempSync(join(tmpdir(), 'lhci-server-'));
+  const [keyFile, certFile] = [join(dir, 'key.pem'), join(dir, 'cert.pem')];
+  execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1', '-subj', '/CN=127.0.0.1',
+    '-addext', 'subjectAltName=IP:127.0.0.1', '-keyout', keyFile, '-out', certFile], { stdio: 'ignore' });
+  const certificate = { key: readFileSync(keyFile), cert: readFileSync(certFile) };
+  rmSync(dir, { recursive: true });
+  return certificate;
+}
+
 function startProxy() {
-  createServer((req, res) => {
-    const forward = request({ host: '127.0.0.1', port: upstreamPort, method: req.method, path: req.url, headers: req.headers }, (up) => {
-      const headers = { ...up.headers };
+  const handler = (req, res) => {
+    const forwarded = forwardable(req.headers);
+    forwarded.host = req.headers.host ?? req.headers[':authority'];
+    const forward = request({ host: '127.0.0.1', port: upstreamPort, method: req.method, path: req.url, headers: forwarded }, (up) => {
+      const headers = forwardable(up.headers);
       const type = String(headers['content-type'] || '');
       const encoding = encodingFor(req.headers['accept-encoding']);
       const compress = encoding && !headers['content-encoding'] && COMPRESSIBLE.test(type)
@@ -58,8 +87,10 @@ function startProxy() {
       res.end();
     });
     req.pipe(forward);
-  }).listen(port, '127.0.0.1', () => {
-    console.log(`Production server running on http://127.0.0.1:${port} (compressing proxy for vinext start on ${upstreamPort})`);
+  };
+  const server = useHttp2 ? createSecureServer({ ...throwawayCertificate(), allowHTTP1: true }, handler) : createServer(handler);
+  server.listen(port, '127.0.0.1', () => {
+    console.log(`Production server running on ${useHttp2 ? 'https' : 'http'}://127.0.0.1:${port} (compressing proxy for vinext start on ${upstreamPort})`);
   });
 }
 
