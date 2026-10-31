@@ -78,22 +78,18 @@ function isIdList(value: unknown, max: number, allowed: string[]) {
     && value.every((item) => typeof item === 'string' && allowed.includes(item));
 }
 
-export function validateGrainPlannerState(value: unknown): value is GrainPlannerStateV1 {
-  if (!isRecord(value) || !hasExactKeys(value, STATE_KEYS)) return false;
-  if (value.schema !== GRAIN_PLANNER_STATE_SCHEMA || value.version !== 1) return false;
-  if (typeof value.plannerVersion !== 'string' || !value.plannerVersion || value.plannerVersion.length > 60) return false;
-
-  const answers = value.answers;
+function isValidAnswers(answers: unknown) {
   if (!isRecord(answers) || !hasExactKeys(answers, ANSWER_KEYS)) return false;
   if (!isIdList(answers.crops, 6, cropOptions)) return false;
   if (typeof answers.capacity !== 'string' || answers.capacity.length > 40) return false;
   if (!isIdList(answers.development, 7, ids(developmentOptions))) return false;
-  for (const [key, allowed] of Object.entries(SINGLE_CHOICE_IDS)) {
+  return Object.entries(SINGLE_CHOICE_IDS).every(([key, allowed]) => {
     const choice = answers[key];
-    if (choice !== null && !(typeof choice === 'string' && allowed.includes(choice))) return false;
-  }
+    return choice === null || (typeof choice === 'string' && allowed.includes(choice));
+  });
+}
 
-  const derived = value.derived;
+function isValidDerived(derived: unknown) {
   if (!isRecord(derived) || !hasExactKeys(derived, DERIVED_KEYS)) return false;
   if (derived.outcome !== 'candidateComparison' && derived.outcome !== 'clarificationRequired') return false;
   if (!isIdList(derived.candidates, 3, ['silo', 'framed', 'arch'])) return false;
@@ -101,4 +97,11 @@ export function validateGrainPlannerState(value: unknown): value is GrainPlanner
   if (typeof derived.unknownCount !== 'number' || !Number.isInteger(derived.unknownCount) || derived.unknownCount < 0 || derived.unknownCount > 10) return false;
   if (!isIdList(derived.blockingUnknowns, 3, ['crops', 'separation', 'processing'])) return false;
   return typeof derived.tension === 'boolean';
+}
+
+export function validateGrainPlannerState(value: unknown): value is GrainPlannerStateV1 {
+  if (!isRecord(value) || !hasExactKeys(value, STATE_KEYS)) return false;
+  if (value.schema !== GRAIN_PLANNER_STATE_SCHEMA || value.version !== 1) return false;
+  if (typeof value.plannerVersion !== 'string' || !value.plannerVersion || value.plannerVersion.length > 60) return false;
+  return isValidAnswers(value.answers) && isValidDerived(value.derived);
 }

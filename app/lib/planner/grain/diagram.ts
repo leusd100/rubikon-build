@@ -24,22 +24,36 @@ export type GrainDiagramModel = {
   phases: { kind: 'second' | 'unknown'; label: string }[];
 };
 
+function storageZones(answers: Answers) {
+  if (answers.separation === 'required') return Math.min(5, Math.max(2, answers.crops.length));
+  return answers.separation === 'shared' ? 1 : 0;
+}
+
+function preparationSteps(process: Answers['processing']) {
+  if (process === 'both') return ['ОЧИЩЕННЯ', 'СУШІННЯ'];
+  if (process === 'cleaning') return ['ОЧИЩЕННЯ'];
+  return process === 'drying' ? ['СУШІННЯ'] : [];
+}
+
+function siteContext(pressure: Answers['sitePressure']) {
+  if (pressure === 'compact') return 'КОМПАКТНА';
+  return pressure === 'space' ? 'Є ЗАПАС ПЛОЩІ' : '?';
+}
+
 export function grainDiagramModel(answers: Answers): GrainDiagramModel {
   const capacityLabel = formatCapacityInfo(parseCapacity(answers.capacity));
   const process = answers.processing;
-  const zones = answers.separation === 'required' ? Math.min(5, Math.max(2, answers.crops.length)) : answers.separation === 'shared' ? 1 : 0;
-  const steps = process === 'both' ? ['ОЧИЩЕННЯ', 'СУШІННЯ'] : process === 'cleaning' ? ['ОЧИЩЕННЯ'] : process === 'drying' ? ['СУШІННЯ'] : [];
+  const zones = storageZones(answers);
   const row = [
     { title: 'ПРИЙМАННЯ', sub: answers.operation ? (diagramOperation[answers.operation] ?? '?') : '?', active: false },
-    ...steps.map((step) => ({ title: step, sub: 'підтверджено', active: true })),
+    ...preparationSteps(process).map((step) => ({ title: step, sub: 'підтверджено', active: true })),
     ...(process === 'unknown' ? [{ title: 'ПІДГОТОВКА', sub: '?', active: false }] : []),
   ];
-  const siteContext = answers.sitePressure === 'compact' ? 'КОМПАКТНА' : answers.sitePressure === 'space' ? 'Є ЗАПАС ПЛОЩІ' : '?';
   const zoneLetters = ['А', 'Б', 'В', 'Г', 'Д'];
   const diagramCapacity = capacityLabel.startsWith('≈') ? capacityLabel.replace('≈ ', '≈') : '?';
 
   return {
-    siteCaption: `ДІЛЯНКА · ${siteContext}`,
+    siteCaption: `ДІЛЯНКА · ${siteContext(answers.sitePressure)}`,
     row,
     storageLabel: `ЗБЕРІГАННЯ ${diagramCapacity}`,
     zoneLetters: answers.crops.length && zones > 0 ? zoneLetters.slice(0, zones) : [],
