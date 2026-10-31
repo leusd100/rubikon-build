@@ -118,9 +118,11 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let timers: number[] = [];
     let walked = still || window.matchMedia('(max-width: 1050px)').matches;
-    const observer = new IntersectionObserver(([entry]) => {
-      setInView(Boolean(entry?.isIntersecting));
-      if (walked || !entry?.isIntersecting || entry.intersectionRatio < 0.5) return;
+    // One call can hold several entries (DrawingSheet): the newest says whether it is on screen now, and any that reached
+    // half starts the walk, as it would have one call at a time
+    const observer = new IntersectionObserver((entries) => {
+      setInView(entries.at(-1)!.isIntersecting);
+      if (walked || !entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)) return;
       walked = true;
       const order = [...formats.slice(1), formats[0]];
       timers = order.map((format, index) => window.setTimeout(() => { if (!touched.current) select(format.id); }, 1600 + index * TOUR_MS));
