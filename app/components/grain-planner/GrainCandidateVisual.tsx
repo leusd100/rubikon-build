@@ -14,7 +14,7 @@ const titles: Record<CandidateKey, string> = {
  * overview renders this inside a server component handed to a client band, and generated ids there could mismatch on
  * hydration; for the same reason it carries no element ids (the result can show it twice).
  */
-export function GrainCandidateVisual({ type }: { type: CandidateKey }) {
+export function GrainCandidateVisual({ type }: Readonly<{ type: CandidateKey }>) {
   return (
     <svg className="planner-approach-visual" viewBox="0 0 360 170" role="img" aria-label={`Концептуальна схема ${titles[type]}`}>
       <path className="gcv-ground" d="M12 140H348" />

@@ -20,7 +20,7 @@ export function QuestionFrame({
   continueLabel,
   onContinue,
   children,
-}: {
+}: Readonly<{
   themeIndex: number;
   themeTitle: string;
   contextLabel: string;
@@ -31,7 +31,7 @@ export function QuestionFrame({
   continueLabel: string;
   onContinue: () => void;
   children: ReactNode;
-}) {
+}>) {
   const headingId = `planner-question-${themeIndex}`;
 
   return (

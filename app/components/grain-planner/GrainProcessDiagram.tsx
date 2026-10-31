@@ -6,7 +6,7 @@ const GRID = [
   ...Array.from({ length: Math.ceil(400 / 24) }, (_, index) => `M${index * 24} 0V330`),
 ].join('');
 
-function DiagramNode({ x, y, w, title, sub, active = false }: { x: number; y: number; w: number; title: string; sub?: string; active?: boolean }) {
+function DiagramNode({ x, y, w, title, sub, active = false }: Readonly<{ x: number; y: number; w: number; title: string; sub?: string; active?: boolean }>) {
   // a step not known yet is drawn as hidden is on a drawing — short dash; a confirmed one in copper
   let state = '';
   if (active) state = ' is-active';
@@ -35,7 +35,7 @@ const spelledOut = (title: string) => (title === 'ВІДВАНТ.' ? 'ВІДВА
  * It carries no generated ids (aria-label, plain grid lines): useId-based ids here intermittently
  * hydrated differently from the server HTML, and the diagram can be on the page twice.
  */
-export function GrainProcessDiagram({ answers }: { answers: Answers }) {
+export function GrainProcessDiagram({ answers }: Readonly<{ answers: Answers }>) {
   const model = grainDiagramModel(answers);
   const { row } = model;
   const nodeW = 118; const gap = 9; const x0 = 14; const rowY = 46;

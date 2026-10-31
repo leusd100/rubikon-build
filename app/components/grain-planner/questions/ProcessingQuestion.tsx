@@ -6,7 +6,7 @@ import { ChoiceGroup } from '../../planner/ChoiceGroup';
 import { Clarifier } from '../../planner/Clarifier';
 import type { GrainQuestionProps } from './types';
 
-export function ProcessingQuestion({ answers, answer }: GrainQuestionProps) {
+export function ProcessingQuestion({ answers, answer }: Readonly<GrainQuestionProps>) {
   const askHandling = shouldAskHandlingInProcessing(answers);
   const knownHandling = hasActiveProcessing(answers.processing) && Boolean(answers.handling);
   const contextRef = useRef<HTMLParagraphElement>(null);

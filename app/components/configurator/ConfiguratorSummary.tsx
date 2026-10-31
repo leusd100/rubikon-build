@@ -140,11 +140,11 @@ export function ConfiguratorSummary({
   domain,
   showInquiryAction = false,
   onInquiryAction,
-}: {
+}: Readonly<{
   domain: HangarDomainModel;
   showInquiryAction?: boolean;
   onInquiryAction?: () => void;
-}) {
+}>) {
   const summary = deriveSummary(domain);
   // The stamp names the untouched example as the sheet above it does — «Приклад» — and says «Ви обрали» once the drawn
   // hangar is the visitor's (sameDrawnHangar, as the drawings and the cost notes decide it; 04.10)

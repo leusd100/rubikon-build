@@ -32,7 +32,7 @@ const X_AXIS = new THREE.Vector3(1, 0, 0);
  * rather than per-member hand-computed rotations, which is the arithmetic that produced a real
  * mispositioning bug in the earlier spike.
  */
-function Strut({ member, section, color }: { member: Member; section: number; color: string }) {
+function Strut({ member, section, color }: Readonly<{ member: Member; section: number; color: string }>) {
   const { position, quaternion, length } = useMemo(() => {
     const a = new THREE.Vector3(member.a.x, member.a.y, member.a.z);
     const b = new THREE.Vector3(member.b.x, member.b.y, member.b.z);
@@ -54,11 +54,11 @@ export function HangarSpikeScene({
   building,
   showFoundation,
   showFrame,
-}: {
+}: Readonly<{
   building: ParametricBuildingModel;
   showFoundation: boolean;
   showFrame: boolean;
-}) {
+}>) {
   const { widthM, lengthM } = building.footprint;
   const { eaveM, ridgeM } = building.heights;
 

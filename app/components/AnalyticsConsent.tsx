@@ -80,13 +80,13 @@ function ConsentToggleGroup({
   description,
   value,
   onChange,
-}: {
+}: Readonly<{
   name: string;
   legend: string;
   description: string;
   value: ConsentCategory;
   onChange: (next: ConsentCategory) => void;
-}) {
+}>) {
   return (
     <fieldset className="cookie-toggle-group">
       <legend>{legend}</legend>

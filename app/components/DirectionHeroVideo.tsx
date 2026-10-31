@@ -36,7 +36,7 @@ export function DirectionHeroVideo({
   loopSingleSource = true,
   playbackRate = 1,
   videoMediaQuery = '(min-width: 761px)',
-}: DirectionHeroVideoProps) {
+}: Readonly<DirectionHeroVideoProps>) {
   // on a computer the pause / play stands on the line of the hero's buttons, clear of the cookie strip (08.10)
   const placeControl = useHeroControlPlacement();
   const [activeSource, setActiveSource] = useState(0);

@@ -45,7 +45,7 @@ const AttachmentContext = createContext<InquiryAttachmentState | null>(null);
  * configurator or the grain planner — owns its state machine and publishes here; the form and the
  * phone CTA only read. Neither side imports the other, so the form stays free of hangar and grain.
  */
-export function InquiryAttachmentProvider({ children }: { children: ReactNode }) {
+export function InquiryAttachmentProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [source, setSource] = useState<InquiryAttachmentSource | null>(null);
   // The briefs saved leads carried: kept here, not by the source, so the hangar and the grain brief share the rule — every
   // one of them, not only the last (08.10, audit: a variant sent earlier and returned to looked unsent), and in this

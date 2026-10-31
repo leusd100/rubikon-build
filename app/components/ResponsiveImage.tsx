@@ -24,7 +24,7 @@ type ResponsiveImageProps = {
  * variants, so this component is safe to reuse even for images outside the
  * Step 02 scope without silently breaking them.
  */
-export default function ResponsiveImage({ src, alt, sizes, className }: ResponsiveImageProps) {
+export default function ResponsiveImage({ src, alt, sizes, className }: Readonly<ResponsiveImageProps>) {
   const srcSet = webpSrcSet(src);
 
   if (!srcSet) {

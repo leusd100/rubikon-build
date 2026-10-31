@@ -21,7 +21,7 @@ type DirectionHeroImageProps = {
  * It deliberately does not share DirectionHeroVideo so this path cannot attach
  * hidden video sources or change deferred-media behaviour elsewhere.
  */
-export function DirectionHeroImage({ asset }: DirectionHeroImageProps) {
+export function DirectionHeroImage({ asset }: Readonly<DirectionHeroImageProps>) {
   // The server cannot know the theme, so its markup is the System one: the dark sources carry the OS dark media query
   // and the browser picks one art on the first parse. Rendering the daylight art there made every dark visitor fetch the
   // daylight hero (high priority) and then the dark one after hydration (MD-01, 29.10: +52…230 KB at 390, +162…446 KB at

@@ -5,7 +5,7 @@ import { ChoiceGroup } from '../../planner/ChoiceGroup';
 import { Clarifier } from '../../planner/Clarifier';
 import type { GrainQuestionProps } from './types';
 
-export function OperationQuestion({ answers, answer }: GrainQuestionProps) {
+export function OperationQuestion({ answers, answer }: Readonly<GrainQuestionProps>) {
   const showHandling = answers.operation === 'high' || Boolean(answers.handling);
 
   return (

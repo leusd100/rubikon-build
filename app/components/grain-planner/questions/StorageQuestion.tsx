@@ -25,7 +25,7 @@ const cropIcons: Record<string, ReactNode> = {
  */
 const IDS = 'grain-storage';
 
-export function StorageQuestion({ answers, answer }: GrainQuestionProps) {
+export function StorageQuestion({ answers, answer }: Readonly<GrainQuestionProps>) {
   const ids = IDS;
   const capacityId = `${ids}-capacity`;
   const hintId = `${ids}-hint`;

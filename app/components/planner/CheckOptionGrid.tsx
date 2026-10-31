@@ -13,7 +13,7 @@ export function CheckOptionGrid({
   onToggle,
   variant,
   idBase,
-}: {
+}: Readonly<{
   legend: string;
   options: readonly CheckOption[];
   selected: readonly string[];
@@ -25,7 +25,7 @@ export function CheckOptionGrid({
    * differently from the server HTML. Client-only groups can leave it to useId.
    */
   idBase?: string;
-}) {
+}>) {
   const generated = useId();
   const group = idBase ?? generated;
 

@@ -11,7 +11,7 @@ export function ApproachCard({
   reason,
   actionLabel,
   onAction,
-}: {
+}: Readonly<{
   /** The card's kind over its drawing; the grain overview leaves it out (it repeated the title) */
   category?: string;
   label?: string;
@@ -21,7 +21,7 @@ export function ApproachCard({
   reason?: string;
   actionLabel?: string;
   onAction?: () => void;
-}) {
+}>) {
   return (
     <article className="planner-approach">
       {(category || label) && (

@@ -19,13 +19,13 @@ function SwatchGroup<Id extends string>({
   selected,
   onSelect,
   disabled = false,
-}: {
+}: Readonly<{
   legend: string;
   presets: ReadonlyArray<{ id: Id; label: string; color: string }>;
   selected: Id;
   onSelect: (id: Id) => void;
   disabled?: boolean;
-}) {
+}>) {
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
 
   return (
@@ -77,7 +77,7 @@ export function MaterialPresetPicker({
   onRoofPresetChange,
   wallsInScope = true,
   roofInScope = true,
-}: {
+}: Readonly<{
   wallPreset: WallPresetId;
   roofPreset: RoofPresetId;
   onWallPresetChange: (id: WallPresetId) => void;
@@ -87,7 +87,7 @@ export function MaterialPresetPicker({
    *  than hidden, and never reset — the selection comes back with the surface. */
   wallsInScope?: boolean;
   roofInScope?: boolean;
-}) {
+}>) {
   return (
     <div className="hc-material-presets">
       <SwatchGroup legend="Обшивка" presets={WALL_PRESETS} selected={wallPreset} onSelect={onWallPresetChange} disabled={!wallsInScope} />

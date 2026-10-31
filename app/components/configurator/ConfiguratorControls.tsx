@@ -141,7 +141,7 @@ function NumericField({
   children,
   clamp,
   onCommit,
-}: {
+}: Readonly<{
   inputId: string;
   label: string;
   value: number;
@@ -154,7 +154,7 @@ function NumericField({
   children?: ReactNode;
   clamp: (value: number) => number;
   onCommit: (value: number) => void;
-}) {
+}>) {
   const [draft, setDraft] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 

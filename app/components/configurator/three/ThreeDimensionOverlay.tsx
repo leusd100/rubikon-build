@@ -35,7 +35,7 @@ export function ThreeDimensionOverlay({
   eaveM,
   ridgeM,
   onBottomInsetChange,
-}: {
+}: Readonly<{
   widthM: number;
   lengthM: number;
   eaveM: number;
@@ -45,7 +45,7 @@ export function ThreeDimensionOverlay({
    *  one row on a desktop and two at 390px, and it disappears entirely when the visitor hides it —
    *  at which point the building should get that space back. */
   onBottomInsetChange?: (px: number) => void;
-}) {
+}>) {
   const [visible, setVisible] = useState(true);
   const bandRef = useRef<HTMLElement | null>(null);
 

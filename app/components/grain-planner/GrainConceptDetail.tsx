@@ -3,7 +3,7 @@ import { WhyBlock } from '../planner/WhyBlock';
 import { GrainCandidateVisual } from './GrainCandidateVisual';
 
 /** One approach in depth: why it is in the comparison and what needs careful work. */
-export function GrainConceptDetail({ candidate }: { candidate: Candidate }) {
+export function GrainConceptDetail({ candidate }: Readonly<{ candidate: Candidate }>) {
   return (
     <div className="planner-concept">
       <div className="planner-concept-visual">

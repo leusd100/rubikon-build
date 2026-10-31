@@ -56,7 +56,7 @@ function useLabelBox(svgRef: RefObject<SVGSVGElement | null>): Box | null {
   return box;
 }
 
-function DimensionGuideGroup({ guide }: { guide: DimensionGuide }) {
+function DimensionGuideGroup({ guide }: Readonly<{ guide: DimensionGuide }>) {
   const [a, b] = guide.line;
   return (
     <g className={`hc-dimension${guide.derived ? ' is-derived' : ''}`} aria-hidden="true">
@@ -85,7 +85,7 @@ function transitionStyle(layer: LayerTransitionStyle, extraDelayMs = 0): CSSProp
   };
 }
 
-function FrameLineEl({ line, className, style }: { line: FrameLine; className: string; style: CSSProperties }) {
+function FrameLineEl({ line, className, style }: Readonly<{ line: FrameLine; className: string; style: CSSProperties }>) {
   const [a, b] = line.points;
   return <line className={className} style={style} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
 }
@@ -94,11 +94,11 @@ function BuildLayerPolygon({
   points,
   className,
   style,
-}: {
+}: Readonly<{
   points: Point[];
   className: string;
   style: CSSProperties;
-}) {
+}>) {
   return <polygon className={className} style={style} points={pointsAttr(points)} />;
 }
 
@@ -123,13 +123,13 @@ function EnvelopeSurface({
   style,
   fillClass,
   emptyClass,
-}: {
+}: Readonly<{
   segment: ProjectedSegment;
   phase: string;
   style: CSSProperties;
   fillClass: string;
   emptyClass: string;
-}) {
+}>) {
   return (
     <BuildLayerPolygon
       points={segment.points}

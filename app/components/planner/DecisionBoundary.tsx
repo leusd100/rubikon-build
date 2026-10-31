@@ -16,7 +16,7 @@ export function DecisionBoundary({
   firstCall,
   gates,
   note,
-}: {
+}: Readonly<{
   eyebrow: string;
   heading: string;
   lead: string;
@@ -26,7 +26,7 @@ export function DecisionBoundary({
   gates: BoundaryList;
   /** Under the columns — the domain's responsibility note. */
   note?: ReactNode;
-}) {
+}>) {
   return (
     <div className="planner-boundary" aria-labelledby="planner-boundary-title">
       <div className="planner-boundary-intro">

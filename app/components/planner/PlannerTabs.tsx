@@ -26,14 +26,14 @@ export function PlannerTabs({
   active,
   onChange,
   children,
-}: {
+}: Readonly<{
   idBase: string;
   label: string;
   tabs: readonly PlannerTab[];
   active: string;
   onChange: (id: string) => void;
   children: (id: string) => ReactNode;
-}) {
+}>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {

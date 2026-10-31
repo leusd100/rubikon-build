@@ -4,12 +4,12 @@ export function ComparisonTable({
   cornerLabel,
   columns,
   rows,
-}: {
+}: Readonly<{
   caption: string;
   cornerLabel: string;
   columns: readonly string[];
   rows: readonly { label: string; cells: readonly string[] }[];
-}) {
+}>) {
   return (
     // Focusable so keyboard users can scroll the table sideways on narrow screens.
     <section className="planner-comparison" aria-label={caption} tabIndex={0}>

@@ -7,7 +7,7 @@ import { DirectionCostSection, DirectionEditorial, DirectionProcess } from '../D
  * factors where the config has them (the complex page), then DirectionProcess. A real-objects band joins here once
  * grainPage.cases holds confirmed objects; until then there is no band at all — no placeholders.
  */
-export function GrainEditorialArchitecture({ config }: { config: DirectionPageConfig }) {
+export function GrainEditorialArchitecture({ config }: Readonly<{ config: DirectionPageConfig }>) {
   return (
     <>
       <DirectionEditorial directionId={config.id} editorial={config.editorial} className="grain-implementation-band" />

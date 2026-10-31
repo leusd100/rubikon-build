@@ -39,12 +39,12 @@ function DimensionSlider({
   label,
   value,
   onChange,
-}: {
+}: Readonly<{
   fieldKey: keyof ConfiguratorState['dimensions'];
   label: string;
   value: number;
   onChange: (value: number) => void;
-}) {
+}>) {
   const bounds = DIMENSION_BOUNDS[fieldKey];
   return (
     <label className="r3f-field">

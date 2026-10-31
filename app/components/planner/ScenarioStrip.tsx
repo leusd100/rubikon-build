@@ -7,13 +7,13 @@ export function ScenarioStrip({
   facts,
   editLabel,
   onEdit,
-}: {
+}: Readonly<{
   label: string;
   headline: string;
   facts: readonly string[];
   editLabel: string;
   onEdit: () => void;
-}) {
+}>) {
   return (
     <div className="planner-scenario">
       <div>
