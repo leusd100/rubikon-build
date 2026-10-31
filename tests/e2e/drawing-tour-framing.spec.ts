@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { nextFrames } from './frames.helpers';
 
 // The drawing tours' framing (owner 22.10: «масштаб зменшити, щоб краще влазило»). Every state of every «Вузол
 // напряму» tour and of the /pro-nas practice: the words shown on the drawing are whole in the frame and clear of the
@@ -43,6 +44,17 @@ const misplaced = (page: Page, frameSelector: string, wordsSelector: string, bar
   });
 }, [frameSelector, wordsSelector, barsSelector] as const);
 
+/**
+ * The view on show is in place. The stage takes its measured view once the page has hydrated and the fonts are in, and
+ * only then loses its inline `transition: none` (`placed`, useDrawingCamera). A chosen step's camera comes with the commit
+ * that says so, and what the view lights follows in frames: with reduced motion every transition runs .01 ms. 9 frames
+ * are 150 ms at 60 Hz.
+ */
+async function viewInPlace(page: Page, stageSelector: string) {
+  await expect.poll(() => page.locator(stageSelector).evaluate((stage: HTMLElement) => stage.style.transition)).toBe('');
+  await nextFrames(page, 9);
+}
+
 const WIDTHS = [[320, 700], [390, 844], [768, 1024], [1024, 1000], [1440, 900]] as const;
 
 test.describe('drawing tours: every view holds its words', () => {
@@ -59,7 +71,7 @@ test.describe('drawing tours: every view holds its words', () => {
             await steps.nth(step - 1).click();
             await expect(page.locator('.dn')).toHaveAttribute('data-step', String(step));
           }
-          await page.waitForTimeout(150);
+          await viewInPlace(page, '.dn-stage');
           expect(await misplaced(page, '.dn-sheet .sheet-image', '.dn-stage .node-drawing text', '.dn-progress'), `${width}px, view ${step}`).toEqual([]);
         }
       }
@@ -74,8 +86,11 @@ test.describe('drawing tours: every view holds its words', () => {
       const steps = page.locator('.about-before-step');
       const count = await steps.count();
       for (let step = 0; step <= count; step += 1) {
-        if (step) await steps.nth(step - 1).click();
-        await page.waitForTimeout(150);
+        if (step) {
+          await steps.nth(step - 1).click();
+          await expect(page.locator('.ps')).toHaveAttribute('data-step', String(step));
+        }
+        await viewInPlace(page, '.ps-stage');
         expect(await misplaced(page, '.ps-sheet .sheet-image', '.practice-drawing text, .aqc-step', '.ps-sheet .dn-progress, .ps-progress'), `${width}px, view ${step}`).toEqual([]);
       }
     }
