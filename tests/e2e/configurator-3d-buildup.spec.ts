@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { LAYER_DURATION_MS, layerStartOffsetMs } from '../../app/lib/configurator/buildUpSequence';
-import { chooseSeparateWorks, openControlGroup } from './configurator.helpers';
+import { chooseSeparateWorks, installDrawCallCounter, openControlGroup, waitForBuildUpToSettle } from './configurator.helpers';
 
 // Phase 3B — 3D build-up integration. `ThreeHangarView` consumes the SAME `useLayerLifecycle`
 // hook and `buildUpSequence.ts` timing table the SVG renderer already uses (see that module's own
@@ -59,30 +59,6 @@ async function toggleScope(page: Page, item: keyof typeof scopeLabel) {
   await scopeBox(page, item).click();
 }
 
-/** Instruments the canvas's WebGL context to count draw calls, without touching app code — the
- *  same technique `docs/hangar-3d-view-phase-3a.md`'s own draw-call measurements used manually,
- *  wired up here so it runs on every future change instead of being a one-off DevTools session. */
-async function installDrawCallCounter(page: Page) {
-  await page.addInitScript(() => {
-    const w = window as unknown as { __drawCalls: number };
-    w.__drawCalls = 0;
-    const patch = (proto: typeof WebGLRenderingContext.prototype | typeof WebGL2RenderingContext.prototype) => {
-      const drawArrays = proto.drawArrays;
-      const drawElements = proto.drawElements;
-      proto.drawArrays = function (this: WebGLRenderingContext, ...args: Parameters<typeof drawArrays>) {
-        w.__drawCalls += 1;
-        return drawArrays.apply(this, args);
-      };
-      proto.drawElements = function (this: WebGLRenderingContext, ...args: Parameters<typeof drawElements>) {
-        w.__drawCalls += 1;
-        return drawElements.apply(this, args);
-      };
-    };
-    patch(WebGLRenderingContext.prototype);
-    if (typeof WebGL2RenderingContext !== 'undefined') patch(WebGL2RenderingContext.prototype);
-  });
-}
-
 /**
  * Lets a test hold every animation frame back, the way CI does on its own. The runners have no GPU, so WebGL runs in
  * software (SwiftShader) and the browser hands out animation frames far apart: about 1.1 s apart in the trace of run
@@ -137,40 +113,6 @@ async function installFramePacer(page: Page) {
       live.delete(id);
     };
   });
-}
-
-/**
- * Where an idle check can start: the build-up has caught up with the configuration, and the frames that change asked
- * for have been drawn. Waits on both events, not on a guessed duration. On CI a 600 ms wait for a 250 ms roof transition was not
- * always enough: the transition ends on its lifecycle timer, and the frame that end asks for came whenever the browser
- * next gave one out. Under software WebGL that was up to 1.8 s after the click locally, and over 2 s after it in the
- * CI run that failed. That frame then fell inside the idle window.
- *
- * 1. `data-build-up="settled"` on the canvas's wrapper (ThreeHangarView): every layer is at rest on the side its scope
- *    asks for. It reads 'running' from the render where the scope changes, so it cannot be a stale 'settled' from
- *    before the click.
- * 2. Two animation frames in a row with no draw call. While R3F's demand loop runs it draws in every frame, so a whole
- *    frame without one means the loop has stopped. Two, not one: in the first frame the probe can run before a loop that
- *    was asked for a frame just after it. A loop that never stops fails here, by the deadline, not at the test's timeout.
- *    `quietFramesNeeded` asks for a longer run of them, for a test that needs the canvas to have idled.
- */
-async function waitForBuildUpToSettle(page: Page, quietFramesNeeded = 2) {
-  await expect(page.locator('.hc-preview-surface [data-build-up]')).toHaveAttribute('data-build-up', 'settled', { timeout: 15_000 });
-  const stopped = await page.evaluate((needed) => new Promise<boolean>((resolve) => {
-    const w = window as unknown as { __drawCalls: number };
-    const deadline = performance.now() + 15_000;
-    let last = w.__drawCalls;
-    let quietFrames = 0;
-    const tick = () => {
-      quietFrames = w.__drawCalls === last ? quietFrames + 1 : 0;
-      last = w.__drawCalls;
-      if (quietFrames >= needed) resolve(true);
-      else if (performance.now() > deadline) resolve(false);
-      else requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }), quietFramesNeeded);
-  expect(stopped, 'the render loop was still drawing 15 s after the build-up settled — frameloop="demand" never returned to idle').toBe(true);
 }
 
 /**
@@ -331,6 +273,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     // Still the heaviest test in the file — 4 layers toggled off and back on with explicit settle
     // waits — but its budget now comes from the describe above, which covers every test here for
     // the same reason rather than singling this one out.
+    await installDrawCallCounter(page);
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);
@@ -338,9 +281,9 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
 
     for (const item of ['roof', 'walls', 'frame', 'foundation'] as const) {
       await toggleScope(page, item); // off
-      await page.waitForTimeout(500); // longer than any single layer's duration + offset
+      await waitForBuildUpToSettle(page); // the whole transition has played, however late its frames came
       await toggleScope(page, item); // back on
-      await page.waitForTimeout(500);
+      await waitForBuildUpToSettle(page);
     }
 
     expect(errors, `console/page errors during build-up: ${errors.join('\n')}`).toEqual([]);
@@ -353,6 +296,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
   });
 
   test('rapid ON → OFF → ON on the same layer converges cleanly, no error, no stuck state', async ({ page }) => {
+    await installDrawCallCounter(page);
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);
@@ -364,7 +308,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await roof.click(); // off again — interrupts the materialize that just started
     await roof.click(); // on — settles here
 
-    await page.waitForTimeout(600); // roof's own duration (250ms) with generous headroom
+    await waitForBuildUpToSettle(page);
     expect(errors, `console/page errors during interruption: ${errors.join('\n')}`).toEqual([]);
 
     // Converged on the LAST requested state (on) — check via the summary, the canonical
@@ -373,6 +317,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
   });
 
   test('a dimension change mid-transition does not throw — geometry updates immediately, independent of the in-flight animation', async ({ page }) => {
+    await installDrawCallCounter(page);
     const errors = trackErrors(page);
     await openConfigurator(page);
     await enterThreeMode(page);
@@ -383,13 +328,14 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
     await openControlGroup(page, 'dimensions');
     await page.locator('#hc-dimension-width').fill('40');
     await page.locator('#hc-dimension-width').blur(); // fires while columns/rafters are still shrinking
-    await page.waitForTimeout(500);
+    await waitForBuildUpToSettle(page);
 
     expect(errors, `console/page errors: ${errors.join('\n')}`).toEqual([]);
     await expect(page.locator('.hc-summary-dimensions')).toContainText('40');
   });
 
   test('reduced motion: 3D build-up resolves without error and without the staged sequence', async ({ page }) => {
+    await installDrawCallCounter(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const errors = trackErrors(page);
     await openConfigurator(page);
@@ -398,7 +344,7 @@ test.describe('configurator 3D build-up (Phase 3B)', () => {
 
     await toggleScope(page, 'roof');
     await toggleScope(page, 'roof');
-    await page.waitForTimeout(200); // reduced motion resolves same-tick; this is generous headroom
+    await waitForBuildUpToSettle(page);
 
     expect(errors, `console/page errors under reduced motion: ${errors.join('\n')}`).toEqual([]);
     await expect(scopeFact(page)).toContainText('покрівля');

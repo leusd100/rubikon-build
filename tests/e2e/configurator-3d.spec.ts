@@ -92,7 +92,7 @@ test.describe('configurator 3D mode (Phase 3A)', () => {
 
     // the step the visitor was on stays open (the view switch is the preview's, not the controls')
     await expect(page.locator('#hc-step-shell-tab')).toHaveAttribute('aria-selected', 'true');
-    expect(await page.locator('#hc-dimension-width').inputValue()).toBe(dimsBefore);
+    await expect(page.locator('#hc-dimension-width')).toHaveValue(dimsBefore);
     expect(await page.locator('.hc-summary-facts').innerText()).toBe(summaryBefore);
   });
 
