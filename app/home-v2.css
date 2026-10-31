@@ -652,7 +652,7 @@ main[data-home="v2"] .hv2-contour-stage[data-sweep] :is(.hv2-proof-labels, .hv2-
    measured figures as chips under the note */
 main[data-home="v2"] .hv2-contour .hv2-contour-right b { display: grid; gap: 7px; overflow: visible; white-space: normal; text-transform: none; letter-spacing: 0; }
 /* the layers are words, the active one underlined in copper: one filled button on the sheet — the brief (audit 08.10) */
-main[data-home="v2"] .hv2-contour-layers { display: inline-flex; justify-self: start; gap: 16px; border: 0; }
+main[data-home="v2"] .hv2-contour-layers { display: inline-flex; justify-self: start; gap: 16px; min-inline-size: 0; margin: 0; padding: 0; border: 0; }
 main[data-home="v2"] .hv2-contour-layers button {
   min-height: 36px; padding: 0 2px; color: var(--hv2-text-2); background: none; border: 0; border-radius: 0; cursor: pointer;
   font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; white-space: nowrap;

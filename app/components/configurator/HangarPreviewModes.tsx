@@ -1,10 +1,10 @@
 'use client';
 
-import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { DrawingSheet, type SheetCell } from '../DrawingSheet';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import type { HangarPresentationDemo } from '../../lib/configurator/presentationDemo';
-import { buildThreeScene } from '../../lib/configurator/threeSceneModel';
+import { buildThreeScene, type ThreeSceneModel } from '../../lib/configurator/threeSceneModel';
 import { CladdingSection } from './CladdingSection';
 import { ConfiguratorFrameView } from './ConfiguratorFrameView';
 import { HangarGeneralView } from './HangarGeneralView';
@@ -66,14 +66,14 @@ function ModeSwitch({
   onSelect,
   threeAvailable,
   onSheet = false,
-}: {
+}: Readonly<{
   mode: Mode;
   onSelect: (mode: Mode) => void;
   threeAvailable: boolean;
   /** In a drawing sheet's title block (/angary): a square two-cell switch under «Вид», so the first cell says
    *  «Технічний» and keeps «вид» for its name only */
   onSheet?: boolean;
-}) {
+}>) {
   // A span in the title block (a figcaption's phrasing content), a div in the toolbar
   const Group = onSheet ? 'span' : 'div';
   return (
@@ -106,26 +106,193 @@ function ModeSwitch({
 function ThreeLoading() {
   // Occupies the canvas slot exactly, so switching modes never shifts the surrounding layout.
   return (
-    <div className="hc-preview-loading" role="status">
+    <output className="hc-preview-loading">
       <span className="hc-preview-loading-bar" aria-hidden="true" />
       <span>Завантаження 3D…</span>
-    </div>
+    </output>
   );
 }
 
 function DemoStatusStrip({
   demo,
   onReturn,
-}: {
+}: Readonly<{
   demo: HangarPresentationDemo;
   onReturn: () => void;
-}) {
+}>) {
   return (
     <div className="hc-preview-demo-status">
       <span>{demo.label} · ваш вибір не змінено</span>
       <button type="button" onClick={onReturn}>Повернути мій варіант</button>
     </div>
   );
+}
+
+function previewMaxDpr(isMobile: boolean, isFullscreen: boolean) {
+  if (isMobile) return 1.5;
+  return isFullscreen ? 3 : 2;
+}
+
+/**
+ * The Canvas is mounted only while 3D is the active mode, so switching back to Technical
+ * unmounts it and the next switch to 3D builds a fresh WebGL context. That was investigated as
+ * a performance defect and the answer is: LEAVE IT. Recorded here because the investigation was
+ * expensive and the wrong conclusion is very easy to reach from CI numbers.
+ *
+ * Measured on real hardware (Apple M1, ANGLE Metal, hardware WebGL), repeat Technical -> 3D:
+ *
+ *   first real frame        median 115 ms   (93-122 over 8 runs)
+ *   fully settled           median 172 ms   (144-181)
+ *   main thread blocked     median  62 ms   (51-64)
+ *
+ * That is inside the product target of <200 ms with no long tail and no bimodality.
+ *
+ * The SAME measurement under Playwright's headless Chromium reports a 1.3-1.7 s main-thread
+ * block on every switch, and a 0.8-1.4 s "intermittent tail". Both are artefacts of the test
+ * environment, not of this code. A CPU profile of that block is 1529 ms of `(program)` (native
+ * driver work) plus 89 ms of `getProgramInfoLog` — Three blocking synchronously while the driver
+ * links the 7 shader programs a new context cannot inherit. Headless Chromium renders through a
+ * software GL where `KHR_parallel_shader_compile` is UNAVAILABLE, so that link has to block; on
+ * the M1 the same extension IS available and the driver compiles off-thread, which is the whole
+ * difference between 1.5 s and 62 ms.
+ *
+ * So: do not "fix" this from a CI timing, and do not keep the Canvas mounted to chase it. Keeping
+ * it mounted would trade a 62 ms cost for a permanently resident WebGL context, a hidden scene
+ * that must be provably paused, and the loss of the guarantee that a visitor who never opens 3D
+ * pays nothing for it.
+ *
+ * What IS real, and accepted: one WebGL context per switch, each rebuild costing the 62 ms above.
+ * R3F forces the old one lost as its Canvas goes, which frees its GPU side, but that is all it
+ * does: the browser does NOT reclaim the rest (27.10, GL-04 — the old note here said it did). The
+ * shared geometries, materials and textures held every closed renderer, its lost context and its
+ * detached canvas — 8 opens, 8 live contexts after GC. ThreeHangarView now disposes them as it
+ * closes (`disposeSharedResources`), and at most the last closed renderer stays, until the next.
+ */
+function HangarThreeCanvas({
+  domain,
+  scene,
+  onSheet,
+  isMobile,
+  isFullscreen,
+  wallPreset,
+  roofPreset,
+  showScaleFigure,
+  overlayInsetPx,
+  toolsInsetPx,
+  descriptionId,
+  onError,
+  onOverlayInset,
+}: Readonly<{
+  domain: HangarDomainModel;
+  scene: ThreeSceneModel;
+  onSheet: boolean;
+  isMobile: boolean;
+  isFullscreen: boolean;
+  wallPreset: WallPresetId;
+  roofPreset: RoofPresetId;
+  showScaleFigure: boolean;
+  overlayInsetPx: number;
+  toolsInsetPx: number;
+  descriptionId: string;
+  onError: () => void;
+  onOverlayInset: (px: number) => void;
+}>) {
+  const inPageSheet = onSheet && !isFullscreen;
+  return (
+    <div className="hc-preview-canvas">
+      <ThreeErrorBoundary onError={onError}>
+        <Suspense fallback={<ThreeLoading />}>
+          <ThreeHangarView
+            scene={scene}
+            // Mobile keeps the geometry identical and only lowers presentation density —
+            // no separate mobile building model.
+            shadows={!isMobile}
+            // Phase 3F §14 — the fullscreen quality tier. Same Canvas, same mount, same scene the
+            // whole time (this is one JSX subtree regardless of `isFullscreen`;
+            // `FullscreenPreviewFrame` only repositions it — see that component's own doc comment
+            // for why a second Canvas/WebGL context was explicitly rejected) — only these two
+            // presentation props change when the user asks for fullscreen, both already reactive
+            // props R3F/Three re-read on change rather than baking in at creation (see
+            // SceneLighting's own `ShadowMapResize`-equivalent effect for the shadow-map half of
+            // this). Mobile's own lower ceiling always wins over the fullscreen bump — a phone in
+            // fullscreen still has a phone GPU.
+            // The mobile ceiling is also what bounds roof rib legibility on long buildings, and
+            // that was measured rather than assumed. Roof ribs are real swept geometry at a
+            // constant 0.2 m pitch (envelopePanelGeometry.ts), so a 50 m building carries ~250 of
+            // them; the camera frames it into ~200 CSS px of preview, which is well under one
+            // rib per pixel, and the far slope reads as a moire speckle rather than as profiled
+            // sheet. It is NOT the procedural noise maps: removing `normalMap` from every
+            // material outright moves the frame by at most 2/255, so anisotropy and repeat are
+            // the wrong lever. Raising this ceiling is the right one, and it works — probed at
+            // 390px with a 50 m building, 2 visibly evens the dashes and 3 resolves them into
+            // clean continuous ribs — but 3 is 4x the fragments of 1.5 on the device least able
+            // to afford them, and no phone-hardware frame timing has been taken to justify that
+            // trade. Left at 1.5 deliberately: a cosmetic gain at long lengths does not outrank a
+            // deliberate perf tier, and the fix is recorded here so it can be taken as a decision
+            // with device testing rather than discovered again from the symptom.
+            maxDpr={previewMaxDpr(isMobile, isFullscreen)}
+            shadowMapSize={isFullscreen ? 2048 : 1024}
+            // /angary's sheet: a colour per part and per system — the light lid, cooler steel walls, warm white sandwich
+            // panels (10.10, materials.ts)
+            wallColor={onSheet ? SHEET_WALL_COLOR : wallPresetColor(wallPreset)}
+            roofColor={onSheet ? SHEET_ROOF_COLOR : roofPresetColor(roofPreset)}
+            wallSandwichColor={onSheet ? SHEET_WALL_SANDWICH_COLOR : undefined}
+            roofSandwichColor={onSheet ? SHEET_ROOF_SANDWICH_COLOR : undefined}
+            showScaleFigure={showScaleFigure}
+            bottomInsetPx={overlayInsetPx}
+            topInsetPx={inPageSheet ? toolsInsetPx : 0}
+          />
+        </Suspense>
+      </ThreeErrorBoundary>
+      {/* Plain HTML, not WebGL text (brief §27) — renders immediately, independent of the
+          lazy three.js chunk, so the numbers are there even while "Завантаження 3D…" is
+          still showing. Outside ThreeErrorBoundary on purpose: a renderer failure should
+          still leave this orientation readout on screen right up until the fallback to
+          Technical actually happens. */}
+      <ThreeDimensionOverlay
+        // on /angary's sheet, which has no toggle for them, the sizes hidden in the expanded view come back (10.10, QA);
+        // the research screen keeps the visitor's choice across visits
+        key={inPageSheet ? 'sheet' : 'view'}
+        onBottomInsetChange={onOverlayInset}
+        widthM={domain.dimensions.widthM}
+        lengthM={domain.dimensions.lengthM}
+        eaveM={domain.dimensions.eaveHeightM}
+        ridgeM={scene.building.heights.ridgeM}
+      />
+      {/* nothing in the request: the 3D has nothing to build — said, rather than an empty field with a shadow (10.10, QA) */}
+      {!domain.scope.foundation && !domain.scope.frame && !domain.scope.walls && !domain.scope.roof && (
+        <p className="hc-three-empty">Нічого не обрано в{'\u00A0'}обсязі робіт</p>
+      )}
+      {/* Travels with the same Canvas into fullscreen, where the rest of the page is inert.
+          Remains available even when the visitor hides the visual dimension overlay. */}
+      <p id={descriptionId} className="hc-visually-hidden">
+        {previewDescription('three', domain.dimensions, scene.building.heights.ridgeM)}
+      </p>
+    </div>
+  );
+}
+
+/** The two drawn views: the frame on «Каркас», else the general view on /angary's sheet, the technical view elsewhere */
+function DrawnView({
+  mode,
+  onSheet,
+  domain,
+  released,
+  tools,
+  onCaption,
+}: Readonly<{
+  mode: Mode;
+  onSheet: boolean;
+  domain: HangarDomainModel;
+  released: number;
+  tools: boolean;
+  onCaption: (caption: string) => void;
+}>) {
+  if (mode === 'frame' && onSheet) return <ConfiguratorFrameView onCaption={onCaption} />;
+  // /angary's sheet draws the general view in the frame drawing's language (10.10, HangarGeneralView); the research
+  // screen keeps the old technical view
+  if (onSheet) return <HangarGeneralView domain={domain} released={released} tools={tools} />;
+  return <HangarPreview domain={domain} released={released} />;
 }
 
 /** /angary's preview on a «Креслення» drawing sheet (03.10) — see HangarPreviewModes */
@@ -136,6 +303,95 @@ export type PreviewSheet = {
   untouched: boolean;
 };
 
+/** The sheet is the surface: the phone's mini drawing holds the whole sheet under the header (HangarConfigurator) */
+function PreviewSheetSurface({
+  sheet,
+  mode,
+  frameCaption,
+  readout,
+  folded,
+  onToggleFold,
+  imageRef,
+  domain,
+  threeChip,
+  onThreeChip,
+  expand,
+  children,
+}: Readonly<{
+  sheet: PreviewSheet;
+  mode: Mode;
+  frameCaption: string;
+  readout: string;
+  folded: boolean;
+  onToggleFold: () => void;
+  imageRef: RefObject<HTMLDivElement | null>;
+  domain: HangarDomainModel;
+  /** The chip to the 3D and back is on offer */
+  threeChip: boolean;
+  onThreeChip: (chip: HTMLElement) => void;
+  expand: ReactNode;
+  children: ReactNode;
+}>) {
+  const showThree = mode === 'three';
+  let shownOnSheet = GENERAL_SHOWN;
+  if (mode === 'frame') shownOnSheet = frameCaption;
+  else if (showThree) shownOnSheet = THREE_SHOWN;
+  const cells: SheetCell[] = [
+    // keyed, and the sizes untranslated: a page translation left them at their old values (08.10)
+    {
+      tone: 'main',
+      label: 'Що показано',
+      value: <span key={shownOnSheet}>{shownOnSheet}</span>,
+      // the frame's captions differ in length from step to step: a phone keeps two lines for them (sheet css)
+      className: mode === 'frame' ? 'hc-sheet-shown is-frame' : 'hc-sheet-shown',
+    },
+    { label: 'Об’єкт', value: <span translate="no"><SheetValue text={sheet.object} /></span> },
+    // shown only by the phone's mini drawing, in place of the other cells
+    { value: <span translate="no">{readout}</span>, className: 'hc-sheet-readout' },
+  ];
+
+  return (
+    <DrawingSheet
+      className={`hc-preview-surface hc-preview-sheet${folded ? ' is-folded' : ''}`}
+      imageClassName={`hc-preview-image${mode === 'frame' ? ' hc-frame-image' : ''}`}
+      imageRef={imageRef}
+      cells={cells}
+      // shown only by the phone's mini drawing (configurator-sheet.css). Its words are its state, said once (10.10,
+      // audit F131): with aria-expanded as well, a screen reader heard «Згорнути, розгорнуто».
+      action={(
+        <button type="button" className="hc-mini-toggle" onClick={onToggleFold}>
+          {/* the picture is «креслення» everywhere (10.10, audit F101: «ескіз» here only); the changing words are its only
+              state signal (audit F131) */}
+          {folded ? 'Показати креслення' : 'Згорнути'}
+        </button>
+      )}
+    >
+      {children}
+      {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) — in the 3D
+          too since 10.10 (QA: on a tablet the legend under the drawing left with the 3D, and the stuck sheet, with
+          the step under it, jumped 102 px each way; the 3D's surfaces are the same materials) */}
+      {(mode === 'technical' || showThree) && <CladdingSection domain={domain} />}
+      {/* 3D, a secondary look: a chip on the drawing opens it, and in 3D the same chip goes back (07.10). One button in
+          one place whose words change (09.10, audit F76): two buttons swapped out from under the keyboard, and focus
+          fell to the page's start. Not on «Каркас» (09.10, owner, audit F14): the step is the frame's line drawing —
+          3D showed the clad hangar and took the step's own list from beside it. «Розгорнути» joins it in 3D, the
+          picture's own action. */}
+      {threeChip && (
+        <div className="hc-sheet-tools">
+          <button
+            type="button"
+            className={showThree ? 'hc-sheet-chip' : 'hc-sheet-chip hc-sheet-three'}
+            onClick={(event) => onThreeChip(event.currentTarget)}
+          >
+            {showThree ? <><Arrow to="left" /> Креслення</> : 'Подивитися в 3D'}
+          </button>
+          {showThree && expand}
+        </div>
+      )}
+    </DrawingSheet>
+  );
+}
+
 export function HangarPreviewModes({
   domain,
   presentationDemo,
@@ -143,7 +399,7 @@ export function HangarPreviewModes({
   onEndPresentationDemo,
   sheet,
   frame = false,
-}: {
+}: Readonly<{
   domain: HangarDomainModel;
   /** The configurator's «Каркас» step is open (07.10): the sheet shows the frame (ConfiguratorFrameView) */
   frame?: boolean;
@@ -153,7 +409,8 @@ export function HangarPreviewModes({
   /** /angary lays the preview on a drawing sheet: rulers, a title block with what is shown, the object and the view
    *  switch, a dark image field in both themes (configurator-sheet.css). /configurator-preview keeps its card. */
   sheet?: PreviewSheet;
-}) {
+}>) {
+  const onSheet = Boolean(sheet);
   // 3D is opened over one view and goes when the step changes the view (07.10): it remembers the view it was opened on
   const view2d: Mode = frame && sheet ? 'frame' : 'technical';
   const [threeOver, setThreeOver] = useState<Mode | null>(null);
@@ -197,7 +454,7 @@ export function HangarPreviewModes({
   const [toolsInsetPx, setToolsInsetPx] = useState(0);
   const modeSwitchAnchorRef = useRef<HTMLDivElement>(null);
   const drawingRef = useRef<HTMLDivElement>(null);
-  const released = useFirstViewBuildUp(drawingRef, Boolean(sheet), sheet?.untouched ?? false);
+  const released = useFirstViewBuildUp(drawingRef, onSheet, sheet?.untouched ?? false);
   // The phone's mini drawing reads its sizes in the title block, not off the drawing (configurator-sheet.css)
   const readout = useMemo(() => miniReadout(domain), [domain]);
 
@@ -235,6 +492,11 @@ export function HangarPreviewModes({
     if (!tools) return;
     setToolsInsetPx(tools.offsetTop + tools.offsetHeight + 8);
   };
+  const toggleThreeChip = (chip: HTMLElement) => {
+    if (!showThree) holdField(chip);
+    selectMode(showThree ? 'technical' : 'three');
+    setViewNote(showThree ? GENERAL_SHOWN : THREE_SHOWN);
+  };
   // 3D goes when the phone's mini drawing comes (10.10, audit F55): the mini drawing has no chip to go back by, and held
   // the 3D picture under the header with no way to the drawing
   useEffect(() => {
@@ -254,116 +516,11 @@ export function HangarPreviewModes({
     }
   }, [isFullscreen, onEndPresentationDemo]);
 
-  /**
-   * The Canvas is mounted only while 3D is the active mode, so switching back to Technical
-   * unmounts it and the next switch to 3D builds a fresh WebGL context. That was investigated as
-   * a performance defect and the answer is: LEAVE IT. Recorded here because the investigation was
-   * expensive and the wrong conclusion is very easy to reach from CI numbers.
-   *
-   * Measured on real hardware (Apple M1, ANGLE Metal, hardware WebGL), repeat Technical -> 3D:
-   *
-   *   first real frame        median 115 ms   (93-122 over 8 runs)
-   *   fully settled           median 172 ms   (144-181)
-   *   main thread blocked     median  62 ms   (51-64)
-   *
-   * That is inside the product target of <200 ms with no long tail and no bimodality.
-   *
-   * The SAME measurement under Playwright's headless Chromium reports a 1.3-1.7 s main-thread
-   * block on every switch, and a 0.8-1.4 s "intermittent tail". Both are artefacts of the test
-   * environment, not of this code. A CPU profile of that block is 1529 ms of `(program)` (native
-   * driver work) plus 89 ms of `getProgramInfoLog` — Three blocking synchronously while the driver
-   * links the 7 shader programs a new context cannot inherit. Headless Chromium renders through a
-   * software GL where `KHR_parallel_shader_compile` is UNAVAILABLE, so that link has to block; on
-   * the M1 the same extension IS available and the driver compiles off-thread, which is the whole
-   * difference between 1.5 s and 62 ms.
-   *
-   * So: do not "fix" this from a CI timing, and do not keep the Canvas mounted to chase it. Keeping
-   * it mounted would trade a 62 ms cost for a permanently resident WebGL context, a hidden scene
-   * that must be provably paused, and the loss of the guarantee that a visitor who never opens 3D
-   * pays nothing for it.
-   *
-   * What IS real, and accepted: one WebGL context per switch, each rebuild costing the 62 ms above.
-   * R3F forces the old one lost as its Canvas goes, which frees its GPU side, but that is all it
-   * does: the browser does NOT reclaim the rest (27.10, GL-04 — the old note here said it did). The
-   * shared geometries, materials and textures held every closed renderer, its lost context and its
-   * detached canvas — 8 opens, 8 live contexts after GC. ThreeHangarView now disposes them as it
-   * closes (`disposeSharedResources`), and at most the last closed renderer stays, until the next.
-   */
-  const threeCanvas = showThree ? (
-    <div className="hc-preview-canvas">
-      <ThreeErrorBoundary onError={handleThreeError}>
-        <Suspense fallback={<ThreeLoading />}>
-          <ThreeHangarView
-            scene={threeScene}
-            // Mobile keeps the geometry identical and only lowers presentation density —
-            // no separate mobile building model.
-            shadows={!isMobile}
-            // Phase 3F §14 — the fullscreen quality tier. Same Canvas, same mount, same scene the
-            // whole time (`threeCanvas` above is one JSX subtree regardless of `isFullscreen`;
-            // `FullscreenPreviewFrame` only repositions it — see that component's own doc comment
-            // for why a second Canvas/WebGL context was explicitly rejected) — only these two
-            // presentation props change when the user asks for fullscreen, both already reactive
-            // props R3F/Three re-read on change rather than baking in at creation (see
-            // SceneLighting's own `ShadowMapResize`-equivalent effect for the shadow-map half of
-            // this). Mobile's own lower ceiling always wins over the fullscreen bump — a phone in
-            // fullscreen still has a phone GPU.
-            // The mobile ceiling is also what bounds roof rib legibility on long buildings, and
-            // that was measured rather than assumed. Roof ribs are real swept geometry at a
-            // constant 0.2 m pitch (envelopePanelGeometry.ts), so a 50 m building carries ~250 of
-            // them; the camera frames it into ~200 CSS px of preview, which is well under one
-            // rib per pixel, and the far slope reads as a moire speckle rather than as profiled
-            // sheet. It is NOT the procedural noise maps: removing `normalMap` from every
-            // material outright moves the frame by at most 2/255, so anisotropy and repeat are
-            // the wrong lever. Raising this ceiling is the right one, and it works — probed at
-            // 390px with a 50 m building, 2 visibly evens the dashes and 3 resolves them into
-            // clean continuous ribs — but 3 is 4x the fragments of 1.5 on the device least able
-            // to afford them, and no phone-hardware frame timing has been taken to justify that
-            // trade. Left at 1.5 deliberately: a cosmetic gain at long lengths does not outrank a
-            // deliberate perf tier, and the fix is recorded here so it can be taken as a decision
-            // with device testing rather than discovered again from the symptom.
-            maxDpr={isMobile ? 1.5 : isFullscreen ? 3 : 2}
-            shadowMapSize={isFullscreen ? 2048 : 1024}
-            // /angary's sheet: a colour per part and per system — the light lid, cooler steel walls, warm white sandwich
-            // panels (10.10, materials.ts)
-            wallColor={sheet ? SHEET_WALL_COLOR : wallPresetColor(wallPreset)}
-            roofColor={sheet ? SHEET_ROOF_COLOR : roofPresetColor(roofPreset)}
-            wallSandwichColor={sheet ? SHEET_WALL_SANDWICH_COLOR : undefined}
-            roofSandwichColor={sheet ? SHEET_ROOF_SANDWICH_COLOR : undefined}
-            showScaleFigure={showScaleFigure}
-            bottomInsetPx={overlayInsetPx}
-            topInsetPx={sheet && !isFullscreen ? toolsInsetPx : 0}
-          />
-        </Suspense>
-      </ThreeErrorBoundary>
-      {/* Plain HTML, not WebGL text (brief §27) — renders immediately, independent of the
-          lazy three.js chunk, so the numbers are there even while "Завантаження 3D…" is
-          still showing. Outside ThreeErrorBoundary on purpose: a renderer failure should
-          still leave this orientation readout on screen right up until the fallback to
-          Technical actually happens. */}
-      <ThreeDimensionOverlay
-        // on /angary's sheet, which has no toggle for them, the sizes hidden in the expanded view come back (10.10, QA);
-        // the research screen keeps the visitor's choice across visits
-        key={sheet && !isFullscreen ? 'sheet' : 'view'}
-        onBottomInsetChange={setOverlayInsetPx}
-        widthM={domain.dimensions.widthM}
-        lengthM={domain.dimensions.lengthM}
-        eaveM={domain.dimensions.eaveHeightM}
-        ridgeM={threeScene.building.heights.ridgeM}
-      />
-      {/* nothing in the request: the 3D has nothing to build — said, rather than an empty field with a shadow (10.10, QA) */}
-      {!domain.scope.foundation && !domain.scope.frame && !domain.scope.walls && !domain.scope.roof && (
-        <p className="hc-three-empty">Нічого не обрано в{'\u00A0'}обсязі робіт</p>
-      )}
-      {/* Travels with the same Canvas into fullscreen, where the rest of the page is inert.
-          Remains available even when the visitor hides the visual dimension overlay. */}
-      <p id={descriptionId} className="hc-visually-hidden">
-        {previewDescription('three', domain.dimensions, threeScene.building.heights.ridgeM)}
-      </p>
-    </div>
-  ) : null;
+  const demoStrip = presentationDemo
+    ? <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
+    : null;
 
-  let view: ReactNode;
-  if (showThree) view = (
+  const view = showThree ? (
     <FullscreenPreviewFrame
       active={isFullscreen}
       onExit={exitFullscreen}
@@ -371,18 +528,27 @@ export function HangarPreviewModes({
       labelledBy="Розгорнутий перегляд 3D-моделі ангара"
       describedBy={descriptionId}
       announcement={presentationAnnouncement}
-      status={presentationDemo
-        ? <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
-        : null}
+      status={demoStrip}
     >
-      {threeCanvas}
+      <HangarThreeCanvas
+        domain={domain}
+        scene={threeScene}
+        onSheet={onSheet}
+        isMobile={isMobile}
+        isFullscreen={isFullscreen}
+        wallPreset={wallPreset}
+        roofPreset={roofPreset}
+        showScaleFigure={showScaleFigure}
+        overlayInsetPx={overlayInsetPx}
+        toolsInsetPx={toolsInsetPx}
+        descriptionId={descriptionId}
+        onError={handleThreeError}
+        onOverlayInset={setOverlayInsetPx}
+      />
     </FullscreenPreviewFrame>
+  ) : (
+    <DrawnView mode={effectiveMode} onSheet={onSheet} domain={domain} released={released} tools={threeAvailable} onCaption={setFrameCaption} />
   );
-  else if (effectiveMode === 'frame' && sheet) view = <ConfiguratorFrameView onCaption={setFrameCaption} />;
-  // /angary's sheet draws the general view in the frame drawing's language (10.10, HangarGeneralView); the research
-  // screen keeps the old technical view
-  else if (sheet) view = <HangarGeneralView domain={domain} released={released} tools={threeAvailable} />;
-  else view = <HangarPreview domain={domain} released={released} />;
 
   // Fullscreen and secondary 3D actions — brief §10's own suggested hierarchy: mode switch stays
   // primary, everything else stays a small, clearly secondary action beside it. Only meaningful in
@@ -410,27 +576,10 @@ export function HangarPreviewModes({
           checked={showScaleFigure}
           onChange={(e) => setShowScaleFigure(e.target.checked)}
         />
-        Показати людину для масштабу
+        <span>Показати людину для масштабу</span>
       </label>
     </>
   );
-
-  let shownOnSheet = GENERAL_SHOWN;
-  if (effectiveMode === 'frame') shownOnSheet = frameCaption;
-  else if (showThree) shownOnSheet = THREE_SHOWN;
-  const sheetCells: SheetCell[] = sheet ? [
-    // keyed, and the sizes untranslated: a page translation left them at their old values (08.10)
-    {
-      tone: 'main',
-      label: 'Що показано',
-      value: <span key={shownOnSheet}>{shownOnSheet}</span>,
-      // the frame's captions differ in length from step to step: a phone keeps two lines for them (sheet css)
-      className: effectiveMode === 'frame' ? 'hc-sheet-shown is-frame' : 'hc-sheet-shown',
-    },
-    { label: 'Об’єкт', value: <span translate="no"><SheetValue text={sheet.object} /></span> },
-    // shown only by the phone's mini drawing, in place of the other cells
-    { value: <span translate="no">{readout}</span>, className: 'hc-sheet-readout' },
-  ] : [];
 
   return (
     <>
@@ -439,53 +588,23 @@ export function HangarPreviewModes({
           {presentationAnnouncement || viewNote}
         </p>
       )}
-      {presentationDemo && !isFullscreen && (
-        <DemoStatusStrip demo={presentationDemo} onReturn={handleEndPresentationDemo} />
-      )}
+      {!isFullscreen && demoStrip}
       {sheet ? (
-        // The sheet is the surface: the phone's mini drawing holds the whole sheet under the header (HangarConfigurator)
-        <DrawingSheet
-          className={`hc-preview-surface hc-preview-sheet${miniFolded ? ' is-folded' : ''}`}
-          imageClassName={`hc-preview-image${effectiveMode === 'frame' ? ' hc-frame-image' : ''}`}
+        <PreviewSheetSurface
+          sheet={sheet}
+          mode={effectiveMode}
+          frameCaption={frameCaption}
+          readout={readout}
+          folded={miniFolded}
+          onToggleFold={toggleMiniFold}
           imageRef={drawingRef}
-          cells={sheetCells}
-          // shown only by the phone's mini drawing (configurator-sheet.css). Its words are its state, said once (10.10,
-          // audit F131): with aria-expanded as well, a screen reader heard «Згорнути, розгорнуто».
-          action={(
-            <button type="button" className="hc-mini-toggle" onClick={toggleMiniFold}>
-              {/* the picture is «креслення» everywhere (10.10, audit F101: «ескіз» here only); the changing words are its only
-                  state signal (audit F131) */}
-              {miniFolded ? 'Показати креслення' : 'Згорнути'}
-            </button>
-          )}
+          domain={domain}
+          threeChip={threeAvailable && view2d !== 'frame'}
+          onThreeChip={toggleThreeChip}
+          expand={expand}
         >
           {view}
-          {/* The layers the technical drawing cannot show from outside: the insulation, the panel's core (07.10) — in the 3D
-              too since 10.10 (QA: on a tablet the legend under the drawing left with the 3D, and the stuck sheet, with
-              the step under it, jumped 102 px each way; the 3D's surfaces are the same materials) */}
-          {(effectiveMode === 'technical' || showThree) && <CladdingSection domain={domain} />}
-          {/* 3D, a secondary look: a chip on the drawing opens it, and in 3D the same chip goes back (07.10). One button in
-              one place whose words change (09.10, audit F76): two buttons swapped out from under the keyboard, and focus
-              fell to the page's start. Not on «Каркас» (09.10, owner, audit F14): the step is the frame's line drawing —
-              3D showed the clad hangar and took the step's own list from beside it. «Розгорнути» joins it in 3D, the
-              picture's own action. */}
-          {threeAvailable && view2d !== 'frame' && (
-            <div className="hc-sheet-tools">
-              <button
-                type="button"
-                className={showThree ? 'hc-sheet-chip' : 'hc-sheet-chip hc-sheet-three'}
-                onClick={(event) => {
-                  if (!showThree) holdField(event.currentTarget);
-                  selectMode(showThree ? 'technical' : 'three');
-                  setViewNote(showThree ? GENERAL_SHOWN : THREE_SHOWN);
-                }}
-              >
-                {showThree ? <><Arrow to="left" /> Креслення</> : 'Подивитися в 3D'}
-              </button>
-              {showThree && expand}
-            </div>
-          )}
-        </DrawingSheet>
+        </PreviewSheetSurface>
       ) : (
         <>
           <div className="hc-preview-toolbar">

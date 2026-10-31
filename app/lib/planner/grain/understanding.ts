@@ -59,21 +59,33 @@ export function buildDrivers(answers: Answers) {
   return result;
 }
 
+/** A choice that says something: given, and not «unknown» */
+function isConfirmed(choice: string | null): choice is string {
+  return Boolean(choice) && choice !== 'unknown';
+}
+
+/** The line for the development answers, or null when they state nothing */
+function developmentFact(development: Answers['development']) {
+  if (development.includes('none')) return 'без вираженої другої черги';
+  if (!development.length || development.includes('unknown')) return null;
+  return development.map((item) => logicLabels[item]).join(' + ');
+}
+
 export function buildFacts(answers: Answers) {
   const result: string[] = [];
   const parsedCapacity = parseCapacity(answers.capacity);
   const capacity = formatCapacityInfo(parsedCapacity);
   if (capacity && parsedCapacity.kind !== 'unknown') result.push(capacity);
   if (answers.crops.length && !answers.crops.includes('Ще не визначили')) result.push(answers.crops.join(' · '));
-  if (answers.separation && answers.separation !== 'unknown') result.push(logicLabels[answers.separation]);
-  if (answers.operation && answers.operation !== 'unknown') result.push(logicLabels[answers.operation]);
-  if (answers.handling && answers.handling !== 'unknown') result.push(`зараз: ${logicLabels[answers.handling]}`);
-  if (answers.processing && answers.processing !== 'unknown') result.push(`підготовка: ${logicLabels[answers.processing]}`);
-  if (answers.site && answers.site !== 'unknown') result.push(logicLabels[answers.site]);
-  if (answers.sitePressure && answers.sitePressure !== 'unknown') result.push(logicLabels[answers.sitePressure]);
-  if (answers.development.includes('none')) result.push('без вираженої другої черги');
-  else if (answers.development.length && !answers.development.includes('unknown')) result.push(answers.development.map((item) => logicLabels[item]).join(' + '));
-  if (requiresFutureHandling(answers) && answers.futureHandling && answers.futureHandling !== 'unknown') result.push(`у майбутньому: ${logicLabels[answers.futureHandling]}`);
+  if (isConfirmed(answers.separation)) result.push(logicLabels[answers.separation]);
+  if (isConfirmed(answers.operation)) result.push(logicLabels[answers.operation]);
+  if (isConfirmed(answers.handling)) result.push(`зараз: ${logicLabels[answers.handling]}`);
+  if (isConfirmed(answers.processing)) result.push(`підготовка: ${logicLabels[answers.processing]}`);
+  if (isConfirmed(answers.site)) result.push(logicLabels[answers.site]);
+  if (isConfirmed(answers.sitePressure)) result.push(logicLabels[answers.sitePressure]);
+  const development = developmentFact(answers.development);
+  if (development !== null) result.push(development);
+  if (requiresFutureHandling(answers) && isConfirmed(answers.futureHandling)) result.push(`у майбутньому: ${logicLabels[answers.futureHandling]}`);
   return result;
 }
 
@@ -86,7 +98,7 @@ export function buildFacts(answers: Answers) {
  */
 export function joinTraits(traits: string[]) {
   if (traits.length < 2) return traits[0] ?? '';
-  return `${traits.slice(0, -1).join(', ')} та ${traits[traits.length - 1]}`;
+  return `${traits.slice(0, -1).join(', ')} та ${traits.at(-1)}`;
 }
 
 export function synthesizeScenario(answers: Answers) {

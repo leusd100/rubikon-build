@@ -57,13 +57,16 @@ export function visibleCandidateKeys(answers: Answers): CandidateKey[] {
   return keys;
 }
 
-export function buildCandidates(answers: Answers): Candidate[] {
-  const silo: Candidate = {
+function siloCandidate(answers: Answers): Candidate {
+  return {
     key: 'silo', ...candidateCatalog.silo, label: 'До порівняння',
     reasons: siloReasons(answers),
     careful: ['Фактичну продуктивність усіх ділянок потоку', 'Транспортні маршрути й точки приймання', hasDevelopmentIntent(answers) && 'Сумісність першої черги з майбутнім розвитком', 'Займану площу всього комплексу, а не лише сховищ'].filter(Boolean) as string[],
   };
-  const framedReasons = [
+}
+
+function framedCandidate(answers: Answers): Candidate {
+  const reasons = [
     answers.separation === 'shared' && 'Ви вказали, що партії можуть зберігатися разом, — тому єдиний гнучкий внутрішній об’єм стає доречним.',
     answers.separation === 'required' && 'Ви вказали окремі партії — тому схема зонування стає одним із головних питань для перевірки.',
     answers.separation === 'unknown' && 'Спосіб розділення ви ще не визначили, тому підлоговий підхід лишається попередньою альтернативою.',
@@ -71,24 +74,30 @@ export function buildCandidates(answers: Answers): Candidate[] {
     answers.development.includes('physical') && 'Ви плануєте фізичне розширення — тому потрібна окрема схема поетапності генерального плану.',
     existingSiteTypes.includes(answers.site ?? '') && `Ви вказали ${siteAccusative[answers.site ?? '']} — можливість використати наявний об’єкт не припускається автоматично й потребує обстеження.`,
   ].filter(Boolean) as string[];
-  const framed: Candidate = {
+  return {
     key: 'framed', ...candidateCatalog.framed, label: 'До порівняння',
-    reasons: framedReasons.length ? framedReasons : ['Підтверджені відповіді поки не звужують задачу до інтегрованої технологічної системи.'],
+    reasons: reasons.length ? reasons : ['Підтверджені відповіді поки не звужують задачу до інтегрованої технологічної системи.'],
     careful: [answers.separation === 'required' && 'Схему фізичного розділення партій', stationaryHandling.includes(answers.handling ?? '') && 'Інтеграцію поточного стаціонарного переміщення', 'Робочі й транспортні зони', answers.sitePressure === 'compact' && 'Фактичну займану площу на компактному майданчику'].filter(Boolean) as string[],
   };
-  const archReasons = [
+}
+
+function archCandidate(answers: Answers): Candidate {
+  const reasons = [
     answers.site === 'greenfield' && 'Ви вказали вільну ділянку — тож окрему підлогову будівлю можна перевірити як альтернативу.',
     answers.sitePressure === 'space' && 'Ви підтвердили запас площі — тому окремий підлоговий об’єм не варто відкидати передчасно.',
     answers.operation === 'seasonal' && 'Ви вказали сезонне зберігання — тому підлогове зберігання лишається змістовним контрольним підходом.',
     answers.handling === 'mobile' && 'Ви вказали мобільну техніку — тому експлуатаційний сценарій підлогового об’єкта важливо перевірити.',
     answers.separation === 'required' && 'Ви вказали окремі партії — тому для арочного об’єму окремо перевіряється можливість зонування.',
   ].filter(Boolean) as string[];
-  const arch: Candidate = {
+  return {
     key: 'arch', ...candidateCatalog.arch, label: 'До порівняння',
-    reasons: archReasons.length ? archReasons : ['Підлоговий підхід зберігається як контрольна альтернатива, доки майданчик і експлуатаційна схема не виключають його.'],
+    reasons: reasons.length ? reasons : ['Підлоговий підхід зберігається як контрольна альтернатива, доки майданчик і експлуатаційна схема не виключають його.'],
     careful: [answers.separation === 'required' && 'Можливість зонування незалежних партій', hasActiveProcessing(answers.processing) && 'Спосіб інтеграції технологічних зон', existingSiteTypes.includes(answers.site ?? '') && 'Можливість розміщення нового об’єкта поруч із наявною забудовою', 'Експлуатаційну логіку й доступ техніки'].filter(Boolean) as string[],
   };
-  const candidates = { silo, framed, arch };
+}
+
+export function buildCandidates(answers: Answers): Candidate[] {
+  const candidates = { silo: siloCandidate(answers), framed: framedCandidate(answers), arch: archCandidate(answers) };
   return visibleCandidateKeys(answers).map((key) => candidates[key]);
 }
 
