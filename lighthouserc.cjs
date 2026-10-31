@@ -1,7 +1,7 @@
 const median = 'median';
 const profileName = process.env.LHCI_PROFILE;
 const port = process.env.LHCI_PORT || '4174';
-const baseUrl = `http://127.0.0.1:${port}`;
+const baseUrl = `https://127.0.0.1:${port}`;
 
 const profiles = {
   home: {
@@ -33,9 +33,9 @@ const profile = profiles[profileName];
 module.exports = {
   ci: {
     collect: {
-      // `vinext start` behind a compressing proxy: Cloudflare serves JS and CSS with brotli, `vinext start` does not,
+      // `vinext start` behind a compressing HTTP/2 proxy: Cloudflare serves JS and CSS with brotli and multiplexes them,
       // and the byte and LCP budgets below are only meaningful against what visitors receive (scripts/perf/lhci-server.mjs).
-      startServerCommand: `node scripts/perf/lhci-server.mjs --port ${port}`,
+      startServerCommand: `node scripts/perf/lhci-server.mjs --port ${port} --http2`,
       startServerReadyPattern: 'Production server running',
       startServerReadyTimeout: 120_000,
       url: [profile.url],
@@ -46,7 +46,8 @@ module.exports = {
       // which is the standard Lighthouse CI mitigation for this kind of CI-noise variance.
       numberOfRuns: 5,
       settings: {
-        chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage',
+        // The server's certificate is self-signed and lives for this run
+        chromeFlags: '--headless --no-sandbox --disable-dev-shm-usage --ignore-certificate-errors',
         maxWaitForLoad: 90_000,
       },
     },
