@@ -141,7 +141,7 @@ function NumericField({
   children,
   clamp,
   onCommit,
-}: {
+}: Readonly<{
   inputId: string;
   label: string;
   value: number;
@@ -154,7 +154,7 @@ function NumericField({
   children?: ReactNode;
   clamp: (value: number) => number;
   onCommit: (value: number) => void;
-}) {
+}>) {
   const [draft, setDraft] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
@@ -181,7 +181,8 @@ function NumericField({
     setDraft(null);
   }
 
-  const range = `Від ${formatMetres(min)} до ${formatMetres(max)}${NBSP}м${step < 1 ? `, крок ${formatMetres(step)}${NBSP}м` : ''}.`;
+  const stepNote = step < 1 ? `, крок ${formatMetres(step)}${NBSP}м` : '';
+  const range = `Від ${formatMetres(min)} до ${formatMetres(max)}${NBSP}м${stepNote}.`;
   return (
     <div className="hc-field">
       {/* The value once, in its field, with its metre beside it (10.10, audit F114): «24 м» over a field reading «24» showed

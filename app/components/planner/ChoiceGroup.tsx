@@ -17,13 +17,13 @@ export function ChoiceGroup({
   options,
   onChange,
   columns = 1,
-}: {
+}: Readonly<{
   legend: string;
   value: string | null;
   options: readonly ChoiceOption[];
   onChange: (value: string) => void;
   columns?: 1 | 2;
-}) {
+}>) {
   const group = useId();
 
   return (

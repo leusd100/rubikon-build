@@ -10,7 +10,7 @@ function themeMarker(state: ThemeState, index: number) {
 }
 
 /** The consultation's themes in order — the cover before the first answer, progress after. */
-export function ThemeRail({ items, active, label }: { items: readonly ThemeRailItem[]; active: number; label: string }) {
+export function ThemeRail({ items, active, label }: Readonly<{ items: readonly ThemeRailItem[]; active: number; label: string }>) {
   return (
     <ol className="planner-theme-rail" aria-label={label}>
       {items.map((item, index) => (

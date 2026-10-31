@@ -4,7 +4,7 @@ import { messengerContacts } from '../data/contactMethods';
 
 const viber = messengerContacts.viber;
 
-export default function ViberContactButton({ showFullLabel = false }: { showFullLabel?: boolean }) {
+export default function ViberContactButton({ showFullLabel = false }: Readonly<{ showFullLabel?: boolean }>) {
   return (
     <button
       className="messenger-link messenger-viber"

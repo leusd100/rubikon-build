@@ -627,3 +627,37 @@ describe('roof secondary steel projections (03.10)', () => {
     }
   });
 });
+
+describe('line and surface ids', () => {
+  const unique = (ids: string[]) => expect(new Set(ids).size).toBe(ids.length);
+  const lists = (scene: ReturnType<typeof projectFor>) => [
+    ...Object.values(scene.frame).filter(Array.isArray),
+    scene.wallSegments,
+    scene.roofSegments,
+    scene.gates,
+  ];
+
+  it('stay unique in every list, for each structural scheme across the size range', () => {
+    const schemes: StructuralScheme[] = ['clearSpan', 'centerSupport'];
+    const roofs: RoofStructure[] = ['truss', 'portalRafter'];
+    const { width, length } = DIMENSION_BOUNDS;
+    for (const scheme of schemes) {
+      for (const roofStructure of roofs) {
+        for (const widthM of [width.min, 24, width.max]) {
+          for (const lengthM of [length.min, 48, length.max]) {
+            const dimensions = { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: widthM, length: lengthM };
+            const scene = projectForStructural({ scheme, roofStructure }, { dimensions });
+            for (const list of lists(scene)) unique(list.map(({ id }) => id));
+          }
+        }
+      }
+    }
+  });
+
+  it('keep a member its id when the building is resized, so its line moves rather than remounts', () => {
+    const sized = (length: number) => projectFor({ dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, length } });
+    const [short, long] = [sized(36), sized(60)];
+    expect(short.frame.columns.length).toBeLessThan(long.frame.columns.length);
+    expect(long.frame.columns.map(({ id }) => id)).toEqual(expect.arrayContaining(short.frame.columns.map(({ id }) => id)));
+  });
+});

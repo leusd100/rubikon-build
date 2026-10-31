@@ -69,7 +69,7 @@ const resultSection = () => document.getElementById('result');
  * domain reducers (app/lib/planner/grain: flow.ts and attachment.ts); this adds where the page
  * scrolls next, and publishes the brief to the page's inquiry form while it is attached.
  */
-export function GrainPlannerProvider({ children }: { children: ReactNode }) {
+export function GrainPlannerProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [session, dispatch] = useReducer(reduceGrainSession, INITIAL_GRAIN_SESSION);
   const [latestFact, setLatestFact] = useState<string | null>(null);
   const [changeOpen, setChangeOpen] = useState(false);

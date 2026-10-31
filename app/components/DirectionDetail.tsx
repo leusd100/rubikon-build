@@ -25,6 +25,7 @@ import './directions/direction-template.css';
 import './directions/process-split.css';
 import './faq.css';
 import { Arrow } from './Arrow';
+import { classNames } from '../lib/classNames';
 
 const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
   'zernoskhovyshcha',
@@ -33,21 +34,16 @@ const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
 
-/** The class names that are set, space-separated. */
-function classNames(...names: (string | undefined)[]) {
-  return names.filter(Boolean).join(' ');
-}
-
 function DirectionItemCards({
   className,
   items,
   motion = false,
-}: {
+}: Readonly<{
   className: string;
   items: readonly DirectionItem[];
   /** Rises in one by one when the page's motion controller sees it (direction-template.css) */
   motion?: boolean;
-}) {
+}>) {
   return (
     <div className={className} data-motion={motion ? '' : undefined}>
       {items.map(([number, title, text, Icon], index) => (
@@ -91,7 +87,7 @@ function DirectionHero({
   heroImage,
   nextHref,
   actions,
-}: DirectionHeroProps) {
+}: Readonly<DirectionHeroProps>) {
   const serviceData = {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -172,15 +168,15 @@ export function DirectionProcess({
   split,
   link,
   className,
-}: {
+}: Readonly<{
   eyebrow?: string;
   title: string;
   text: string;
   steps: readonly DirectionStep[];
   split?: readonly ProcessSplit[];
-  link?: DirectionPageConfig['process']['link'];
+  link?: NonNullable<DirectionPageConfig['process']['link']>;
   className?: string;
-}) {
+}>) {
   const sides = split?.length === steps.length ? split : undefined;
   return (
     <section className={classNames('page-section page-section-dark', className)}>
@@ -273,11 +269,11 @@ export function DirectionEditorial({
   directionId,
   editorial,
   className,
-}: {
+}: Readonly<{
   directionId: DirectionPageConfig['id'];
   editorial: DirectionPageConfig['editorial'];
   className?: string;
-}) {
+}>) {
   const layout = mediaFirstEditorialDirections.has(directionId) ? 'media-first' : 'copy-first';
 
   // «Вузол напряму»: the same block as a three-step tour of one node, where the page gives one
@@ -330,11 +326,11 @@ export function DirectionFaq({
   title,
   items: sourceItems,
   collapsible = false,
-}: {
+}: Readonly<{
   title: string;
   items: readonly DirectionFaqItem[];
   collapsible?: boolean;
-}) {
+}>) {
   // Model-owned answers become text here, on the server, before the list and its FAQPage data use them.
   const items = sourceItems.map(([question, answer]) => [question, faqAnswerText(answer)] as const);
   const faqData = {
@@ -402,7 +398,7 @@ function RelatedDirections({
   title = 'Пов’язані напрямки',
   text,
   closing = false,
-}: {
+}: Readonly<{
   id: DirectionPageConfig['id'];
   compact?: boolean;
   items?: readonly RelatedDirection[];
@@ -411,7 +407,7 @@ function RelatedDirections({
   text?: string;
   /** The band closes the page, after #inquiry (DirectionPageConfig.related.placement) */
   closing?: boolean;
-}) {
+}>) {
   const related = items ?? relatedDirections[id];
 
   if (!related.length) return null;
@@ -447,11 +443,11 @@ export function DirectionPage({
   config,
   signatureExperience,
   editorialArchitecture,
-}: {
+}: Readonly<{
   config: DirectionPageConfig;
   signatureExperience?: ReactNode;
   editorialArchitecture?: ReactNode;
-}) {
+}>) {
   const direction = getDirection(config.id);
   // /angary (owner, 03.10) and metal, concrete, roofing (OD-PX-17 A, 25.10): the related directions come after the form
   const relatedClosesPage = config.related?.placement === 'after-inquiry';

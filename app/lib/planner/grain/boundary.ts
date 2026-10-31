@@ -21,8 +21,7 @@ export function scenarioClientQuestions(answers: Answers) {
   const capacity = parseCapacity(answers.capacity);
   if (capacity.kind === 'unknown') questions.push('Орієнтовна місткість або робочий діапазон');
   if (answers.operation === 'high' || hasActiveProcessing(answers.processing) || stationaryHandling.includes(answers.handling ?? '') || answers.development.includes('handling')) {
-    questions.push('Пікова продуктивність приймання й відвантаження');
-    questions.push('Основний транспорт приймання та відвантаження');
+    questions.push('Пікова продуктивність приймання й відвантаження', 'Основний транспорт приймання та відвантаження');
   }
   if (answers.separation === 'required') questions.push('Орієнтовні обсяги та одночасність окремих партій');
   if (answers.sitePressure === 'unknown') questions.push('Фактичні межі та доступна площа майданчика');
@@ -30,8 +29,7 @@ export function scenarioClientQuestions(answers: Answers) {
   if (answers.processing === 'drying' || answers.processing === 'both') questions.push('Робочий діапазон вологості зерна на прийманні');
   if (answers.development.includes('capacity')) questions.push('Цільова місткість наступної фази');
   if (answers.development.includes('physical')) questions.push('Чи є фактичний резерв території для розширення');
-  questions.push('Орієнтовна тривалість зберігання');
-  questions.push('Регіон і розташування майданчика');
+  questions.push('Орієнтовна тривалість зберігання', 'Регіон і розташування майданчика');
   return questions;
 }
 
@@ -59,10 +57,11 @@ export function readinessState(answers: Answers): ReadinessState {
   const unknownCount = countUnknowns(answers);
   const blockingUnknownCount = decisionBlockingUnknowns(answers).length;
   const outcome = routeDecision(answers);
+  const provisional = unknownCount ? 'Попереднє' : 'Готове';
   return {
-    understanding: blockingUnknownCount ? 'Частково' : unknownCount ? 'Попереднє' : 'Готове',
+    understanding: blockingUnknownCount ? 'Частково' : provisional,
     decision: outcome === 'candidateComparison' ? 'Можна порівнювати' : 'Потрібні уточнення',
-    brief: unknownCount ? 'Попереднє' : 'Готове',
+    brief: provisional,
   };
 }
 

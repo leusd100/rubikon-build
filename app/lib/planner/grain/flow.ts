@@ -48,7 +48,8 @@ function continueGrainFlow(state: GrainFlowState, action: Extract<GrainFlowActio
   if (!isThemeComplete(action.theme, state.answers)) return state;
   const editing = state.editing;
   // `state.completed` is the list *before* this theme is added, as in the prototype's closure.
-  const next = editing && state.completed.length === 5 ? GRAIN_READINESS_STEP : action.theme === 4 ? GRAIN_READINESS_STEP : action.theme + 1;
+  const toReadiness = action.theme === 4 || (editing && state.completed.length === 5);
+  const next = toReadiness ? GRAIN_READINESS_STEP : action.theme + 1;
   return {
     ...state,
     committedAnswers: {

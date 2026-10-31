@@ -25,10 +25,10 @@ const messengerLinks = [
 export function MessengerLinks({
   className,
   showFullLabels = false,
-}: {
+}: Readonly<{
   className: string;
   showFullLabels?: boolean;
-}) {
+}>) {
   return (
     <div className={className} role="group" aria-label={`Месенджери ${company.name}`}>
       {messengerLinks.map(([kind, { label, href, icon, shortName }]) => (
@@ -66,7 +66,7 @@ export function SectionHeader({
   icon,
   titleId,
   aside,
-}: {
+}: Readonly<{
   /** The small label over the title; a subsection of the band before goes without (PDO-101) */
   eyebrow?: string;
   title: ReactNode;
@@ -82,7 +82,7 @@ export function SectionHeader({
   icon?: ReactNode;
   /** For a section that names itself by its heading (aria-labelledby). */
   titleId?: string;
-}) {
+}>) {
   // No short word left at a line's end (PDO-44 п. 2): set (b) in the title, set (a) in the lead — at render, so the data
   // stays plain for metadata and structured data
   const heading = typeof title === 'string' ? keepHeadingWords(title) : title;
@@ -103,11 +103,11 @@ export function GhostWord({
   word,
   tone = 'light',
   align = 'end',
-}: {
+}: Readonly<{
   word: string;
   tone?: 'light' | 'dark';
   align?: 'start' | 'end';
-}) {
+}>) {
   return (
     <span
       className={`ghost-word ghost-word-${tone} ghost-word-${align}`}
@@ -120,9 +120,9 @@ export function GhostWord({
 
 function SectionDivider({
   variant = 'neutral',
-}: {
+}: Readonly<{
   variant?: 'accent' | 'neutral' | 'dark' | 'inverse';
-}) {
+}>) {
   return <div className={`section-divider section-divider-${variant}`} aria-hidden="true" />;
 }
 
@@ -252,7 +252,7 @@ export function SiteFooter() {
   );
 }
 
-export function Breadcrumbs({ items }: { items: Array<{ label: string; href: string }> }) {
+export function Breadcrumbs({ items }: Readonly<{ items: Array<{ label: string; href: string }> }>) {
   const baseUrl = company.siteUrl;
   const data = {
     '@context': 'https://schema.org',
@@ -337,7 +337,7 @@ function PersonFocus({ items }: Readonly<{ items?: readonly string[] }>) {
   );
 }
 
-export function TeamSection({ variant = 'home', id }: { variant?: TeamVariant; id?: string }) {
+export function TeamSection({ variant = 'home', id }: Readonly<{ variant?: TeamVariant; id?: string }>) {
   const { sergii, dmytro } = teamContent[variant];
   const isHome = variant === 'home';
 

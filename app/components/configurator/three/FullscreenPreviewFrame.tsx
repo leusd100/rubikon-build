@@ -45,7 +45,7 @@ export function FullscreenPreviewFrame({
   status,
   announcement,
   children,
-}: {
+}: Readonly<{
   active: boolean;
   onExit: () => void;
   /** Dresses the open overlay for the page that owns it (/angary: the drawing sheet's square chrome) */
@@ -59,7 +59,7 @@ export function FullscreenPreviewFrame({
   /** The single active live region moves into the modal while its background is inert. */
   announcement?: ReactNode;
   children: ReactNode;
-}) {
+}>) {
   // Created lazily, once, only on the client — see the module doc for why this is `useState`
   // (never mutated afterward) rather than a ref. The SSR guard is cheap insurance: today's only
   // call site never mounts this component before the user has already interacted client-side
@@ -84,7 +84,7 @@ export function FullscreenPreviewFrame({
     const parent = active ? document.body : inlineAnchorRef.current;
     parent?.appendChild(portalHost); // appendChild auto-detaches it from wherever it was first
     return () => {
-      portalHost.parentElement?.removeChild(portalHost); // only matters on final unmount
+      portalHost.remove(); // only matters on final unmount
     };
   }, [active, portalHost]);
 
@@ -117,7 +117,7 @@ export function FullscreenPreviewFrame({
       } else if (event.key === 'Tab') {
         const controls = focusableControls();
         const first = controls[0];
-        const last = controls[controls.length - 1];
+        const last = controls.at(-1);
         if (event.shiftKey && document.activeElement === first) {
           event.preventDefault();
           last?.focus();

@@ -35,7 +35,7 @@ const RetryPersonalizedResult = lazy(retryPersonalizedResult);
  * answer — well before the five themes lead to «Показати концепції» — so the first page load does
  * not carry it and the reveal never waits for it.
  */
-export function GrainResultBand({ generic }: { generic: ReactNode }) {
+export function GrainResultBand({ generic }: Readonly<{ generic: ReactNode }>) {
   const { state } = useGrainPlanner();
   const [loadAttempt, setLoadAttempt] = useState(0);
   const consultationStarted = state.completed.length > 0 || state.answers.crops.length > 0 || state.answers.capacity !== '';

@@ -320,7 +320,7 @@ const FRAME_MIN_BAYS = 2;
  *     the two independently-verified calibration points below, which cover the 18–36 m range
  *     most real requests actually land in. Not every internal mathematical anchor has to line up
  *     with a UI bound — this is that case, deliberately.
- * Not a bug, not a TODO — do not "fix" this without a product decision to revisit it.
+ * Not a bug and not unfinished work — do not "fix" this without a product decision to revisit it.
  *
  * So pitch interpolates from steeper-at-narrow to shallower-at-wide, clamped at
  * both ends. Two independent checks on the numbers below:

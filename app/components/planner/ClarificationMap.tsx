@@ -12,7 +12,7 @@ export function ClarificationMap({
   howLabel,
   editLabel,
   onEdit,
-}: {
+}: Readonly<{
   heading: ReactNode;
   cards: readonly ClarificationCard[];
   density: 'full' | 'compact';
@@ -20,7 +20,7 @@ export function ClarificationMap({
   howLabel: string;
   editLabel: string;
   onEdit: () => void;
-}) {
+}>) {
   return (
     <div className="planner-clarification">
       {heading}

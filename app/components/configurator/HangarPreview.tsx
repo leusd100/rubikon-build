@@ -56,7 +56,7 @@ function useLabelBox(svgRef: RefObject<SVGSVGElement | null>): Box | null {
   return box;
 }
 
-function DimensionGuideGroup({ guide }: { guide: DimensionGuide }) {
+function DimensionGuideGroup({ guide }: Readonly<{ guide: DimensionGuide }>) {
   const [a, b] = guide.line;
   return (
     <g className={`hc-dimension${guide.derived ? ' is-derived' : ''}`} aria-hidden="true">
@@ -85,7 +85,7 @@ function transitionStyle(layer: LayerTransitionStyle, extraDelayMs = 0): CSSProp
   };
 }
 
-function FrameLineEl({ line, className, style }: { line: FrameLine; className: string; style: CSSProperties }) {
+function FrameLineEl({ line, className, style }: Readonly<{ line: FrameLine; className: string; style: CSSProperties }>) {
   const [a, b] = line.points;
   return <line className={className} style={style} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
 }
@@ -94,11 +94,11 @@ function BuildLayerPolygon({
   points,
   className,
   style,
-}: {
+}: Readonly<{
   points: Point[];
   className: string;
   style: CSSProperties;
-}) {
+}>) {
   return <polygon className={className} style={style} points={pointsAttr(points)} />;
 }
 
@@ -123,13 +123,13 @@ function EnvelopeSurface({
   style,
   fillClass,
   emptyClass,
-}: {
+}: Readonly<{
   segment: ProjectedSegment;
   phase: string;
   style: CSSProperties;
   fillClass: string;
   emptyClass: string;
-}) {
+}>) {
   return (
     <BuildLayerPolygon
       points={segment.points}
@@ -277,7 +277,7 @@ export function HangarPreview({
       <g className={`hc-layer hc-side hc-side-left hc-envelope-${envelope.walls} ${sideActive ? 'is-active' : ''}`}>
         {leftWalls.map((segment, index) => (
           <EnvelopeSurface
-            key={index}
+            key={segment.id}
             segment={segment}
             phase={walls.phase}
             style={transitionStyle(walls, staggerDelayMs('walls', index, leftWalls.length))}
@@ -293,7 +293,7 @@ export function HangarPreview({
       <g className={`hc-layer hc-top hc-envelope-${envelope.roof} ${topActive ? 'is-active' : ''}`}>
         {scene.roofSegments.map((segment, index) => (
           <EnvelopeSurface
-            key={index}
+            key={segment.id}
             segment={segment}
             phase={roof.phase}
             style={transitionStyle(roof, staggerDelayMs('roof', index, scene.roofSegments.length))}
@@ -307,7 +307,7 @@ export function HangarPreview({
       <g className={`hc-layer hc-side hc-side-right hc-envelope-${envelope.walls} ${sideActive ? 'is-active' : ''}`}>
         {rightWalls.map((segment, index) => (
           <EnvelopeSurface
-            key={index}
+            key={segment.id}
             segment={segment}
             phase={walls.phase}
             style={transitionStyle(walls, staggerDelayMs('walls', index, rightWalls.length))}
@@ -332,7 +332,7 @@ export function HangarPreview({
         <CladdingLinesEl lines={cladding.front} system={envelope.wallSystem} phase={walls.phase} style={transitionStyle(walls)} />
         {scene.gates.map((gate, index) => (
           <BuildLayerPolygon
-            key={index}
+            key={gate.id}
             points={gate.points}
             className={`hc-buildlayer hc-phase-${gateLayer.phase} hc-gate`}
             style={transitionStyle(gateLayer, staggerDelayMs('gates', index, scene.gates.length))}
@@ -343,7 +343,7 @@ export function HangarPreview({
         <g className="hc-gate-outline" aria-hidden="true">
           {scene.gates.map((gate, index) => (
             <BuildLayerPolygon
-              key={index}
+              key={gate.id}
               points={gate.points}
               className={`hc-buildlayer hc-phase-${gateLayer.phase}`}
               style={transitionStyle(gateLayer, staggerDelayMs('gates', index, scene.gates.length))}
@@ -355,7 +355,7 @@ export function HangarPreview({
       <g className="hc-layer hc-columns">
         {scene.frame.columns.map((line, index) => (
           <FrameLineEl
-            key={index}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${columns.phase}`}
             style={transitionStyle(columns, staggerDelayMs('columns', index, scene.frame.columns.length))}
@@ -367,7 +367,7 @@ export function HangarPreview({
             "columns arrive" grouping). */}
         {scene.frame.internalColumns.map((line, index) => (
           <FrameLineEl
-            key={`internal-${index}`}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${columns.phase}`}
             style={transitionStyle(columns, staggerDelayMs('columns', index, scene.frame.internalColumns.length))}
@@ -375,7 +375,7 @@ export function HangarPreview({
         ))}
         {scene.frame.internalColumnProps.map((line, index) => (
           <FrameLineEl
-            key={`internal-prop-${index}`}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${columns.phase}`}
             style={transitionStyle(columns, staggerDelayMs('columns', index, scene.frame.internalColumnProps.length))}
@@ -386,7 +386,7 @@ export function HangarPreview({
       <g className="hc-layer hc-rafters">
         {scene.frame.rafters.map((line, index) => (
           <FrameLineEl
-            key={index}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${rafters.phase}`}
             style={transitionStyle(rafters, staggerDelayMs('rafters', index, scene.frame.rafters.length))}
@@ -400,7 +400,7 @@ export function HangarPreview({
             "roof framing arrives" moment. */}
         {domain.structural.roofStructure === 'truss' && scene.frame.trussChords.map((line, index) => (
           <FrameLineEl
-            key={`truss-chord-${index}`}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${rafters.phase}`}
             style={transitionStyle(rafters, staggerDelayMs('rafters', index, scene.frame.trussChords.length))}
@@ -408,7 +408,7 @@ export function HangarPreview({
         ))}
         {domain.structural.roofStructure === 'truss' && scene.frame.trussWebs.map((line, index) => (
           <FrameLineEl
-            key={`truss-web-${index}`}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${rafters.phase} hc-truss-web`}
             style={transitionStyle(rafters, staggerDelayMs('rafters', index, scene.frame.trussWebs.length))}
@@ -419,7 +419,7 @@ export function HangarPreview({
       <g className="hc-layer hc-purlins">
         {scene.frame.girts.map((line, index) => (
           <FrameLineEl
-            key={index}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${purlins.phase}`}
             style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.girts.length))}
@@ -429,7 +429,7 @@ export function HangarPreview({
             secondary steel arrives with the walls'. */}
         {scene.frame.roofPurlins.map((line, index) => (
           <FrameLineEl
-            key={`roof-purlin-${index}`}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${purlins.phase} hc-roof-purlin`}
             style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.roofPurlins.length))}
@@ -439,7 +439,7 @@ export function HangarPreview({
             girts: both are secondary steel, always present, not a user control. */}
         {scene.frame.bracing.map((line, index) => (
           <FrameLineEl
-            key={`brace-${index}`}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${purlins.phase} hc-brace`}
             style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.bracing.length))}
@@ -448,7 +448,7 @@ export function HangarPreview({
         {/* 03.10 — the roof's crosses, in the wall bracing's bays and ink. */}
         {scene.frame.roofBracing.map((line, index) => (
           <FrameLineEl
-            key={`roof-brace-${index}`}
+            key={line.id}
             line={line}
             className={`hc-buildlayer hc-phase-${purlins.phase} hc-brace hc-roof-brace`}
             style={transitionStyle(purlins, staggerDelayMs('purlins', index, scene.frame.roofBracing.length))}

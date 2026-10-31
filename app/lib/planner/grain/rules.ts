@@ -83,17 +83,22 @@ export function isThemeComplete(index: number, answers: Answers) {
 
 export function themeAnswerState(index: number, answers: Answers): ThemeAnswerState {
   if (!isThemeComplete(index, answers)) return 'incomplete';
-  const capacity = parseCapacity(answers.capacity);
-  const unknown = index === 0
-    ? capacity.kind === 'unknown' || answers.crops.includes('Ще не визначили') || answers.separation === 'unknown'
-    : index === 1
-      ? answers.operation === 'unknown' || (answers.operation === 'high' && answers.handling === 'unknown')
-      : index === 2
-        ? answers.processing === 'unknown' || (requiresHandling(answers) && answers.handling === 'unknown')
-        : index === 3
-          ? answers.site === 'unknown' || answers.sitePressure === 'unknown'
-          : answers.development.includes('unknown') || (requiresFutureHandling(answers) && answers.futureHandling === 'unknown');
-  return unknown ? 'unknown' : 'confirmed';
+  return themeHasUnknown(index, answers) ? 'unknown' : 'confirmed';
+}
+
+function themeHasUnknown(index: number, answers: Answers) {
+  switch (index) {
+    case 0:
+      return parseCapacity(answers.capacity).kind === 'unknown' || answers.crops.includes('Ще не визначили') || answers.separation === 'unknown';
+    case 1:
+      return answers.operation === 'unknown' || (answers.operation === 'high' && answers.handling === 'unknown');
+    case 2:
+      return answers.processing === 'unknown' || (requiresHandling(answers) && answers.handling === 'unknown');
+    case 3:
+      return answers.site === 'unknown' || answers.sitePressure === 'unknown';
+    default:
+      return answers.development.includes('unknown') || (requiresFutureHandling(answers) && answers.futureHandling === 'unknown');
+  }
 }
 
 /**

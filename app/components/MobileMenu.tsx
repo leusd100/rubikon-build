@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 
-export default function MobileMenu({ children }: { children: ReactNode }) {
+export default function MobileMenu({ children }: Readonly<{ children: ReactNode }>) {
   const menuRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {

@@ -9,13 +9,13 @@ export function DriverPills({
   drivers,
   open,
   onToggle,
-}: {
+}: Readonly<{
   id: string;
   label: string;
   drivers: readonly DriverView[];
   open: string | null;
   onToggle: (driver: string) => void;
-}) {
+}>) {
   const active = drivers.find((driver) => driver.label === open);
 
   return (

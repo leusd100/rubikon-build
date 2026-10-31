@@ -9,7 +9,7 @@ export function ChangeBanner({
   notes,
   open,
   onToggle,
-}: {
+}: Readonly<{
   id: string;
   title: string;
   subtitle: string;
@@ -17,7 +17,7 @@ export function ChangeBanner({
   notes: readonly string[];
   open: boolean;
   onToggle: () => void;
-}) {
+}>) {
   return (
     <div className="planner-change" role="status">
       <div className="planner-change-head">

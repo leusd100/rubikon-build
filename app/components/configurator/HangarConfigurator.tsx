@@ -220,13 +220,13 @@ function useConfiguratorLinks(enabled: boolean, layoutRef: RefObject<HTMLDivElem
   useEffect(() => {
     if (!enabled) return undefined;
     const onClick = (event: MouseEvent) => {
-      const link = event.target instanceof Element ? event.target.closest('a[href="#configurator"]') : null;
+      const link = event.target instanceof Element ? event.target.closest<HTMLElement>('a[href="#configurator"]') : null;
       const layout = layoutRef.current;
       const section = layout?.closest<HTMLElement>('#configurator');
       const tabs = layout?.querySelector<HTMLElement>('.hc-steps');
       if (!link || !layout || !section || !tabs || event.defaultPrevented || event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      if (link.hasAttribute('data-open-steps')) {
+      if ('openSteps' in link.dataset) {
         // handled here: the desktop's smooth scrolling (Lenis, SmoothScroll.tsx) took anchor clicks on the window too
         // (until MO-02), read the page mid-jump and carried it back down to the form
         event.preventDefault();

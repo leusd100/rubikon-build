@@ -131,10 +131,10 @@ function classifyBudget(budgetHint: string | null): BudgetTier {
   if (!budgetHint) return 'unknown';
 
   const lower = budgetHint.toLowerCase();
-  const numberMatch = lower.match(/[\d]+([.,]\d+)?/);
+  const numberMatch = /\d+([.,]\d+)?/.exec(lower);
   if (!numberMatch) return 'unknown';
 
-  let value = parseFloat(numberMatch[0].replace(',', '.'));
+  let value = Number.parseFloat(numberMatch[0].replace(',', '.'));
   if (lower.includes('млн')) value *= 1_000_000;
   else if (lower.includes('тис')) value *= 1_000;
 

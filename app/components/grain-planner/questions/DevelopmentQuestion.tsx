@@ -7,7 +7,7 @@ import { Clarifier } from '../../planner/Clarifier';
 import type { GrainQuestionProps } from './types';
 import { Arrow } from '../../Arrow';
 
-export function DevelopmentQuestion({ answers, answer }: GrainQuestionProps) {
+export function DevelopmentQuestion({ answers, answer }: Readonly<GrainQuestionProps>) {
   // Verbatim toggle rules from the prototype: «none» and «unknown» are exclusive of everything else.
   function toggle(value: string) {
     let next = [...answers.development];

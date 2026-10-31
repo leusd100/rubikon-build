@@ -27,7 +27,7 @@ export function LiveUnderstandingPanel({
   insight,
   tension,
   progress,
-}: {
+}: Readonly<{
   variant: 'panel' | 'summary';
   label: string;
   note: string;
@@ -38,7 +38,7 @@ export function LiveUnderstandingPanel({
   insight?: Insight | null;
   tension?: Tension | null;
   progress?: readonly PanelProgressItem[];
-}) {
+}>) {
   const Wrapper = variant === 'panel' ? 'aside' : 'div';
 
   return (

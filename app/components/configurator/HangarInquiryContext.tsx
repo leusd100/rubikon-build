@@ -155,7 +155,7 @@ function reduceHangarInquiry(current: HangarInquiryState, action: HangarInquiryA
  * Owns the hangar configuration, its attachment state and the presentation demo. The attachment is
  * also published to the page's shared InquiryAttachmentProvider, which is what the form reads.
  */
-export function HangarInquiryProvider({ children }: { children: ReactNode }) {
+export function HangarInquiryProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [model, dispatch] = useReducer(reduceHangarInquiry, INITIAL_HANGAR_INQUIRY_STATE);
   const detachConfiguration = useCallback(() => dispatch({ type: 'explicit-detach' }), []);
 

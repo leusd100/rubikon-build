@@ -23,7 +23,7 @@ const FIGURE_HEAD_RADIUS_M = 0.11;
 const FIGURE_BODY_RADIUS_M = 0.16;
 const FIGURE_MATERIAL_COLOR = '#2b2f33'; // dark, quiet silhouette — reads as "a person", never competes with the building's own lighter value-ladder (materials.ts)
 
-export function ScaleFigure({ position }: { position: [number, number, number] }) {
+export function ScaleFigure({ position }: Readonly<{ position: [number, number, number] }>) {
   const bodyLength = FIGURE_HEIGHT_M - FIGURE_HEAD_RADIUS_M * 2 - FIGURE_BODY_RADIUS_M * 2;
   const material = useMemo(
     () => new THREE.MeshStandardMaterial({ color: FIGURE_MATERIAL_COLOR, roughness: 0.9, metalness: 0.02 }),

@@ -5,7 +5,7 @@ import { ChoiceGroup } from '../../planner/ChoiceGroup';
 import { Clarifier } from '../../planner/Clarifier';
 import type { GrainQuestionProps } from './types';
 
-export function SiteQuestion({ answers, answer }: GrainQuestionProps) {
+export function SiteQuestion({ answers, answer }: Readonly<GrainQuestionProps>) {
   const siteKnown = Boolean(answers.site);
   const existingContext = Boolean(answers.site && !['greenfield', 'unknown'].includes(answers.site));
   const pressureTitle = existingContext ? 'Наскільки жорстко рішення обмежене наявним простором?' : 'Чи є суттєве обмеження по площі?';

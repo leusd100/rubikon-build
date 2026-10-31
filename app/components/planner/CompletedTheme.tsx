@@ -8,13 +8,13 @@ export function CompletedTheme({
   summary,
   state,
   onEdit,
-}: {
+}: Readonly<{
   index: number;
   title: string;
   summary: string;
   state: ThemeState;
   onEdit: () => void;
-}) {
+}>) {
   return (
     <div className="planner-completed" data-planner-theme={index} data-state={state}>
       <span className="planner-completed-icon" aria-hidden="true">{state === 'unknown' ? <CircleHelp /> : <Check />}</span>

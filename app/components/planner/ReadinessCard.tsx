@@ -11,7 +11,7 @@ export function ReadinessCard({
   ready,
   revealLabel,
   onReveal,
-}: {
+}: Readonly<{
   eyebrow: string;
   heading: string;
   body: string;
@@ -19,7 +19,7 @@ export function ReadinessCard({
   ready: boolean;
   revealLabel: string;
   onReveal: () => void;
-}) {
+}>) {
   return (
     <article className="planner-readiness" data-planner-anchor aria-labelledby="planner-readiness-title">
       <span className="planner-readiness-mark" aria-hidden="true">{ready ? <Check /> : <CircleHelp />}</span>

@@ -1,5 +1,5 @@
 /** The result band's heading: what kind of answer the planner reached. */
-export function ResultHeading({ id, eyebrow, heading, lead }: { id: string; eyebrow: string; heading: string; lead: string }) {
+export function ResultHeading({ id, eyebrow, heading, lead }: Readonly<{ id: string; eyebrow: string; heading: string; lead: string }>) {
   return (
     <header className="planner-result-heading" data-planner-anchor>
       <p className="eyebrow"><span /> {eyebrow}</p>

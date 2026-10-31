@@ -13,7 +13,7 @@ export function BriefTable({
   asideTitle,
   aside,
   action,
-}: {
+}: Readonly<{
   eyebrow: string;
   heading: string;
   note: string;
@@ -21,7 +21,7 @@ export function BriefTable({
   asideTitle: string;
   aside: readonly BriefAsideRow[];
   action?: ReactNode;
-}) {
+}>) {
   return (
     <div className="planner-brief" data-planner-brief aria-labelledby="planner-brief-title">
       <div className="planner-brief-head">

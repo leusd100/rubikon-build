@@ -127,7 +127,7 @@ export function layerStartOffsetMs(layer: BuildLayer): number {
  * the brief's ~3s per-action ceiling regardless of hangar size, since every layer's own stagger
  * span is independently capped above. */
 export function totalSequenceDurationMs(): number {
-  const lastInGroup = FRAME_GROUP[FRAME_GROUP.length - 1];
+  const lastInGroup = FRAME_GROUP.at(-1)!;
   return layerStartOffsetMs(lastInGroup) + MAX_STAGGER_SPAN_MS[lastInGroup] + LAYER_DURATION_MS[lastInGroup];
 }
 
