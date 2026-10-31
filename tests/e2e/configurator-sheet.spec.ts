@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { openControlGroup, scrollToMiniHold } from './configurator.helpers';
+import { nextFrames } from './frames.helpers';
 import { getFromServer } from './server.helpers';
 
 // /angary's configurator on the «Креслення» sheet and its first view (owner, 03.10): the preview lies on a drawing
@@ -416,10 +417,18 @@ test.describe('the first view builds the drawing', () => {
     expect(order[order.length - 1] - order[0]).toBeGreaterThan(1500);
     expect(order[order.length - 1] - order[0]).toBeLessThan(4500);
 
-    // once per page load: away and back, the drawing stays complete
+    // once per page load: away and back, the drawing stays complete. Counted, not only read after: the checks below retry,
+    // and a replay would have finished in their time. It would start with the sheet's observer: in frames, 400 ms at 60 Hz
+    await page.evaluate(() => {
+      const counted = { changes: 0 };
+      (window as unknown as { __replay: typeof counted }).__replay = counted;
+      new MutationObserver((records) => { counted.changes += records.length; })
+        .observe(document.querySelector('#configurator .hc-preview-image')!, { subtree: true, attributes: true, attributeFilter: ['data-held', 'data-build', 'data-building'] });
+    });
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     await bringSheetIntoView(page);
-    await page.waitForTimeout(400);
+    await nextFrames(page, 24);
+    expect(await page.evaluate(() => (window as unknown as { __replay: { changes: number } }).__replay.changes), 'a stage held back again').toBe(0);
     await expectWholeDrawing(picture);
     await expect(picture).not.toHaveAttribute('data-build', 'armed');
   });
