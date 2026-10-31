@@ -654,7 +654,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           className: 'hv2-contour-right',
           value: (
             <>
-              <span className="hv2-contour-layers" role="group" aria-label="Що показати праворуч">
+              <fieldset className="hv2-contour-layers" aria-label="Що показати праворуч">
                 {LAYER_ORDER.map((name) => (
                   <button
                     key={name}
@@ -669,7 +669,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                     {LAYERS[name].button}
                   </button>
                 ))}
-              </span>
+              </fieldset>
               <span className="hv2-contour-legend">
                 {LAYER_ORDER.map((name) => (
                   <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={dataFlag(name === layer)}>
