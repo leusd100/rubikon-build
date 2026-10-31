@@ -298,19 +298,9 @@ function boundsOf(points: Vec3[]) {
   };
 }
 
-/**
- * Pure: a HangarDomainModel in, mesh descriptors out. Geometry is delegated to
- * buildParametricModel(); this function only selects surfaces and assigns materials/sections.
- */
-export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
-  const building = buildParametricModel(domain);
-  const { widthM, lengthM } = building.footprint;
-
+/** The portal frames and the secondary steel, in the order the scene lists them */
+function frameStruts(building: ParametricBuildingModel): StrutMesh[] {
   const struts: StrutMesh[] = [];
-  const panels: PanelMesh[] = [];
-  const gables: GableMesh[] = [];
-  const recesses: PanelMesh[] = [];
-  const leaves: GateLeafMesh[] = [];
 
   // ── Primary frame: two columns + two rafters per portal frame, straight from the model ──
   for (const frame of building.frames) {
@@ -349,6 +339,13 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     );
   });
 
+  return struts;
+}
+
+/** The centre support line */
+function internalColumnStruts(building: ParametricBuildingModel): StrutMesh[] {
+  const struts: StrutMesh[] = [];
+
   // ── Phase 3E: the centre support line — empty unless structuralScheme is centerSupport, see
   // buildInternalColumns's own doc comment in parametricModel.ts. ──
   for (const col of building.internalColumns) {
@@ -372,30 +369,88 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
     }
   }
 
-  // ── Phase 3E: the truss's own bottom chord + web, ONLY in truss mode — the top chord is
-  // building.frames' own leftRafter/rightRafter, already pushed above; nothing to add there. ──
-  if (domain.structural.roofStructure === 'truss') {
-    for (const truss of building.trusses) {
+  return struts;
+}
+
+// ── Phase 3E: the truss's own bottom chord + web, ONLY in truss mode — the top chord is
+// building.frames' own leftRafter/rightRafter, listed by frameStruts; nothing to add here. ──
+function trussStruts(building: ParametricBuildingModel): StrutMesh[] {
+  const struts: StrutMesh[] = [];
+  for (const truss of building.trusses) {
+    struts.push({
+      id: `truss-bottom-${truss.index}`,
+      a: truss.bottomChord.a,
+      b: truss.bottomChord.b,
+      sectionM: TRUSS_CHORD_SECTION_M,
+      material: 'frame-primary',
+      role: 'truss-chord',
+    });
+    truss.webs.forEach((web, webIndex) => {
       struts.push({
-        id: `truss-bottom-${truss.index}`,
-        a: truss.bottomChord.a,
-        b: truss.bottomChord.b,
-        sectionM: TRUSS_CHORD_SECTION_M,
+        id: `truss-web-${truss.index}-${webIndex}`,
+        a: web.a,
+        b: web.b,
+        sectionM: TRUSS_WEB_SECTION_M,
         material: 'frame-primary',
-        role: 'truss-chord',
+        role: 'truss-web',
       });
-      truss.webs.forEach((web, webIndex) => {
-        struts.push({
-          id: `truss-web-${truss.index}-${webIndex}`,
-          a: web.a,
-          b: web.b,
-          sectionM: TRUSS_WEB_SECTION_M,
-          material: 'frame-primary',
-          role: 'truss-web',
-        });
-      });
-    }
+    });
   }
+  return struts;
+}
+
+// ── Gate recesses: a dark plane set back behind each opening — measured from the front gable's outer face, which
+// stands CLADDING_END_REACH_M in front of the first frame (09.10, F68) ──
+function openingMeshes(building: ParametricBuildingModel) {
+  const recesses: PanelMesh[] = [];
+  const leaves: GateLeafMesh[] = [];
+  const frontFaceZ = -CLADDING_END_REACH_M;
+  for (const opening of building.openings) {
+    const { xM, yM, widthM: gw, heightM: gh } = opening.rect;
+    const z = frontFaceZ + GATE_RECESS_INSET_M;
+    recesses.push({
+      id: `recess-${opening.index}`,
+      corners: [
+        { x: xM, y: yM + gh, z },
+        { x: xM + gw, y: yM + gh, z },
+        { x: xM + gw, y: yM, z },
+        { x: xM, y: yM, z },
+      ],
+      thicknessM: 0.02,
+      material: 'gate-recess',
+    });
+    leaves.push({
+      id: `leaf-${opening.index}`,
+      kind: opening.kind,
+      xM,
+      widthM: gw,
+      heightM: gh,
+      // The door sits a little deeper than a gate: a sectional gate hangs just inside its opening,
+      // a personnel door is set back in a frame. Both stay well in front of the recess plane.
+      zM: frontFaceZ + (opening.kind === 'door' ? DOOR_LEAF_DEPTH_M : GATE_LEAF_DEPTH_M),
+      frameZM: frontFaceZ,
+      material: opening.kind === 'door' ? 'door' : 'gate',
+    });
+  }
+  return { recesses, leaves };
+}
+
+/**
+ * Pure: a HangarDomainModel in, mesh descriptors out. Geometry is delegated to
+ * buildParametricModel(); this function only selects surfaces and assigns materials/sections.
+ */
+export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
+  const building = buildParametricModel(domain);
+  const { widthM, lengthM } = building.footprint;
+
+  const struts: StrutMesh[] = [
+    ...frameStruts(building),
+    ...internalColumnStruts(building),
+    ...(domain.structural.roofStructure === 'truss' ? trussStruts(building) : []),
+  ];
+  const panels: PanelMesh[] = [];
+  const gables: GableMesh[] = [];
+  const { recesses, leaves } = openingMeshes(building);
 
   // ── Envelope: side walls and both roof slopes, per bay ──
   // The roof's underside stands ROOF_STANDOFF_M off the rafters along the slope's normal (09.10, F68): higher than the
@@ -468,37 +523,6 @@ export function buildThreeScene(domain: HangarDomainModel): ThreeSceneModel {
       material: claddingMaterialKey('wall', domain.envelope.wallSystem),
       claddingSystem: domain.envelope.wallSystem,
       face: gable.face,
-    });
-  }
-
-  // ── Gate recesses: a dark plane set back behind each opening — measured from the front gable's outer face, which
-  // stands CLADDING_END_REACH_M in front of the first frame (09.10, F68) ──
-  const frontFaceZ = -CLADDING_END_REACH_M;
-  for (const opening of building.openings) {
-    const { xM, yM, widthM: gw, heightM: gh } = opening.rect;
-    const z = frontFaceZ + GATE_RECESS_INSET_M;
-    recesses.push({
-      id: `recess-${opening.index}`,
-      corners: [
-        { x: xM, y: yM + gh, z },
-        { x: xM + gw, y: yM + gh, z },
-        { x: xM + gw, y: yM, z },
-        { x: xM, y: yM, z },
-      ],
-      thicknessM: 0.02,
-      material: 'gate-recess',
-    });
-    leaves.push({
-      id: `leaf-${opening.index}`,
-      kind: opening.kind,
-      xM,
-      widthM: gw,
-      heightM: gh,
-      // The door sits a little deeper than a gate: a sectional gate hangs just inside its opening,
-      // a personnel door is set back in a frame. Both stay well in front of the recess plane.
-      zM: frontFaceZ + (opening.kind === 'door' ? DOOR_LEAF_DEPTH_M : GATE_LEAF_DEPTH_M),
-      frameZM: frontFaceZ,
-      material: opening.kind === 'door' ? 'door' : 'gate',
     });
   }
 
