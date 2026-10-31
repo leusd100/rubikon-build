@@ -28,6 +28,38 @@ export function initialLifecycleState(visible: boolean): LayerLifecycleState {
   return { phase: visible ? 'visible' : 'hidden', requestedVisible: visible };
 }
 
+function afterVisibleRequest(state: LayerLifecycleState): LayerLifecycleState {
+  if (state.phase === 'visible' || state.phase === 'materializing') {
+    return state.requestedVisible ? state : { ...state, requestedVisible: true };
+  }
+  // From hidden or mid-dematerialize: start (or reverse into) materializing.
+  return { phase: 'materializing', requestedVisible: true };
+}
+
+function afterHiddenRequest(state: LayerLifecycleState): LayerLifecycleState {
+  if (state.phase === 'hidden' || state.phase === 'dematerializing') {
+    return state.requestedVisible ? { ...state, requestedVisible: false } : state;
+  }
+  return { phase: 'dematerializing', requestedVisible: false };
+}
+
+function afterTransition(state: LayerLifecycleState): LayerLifecycleState {
+  if (state.phase === 'materializing') {
+    // Did a hide request arrive while materializing? Converge to the latest one instead of
+    // settling on a state nobody wants anymore.
+    return state.requestedVisible
+      ? { phase: 'visible', requestedVisible: true }
+      : { phase: 'dematerializing', requestedVisible: false };
+  }
+  if (state.phase === 'dematerializing') {
+    return state.requestedVisible
+      ? { phase: 'materializing', requestedVisible: true }
+      : { phase: 'hidden', requestedVisible: false };
+  }
+  // hidden/visible are terminal with respect to this event — nothing is in flight.
+  return state;
+}
+
 /**
  * Deterministic: the same (state, event) pair always produces the same result — no randomness,
  * no wall-clock reads, no DOM. `TRANSITION_COMPLETE` is dispatched by the timing layer (the React
@@ -36,35 +68,12 @@ export function initialLifecycleState(visible: boolean): LayerLifecycleState {
  */
 export function layerLifecycleReducer(state: LayerLifecycleState, event: LifecycleEvent): LayerLifecycleState {
   switch (event.type) {
-    case 'REQUEST_VISIBLE': {
-      if (state.phase === 'visible' || state.phase === 'materializing') {
-        return state.requestedVisible ? state : { ...state, requestedVisible: true };
-      }
-      // From hidden or mid-dematerialize: start (or reverse into) materializing.
-      return { phase: 'materializing', requestedVisible: true };
-    }
-    case 'REQUEST_HIDDEN': {
-      if (state.phase === 'hidden' || state.phase === 'dematerializing') {
-        return state.requestedVisible ? { ...state, requestedVisible: false } : state;
-      }
-      return { phase: 'dematerializing', requestedVisible: false };
-    }
-    case 'TRANSITION_COMPLETE': {
-      if (state.phase === 'materializing') {
-        // Did a hide request arrive while materializing? Converge to the latest one instead of
-        // settling on a state nobody wants anymore.
-        return state.requestedVisible
-          ? { phase: 'visible', requestedVisible: true }
-          : { phase: 'dematerializing', requestedVisible: false };
-      }
-      if (state.phase === 'dematerializing') {
-        return state.requestedVisible
-          ? { phase: 'materializing', requestedVisible: true }
-          : { phase: 'hidden', requestedVisible: false };
-      }
-      // hidden/visible are terminal with respect to this event — nothing is in flight.
-      return state;
-    }
+    case 'REQUEST_VISIBLE':
+      return afterVisibleRequest(state);
+    case 'REQUEST_HIDDEN':
+      return afterHiddenRequest(state);
+    case 'TRANSITION_COMPLETE':
+      return afterTransition(state);
     default:
       return state;
   }
