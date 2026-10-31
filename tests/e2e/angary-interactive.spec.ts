@@ -264,10 +264,9 @@ test('«Пауза» stops all the frame tour\'s motion, and nothing loops out o
   await page.locator('#hc-step-frame').scrollIntoViewIfNeeded();
   await items.nth(4).click();
   await expect(frame.locator('.ft-chain[data-load="wind"]')).toBeVisible();
-  // every animation of the build runs out; a loop never would
-  await expect
-    .poll(() => frame.evaluate((root) => root.getAnimations({ subtree: true }).filter((animation) => animation.playState === 'running').length), { timeout: 15_000 })
-    .toBe(0);
+  // Past the step's own time (7.6 s) every timer of the page has fired; a loop counts as soon as its rule applies, through
+  // its delay too
+  await page.clock.runFor(8000);
   expect(await looping()).toBe(0);
 });
 
