@@ -30,7 +30,7 @@ Push to main / workflow_dispatch
 
 Nightly / workflow_dispatch
 └─ lint + typecheck + coverage + build
-   ├─ full E2E (4 shards, including accessibility interaction suites)
+   ├─ full E2E (6 shards, including accessibility interaction suites)
    ├─ site-wide visual (2 shards)
    └─ Lighthouse: home + standard + grain (parallel)
 ```
