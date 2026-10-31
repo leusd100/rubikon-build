@@ -82,7 +82,8 @@ export function formatMeters(value: number): string {
 
 /** «24 × 60 × 8 м», «4 × 4 м», «1 × 2,1 м» — one unbreakable piece, spaced «×» everywhere (it was «4×4» beside «24 × 60») */
 export function formatSize(...valuesM: number[]): string {
-  return `${valuesM.map(formatMeters).join(`${NBSP}×${NBSP}`)}${NBSP}м`;
+  const separator = `${NBSP}×${NBSP}`;
+  return `${valuesM.map(formatMeters).join(separator)}${NBSP}м`;
 }
 
 /**

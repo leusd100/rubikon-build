@@ -137,7 +137,8 @@ const timeline = [
   `M${n1[0]},${n1[1]}L${n2[0]},${n2[1]}`,
 ].join('');
 // …and the schedule they meet in: three overlapping works over a time axis with its ticks
-const scheduleAxis = `M${schedule.x},${schedule.y + 20}h126${Array.from({ length: 7 }, (_, index) => `M${schedule.x + index * 21},${schedule.y + 20}v-4`).join('')}`;
+const scheduleTicks = Array.from({ length: 7 }, (_, index) => `M${schedule.x + index * 21},${schedule.y + 20}v-4`).join('');
+const scheduleAxis = `M${schedule.x},${schedule.y + 20}h126${scheduleTicks}`;
 const pad2 = (value: number) => String(value).padStart(2, '0');
 
 /** Where each number sits on the drawing — on its part, clear of the other lines. The foundation's stands a little up

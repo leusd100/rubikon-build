@@ -45,6 +45,8 @@ function round(value: number): number {
 /** A projected envelope surface. `face`/`slope` are carried through from the scene model so
  *  consumers can pick surfaces by identity instead of re-correlating them by array index. */
 export type ProjectedSegment = {
+  /** See FrameLine's. */
+  id: string;
   points: Point[];
   hasFill: boolean;
   envelope: EnvelopeChoice | undefined;
@@ -54,7 +56,9 @@ export type ProjectedSegment = {
 
 /** One structural member's projected line, plus whether its scope is currently on — carried
  *  through rather than filtered out so the renderer can animate a member fading out. */
-export type FrameLine = { points: [Point, Point]; visible: boolean };
+/** `id`: what the member is in the building, unique in its list and never its geometry, so a resized building moves its
+ *  lines rather than remounting them. */
+export type FrameLine = { id: string; points: [Point, Point]; visible: boolean };
 
 export type FrameLines = {
   columns: FrameLine[];
@@ -83,6 +87,9 @@ export type FrameLines = {
   /** 03.10 — the roof bracing's crosses, in the same bays as `bracing`. */
   roofBracing: FrameLine[];
 };
+
+/** How much of a label's run lies left of its anchor point. */
+const ANCHOR_SHARE: Record<DimensionGuide['anchor'], number> = { start: 0, middle: 0.5, end: 1 };
 
 export type DimensionGuide = {
   line: [Point, Point];
@@ -163,7 +170,7 @@ function labelExtent(guide: Omit<DimensionGuide, 'ticks' | 'line'>): Point[] {
   }
   const width = run;
   const { x, y } = guide.label;
-  const left = guide.anchor === 'end' ? x - width : guide.anchor === 'middle' ? x - width / 2 : x;
+  const left = x - width * ANCHOR_SHARE[guide.anchor];
   return [
     { x: left, y: y - fontPx },
     { x: left + width, y: y + fontPx * 0.35 },
@@ -180,7 +187,7 @@ export type IsometricScene = {
   wallSegments: ProjectedSegment[];
   gableEnds: ProjectedSegment[];
   roofSegments: ProjectedSegment[];
-  gates: { points: Point[] }[];
+  gates: { id: string; points: Point[] }[];
   dimensions: {
     width: DimensionGuide;
     length: DimensionGuide;
@@ -236,25 +243,27 @@ export function projectIsometricScene(scene: TechnicalSceneModel, labelScale = 1
     return { id: f.id, points: projectAll(corners), visible: f.visible };
   });
 
-  const asLine = (p: { a: Vec3; b: Vec3; visible: boolean }): FrameLine => ({
+  const asLine = (p: { a: Vec3; b: Vec3; visible: boolean }, id: string): FrameLine => ({
+    id,
     points: [project(p.a), project(p.b)],
     visible: p.visible,
   });
 
-  const columns = findPrimitives(scene, 'frame-column').map(asLine);
-  const rafters = findPrimitives(scene, 'frame-rafter').map(asLine);
-  const girts = findPrimitives(scene, 'wall-girt').map(asLine);
-  const roofPurlins = findPrimitives(scene, 'roof-purlin').map(asLine);
+  const columns = findPrimitives(scene, 'frame-column').map((p) => asLine(p, `${p.face}-${p.index}`));
+  const rafters = findPrimitives(scene, 'frame-rafter').map((p) => asLine(p, `${p.slope}-${p.index}`));
+  const girts = findPrimitives(scene, 'wall-girt').map((p) => asLine(p, `${p.index}`));
+  const roofPurlins = findPrimitives(scene, 'roof-purlin').map((p) => asLine(p, `${p.index}`));
   const ridgePrimitive = findPrimitives(scene, 'ridge-line')[0];
-  const ridge = ridgePrimitive ? asLine(ridgePrimitive) : null;
-  const internalColumns = findPrimitives(scene, 'internal-column').map(asLine);
-  const internalColumnProps = findPrimitives(scene, 'internal-column-prop').map(asLine);
-  const trussChords = findPrimitives(scene, 'truss-chord').map(asLine);
-  const trussWebs = findPrimitives(scene, 'truss-web').map(asLine);
-  const bracing = findPrimitives(scene, 'wall-brace').map(asLine);
-  const roofBracing = findPrimitives(scene, 'roof-brace').map(asLine);
+  const ridge = ridgePrimitive ? asLine(ridgePrimitive, 'ridge') : null;
+  const internalColumns = findPrimitives(scene, 'internal-column').map((p) => asLine(p, `${p.index}`));
+  const internalColumnProps = findPrimitives(scene, 'internal-column-prop').map((p) => asLine(p, `${p.index}`));
+  const trussChords = findPrimitives(scene, 'truss-chord').map((p) => asLine(p, `${p.index}`));
+  const trussWebs = findPrimitives(scene, 'truss-web').map((p) => asLine(p, `${p.index}-${p.webIndex}`));
+  const bracing = findPrimitives(scene, 'wall-brace').map((p) => asLine(p, `${p.face}-${p.bayIndex}-${p.diagonal}`));
+  const roofBracing = findPrimitives(scene, 'roof-brace').map((p) => asLine(p, `${p.slope}-${p.bayIndex}-${p.panelIndex}-${p.diagonal}`));
 
   const wallSegments: ProjectedSegment[] = findPrimitives(scene, 'wall-segment').map((s) => ({
+    id: `${s.face}-${s.index}`,
     points: projectAll(s.corners),
     hasFill: s.hasFill,
     envelope: s.envelope,
@@ -262,6 +271,7 @@ export function projectIsometricScene(scene: TechnicalSceneModel, labelScale = 1
   }));
 
   const gableEnds: ProjectedSegment[] = findPrimitives(scene, 'gable-end').map((g) => ({
+    id: g.face,
     points: projectAll(g.outline),
     hasFill: g.hasFill,
     envelope: g.envelope,
@@ -269,13 +279,14 @@ export function projectIsometricScene(scene: TechnicalSceneModel, labelScale = 1
   }));
 
   const roofSegments: ProjectedSegment[] = findPrimitives(scene, 'roof-segment').map((s) => ({
+    id: `${s.slope}-${s.index}`,
     points: projectAll(s.corners),
     hasFill: s.hasFill,
     envelope: s.envelope,
     slope: s.slope,
   }));
 
-  const gates = findPrimitives(scene, 'opening-cutout').map((g) => ({ points: projectAll(g.corners) }));
+  const gates = findPrimitives(scene, 'opening-cutout').map((g) => ({ id: `${g.index}`, points: projectAll(g.corners) }));
 
   // The building's own projected extent drives guide placement and framing. The terrain is
   // deliberately NOT part of it: it is staging, and letting it set the bounds is what made the

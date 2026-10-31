@@ -23,11 +23,22 @@ const UNDECIDED_LABEL = 'Ви ще не визначили';
 const FIRST_CALL_LABEL = 'На першій розмові уточнимо';
 const LIST_SEPARATOR = '; ';
 
+function taskType(answers: Answers) {
+  if (answers.processing === 'none') return 'Зберігання зерна без підтвердженої підготовки';
+  if (!answers.processing || answers.processing === 'unknown') return 'Тип задачі уточнюється';
+  return 'Зберігання з підготовкою зерна';
+}
+
+function futureHandlingLabel(answers: Answers) {
+  if (!requiresFutureHandling(answers)) return 'Не заявлено окремо';
+  return answers.futureHandling ? uiLabels[answers.futureHandling] : 'Потрібно уточнити';
+}
+
 /** The ten «Попередній опис» rows, with the theme each one edits. */
 export function grainBriefTaskRows(answers: Answers): BriefRow[] {
   const capacityLabel = formatCapacityInfo(parseCapacity(answers.capacity));
   const rows = [
-    ['Тип задачі', answers.processing && !['none', 'unknown'].includes(answers.processing) ? 'Зберігання з підготовкою зерна' : answers.processing === 'none' ? 'Зберігання зерна без підтвердженої підготовки' : 'Тип задачі уточнюється', 2],
+    ['Тип задачі', taskType(answers), 2],
     ['Місткість', capacityLabel || 'Потрібно уточнити', 0],
     ['Продукція', answers.crops.join(' · ') || 'Потрібно уточнити', 0],
     ['Розділення', answers.separation ? uiLabels[answers.separation] : 'Не визначено', 0],
@@ -36,7 +47,7 @@ export function grainBriefTaskRows(answers: Answers): BriefRow[] {
     ['Підготовка зерна', answers.processing ? uiLabels[answers.processing] : 'Не визначено', 2],
     ['Майданчик', [answers.site && uiLabels[answers.site], answers.sitePressure && uiLabels[answers.sitePressure]].filter(Boolean).join(' · ') || 'Не визначено', 3],
     ['Розвиток', answers.development.map(developmentLabel).join(' · ') || 'Не визначено', 4],
-    ['Майбутнє переміщення', requiresFutureHandling(answers) ? answers.futureHandling ? uiLabels[answers.futureHandling] : 'Потрібно уточнити' : 'Не заявлено окремо', 4],
+    ['Майбутнє переміщення', futureHandlingLabel(answers), 4],
   ] as [string, string, number][];
   return rows.map(([label, value, themeIndex]) => ({ label, value, themeIndex }));
 }
@@ -104,7 +115,7 @@ export function formatGrainBriefText(brief: PreliminaryBrief, answers: Answers, 
   let text = render();
   for (const label of [FIRST_CALL_LABEL, UNDECIDED_LABEL]) {
     const items = lists.get(label);
-    while (items && items.length && text.length > limit) {
+    while (items?.length && text.length > limit) {
       items.pop();
       truncated.add(label);
       text = render();

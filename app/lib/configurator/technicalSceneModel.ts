@@ -62,10 +62,10 @@ export type ScenePrimitive =
   | { kind: 'truss-web'; visible: boolean; index: number; webIndex: number; a: Vec3; b: Vec3 }
   // Phase 3E, brief §13/§15 — a few restrained X marks, never omitted (see BraceMember's own doc
   // comment — always at least the first/last bay, at any supported length).
-  | { kind: 'wall-brace'; visible: boolean; face: 'left' | 'right'; bayIndex: number; a: Vec3; b: Vec3 }
+  | { kind: 'wall-brace'; visible: boolean; face: 'left' | 'right'; bayIndex: number; diagonal: 'a' | 'b'; a: Vec3; b: Vec3 }
   // 03.10 — the roof bracing: one primitive per diagonal, in the wall bracing's own bays (see
   // RoofBraceMember in parametricModel.ts).
-  | { kind: 'roof-brace'; visible: boolean; slope: 'left' | 'right'; bayIndex: number; a: Vec3; b: Vec3 }
+  | { kind: 'roof-brace'; visible: boolean; slope: 'left' | 'right'; bayIndex: number; panelIndex: number; diagonal: 'a' | 'b'; a: Vec3; b: Vec3 }
   // One primitive per structural bay so the envelope materialises section-by-section.
   | {
       kind: 'wall-segment';
@@ -159,14 +159,16 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
   const frameVisible = domain.scope.frame;
 
   for (const frame of building.frames) {
-    primitives.push({
-      kind: 'frame-column', visible: frameVisible, face: 'left', index: frame.index,
-      a: frame.leftColumn.a, b: frame.leftColumn.b,
-    });
-    primitives.push({
-      kind: 'frame-column', visible: frameVisible, face: 'right', index: frame.index,
-      a: frame.rightColumn.a, b: frame.rightColumn.b,
-    });
+    primitives.push(
+      {
+        kind: 'frame-column', visible: frameVisible, face: 'left', index: frame.index,
+        a: frame.leftColumn.a, b: frame.leftColumn.b,
+      },
+      {
+        kind: 'frame-column', visible: frameVisible, face: 'right', index: frame.index,
+        a: frame.rightColumn.a, b: frame.rightColumn.b,
+      },
+    );
   }
   // Phase 3E — the centre support line, pushed alongside the external columns above (same
   // build-up moment: brief §14's "prefer grouping over exploding the FSM", mirrored from
@@ -183,14 +185,16 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
   // Rafters are pushed after every column so the build-up's per-instance stagger indexes run
   // over a contiguous run of same-kind primitives, matching how columns are staged.
   for (const frame of building.frames) {
-    primitives.push({
-      kind: 'frame-rafter', visible: frameVisible, slope: 'left', index: frame.index,
-      a: frame.leftRafter.a, b: frame.leftRafter.b,
-    });
-    primitives.push({
-      kind: 'frame-rafter', visible: frameVisible, slope: 'right', index: frame.index,
-      a: frame.rightRafter.a, b: frame.rightRafter.b,
-    });
+    primitives.push(
+      {
+        kind: 'frame-rafter', visible: frameVisible, slope: 'left', index: frame.index,
+        a: frame.leftRafter.a, b: frame.leftRafter.b,
+      },
+      {
+        kind: 'frame-rafter', visible: frameVisible, slope: 'right', index: frame.index,
+        a: frame.rightRafter.a, b: frame.rightRafter.b,
+      },
+    );
   }
 
   // Phase 3E — the truss's own bottom chord + web, pushed alongside the rafters (top chord)
@@ -217,13 +221,17 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
   // Phase 3E — wall bracing, same `frameVisible` gating as girts (both secondary steel, both
   // always present wherever ParametricBuildingModel put them — brief §11/§13).
   building.bracing.forEach((brace) => {
-    primitives.push({ kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, a: brace.diagonalA.a, b: brace.diagonalA.b });
-    primitives.push({ kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, a: brace.diagonalB.a, b: brace.diagonalB.b });
+    primitives.push(
+      { kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, diagonal: 'a', a: brace.diagonalA.a, b: brace.diagonalA.b },
+      { kind: 'wall-brace', visible: frameVisible, face: brace.face, bayIndex: brace.bayIndex, diagonal: 'b', a: brace.diagonalB.a, b: brace.diagonalB.b },
+    );
   });
   // 03.10 — and the roof's, gated the same way.
   building.roofBracing.forEach((brace) => {
-    primitives.push({ kind: 'roof-brace', visible: frameVisible, slope: brace.slope, bayIndex: brace.bayIndex, a: brace.diagonalA.a, b: brace.diagonalA.b });
-    primitives.push({ kind: 'roof-brace', visible: frameVisible, slope: brace.slope, bayIndex: brace.bayIndex, a: brace.diagonalB.a, b: brace.diagonalB.b });
+    primitives.push(
+      { kind: 'roof-brace', visible: frameVisible, slope: brace.slope, bayIndex: brace.bayIndex, panelIndex: brace.panelIndex, diagonal: 'a', a: brace.diagonalA.a, b: brace.diagonalA.b },
+      { kind: 'roof-brace', visible: frameVisible, slope: brace.slope, bayIndex: brace.bayIndex, panelIndex: brace.panelIndex, diagonal: 'b', a: brace.diagonalB.a, b: brace.diagonalB.b },
+    );
   });
 
   for (const segment of building.envelope.wallSegments) {
@@ -271,10 +279,12 @@ export function buildTechnicalScene(domain: HangarDomainModel): TechnicalSceneMo
     primitives.push({ kind: 'opening-cutout', index: opening.index, corners: opening.corners });
   }
 
-  primitives.push({ kind: 'dimension-guide', axis: 'width', valueM: widthM, derived: false });
-  primitives.push({ kind: 'dimension-guide', axis: 'length', valueM: lengthM, derived: false });
-  primitives.push({ kind: 'dimension-guide', axis: 'eave', valueM: eaveM, derived: false });
-  primitives.push({ kind: 'dimension-guide', axis: 'ridge', valueM: ridgeM, derived: true });
+  primitives.push(
+    { kind: 'dimension-guide', axis: 'width', valueM: widthM, derived: false },
+    { kind: 'dimension-guide', axis: 'length', valueM: lengthM, derived: false },
+    { kind: 'dimension-guide', axis: 'eave', valueM: eaveM, derived: false },
+    { kind: 'dimension-guide', axis: 'ridge', valueM: ridgeM, derived: true },
+  );
 
   return {
     dimensions: { widthM, lengthM, eaveHeightM: eaveM, ridgeHeightM: ridgeM },

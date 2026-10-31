@@ -101,6 +101,7 @@ export function DirectionHeroVideo({
       };
     }
 
+    const clearOutgoing = (index: number) => setOutgoingSource((current) => current === index ? null : current);
     let pauseTimer: ReturnType<typeof setTimeout> | undefined;
     const cycleTimer = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return;
@@ -124,7 +125,7 @@ export function DirectionHeroVideo({
 
         pauseTimer = setTimeout(() => {
           videos[previousIndex]?.pause();
-          setOutgoingSource((current) => current === previousIndex ? null : current);
+          clearOutgoing(previousIndex);
         }, fadeDurationMs);
       }).catch(() => undefined);
     }, clipDurationMs);

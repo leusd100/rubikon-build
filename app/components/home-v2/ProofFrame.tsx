@@ -18,7 +18,13 @@ import { homeProofDetailSpots, homeProofFrame, homeProofParts, type PointLoad, t
 
 const { width: W, height: H } = homeProofContour.photo;
 type Pt = readonly [number, number];
-const d = (points: readonly Pt[], closed = false) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}${closed ? 'Z' : ''}`;
+const d = (points: readonly Pt[], closed = false) => {
+  const line = points.map(([x, y]) => `${x} ${y}`).join('L');
+  return `M${line}${closed ? 'Z' : ''}`;
+};
+/** A member's React key: the same line can stand in two groups or at two depths */
+const memberKey = ({ group, depth, points, closed }: Readonly<{ group: string; depth: number; points: readonly Pt[]; closed?: boolean }>) =>
+  `${group}-${depth}-${d(points, closed)}`;
 /** A lit link's React key, by both its ends: the truss's two halves start at the one ridge node */
 export const linkKey = ({ link, points }: Readonly<{ link: number; points: readonly Pt[] }>) => `${link}-${points[0].join()}-${points.at(-1)!.join()}`;
 /** The section hatch's step in photo pixels per frame width (home-v2.css picks one by the --u steps): a narrower frame
@@ -72,7 +78,7 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
     <svg className="hv2-proof-frame" data-layer="scheme" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={windOn ? `${label} ${windLabel}` : label}>
       <defs>
         <clipPath id="hv2-proof-silhouette">
-          {silhouette.map((outline, index) => <path key={index} d={d(outline, true)} />)}
+          {silhouette.map((outline) => <path key={d(outline, true)} d={d(outline, true)} />)}
         </clipPath>
         {/* The gable's face less its gates: the blockwork stops at the openings */}
         <clipPath id="hv2-proof-face">
@@ -113,10 +119,10 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
               <path className="hv2-proof-blocks" data-depth="1" d={blockwork(walls.long, 24, 22)} />
             </>
           )}
-          {walls.cuts.map((cut, index) => <path key={index} className="hv2-proof-cut" d={d(cut, true)} />)}
-          {inside.map((member, index) => (
+          {walls.cuts.map((cut) => <path key={d(cut, true)} className="hv2-proof-cut" d={d(cut, true)} />)}
+          {inside.map((member) => (
             <path
-              key={index}
+              key={memberKey(member)}
               d={d(member.points, member.closed)}
               data-group={member.group}
               data-depth={member.depth}
@@ -156,8 +162,8 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
           {homeProofDetailSpots.map(({ id, ring: [x, y], radius }) => <circle key={id} data-detail={id} cx={x} cy={y} r={radius} />)}
         </g>
         {/* Under the ground, «умовно»: in section under the cut walls and the column, the long wall's strip going back */}
-        {footings.map((member, index) => (
-          <path key={index} className="hv2-proof-footing" d={d(member.points, member.closed)} data-depth={member.depth} data-cut={member.closed ? '' : undefined} />
+        {footings.map((member) => (
+          <path key={memberKey(member)} className="hv2-proof-footing" d={d(member.points, member.closed)} data-depth={member.depth} data-cut={member.closed ? '' : undefined} />
         ))}
       </g>
       {/* The snow's way, link by link — replayed on every press of «Сніг» (a new key restarts it) */}
@@ -166,7 +172,7 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
         <g className="hv2-proof-snow" data-step="0" style={{ '--n': 0 } as CSSProperties}>
           <path className="hv2-proof-comb" d={d(load.comb)} />
           {load.arrows.map(([from, to], index) => (
-            <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head)" style={{ '--k': index } as CSSProperties} />
+            <path key={d([from, to])} d={d([from, to])} markerEnd="url(#hv2-proof-head)" style={{ '--k': index } as CSSProperties} />
           ))}
         </g>
         {/* The strip one truss carries: the snow settles on it */}
@@ -178,8 +184,8 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
           {nodes.map(([x, y]) => <circle key={x} cx={x} cy={y} r="3.4" />)}
         </g>
         <g className="hv2-proof-lit-truss" data-step="3" style={{ '--n': 3 } as CSSProperties}>
-          {members.filter((member) => member.depth === 0 && (member.group === 'truss' || member.group === 'web')).map((member, index) => (
-            <path key={index} d={d(member.points)} />
+          {members.filter((member) => member.depth === 0 && (member.group === 'truss' || member.group === 'web')).map((member) => (
+            <path key={memberKey(member)} d={d(member.points)} />
           ))}
         </g>
         {/* Each lit link: a clean light line on a dark casing, as the measured lines are kept legible — no glow */}
@@ -193,7 +199,7 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
           <path key={leg.at(-1)!.join()} className="hv2-proof-flow" data-step="flow" d={d(leg)} markerEnd="url(#hv2-proof-foot)" style={{ '--n': 3 } as CSSProperties} />
         ))}
         <g className="hv2-proof-ground" data-step="6" style={{ '--n': 6 } as CSSProperties}>
-          {load.ground.map((tick, index) => <path key={index} d={d(tick)} />)}
+          {load.ground.map((tick) => <path key={d(tick)} d={d(tick)} />)}
         </g>
       </g>
       {/* The wind's way — replayed on every press of «Вітер»: the gusts and the lift, then link by link to the ground */}
@@ -202,13 +208,13 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
         {([['wide', wind.gustsWide], ['narrow', wind.gusts]] as const).map(([size, set]) => (
           <g key={size} className="hv2-proof-gusts" data-size={size} data-step="0" style={{ '--n': 0 } as CSSProperties}>
             {set.map(([from, to], index) => (
-              <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
+              <path key={d([from, to])} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
             ))}
           </g>
         ))}
         <g className="hv2-proof-lift" data-step="0" style={{ '--n': 1 } as CSSProperties}>
           {wind.lift.map(([from, to], index) => (
-            <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
+            <path key={d([from, to])} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" style={{ '--k': index } as CSSProperties} />
           ))}
         </g>
         {wind.links.map(({ link, points }) => (
@@ -221,7 +227,7 @@ export const ProofFrame = memo(function ProofFrame({ buildRun, loadRun, windRun,
           <path key={leg.at(-1)!.join()} className="hv2-proof-flow" data-step="flow" d={d(leg)} markerEnd="url(#hv2-proof-foot-wind)" style={{ '--n': 3 } as CSSProperties} />
         ))}
         <g className="hv2-proof-reactions" data-step="6" style={{ '--n': 6 } as CSSProperties}>
-          {wind.reactions.map(([from, to], index) => <path key={index} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" />)}
+          {wind.reactions.map(([from, to]) => <path key={d([from, to])} d={d([from, to])} markerEnd="url(#hv2-proof-head-wind)" />)}
         </g>
       </g>
     </svg>

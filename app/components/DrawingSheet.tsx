@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode, type Ref } from 'react';
+import { classNames } from '../lib/classNames';
 import './drawing-sheet.css';
 
 // «Креслення» — the site's frame for a standalone image (chosen in the /napryamky frame lab): the picture laid on a
@@ -62,11 +63,11 @@ export function DrawingSheet({
   }, []);
 
   return (
-    <figure ref={sheetRef} className={`sheet${className ? ` ${className}` : ''}`}>
+    <figure ref={sheetRef} className={classNames('sheet', className)}>
       <div className="sheet-body">
         <span className="sheet-ruler sheet-ruler-x" aria-hidden="true" />
         <span className="sheet-ruler sheet-ruler-y" aria-hidden="true" />
-        <div className={`sheet-image${imageClassName ? ` ${imageClassName}` : ''}`} ref={imageRef}>
+        <div className={classNames('sheet-image', imageClassName)} ref={imageRef}>
           {children}
         </div>
         <i className="sheet-cover" aria-hidden="true" />
@@ -77,7 +78,7 @@ export function DrawingSheet({
           <span
             // The cells are a fixed layout per sheet: their order never changes
             key={`${index}-${cell.label ?? ''}`}
-            className={`sheet-cell${cell.tone ? ` sheet-cell-${cell.tone}` : ''}${cell.className ? ` ${cell.className}` : ''}`}
+            className={classNames('sheet-cell', cell.tone && `sheet-cell-${cell.tone}`, cell.className)}
           >
             {cell.label && <small>{cell.label}</small>}
             <b>{cell.value}</b>

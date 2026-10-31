@@ -26,6 +26,8 @@ const FOUNDATION_THICKNESS_M = 0.3;
 
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 
+const memberKey = ({ a, b }: Member) => [a.x, a.y, a.z, b.x, b.y, b.z].join();
+
 /**
  * One structural member drawn as a box along its own centre-line. Orientation comes from a
  * quaternion that rotates the box's local +X onto the member direction — the general solution,
@@ -36,7 +38,7 @@ function Strut({ member, section, color }: Readonly<{ member: Member; section: n
   const { position, quaternion, length } = useMemo(() => {
     const a = new THREE.Vector3(member.a.x, member.a.y, member.a.z);
     const b = new THREE.Vector3(member.b.x, member.b.y, member.b.z);
-    const dir = new THREE.Vector3().subVectors(b, a);
+    const dir = b.clone().sub(a);
     const len = dir.length();
     const q = new THREE.Quaternion().setFromUnitVectors(X_AXIS, dir.clone().normalize());
     return { position: new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5), quaternion: q, length: len };
@@ -88,8 +90,8 @@ export function HangarSpikeScene({
         </group>
       ))}
 
-      {showFrame && building.girts.map((girt, index) => (
-        <Strut key={index} member={girt} section={GIRT_SECTION_M} color={RAFTER_COLOR} />
+      {showFrame && building.girts.map((girt) => (
+        <Strut key={memberKey(girt)} member={girt} section={GIRT_SECTION_M} color={RAFTER_COLOR} />
       ))}
     </Canvas>
   );

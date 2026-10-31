@@ -25,6 +25,7 @@ import './directions/direction-template.css';
 import './directions/process-split.css';
 import './faq.css';
 import { Arrow } from './Arrow';
+import { classNames } from '../lib/classNames';
 
 const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
   'zernoskhovyshcha',
@@ -32,11 +33,6 @@ const mediaFirstEditorialDirections = new Set<DirectionPageConfig['id']>([
 ]);
 
 export type { DirectionFaqItem, DirectionItem, DirectionStep } from '../types/directionPage';
-
-/** The class names that are set, space-separated. */
-function classNames(...names: (string | undefined)[]) {
-  return names.filter(Boolean).join(' ');
-}
 
 function DirectionItemCards({
   className,
@@ -178,7 +174,7 @@ export function DirectionProcess({
   text: string;
   steps: readonly DirectionStep[];
   split?: readonly ProcessSplit[];
-  link?: DirectionPageConfig['process']['link'];
+  link?: NonNullable<DirectionPageConfig['process']['link']>;
   className?: string;
 }>) {
   const sides = split?.length === steps.length ? split : undefined;

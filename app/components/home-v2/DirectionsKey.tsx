@@ -72,7 +72,7 @@ function Position({ n }: Readonly<{ n: keyof typeof LEADERS }>) {
 export function DirectionsKey() {
   return (
     <figure className="dkey" data-motion>
-      <svg viewBox="0 0 312 172" preserveAspectRatio="xMaxYMax meet" focusable="false">
+      <svg viewBox="0 0 312 172" preserveAspectRatio="xMaxYMax meet" focusable="false" aria-hidden="true">
         <path className="dkey-axis" d={axes} />
         <g className="dkey-bubbles">
           <circle cx="14" cy={ROWS[0]} r="9.5" />

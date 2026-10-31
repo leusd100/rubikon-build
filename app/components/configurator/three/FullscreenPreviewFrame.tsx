@@ -84,7 +84,7 @@ export function FullscreenPreviewFrame({
     const parent = active ? document.body : inlineAnchorRef.current;
     parent?.appendChild(portalHost); // appendChild auto-detaches it from wherever it was first
     return () => {
-      portalHost.parentElement?.removeChild(portalHost); // only matters on final unmount
+      portalHost.remove(); // only matters on final unmount
     };
   }, [active, portalHost]);
 
@@ -117,7 +117,7 @@ export function FullscreenPreviewFrame({
       } else if (event.key === 'Tab') {
         const controls = focusableControls();
         const first = controls[0];
-        const last = controls[controls.length - 1];
+        const last = controls.at(-1);
         if (event.shiftKey && document.activeElement === first) {
           event.preventDefault();
           last?.focus();

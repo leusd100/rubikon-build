@@ -110,9 +110,8 @@ function SummarySketch({ domain }: Readonly<{ domain: HangarDomainModel }>) {
   // The truss as the configurator and the frame tour draw it (trussPanelNodesM): odd panel points on the top chord, even
   // ones on the bottom chord, a vertical under the ridge — so the centre column lands on a node here too. It was six
   // panels with a diagonal apex at the ridge and the column between nodes, the drawing 003b8e9 had corrected (04.10).
-  const web = truss
-    ? `M${trussPanelNodesM(W).panelXsM.slice(1, -1).map((x, index) => `${X(x)},${Z(index % 2 === 0 ? roofZ(x) : E)}`).join('L')}M${X(W / 2)},${Z(E)}V${Z(R)}`
-    : '';
+  const webNodes = () => trussPanelNodesM(W).panelXsM.slice(1, -1).map((x, index) => `${X(x)},${Z(index % 2 === 0 ? roofZ(x) : E)}`).join('L');
+  const web = truss ? `M${webNodes()}M${X(W / 2)},${Z(E)}V${Z(R)}` : '';
   const section = [
     `M${X(0)},${Z(0)}V${Z(E)}L${X(W / 2)},${Z(R)}L${X(W)},${Z(E)}V${Z(0)}`,
     truss ? `M${X(0)},${Z(E)}H${X(W)}` : '',

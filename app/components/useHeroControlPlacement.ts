@@ -24,7 +24,7 @@ export function useHeroControlPlacement() {
     if (!(frame instanceof HTMLElement) || !actions) return;
     const desktop = window.matchMedia(DESKTOP);
     const place = () => {
-      control.removeAttribute('data-compact');
+      delete control.dataset.compact;
       if (!desktop.matches) {
         control.style.removeProperty('bottom');
         return;
@@ -39,7 +39,7 @@ export function useHeroControlPlacement() {
         || rect.bottom + GAP <= top || rect.top >= top + size + GAP);
       let top = (row.top + row.bottom) / 2 - size / 2;
       if (!clear(left, top)) {
-        control.setAttribute('data-compact', '');
+        control.dataset.compact = '';
         if (!clear(right - size, top)) top = row.top - GAP - size;
       }
       control.style.bottom = `${Math.max(0, Math.round(box.bottom - top - size))}px`;
@@ -53,7 +53,7 @@ export function useHeroControlPlacement() {
       observer.disconnect();
       desktop.removeEventListener('change', place);
       control.style.removeProperty('bottom');
-      control.removeAttribute('data-compact');
+      delete control.dataset.compact;
     };
   }, []);
 }

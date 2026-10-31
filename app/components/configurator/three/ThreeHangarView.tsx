@@ -148,8 +148,13 @@ function MaterialOpacityDriver({ materialKey, layer }: Readonly<{ materialKey: M
  * member is pixel-identical to Phase 3A's own output — growth is a generalisation, not a
  * different code path bolted on afterwards.
  */
+/** Two frames, not one: the first may already be under way when the draw it waits for was only just requested. */
+function afterTwoFrames(callback: (value: void) => void) {
+  requestAnimationFrame(() => requestAnimationFrame(() => callback()));
+}
+
 function grownMatrix(a: THREE.Vector3, b: THREE.Vector3, sectionM: number, progress: number): THREE.Matrix4 {
-  const dir = new THREE.Vector3().subVectors(b, a);
+  const dir = b.clone().sub(a);
   const len = dir.length() || 1e-6;
   const quaternion = new THREE.Quaternion().setFromUnitVectors(X_AXIS, dir.clone().normalize());
   // A zero-length box degenerates its matrix (and, on some drivers, its bounding sphere), so the
@@ -725,11 +730,12 @@ function Gable({ gable, castShadow, layer, roofShown, ribPitchM }: Readonly<{
   );
   useEffect(() => () => overlay?.geometry.dispose(), [overlay]);
 
-  const overlayZ = overlay
-    ? gable.face === 'front'
+  let overlayZ = 0;
+  if (overlay) {
+    overlayZ = gable.face === 'front'
       ? gable.zM - overlay.depthM // protrudes further toward the viewer (−Z) than the field's own near face
-      : gable.zM + gable.thicknessM // protrudes further away (+Z) than the field's own far face
-    : 0;
+      : gable.zM + gable.thicknessM; // protrudes further away (+Z) than the field's own far face
+  }
 
   // The gable's outline in paper ink (10.10) on its outermost face — the overlay's crests where there is one. Its two
   // rakes (outline edges 2 and 3) only when the roof is out of the request: under the roof they are the roof's own
@@ -1121,9 +1127,7 @@ function TestRenderSyncAPI() {
     const api = {
       invalidateAndWaitForFrame: () =>
         new Promise<void>((resolve) => {
-          pendingRef.current.push(() => {
-            requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-          });
+          pendingRef.current.push(() => afterTwoFrames(resolve));
           invalidate();
         }),
     };

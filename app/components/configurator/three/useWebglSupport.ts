@@ -39,7 +39,7 @@ function subscribe() {
 }
 
 function getSnapshot(): WebglSupport {
-  if (cachedSupport === null) cachedSupport = probe();
+  cachedSupport ??= probe();
   return cachedSupport;
 }
 

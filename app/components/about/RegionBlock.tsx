@@ -1,6 +1,7 @@
 import { RegionMap } from './RegionMap';
 import { company } from '../../data/company';
 import { regionMap } from '../../data/regionMap';
+import { classNames } from '../../lib/classNames';
 
 // The main region, as one block shared by /pro-nas (closing its directions) and /napryamky: one copper line with the
 // region on it, «Базуємося в Дніпрі» with the other-regions sentence, and the oblast's real outline (RegionMap,
@@ -8,7 +9,7 @@ import { regionMap } from '../../data/regionMap';
 // ProcessMotion root ([data-motion]); without motion everything stands complete.
 export function RegionBlock({ className }: Readonly<{ className?: string }>) {
   return (
-    <div className={`region-block${className ? ` ${className}` : ''}`} data-motion>
+    <div className={classNames('region-block', className)} data-motion>
       <p className="region-bond"><span>Основний регіон — {company.serviceAreas[0]}</span></p>
       <div className="region-layout">
         <div className="region-copy">
