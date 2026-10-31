@@ -31,14 +31,19 @@ function trackErrors(page: Page): string[] {
   return errors;
 }
 
-async function canvasPixels(page: Page): Promise<Buffer> {
-  return page.locator('.hc-preview-surface canvas').screenshot();
+/**
+ * The canvas's own drawing buffer (createRenderer keeps it). Not a screenshot of the element: that holds whatever lies over
+ * the canvas, and a click that scrolls the page to its control brings the fixed header over it, so a control that drew
+ * nothing still read as a change.
+ */
+async function canvasPixels(page: Page): Promise<string> {
+  return page.locator('.hc-preview-surface canvas').evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
 }
 
 /** The canvas's new picture, once it shows something other than `before` and has stopped drawing, however late its frame
  *  comes (software WebGL hands one out a second or more after the click: the budget is waitForBuildUpToSettle's) */
-async function pictureChangedFrom(page: Page, before: Buffer, message: string): Promise<Buffer> {
-  await expect.poll(async () => (await canvasPixels(page)).equals(before), { message, timeout: 15_000 }).toBe(false);
+async function pictureChangedFrom(page: Page, before: string, message: string): Promise<string> {
+  await expect.poll(async () => (await canvasPixels(page)) === before, { message, timeout: 15_000 }).toBe(false);
   await waitForBuildUpToSettle(page);
   return canvasPixels(page);
 }
