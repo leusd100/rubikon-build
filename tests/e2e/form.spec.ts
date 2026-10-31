@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
 import { setTurnstileMode, solveTurnstile, stubTurnstile, turnstileLog } from './turnstile.helpers';
 
@@ -230,20 +230,92 @@ function leadEvents(page: Page, name: string) {
     .filter((entry) => entry[0] === 'event' && entry[1] === eventName).length, name);
 }
 
-test.describe('Turnstile on the inquiry form', () => {
-  test('loads the widget only when the form approaches, renders it invisible and on-demand for lead_submit', async ({ page }) => {
-    const scriptRequests: string[] = [];
-    page.on('request', (request) => {
-      if (request.url().startsWith('https://challenges.cloudflare.com/')) scriptRequests.push(request.url());
+function turnstileRequests(page: Page) {
+  const urls: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().startsWith('https://challenges.cloudflare.com/')) urls.push(request.url());
+  });
+  return urls;
+}
+
+// Two frames after the form's section meets the window: a proximity observer has fired by then and React has committed
+// what it started, so the checks after this see it without a fixed wait.
+async function scrollPastForm(page: Page) {
+  await page.evaluate(async () => {
+    const section = document.getElementById('inquiry')!;
+    await new Promise<void>((resolve) => {
+      const seen = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        seen.disconnect();
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+      seen.observe(section);
+      section.scrollIntoView({ block: 'center', behavior: 'instant' });
     });
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+  });
+}
+
+/** Past the point where the page's own observers have had their say on the form: two frames alone raced the old proximity start */
+async function formInViewReported(page: Page) {
+  await page.evaluate(async () => {
+    const section = document.getElementById('inquiry')!;
+    await new Promise<void>((resolve) => {
+      const seen = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        seen.disconnect();
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+      seen.observe(section);
+    });
+  });
+}
+
+async function tabTo(page: Page, target: Locator) {
+  for (let stop = 0; stop < 40; stop += 1) {
+    await page.keyboard.press('Tab');
+    if (await target.evaluate((element) => element === document.activeElement)) return;
+  }
+  throw new Error('Tab never reached the field');
+}
+
+// Answers api.js only when told to, as a slow network does. A path of its own, so it can be unrouted without the stub.
+const TURNSTILE_SCRIPT_ROUTE = 'https://challenges.cloudflare.com/turnstile/**';
+
+async function holdTurnstileScript(page: Page) {
+  let answer!: (outcome: 'load' | 'fail') => void;
+  const answered = new Promise<'load' | 'fail'>((resolve) => { answer = resolve; });
+  await page.route(TURNSTILE_SCRIPT_ROUTE, async (route) => {
+    if (await answered === 'fail') return route.abort('failed');
+    return route.fallback();
+  });
+  return answer;
+}
+
+async function acceptLeads(page: Page) {
+  const leads: Array<{ name: string; turnstileToken: string }> = [];
+  await page.route('**/api/leads', async (route) => {
+    leads.push(route.request().postDataJSON() as { name: string; turnstileToken: string });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, id: leads.length, isNew: true }) });
+  });
+  return leads;
+}
+
+test.describe('Turnstile on the inquiry form', () => {
+  test('scrolling past the form loads nothing; the first focus loads the widget, invisible and on-demand for lead_submit', async ({ page }) => {
+    const scriptRequests = turnstileRequests(page);
     await page.goto('/', { waitUntil: 'load' });
     await acceptOnlyEssentialCookies(page);
-    // Hydrated (the banner is client-only) with the form far below the fold: nothing loaded yet.
     const container = page.locator('.inquiry-turnstile');
     await expect(container).toHaveAttribute('data-turnstile-state', 'idle');
     expect(scriptRequests).toEqual([]);
 
-    await page.locator('form.inquiry-form').scrollIntoViewIfNeeded();
+    // main started here: Safari's 120–150 ms iframe stall fell on everyone who passed the form (turnstileGate.ts)
+    await scrollPastForm(page);
+    await expect(container).toHaveAttribute('data-turnstile-state', 'idle');
+    expect(scriptRequests).toEqual([]);
+
+    await page.locator('form.inquiry-form').getByLabel(/Ваше ім’я/).focus();
     await expect(container).toHaveAttribute('data-turnstile-state', 'ready');
     expect(scriptRequests).toEqual(['https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit']);
     expect((await turnstileLog(page)).renders).toEqual([expect.objectContaining({
@@ -596,6 +668,199 @@ test.describe('«Ще не визначено» direction', () => {
     expect(await direction.evaluate((select) => select instanceof HTMLSelectElement && select.validity.valueMissing)).toBe(true);
     expect((await turnstileLog(page)).executes).toBe(0);
     expect(requests).toBe(0);
+  });
+});
+
+test.describe('Turnstile starts with the first interaction, and a lead never goes without a token', () => {
+  const form = (page: Page) => page.locator('form.inquiry-form');
+  const container = (page: Page) => page.locator('.inquiry-turnstile');
+
+  test('a press on the form that focuses nothing starts it', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'idle');
+    await form(page).locator('.inquiry-form-kicker').click();
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'ready');
+    expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('BODY');
+  });
+
+  test('a link that opens the form starts it', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'idle');
+    await page.locator('a[data-open-inquiry]:visible').first().click();
+    await expect(form(page)).toBeVisible();
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'ready');
+  });
+
+  test('a submit before the script answers waits for it: one lead, with a token, nothing typed lost', async ({ page }) => {
+    const leads = await acceptLeads(page);
+    const answer = await holdTurnstileScript(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    // the visitor who reaches the form with nothing loaded: main had started by now
+    await scrollPastForm(page);
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'idle');
+    await fillInquiryFields(page);
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'loading');
+
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    const name = form(page).getByLabel(/Ваше ім’я/);
+    const submit = form(page).locator('button.inquiry-submit');
+    await expect(submit).toHaveText(/Надсилаємо…/);
+    await expect(submit).toHaveAttribute('aria-disabled', 'true');
+    // the second press of someone in a hurry; the button stays pressable and the focus stays where it was
+    await name.press('Enter');
+    await expect(name).toHaveValue('Іван Петренко');
+    expect(leads).toEqual([]);
+    expect((await turnstileLog(page)).executes).toBe(0);
+
+    answer('load');
+    await expect(page.getByRole('heading', { name: 'Запит надіслано', exact: true })).toBeVisible();
+    expect(leads).toEqual([expect.objectContaining({ name: 'Іван Петренко', turnstileToken: 'stub-token-1' })]);
+    expect((await turnstileLog(page)).executes).toBe(1);
+  });
+
+  test('a submit waiting on a script that fails says so, keeps the text, and the next press works', async ({ page }) => {
+    const leads = await acceptLeads(page);
+    const answer = await holdTurnstileScript(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(form(page).locator('button.inquiry-submit')).toHaveText(/Надсилаємо…/);
+
+    answer('fail');
+    await expect(page.locator('.inquiry-status')).toHaveText(VERIFICATION_FAILED);
+    expect(leads).toEqual([]);
+    await expect(form(page).getByLabel(/Ваше ім’я/)).toHaveValue('Іван Петренко');
+    await expect(form(page).getByLabel('Коротко про завдання', { exact: true })).toHaveValue('Потрібен виробничий ангар');
+
+    await page.unroute(TURNSTILE_SCRIPT_ROUTE);
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Запит надіслано', exact: true })).toBeVisible();
+    expect(leads).toEqual([expect.objectContaining({ turnstileToken: 'stub-token-1' })]);
+  });
+
+  test('a form filled with no interaction at all, as autofill or a restored page leaves it, still gets a token on submit', async ({ page }) => {
+    const leads = await acceptLeads(page);
+    const scriptRequests = turnstileRequests(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    await scrollPastForm(page);
+    await form(page).evaluate((element: HTMLFormElement) => {
+      const set = (selector: string, value: string) => {
+        const field = element.querySelector<HTMLInputElement>(selector)!;
+        field.value = value;
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+      set('input[name="name"]', 'Іван Петренко');
+      set('input[name="phone"]', '+380671234567');
+      element.querySelector<HTMLInputElement>('input[name="privacyConsent"]')!.checked = true;
+    });
+    expect(scriptRequests).toEqual([]);
+
+    await form(page).evaluate((element: HTMLFormElement) => element.requestSubmit());
+    await expect.poll(() => leads.length).toBe(1);
+    expect(leads[0]?.turnstileToken).toBe('stub-token-1');
+    expect(scriptRequests).toHaveLength(1);
+  });
+
+  test('keyboard alone: from the #inquiry anchor to a saved lead', async ({ page }) => {
+    const leads = await acceptLeads(page);
+    const scriptRequests = turnstileRequests(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    // following the anchor sets where Tab starts from; the hash is cleared first or the same anchor would not count
+    await page.evaluate(() => {
+      window.location.hash = '';
+      window.location.hash = 'inquiry';
+    });
+    expect(scriptRequests).toEqual([]);
+
+    await tabTo(page, form(page).getByLabel(/Ваше ім’я/));
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'ready');
+    await page.keyboard.type('Іван Петренко');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('+380671234567');
+    await tabTo(page, form(page).getByLabel(/Погоджуюся на обробку персональних даних/));
+    await page.keyboard.press('Space');
+    await tabTo(page, form(page).locator('button.inquiry-submit'));
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByRole('heading', { name: 'Запит надіслано', exact: true })).toBeVisible();
+    expect(leads).toEqual([expect.objectContaining({ name: 'Іван Петренко', turnstileToken: 'stub-token-1' })]);
+  });
+
+  test('arriving at #inquiry loads nothing until the visitor starts, and the form sends as usual', async ({ page }) => {
+    const leads = await acceptLeads(page);
+    const scriptRequests = turnstileRequests(page);
+    await page.goto('/#inquiry', { waitUntil: 'load' });
+    await expect(form(page)).toBeVisible();
+    await acceptOnlyEssentialCookies(page);
+    await formInViewReported(page);
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'idle');
+    expect(scriptRequests).toEqual([]);
+
+    await fillInquiryFields(page);
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Запит надіслано', exact: true })).toBeVisible();
+    expect(leads).toEqual([expect.objectContaining({ turnstileToken: 'stub-token-1' })]);
+  });
+});
+
+test.describe('Turnstile on a phone, where the form starts folded', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const form = (page: Page) => page.locator('form.inquiry-form');
+  const container = (page: Page) => page.locator('.inquiry-turnstile');
+
+  test('passing the folded form loads nothing; «Залишити запит» starts it, and the lead carries a token', async ({ page }) => {
+    const leads = await acceptLeads(page);
+    const scriptRequests = turnstileRequests(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    await scrollPastForm(page);
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'idle');
+    expect(scriptRequests).toEqual([]);
+
+    await page.locator('.conversation-form-toggle').tap();
+    await expect(form(page).getByLabel(/Ваше ім’я/)).toBeFocused();
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'ready');
+    await fillInquiryFields(page);
+    await form(page).locator('button.inquiry-submit').tap();
+    await expect(page.getByRole('heading', { name: 'Запит надіслано', exact: true })).toBeVisible();
+    expect(leads).toEqual([expect.objectContaining({ turnstileToken: 'stub-token-1' })]);
+  });
+
+  test('a touch on the form that arrived at #inquiry starts it', async ({ page }) => {
+    const scriptRequests = turnstileRequests(page);
+    await page.goto('/#inquiry', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    await expect(form(page)).toBeVisible();
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'idle');
+    expect(scriptRequests).toEqual([]);
+
+    await form(page).locator('.inquiry-form-kicker').tap();
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'ready');
+  });
+
+  // api.js stays on the page across a client navigation, so the widget can render in the same task as the click. The link
+  // reaches the gate before ConversationFormToggle opens the form: rendered then, it would go into a display:none container.
+  test('with api.js already on the page, a link that opens the form renders the widget into the opened form', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    await page.addScriptTag({ url: 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit' });
+    await page.evaluate(() => {
+      const api = window.turnstile!;
+      const render = api.render;
+      api.render = (element, options) => {
+        document.documentElement.dataset.widgetShown = String(element.checkVisibility());
+        return render(element, options);
+      };
+    });
+    await page.locator('a[data-open-inquiry]:visible').first().tap();
+    await expect(container(page)).toHaveAttribute('data-turnstile-state', 'ready');
+    await expect(page.locator('html')).toHaveAttribute('data-widget-shown', 'true');
   });
 });
 

@@ -14,6 +14,7 @@ import { toInquiryAttachmentPayload } from '../lib/inquiry/attachment';
 import { normalizeUaPhone } from '../lib/inquiry/phone';
 import { createSubmissionId, nextSubmissionIdAfterSuccess } from '../lib/inquiry/submissionId';
 import { acknowledgeSavedLead, attemptSubmissionId, type SubmitAttempt } from '../lib/inquiry/submitAttempt';
+import { onFirstFormInteraction } from '../lib/inquiry/turnstileGate';
 import { dimensionsFieldView } from './inquiry/formAttachment';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
 import { InquiryAttachmentSummary } from './inquiry/InquiryAttachmentSummary';
@@ -238,24 +239,13 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   // names and the submit button; without JS, no personal field can enter a native URL/query.
   const jsReady = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
-  // Turnstile's script loads only once the form is near the viewport or gets focus — pages whose
-  // visitors never reach the form never fetch it. A failure here is retried on submit.
+  // Turnstile loads on the visitor's first interaction with the form, never by proximity: its iframe stalls a Safari frame
+  // for 120–150 ms, so it must not cost anyone who only scrolls past (turnstileGate.ts). A failure here is retried on submit,
+  // and a submit before this finishes simply waits for it inside getToken().
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
-    const start = () => void prepareTurnstile().catch(() => undefined);
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        observer.disconnect();
-        start();
-      }
-    }, { rootMargin: '600px 0px' });
-    observer.observe(form);
-    form.addEventListener('focusin', start, { once: true });
-    return () => {
-      observer.disconnect();
-      form.removeEventListener('focusin', start);
-    };
+    return onFirstFormInteraction(form, window, () => void prepareTurnstile().catch(() => undefined));
   }, [prepareTurnstile]);
 
   // «0XX…» typed after the field's «+380», a number pasted with spaces: put as +380XXXXXXXXX where the visitor sees it, on
