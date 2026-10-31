@@ -53,7 +53,7 @@ describe('onFirstFormInteraction', () => {
     expect(start).toHaveBeenCalledTimes(1);
   });
 
-  it('takes a click inside a marked link for the link, and a target without closest() for nothing', () => {
+  it('ignores a click whose target is nothing or has no closest()', () => {
     const { start, clickOn, runFrames } = setup();
     clickOn(null);
     clickOn({});

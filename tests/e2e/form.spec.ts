@@ -256,6 +256,21 @@ async function scrollPastForm(page: Page) {
   });
 }
 
+/** Past the point where the page's own observers have had their say on the form: two frames alone raced the old proximity start */
+async function formInViewReported(page: Page) {
+  await page.evaluate(async () => {
+    const section = document.getElementById('inquiry')!;
+    await new Promise<void>((resolve) => {
+      const seen = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        seen.disconnect();
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+      seen.observe(section);
+    });
+  });
+}
+
 async function tabTo(page: Page, target: Locator) {
   for (let stop = 0; stop < 40; stop += 1) {
     await page.keyboard.press('Tab');
@@ -783,7 +798,7 @@ test.describe('Turnstile starts with the first interaction, and a lead never goe
     await page.goto('/#inquiry', { waitUntil: 'load' });
     await expect(form(page)).toBeVisible();
     await acceptOnlyEssentialCookies(page);
-    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await formInViewReported(page);
     await expect(container(page)).toHaveAttribute('data-turnstile-state', 'idle');
     expect(scriptRequests).toEqual([]);
 
