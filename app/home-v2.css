@@ -352,19 +352,16 @@ main[data-home="v2"] .hv2-contour-canvas > :is(svg, .hv2-proof-labels) {
 main[data-home="v2"] .hv2-contour-lines path {
   --w: 1.1; fill: none; stroke-width: calc(var(--u) * var(--w) * var(--k, 1)); stroke-linecap: butt; stroke-linejoin: miter;
 }
-main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { --w: var(--lw-1); }
+/* (its parts' square ends close the corners where butt ends notched them) */
+main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { --w: var(--lw-1); stroke-linecap: square; }
 main[data-home="v2"] .hv2-contour-lines path[data-kind="gate"] { --w: 1.6; }
 /* The line the dragged seam holds (ProofContour's snap): heavier and lighter while it is held, its name by the seam */
 main[data-home="v2"] .hv2-contour-lines path[data-snapped] { --k: 1.8; }
 main[data-home="v2"] .hv2-contour-ink path[data-snapped] { stroke: #e39a68; }
-/* The outline is drawn in parts: square ends close its corners where butt ends notched them */
-main[data-home="v2"] .hv2-contour-lines path[data-kind="outline"] { stroke-linecap: square; }
 /* The held line over the photo too, unclipped (ProofContour) */
 main[data-home="v2"] .hv2-contour-held path { fill: none; stroke: #e39a68; stroke-width: calc(var(--u) * 2 * var(--k, 1)); stroke-linecap: square; stroke-linejoin: miter; }
 main[data-home="v2"] .hv2-contour-held .hv2-contour-held-casing { stroke: rgba(13, 15, 14, .7); stroke-width: calc(var(--u) * (2 * var(--k, 1) + 2.4)); }
 @media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-contour-held { animation: hv2-contour-fade var(--hv2-for-held-fade) ease; } }
-/* A figure or a name the seam cuts through: hidden whole (ProofContour sets data-cut) */
-main[data-home="v2"] .hv2-contour-stage :is(.hv2-proof-labels > [data-cut], .hv2-proof-tag-leaders > [data-cut]) { visibility: hidden !important; }
 main[data-home="v2"] .hv2-contour-ink path { stroke: var(--hv2-copper-text); }
 /* A thin dark casing under each line: it disappears on the tracing and keeps the copper legible on the light cladding */
 main[data-home="v2"] .hv2-contour-casing path { stroke: rgba(13, 15, 14, .6); stroke-width: calc(var(--u) * (var(--w) * var(--k, 1) + 2)); }
@@ -383,7 +380,7 @@ main[data-home="v2"] .hv2-proof-scheme :is([data-group="truss"], [data-group="co
 /* The gable's chords as profiles (owner, 09.10): the member's line wide, its dark core over it (ProofFrame's isProfile) —
    two edges, as the nodes' drawings draw a section */
 main[data-home="v2"] .hv2-proof-scheme [data-group="truss"][data-depth="0"]:not([data-hidden]) { --w: 3.4; --o: 1; stroke-linecap: square; }
-main[data-home="v2"] .hv2-proof-scheme [data-group].hv2-proof-core { stroke: #141615 !important; stroke-opacity: 1; stroke-width: calc(var(--u) * 1.5); stroke-linecap: square; fill: none; }
+main[data-home="v2"] .hv2-proof-scheme [data-group].hv2-proof-core { stroke: #141615; stroke-opacity: 1; stroke-width: calc(var(--u) * 1.5); stroke-linecap: square; fill: none; }
 main[data-home="v2"] .hv2-proof-scheme [data-group="web"] { --w: var(--lw-3); --o: .9; }
 main[data-home="v2"] .hv2-proof-scheme [data-group="wall"] { --w: 1.1; --o: .72; }
 /* (09.10: quiet — at .6 the purlins' runs into depth read as a second web over the truss) */
@@ -487,6 +484,9 @@ main[data-home="v2"] .hv2-contour-stage:is([data-layer="load"], [data-layer="win
 main[data-home="v2"] .hv2-contour-stage[data-layer="frame"] :is(.hv2-proof-tag-leaders, .hv2-proof-tag) {
   opacity: 1; visibility: visible;
 }
+/* A figure or a name the seam cuts through: hidden whole (ProofContour sets data-cut). After the rule above: the same
+   specificity, and on a cut name this one holds */
+main[data-home="v2"] .hv2-contour-stage :is(.hv2-proof-labels > [data-cut], .hv2-proof-tag-leaders > [data-cut]) { visibility: hidden; }
 /* A narrower frame: the names on the right wall's face and in the gate's opening in two lines and a size down, so they
    stay on the face and inside the opening, clear of the right gate's measured jamb (review, 05.10: at 768–1024 px they
    ran over it) */
@@ -609,7 +609,9 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
    from the right edge to its rest, and everything it has passed is the drawing — the tracing, the measured lines, the
    scheme, whole (useFirstSweep drives --split). The figures and the names come in together when it rests. Once. Without
    JavaScript or with reduced motion the sheet stands complete at rest. */
+/* sonar-important-begin: useSeam.ts writes --split inline, and only this holds the seam shut while the sweep waits */
 main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: 100% !important; }
+/* sonar-important-end */
 main[data-home="v2"] .hv2-contour-stage[data-sweep] :is(.hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
 @keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
@@ -1120,10 +1122,10 @@ main[data-home="v2"] .hv2-proof-scheme :is([data-group], .hv2-proof-blocks, .hv2
 main[data-home="v2"] .hv2-contour-stage[data-focus="frame"] .hv2-proof-scheme :is(.hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, [data-group="wall"]),
 main[data-home="v2"] .hv2-contour-stage[data-focus="roof"] .hv2-proof-scheme :is(.hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, .hv2-proof-nodes, [data-group]:not([data-group="purlin"])),
 main[data-home="v2"] .hv2-contour-stage[data-focus="walls"] .hv2-proof-scheme :is(.hv2-proof-footing, .hv2-proof-nodes, [data-group]:not([data-group="wall"])) { opacity: .16; }
-/* …and what lights: the frame's members and the roof's purlins in the bright copper */
-main[data-home="v2"] .hv2-contour-stage[data-focus="frame"] .hv2-proof-scheme :is([data-group="truss"], [data-group="web"], [data-group="column"], [data-group="bracing"], [data-group="purlin"]) { stroke: #e39a68; }
+/* …and what lights: the frame's members and the roof's purlins in the bright copper (a chord's dark core stays dark) */
+main[data-home="v2"] .hv2-contour-stage[data-focus="frame"] .hv2-proof-scheme :is([data-group="truss"], [data-group="web"], [data-group="column"], [data-group="bracing"], [data-group="purlin"]):not(.hv2-proof-core) { stroke: #e39a68; }
 main[data-home="v2"] .hv2-contour-stage[data-focus="roof"] .hv2-proof-scheme [data-group="purlin"] { stroke: #e39a68; --depth: 1; }
-main[data-home="v2"] .hv2-contour-stage[data-focus] :is(.hv2-proof-labels, .hv2-proof-marks, .hv2-proof-detail-pins, .hv2-proof-detail-rings) { opacity: 0 !important; visibility: hidden; }
+main[data-home="v2"] .hv2-contour-stage[data-focus] :is(.hv2-proof-labels, .hv2-proof-marks, .hv2-proof-detail-pins, .hv2-proof-detail-rings) { opacity: 0; visibility: hidden; }
 
 /* --- «Точка навантаження» on «Сніг» (ProofContour, homeProofFrame's pointLoadAt) ---
    The uniform load steps back while a weight stands on the roof; the weight, its landing and its ways in the load's
@@ -1342,7 +1344,7 @@ main[data-home="v2"] .hv2-contour-node-word { font: 600 12px/1 var(--font-manrop
 main[data-home="v2"] .hv2-contour-stage:is(:hover, :focus-within, [data-touring], [data-nodes-hint]) .hv2-proof-detail-rings circle { stroke-opacity: 1; }
 @media (hover: hover) and (pointer: fine) {
   main[data-home="v2"] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-labels > :not([data-tag="truss"], [data-tag="column"]),
-  main[data-home="v2"] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-tag-leaders > :not([data-tag="truss"], [data-tag="column"]) { opacity: 0 !important; }
+  main[data-home="v2"] .hv2-contour-stage:not(:hover, :focus-within, [data-touring]) .hv2-proof-tag-leaders > :not([data-tag="truss"], [data-tag="column"]) { opacity: 0; }
   main[data-home="v2"] :is(.hv2-proof-labels > *, .hv2-proof-tag-leaders > *) { transition: opacity var(--hv2-for-label) ease; }
 }
 /* the nodes' letters: paper on graphite at rest, their colour under the cursor, in the tour, open (and Г after the
@@ -1421,6 +1423,8 @@ main[data-home="v2"] .hv2-contour-node-hint [data-input="touch"] { display: none
 /* audit 08.10: a ring under the mouse is a button (F06); the loops rest off the screen (F15); an anchor to the object lands
    under the fixed header, not behind it (F11) */
 main[data-home="v2"] .hv2-contour-stage[data-over-ring],
+/* sonar-important-begin: over a ring the whole stage is a pointer, above every child's own cursor; the pause must reach every element and pseudo-element */
 main[data-home="v2"] .hv2-contour-stage[data-over-ring] * { cursor: pointer !important; }
 main[data-home="v2"] .hv2-contour-stage[data-offscreen] :is(*, *::before, *::after) { animation-play-state: paused !important; }
+/* sonar-important-end */
 main[data-home="v2"] #real-object { scroll-margin-top: 116px; }
