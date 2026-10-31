@@ -13,10 +13,11 @@ const CORE_GA_HOST = /(^|\.)google-analytics\.com$/;
 const ADVERTISING = /doubleclick\.net|ga-audiences|googlesyndication|googleadservices|\/pagead\//;
 /**
  * Google's tag at times adds a diagnostics beacon — an image from www.googletagmanager.com/td (seen 24.10 on the runs of
- * #237 and #238). The site's CSP blocks it before it leaves the browser, so nothing it carries reaches Google: that one
- * blocked beacon is the policy doing its job, not a failure. Every other blocked Google request still fails the test.
+ * #237 and #238) or /a (seen 31.10 on run 41208464608). The site's CSP blocks it before it leaves the browser, so nothing
+ * it carries reaches Google: that blocked beacon is the policy doing its job, not a failure. Every other blocked Google
+ * request still fails the test.
  */
-const TAG_DIAGNOSTICS = /^img-src https:\/\/www\.googletagmanager\.com\/td(?:\?|$)/;
+const TAG_DIAGNOSTICS = /^img-src https:\/\/www\.googletagmanager\.com\/(?:td|a)(?:\?|$)/;
 
 // Nothing in this file may reach the network from the browser itself. Playwright's routes miss what a page sends while it
 // unloads: gtag's keepalive /g/collect on pagehide (scroll, user_engagement) went out past them on / → /angary (16.10,
