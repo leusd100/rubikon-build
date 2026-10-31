@@ -135,6 +135,22 @@ jobs:
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14
+      # On every night, not only a failed one: a green night is the baseline a later regression is read against.
+      - name: Keep the night's Lighthouse numbers
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          LHCI_PROFILE: ${{ matrix.profile }}
+        run: node scripts/ci/nightly-history.mjs lighthouse --profile "$LHCI_PROFILE" --dir .lighthouseci --out "nightly-metrics/lighthouse-$LHCI_PROFILE.json"
+      - name: Upload the night's Lighthouse numbers
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-metrics-${{ matrix.profile }}
+          path: nightly-metrics/
+          if-no-files-found: ignore
+          retention-days: 7
 
   report:
     name: Nightly Full QA
@@ -160,7 +176,20 @@ jobs:
           path: all-blob-reports
           merge-multiple: true
       - name: Merge Playwright report
-        run: pnpm exec playwright merge-reports --reporter=html ./all-blob-reports
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: nightly-tests.json
+        run: pnpm exec playwright merge-reports --reporter=html,json ./all-blob-reports
+      - name: Keep the night's test counts
+        continue-on-error: true
+        run: node scripts/ci/nightly-history.mjs tests --report nightly-tests.json --out nightly-metrics/tests.json
+      - name: Upload the night's test counts
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-metrics-tests
+          path: nightly-metrics/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload merged report
         uses: actions/upload-artifact@v4
         with:
@@ -178,3 +207,55 @@ jobs:
           test "$E2E" = success &&
           test "$VISUAL" = success &&
           test "$LIGHTHOUSE" = success
+
+  # Apart from `report`, so a night that broke before its reports still gets its line, and so the one token that reads
+  # other runs' artifacts is this job's. It never changes the night's verdict.
+  history:
+    name: Nightly history
+    if: ${{ !cancelled() }}
+    needs: [build, e2e, visual, lighthouse, report]
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download tonight's numbers
+        # None exist when the build failed: that night is still recorded, with its gaps
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          pattern: nightly-metrics-*
+          path: nightly-metrics
+          merge-multiple: true
+      - name: Fetch the history so far
+        # The newest file of this branch, so a run dispatched on a branch cannot enter main's history. A failed download
+        # fails this step and skips the upload below: the chain stays on the last good artifact and nothing is overwritten.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run="$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=nightly-history&per_page=100" \
+            --jq "[.artifacts[] | select(.expired == false and .workflow_run.head_branch == \"$GITHUB_REF_NAME\")][0].workflow_run.id // empty")"
+          if [ -n "$run" ]; then
+            gh run download "$run" --repo "$GITHUB_REPOSITORY" --name nightly-history --dir history
+          fi
+      - name: Record tonight
+        env:
+          RESULT_BUILD: ${{ needs.build.result }}
+          RESULT_E2E: ${{ needs.e2e.result }}
+          RESULT_VISUAL: ${{ needs.visual.result }}
+          RESULT_LIGHTHOUSE: ${{ needs.lighthouse.result }}
+          RESULT_REPORT: ${{ needs.report.result }}
+        run: |
+          NIGHT_DATE="$(date -u +%F)" node scripts/ci/nightly-history.mjs record \
+            --metrics nightly-metrics --history history/nightly-history.ndjson --out history/nightly-history.ndjson
+      - name: Carry the history forward
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-history
+          path: history/nightly-history.ndjson
+          if-no-files-found: error
+          retention-days: 90
