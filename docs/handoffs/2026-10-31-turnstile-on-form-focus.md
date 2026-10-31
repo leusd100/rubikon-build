@@ -5,7 +5,7 @@
 | Дата | 2026-10-31 |
 | Виконавець | Claude Code |
 | Підстава | Рішення власника 31.10 за вимірюванням 30.10 на production: у Safari 27.2 iframe Turnstile зупиняє кадр на 120–150 мс раз на перегляд сторінки |
-| PR | PR_LINE |
+| PR | [#286](https://github.com/leusd100/rubikon-build/pull/286), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `perf/turnstile-on-form-focus` від `main` `55fb1806` |
 | Коміти | `4e997422` — зміна й тести · цей handoff |
 | Змінено | `app/lib/inquiry/turnstileGate.ts` (новий, коли стартувати), `ProjectInquiryForm.tsx` (ефект близькості замінено на цей гейт), `tests/unit/inquiry/turnstileGate.test.ts` (новий), `tests/e2e/form.spec.ts`, `tests/e2e/configurator-phase4-inquiry.spec.ts` |
