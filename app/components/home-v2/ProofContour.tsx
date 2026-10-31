@@ -88,12 +88,14 @@ const SRC_SET = variants.filter(({ width }) => width <= 2304).map(({ src, width 
 // (a phone's frame is the screen's width since 09.10 — the sheet edge to edge — and its canvas 1.22 × that)
 const SIZES = '(max-width: 760px) calc(100vw * 1.22), (max-width: 1556px) calc(92.5vw - 46px), 1394px';
 
-const pathOf = ({ points }: ContourLine) => `M${points.map(([x, y]) => `${x} ${y}`).join('L')}`;
+/** A line's points in a path's words; the «M» before them, and a «Z» after, are the caller's */
+const pathPoints = (points: ContourLine['points']) => points.map(([x, y]) => `${x} ${y}`).join('L');
+const pathOf = ({ points }: ContourLine) => `M${pathPoints(points)}`;
 
 // The quiet tracing (owner review, 04.10 — «тиха калька»): right of the seam the photo stays only inside the building —
 // its drawn silhouette, widened a little for the gutters and the fascia — and the sky and the gravel become the sheet's
 // flat paper with its grid, the building free of the grid. One mask, a data URI of the silhouette, used both ways
-const SILHOUETTE = homeProofFrame.silhouette.map((outline) => `M${outline.map(([x, y]) => `${x} ${y}`).join('L')}Z`).join('');
+const SILHOUETTE = homeProofFrame.silhouette.map((outline) => `M${pathPoints(outline)}Z`).join('');
 const BUILDING_MASK = `url("data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${contourPhoto.width} ${contourPhoto.height}' preserveAspectRatio='none'>`
   + `<path d='${SILHOUETTE}' fill='#000' stroke='#000' stroke-width='14' stroke-linejoin='round'/></svg>`,
@@ -107,6 +109,7 @@ const GROUND: readonly (readonly [number, number])[] = (() => {
   const at = (a: readonly [number, number], b: readonly [number, number], x: number) => a[1] + ((b[1] - a[1]) * (x - a[0])) / (b[0] - a[0]);
   return [[0, at(far, corner, 0) + GROUND_DROP], [corner[0], corner[1] + GROUND_DROP], [contourPhoto.width, at(corner, near, contourPhoto.width) + GROUND_DROP]];
 })();
+const GROUND_LINE = `M${pathPoints(GROUND.map(([x, y]) => [x, Math.round(y * 10) / 10] as const))}`;
 const GROUND_HATCH = (() => {
   let path = '';
   for (let index = 0; index < GROUND.length - 1; index += 1) {
@@ -118,6 +121,19 @@ const GROUND_HATCH = (() => {
   }
   return path;
 })();
+/** A data attribute that is there or is not: the CSS and the e2e read its presence, never a value */
+const dataFlag = (on: unknown) => (on ? '' : undefined);
+
+function stampFit(none: boolean, short: boolean) {
+  if (none) return 'none';
+  return short ? 'short' : undefined;
+}
+
+/** The link of a load's chain lit on the scheme: the word pointed at, else the word pressed. «Каркас» has no chain */
+function litStep(layer: Layer, peek: number | null, on: number | null) {
+  return layer === 'frame' ? undefined : (peek ?? on ?? undefined);
+}
+
 // False in the server markup and the hydrating render, true after (ProjectInquiryForm's idiom)
 const subscribeToNothing = () => () => undefined;
 /** A node's letter and plain name, the draughtsman's term after it — what its pill and its letter on the scheme are called
@@ -165,7 +181,7 @@ const Lines = memo(function Lines({ casing, snapped }: Readonly<{ casing?: boole
           d={pathOf(line)}
           data-line={line.id}
           data-kind={line.kind}
-          data-snapped={snapped === line.id ? '' : undefined}
+          data-snapped={dataFlag(snapped === line.id)}
         >
           {!casing && <title>{line.title}</title>}
         </path>
@@ -248,6 +264,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // The load's chain in the legend, word by word: a word pointed at or pressed lights its link on the scheme alone
   const [stepOn, setStepOn] = useState<number | null>(null);
   const [stepPeek, setStepPeek] = useState<number | null>(null);
+  const toggleStep = (n: number) => setStepOn((on) => (on === n ? null : n));
   useEffect(() => () => cancelAnimationFrame(pointFrame.current), []);
   // A scope's cell lighting its part: nothing else lit meanwhile — no held line, no weight on the roof, no node open
   const focusPart = useScopeFocus(stageRef, {
@@ -556,7 +573,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             aria-label={nodeLabel(item)}
             aria-haspopup="dialog"
             aria-expanded={detail === item.id}
-            data-hint={item.id === hinted ? '' : undefined}
+            data-hint={dataFlag(item.id === hinted)}
             disabled={!ready}
             onClick={() => openNode(item.id)}
             {...(block ? peekOn(item.id) : {})}
@@ -586,7 +603,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             disabled={!ready}
             style={{ '--n': n } as CSSProperties}
             aria-pressed={layer === name && stepOn === n}
-            onClick={() => setStepOn((on) => (on === n ? null : n))}
+            onClick={() => toggleStep(n)}
             onPointerEnter={() => setStepPeek(n)}
             onPointerLeave={() => setStepPeek(null)}
             onFocus={() => setStepPeek(n)}
@@ -637,7 +654,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           className: 'hv2-contour-right',
           value: (
             <>
-              <span className="hv2-contour-layers" role="group" aria-label="Що показати праворуч">
+              <fieldset className="hv2-contour-layers" aria-label="Що показати праворуч">
                 {LAYER_ORDER.map((name) => (
                   <button
                     key={name}
@@ -652,10 +669,10 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
                     {LAYERS[name].button}
                   </button>
                 ))}
-              </span>
+              </fieldset>
               <span className="hv2-contour-legend">
                 {LAYER_ORDER.map((name) => (
-                  <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={name === layer ? '' : undefined}>
+                  <span key={name} className="hv2-contour-legend-set" data-layer={name} data-on={dataFlag(name === layer)}>
                     {legendSet(name)}
                   </span>
                 ))}
@@ -674,12 +691,12 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             disabled={!ready}
             onClick={toggleTour}
           >
-            <i aria-hidden="true" data-stop={tourStep !== null ? '' : undefined} />
+            <i aria-hidden="true" data-stop={dataFlag(tourStep !== null)} />
             {tourStep !== null ? 'Зупинити тур' : 'Тур за 20 секунд'}
           </button>
           {/* The way on: a hangar like this one, the visitor's own (owner, 05.10: in place of «Контур на фото», and
               to be seen) */}
-          <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={engaged ? '' : undefined} data-call={calling ? '' : undefined} onClick={() => queueProofEvent('brief_click')}>
+          <a className="hv2-contour-brief" href={BRIEF_HREF} data-lit={dataFlag(engaged)} data-call={dataFlag(calling)} onClick={() => queueProofEvent('brief_click')}>
             <small>Такий ангар, але ваш</small>
             <span>Сформувати бриф <Arrow to="right" /></span>
           </a>
@@ -691,26 +708,26 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         ref={stageRef}
         className="hv2-contour-stage"
         data-layer={layer}
-        data-dragging={dragging ? '' : undefined}
-        data-pointer-focus={pointerFocus ? '' : undefined}
+        data-dragging={dataFlag(dragging)}
+        data-pointer-focus={dataFlag(pointerFocus)}
         // The seam's names give way where their side is too narrow, the right one before the stamp; the stamp shortens
-        data-narrow-left={narrowLeft ? '' : undefined}
-        data-narrow-right={narrowRight || tagYield ? '' : undefined}
-        data-stamp={stampNone ? 'none' : stampShort ? 'short' : undefined}
-        data-photo-only={split >= 100 ? '' : undefined}
-        data-snapped={snap ? '' : undefined}
+        data-narrow-left={dataFlag(narrowLeft)}
+        data-narrow-right={dataFlag(narrowRight || tagYield)}
+        data-stamp={stampFit(stampNone, stampShort)}
+        data-photo-only={dataFlag(split >= 100)}
+        data-snapped={dataFlag(snap)}
         data-snap-side={snapPlace.side}
-        data-snap-wrap={snapPlace.wrap ? '' : undefined}
+        data-snap-wrap={dataFlag(snapPlace.wrap)}
         data-focus={focusPart ?? undefined}
-        data-point={point ? '' : undefined}
-        data-pointed={pointed ? '' : undefined}
+        data-point={dataFlag(point)}
+        data-pointed={dataFlag(pointed)}
         data-detail={detail ?? undefined}
         data-node-hint={hinting ? NODE_HINT : undefined}
         data-hit-node={layer === 'frame' ? hit?.node : undefined}
         data-peek-node={layer === 'frame' && peekNode && !detail ? peekNode : undefined}
-        data-step-on={(layer === 'load' || layer === 'wind') && (stepPeek ?? stepOn) !== null ? (stepPeek ?? stepOn)! : undefined}
-        data-building={building ? '' : undefined}
-        data-touring={tourStep !== null ? '' : undefined}
+        data-step-on={litStep(layer, stepPeek, stepOn)}
+        data-building={dataFlag(building)}
+        data-touring={dataFlag(tourStep !== null)}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
@@ -746,7 +763,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               {/* The tracing: the same frame (the same file, so no second download), grey and dark, on a fine grid */}
               <div className="hv2-contour-trace" aria-hidden="true" style={{ '--hv2-building': BUILDING_MASK } as CSSProperties}>
                 <svg className="hv2-contour-ground" viewBox={`0 0 ${contourPhoto.width} ${contourPhoto.height}`}>
-                  <path d={`M${GROUND.map(([x, y]) => `${x} ${Math.round(y * 10) / 10}`).join('L')}`} />
+                  <path d={GROUND_LINE} />
                   <path className="hv2-contour-ground-hatch" d={GROUND_HATCH} />
                 </svg>
                 <picture>
@@ -821,13 +838,13 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
         {nodesRow('stage')}
         {/* Node Г's hint (NODE_HINT): over the photo's top corner, where the tour's step is told — clear of every word of
             the drawing at every width — for the eye only (the letters and the pills name their nodes to a screen reader) */}
-        <span className="hv2-contour-node-hint" data-on={hinting ? '' : undefined} aria-hidden="true">
+        <span className="hv2-contour-node-hint" data-on={dataFlag(hinting)} aria-hidden="true">
           <i className="hv2-contour-node-letter">{hintItem.letter}</i>
           <span data-input="hover">Натисніть {hintItem.letter} — покажемо вузол зблизька</span>
           <span data-input="touch">Торкніться {hintItem.letter} — покажемо вузол зблизька</span>
         </span>
         {/* «Тур»: the step on, and how far through it */}
-        <output className="hv2-contour-tour" data-on={tourStep !== null ? '' : undefined}>
+        <output className="hv2-contour-tour" data-on={dataFlag(tourStep !== null)}>
           {tourStep !== null && (
             <>
               <i>{tourStep + 1}/{TOUR.length}</i>
@@ -837,7 +854,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
           )}
         </output>
         {/* «Жива схема»: the name by the pointer */}
-        <span ref={tipRef} className="hv2-proof-hover-tip" data-on={layer === 'frame' && hit ? '' : undefined} aria-hidden="true">
+        <span ref={tipRef} className="hv2-proof-hover-tip" data-on={dataFlag(layer === 'frame' && hit)} aria-hidden="true">
           <b>{hit?.name}</b>
           {hit?.node && <small>Вузол {PROOF_DETAILS.find((entry) => entry.id === hit.node)?.letter} — натисніть літеру</small>}
         </span>
@@ -866,9 +883,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               open
               ref={detailRef}
               className="hv2-detail"
-              data-sheet={detailSheet ? '' : undefined}
-              data-flow={flowOn && !exploded && assembled ? '' : undefined}
-              data-exploded={exploded ? '' : undefined}
+              data-sheet={dataFlag(detailSheet)}
+              data-flow={dataFlag(flowOn && !exploded && assembled)}
+              data-exploded={dataFlag(exploded)}
               onPointerDown={onSheetDown}
               onPointerUp={onSheetUp}
               onPointerCancel={onSheetCancel}

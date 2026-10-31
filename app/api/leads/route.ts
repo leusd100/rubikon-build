@@ -29,7 +29,7 @@ type Env = {
 
 const workerEnv = env as unknown as Env;
 
-const CONTACT_METHODS: readonly string[] = ['Дзвінок', 'Telegram', 'WhatsApp', 'Viber'];
+const CONTACT_METHODS: ReadonlySet<string> = new Set(['Дзвінок', 'Telegram', 'WhatsApp', 'Viber']);
 const DIRECTION_ALLOWLIST: readonly string[] = inquiryDirectionOptions;
 const PHONE_PATTERN = /^\+380\d{9}$/;
 const RATE_LIMIT_MAX = 3;
@@ -118,6 +118,164 @@ async function hashIp(ip: string, salt: string): Promise<string> {
     .join('');
 }
 
+/** The request's JSON, or null when it is not a JSON object. */
+async function readLeadBody(request: Request): Promise<LeadPayload | null> {
+  try {
+    const parsed: unknown = await request.json();
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    return parsed as LeadPayload;
+  } catch {
+    return null;
+  }
+}
+
+function clipContact(body: LeadPayload) {
+  return {
+    submissionId: clip(body.submissionId, 100),
+    name: clip(body.name, 80),
+    phone: clip(body.phone, 20),
+    contactMethod: clip(body.contactMethod, 20),
+    direction: clip(body.direction, 100),
+    consentAt: clip(body.consentAt, 40),
+    privacyVersion: clip(body.privacyVersion, 40),
+  };
+}
+
+function invalidContactFields(contact: ReturnType<typeof clipContact>) {
+  const fieldErrors: string[] = [];
+  if (!contact.submissionId) fieldErrors.push('submissionId');
+  if (contact.name.length < 2) fieldErrors.push('name');
+  if (!PHONE_PATTERN.test(contact.phone)) fieldErrors.push('phone');
+  if (!CONTACT_METHODS.has(contact.contactMethod)) fieldErrors.push('contactMethod');
+  if (!DIRECTION_ALLOWLIST.includes(contact.direction)) fieldErrors.push('direction');
+  if (!contact.consentAt || !isPlausibleConsentTimestamp(contact.consentAt)) fieldErrors.push('consentAt');
+  // Must match the server's own current privacy-policy version, not merely be non-empty —
+  // a client (or a direct API caller) claiming consent under a version we didn't actually
+  // serve would make the audit column meaningless.
+  if (contact.privacyVersion !== company.privacyVersion) fieldErrors.push('privacyVersion');
+  return fieldErrors;
+}
+
+function clipAttribution(body: LeadPayload) {
+  return {
+    sourcePage: clip(body.sourcePage, 300),
+    landingPage: clip(body.landingPage, 300),
+    referrer: clip(body.referrer, 300),
+    utmSource: clip(body.utm?.source, 200),
+    utmMedium: clip(body.utm?.medium, 200),
+    utmCampaign: clip(body.utm?.campaign, 200),
+    utmTerm: clip(body.utm?.term, 200),
+    utmContent: clip(body.utm?.content, 200),
+    gclid: clip(body.clickIds?.gclid, 200),
+    gbraid: clip(body.clickIds?.gbraid, 200),
+    wbraid: clip(body.clickIds?.wbraid, 200),
+  };
+}
+
+/** The response that ends the request when Turnstile does not pass it; null when it does. */
+async function turnstileRejection(request: Request, body: LeadPayload) {
+  if (!workerEnv.TURNSTILE_SECRET) {
+    return json({ ok: false, error: 'server' }, 500);
+  }
+  const verdict = await verifyTurnstileToken({
+    secret: workerEnv.TURNSTILE_SECRET,
+    token: typeof body.turnstileToken === 'string' ? body.turnstileToken.trim() : '',
+    remoteIp: request.headers.get('CF-Connecting-IP'),
+    requestHostname: new URL(request.url).hostname,
+  });
+  if (verdict.ok) return null;
+  return verdict.reason === 'unavailable'
+    ? json({ ok: false, error: 'verification_unavailable' }, 503)
+    : json({ ok: false, error: 'verification' }, 403);
+}
+
+function findLead(submissionId: string) {
+  return workerEnv.DB.prepare('SELECT id FROM leads WHERE submission_id = ?')
+    .bind(submissionId)
+    .first<{ id: number }>();
+}
+
+// Atomic check-and-reserve: the COUNT and the reservation INSERT are one SQLite statement,
+// so no concurrent request can read the same pre-increment count before either writes back
+// (the previous separate SELECT-then-INSERT had exactly that race). `meta.changes === 0`
+// means the WHERE clause suppressed the insert, i.e. the caller is already at the limit.
+function reserveRateSlot(ipHash: string) {
+  return workerEnv.DB.prepare(
+    `INSERT INTO lead_submit_log (ip_hash)
+     SELECT ? WHERE (
+       SELECT COUNT(*) FROM lead_submit_log WHERE ip_hash = ? AND created_at > datetime('now', ?)
+     ) < ?`,
+  )
+    .bind(ipHash, ipHash, RATE_LIMIT_WINDOW, RATE_LIMIT_MAX)
+    .run();
+}
+
+async function insertLead(
+  contact: ReturnType<typeof clipContact>,
+  details: string,
+  attribution: ReturnType<typeof clipAttribution>,
+) {
+  const insert = await workerEnv.DB.prepare(
+    `INSERT INTO leads (
+      submission_id, name, phone, contact_method, direction, details,
+      source_page, landing_page, referrer,
+      utm_source, utm_medium, utm_campaign, utm_term, utm_content,
+      gclid, gbraid, wbraid, consent_at, privacy_version
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      contact.submissionId, contact.name, contact.phone, contact.contactMethod, contact.direction, details,
+      attribution.sourcePage, attribution.landingPage, attribution.referrer,
+      attribution.utmSource, attribution.utmMedium, attribution.utmCampaign, attribution.utmTerm, attribution.utmContent,
+      attribution.gclid, attribution.gbraid, attribution.wbraid, contact.consentAt, contact.privacyVersion,
+    )
+    .run();
+
+  return Number(insert.meta.last_row_id ?? 0);
+}
+
+async function refundRateSlot(rateLogRowId: number) {
+  try {
+    await workerEnv.DB.prepare('DELETE FROM lead_submit_log WHERE rowid = ?').bind(rateLogRowId).run();
+  } catch {
+    // Best effort; a cleanup failure must not hide an accepted lead.
+  }
+}
+
+async function logNotifyFailure(leadId: number, reason: unknown) {
+  try {
+    await workerEnv.DB.prepare(
+      'INSERT INTO lead_notify_failures (lead_id, channel, error) VALUES (?, ?, ?)',
+    )
+      .bind(leadId, 'telegram', String(reason).slice(0, 500))
+      .run();
+  } catch {
+    // The lead itself is already saved — that's what matters if even this logging fails.
+  }
+}
+
+function isUniqueConflict(error: unknown) {
+  return String(error).includes('UNIQUE constraint failed');
+}
+
+/**
+ * A failed response from D1 does not prove the insert failed. Reconcile first;
+ * refund only a confirmed absent lead or the losing UNIQUE-constraint request.
+ */
+async function reconcileFailedInsert(error: unknown, submissionId: string, rateLogRowId: number) {
+  try {
+    const existing = await findLead(submissionId);
+    if (!existing || isUniqueConflict(error)) await refundRateSlot(rateLogRowId);
+    if (existing) {
+      if (!isUniqueConflict(error)) await logNotifyFailure(existing.id, 'Insert acknowledgement lost; notification not attempted');
+      return json({ ok: true, id: existing.id, isNew: false });
+    }
+  } catch {
+    // Outcome unknown: retain the reservation and let the same-ID retry reconcile.
+  }
+  return json({ ok: false, error: 'server' }, 500);
+}
+
 export async function POST(request: Request) {
   try {
     return await handleLead(request);
@@ -128,14 +286,8 @@ export async function POST(request: Request) {
 }
 
 async function handleLead(request: Request) {
-  let body: LeadPayload;
-  try {
-    const parsed: unknown = await request.json();
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return json({ ok: false, error: 'validation', fields: ['body'] }, 400);
-    }
-    body = parsed as LeadPayload;
-  } catch {
+  const body = await readLeadBody(request);
+  if (!body) {
     return json({ ok: false, error: 'validation', fields: ['body'] }, 400);
   }
 
@@ -145,26 +297,8 @@ async function handleLead(request: Request) {
     return json({ ok: true, id: 0, isNew: false });
   }
 
-  const submissionId = clip(body.submissionId, 100);
-  const name = clip(body.name, 80);
-  const phone = clip(body.phone, 20);
-  const contactMethod = clip(body.contactMethod, 20);
-  const direction = clip(body.direction, 100);
-  const consentAt = clip(body.consentAt, 40);
-  const privacyVersion = clip(body.privacyVersion, 40);
-
-  const fieldErrors: string[] = [];
-  if (!submissionId) fieldErrors.push('submissionId');
-  if (name.length < 2) fieldErrors.push('name');
-  if (!PHONE_PATTERN.test(phone)) fieldErrors.push('phone');
-  if (!CONTACT_METHODS.includes(contactMethod)) fieldErrors.push('contactMethod');
-  if (!DIRECTION_ALLOWLIST.includes(direction)) fieldErrors.push('direction');
-  if (!consentAt || !isPlausibleConsentTimestamp(consentAt)) fieldErrors.push('consentAt');
-  // Must match the server's own current privacy-policy version, not merely be non-empty —
-  // a client (or a direct API caller) claiming consent under a version we didn't actually
-  // serve would make the audit column meaningless.
-  if (privacyVersion !== company.privacyVersion) fieldErrors.push('privacyVersion');
-
+  const contact = clipContact(body);
+  const fieldErrors = invalidContactFields(contact);
   if (fieldErrors.length) {
     return json({ ok: false, error: 'validation', fields: fieldErrors }, 400);
   }
@@ -174,29 +308,15 @@ async function handleLead(request: Request) {
   // It also runs before the rate limiter so failed challenges never spend a visitor's slots; the
   // limiter itself is unchanged for every request that passes. Each token is single-use, so a
   // retry after any failure needs a fresh one from the widget.
-  if (!workerEnv.TURNSTILE_SECRET) {
-    return json({ ok: false, error: 'server' }, 500);
-  }
-  const verdict = await verifyTurnstileToken({
-    secret: workerEnv.TURNSTILE_SECRET,
-    token: typeof body.turnstileToken === 'string' ? body.turnstileToken.trim() : '',
-    remoteIp: request.headers.get('CF-Connecting-IP'),
-    requestHostname: new URL(request.url).hostname,
-  });
-  if (!verdict.ok) {
-    return verdict.reason === 'unavailable'
-      ? json({ ok: false, error: 'verification_unavailable' }, 503)
-      : json({ ok: false, error: 'verification' }, 403);
-  }
+  const rejection = await turnstileRejection(request, body);
+  if (rejection) return rejection;
 
   // Idempotent retry, checked before the rate limiter: a sequential retry of an
   // already-accepted submissionId must always succeed and must never touch the rate-limit
   // bucket — regardless of whether that bucket happens to be full right now. This only runs
   // after full field validation above, so a garbage payload paired with a guessed/known
   // submissionId still can't get a 200 without ever having passed validation for that data.
-  const alreadyAccepted = await workerEnv.DB.prepare('SELECT id FROM leads WHERE submission_id = ?')
-    .bind(submissionId)
-    .first<{ id: number }>();
+  const alreadyAccepted = await findLead(contact.submissionId);
   if (alreadyAccepted) {
     return json({ ok: true, id: alreadyAccepted.id, isNew: false });
   }
@@ -215,18 +335,7 @@ async function handleLead(request: Request) {
     ...attachmentDetails(attachment),
   };
   const details = JSON.stringify(leadDetails);
-
-  const sourcePage = clip(body.sourcePage, 300);
-  const landingPage = clip(body.landingPage, 300);
-  const referrer = clip(body.referrer, 300);
-  const utmSource = clip(body.utm?.source, 200);
-  const utmMedium = clip(body.utm?.medium, 200);
-  const utmCampaign = clip(body.utm?.campaign, 200);
-  const utmTerm = clip(body.utm?.term, 200);
-  const utmContent = clip(body.utm?.content, 200);
-  const gclid = clip(body.clickIds?.gclid, 200);
-  const gbraid = clip(body.clickIds?.gbraid, 200);
-  const wbraid = clip(body.clickIds?.wbraid, 200);
+  const attribution = clipAttribution(body);
 
   // A missing salt must fail loudly, not silently hash with an empty string — that would
   // quietly weaken the rate-limit hash instead of surfacing the misconfiguration.
@@ -236,19 +345,7 @@ async function handleLead(request: Request) {
 
   const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
   const ipHash = await hashIp(clientIp, workerEnv.IP_HASH_SALT);
-
-  // Atomic check-and-reserve: the COUNT and the reservation INSERT are one SQLite statement,
-  // so no concurrent request can read the same pre-increment count before either writes back
-  // (the previous separate SELECT-then-INSERT had exactly that race). `meta.changes === 0`
-  // means the WHERE clause suppressed the insert, i.e. the caller is already at the limit.
-  const reservation = await workerEnv.DB.prepare(
-    `INSERT INTO lead_submit_log (ip_hash)
-     SELECT ? WHERE (
-       SELECT COUNT(*) FROM lead_submit_log WHERE ip_hash = ? AND created_at > datetime('now', ?)
-     ) < ?`,
-  )
-    .bind(ipHash, ipHash, RATE_LIMIT_WINDOW, RATE_LIMIT_MAX)
-    .run();
+  const reservation = await reserveRateSlot(ipHash);
 
   if (!reservation.meta.changes) {
     return json({ ok: false, error: 'rate_limited' }, 429);
@@ -258,77 +355,25 @@ async function handleLead(request: Request) {
   let leadId: number;
 
   try {
-    const insert = await workerEnv.DB.prepare(
-      `INSERT INTO leads (
-        submission_id, name, phone, contact_method, direction, details,
-        source_page, landing_page, referrer,
-        utm_source, utm_medium, utm_campaign, utm_term, utm_content,
-        gclid, gbraid, wbraid, consent_at, privacy_version
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-      .bind(
-        submissionId, name, phone, contactMethod, direction, details,
-        sourcePage, landingPage, referrer,
-        utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
-        gclid, gbraid, wbraid, consentAt, privacyVersion,
-      )
-      .run();
-
-    leadId = Number(insert.meta.last_row_id ?? 0);
+    leadId = await insertLead(contact, details, attribution);
   } catch (error) {
-    // A failed response from D1 does not prove the insert failed. Reconcile first;
-    // refund only a confirmed absent lead or the losing UNIQUE-constraint request.
-    try {
-      const existing = await workerEnv.DB.prepare('SELECT id FROM leads WHERE submission_id = ?')
-        .bind(submissionId)
-        .first<{ id: number }>();
-      if (!existing || String(error).includes('UNIQUE constraint failed')) {
-        try {
-          await workerEnv.DB.prepare('DELETE FROM lead_submit_log WHERE rowid = ?').bind(rateLogRowId).run();
-        } catch {
-          // Best effort; a cleanup failure must not hide an accepted lead.
-        }
-      }
-      if (existing) {
-        if (!String(error).includes('UNIQUE constraint failed')) {
-          try {
-            await workerEnv.DB.prepare(
-              'INSERT INTO lead_notify_failures (lead_id, channel, error) VALUES (?, ?, ?)',
-            ).bind(existing.id, 'telegram', 'Insert acknowledgement lost; notification not attempted').run();
-          } catch {
-            // Accepted lead remains successful even if the recovery log is unavailable.
-          }
-        }
-        return json({ ok: true, id: existing.id, isNew: false });
-      }
-    } catch {
-      // Outcome unknown: retain the reservation and let the same-ID retry reconcile.
-    }
-    return json({ ok: false, error: 'server' }, 500);
+    return reconcileFailedInsert(error, contact.submissionId, rateLogRowId);
   }
 
   // D1 already has the lead — from here on, nothing can turn this response into a failure.
   // Notification is best-effort and happens after the fact is already true.
   try {
     await notifyTelegram(workerEnv, {
-      name,
-      phone,
-      direction,
-      contactMethod,
-      sourcePage,
+      name: contact.name,
+      phone: contact.phone,
+      direction: contact.direction,
+      contactMethod: contact.contactMethod,
+      sourcePage: attribution.sourcePage,
       details: leadDetails,
       attachmentLabel: attachment?.telegramLabel ?? GENERIC_ATTACHMENT_TELEGRAM_LABEL,
     });
   } catch (error) {
-    try {
-      await workerEnv.DB.prepare(
-        'INSERT INTO lead_notify_failures (lead_id, channel, error) VALUES (?, ?, ?)',
-      )
-        .bind(leadId, 'telegram', String(error).slice(0, 500))
-        .run();
-    } catch {
-      // The lead itself is already saved — that's what matters if even this logging fails.
-    }
+    await logNotifyFailure(leadId, error);
   }
 
   return json({ ok: true, id: leadId, isNew: true });

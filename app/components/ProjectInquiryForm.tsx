@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type Ref, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type Ref, type SubmitEvent, type SyntheticEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, Phone, Send } from 'lucide-react';
 import { inquiryDirectionOptions } from '../data/directions';
@@ -8,11 +8,12 @@ import { company, companyContactLinks } from '../data/company';
 import { contactMethodOptions, messengerContacts, type ContactMethod } from '../data/contactMethods';
 import { siteRoutes } from '../data/navigation';
 import { filterAttributionForConsent, readAttribution } from '../lib/attribution';
-import { hasAdvertisingConsent, hasAnalyticsConsent } from '../lib/consent';
+import { hasAdvertisingConsent } from '../lib/consent';
 import { queueInquiryAnalyticsEvent } from '../lib/inquiry/analytics';
 import { toInquiryAttachmentPayload } from '../lib/inquiry/attachment';
 import { normalizeUaPhone } from '../lib/inquiry/phone';
 import { createSubmissionId, nextSubmissionIdAfterSuccess } from '../lib/inquiry/submissionId';
+import { acknowledgeSavedLead, attemptSubmissionId, type SubmitAttempt } from '../lib/inquiry/submitAttempt';
 import { dimensionsFieldView } from './inquiry/formAttachment';
 import { useInquiryAttachment } from './inquiry/InquiryAttachmentProvider';
 import { InquiryAttachmentSummary } from './inquiry/InquiryAttachmentSummary';
@@ -32,7 +33,8 @@ const VERIFICATION_FAILED_MESSAGE =
   'Не вдалося надіслати запит. Спробуйте ще раз або зателефонуйте нам: +38 068 261 42 64';
 
 function value(formData: FormData, key: string) {
-  return String(formData.get(key) || '').trim();
+  const entry = formData.get(key);
+  return typeof entry === 'string' ? entry.trim() : '';
 }
 
 const subscribeToHydration = () => () => undefined;
@@ -80,14 +82,16 @@ function enabledFieldName(jsReady: boolean, name: string): string | undefined {
   return jsReady ? name : undefined;
 }
 
-function ContactMethodIcon({ method }: { method: ContactMethod }) {
+const METHOD_MESSENGERS: Record<Exclude<ContactMethod, 'Дзвінок'>, { icon: string }> = {
+  Telegram: messengerContacts.telegram,
+  WhatsApp: messengerContacts.whatsapp,
+  Viber: messengerContacts.viber,
+};
+
+function ContactMethodIcon({ method }: Readonly<{ method: ContactMethod }>) {
   if (method === 'Дзвінок') return <Phone aria-hidden="true" />;
 
-  const messenger = method === 'Telegram'
-    ? messengerContacts.telegram
-    : method === 'WhatsApp'
-      ? messengerContacts.whatsapp
-      : messengerContacts.viber;
+  const messenger = METHOD_MESSENGERS[method];
 
   // eslint-disable-next-line @next/next/no-img-element -- an 18 px SVG; see MessengerLinks in SiteChrome.tsx
   return <img src={messenger.icon} width={18} height={18} alt="" aria-hidden="true" loading="lazy" decoding="async" />;
@@ -136,6 +140,10 @@ function briefFacts(source: ReturnType<typeof useInquiryAttachment>) {
     // «Інше» as the purpose: the task field asks what for (08.10, audit — the lead said «Призначення: Інше» and nothing more)
     otherPurpose: Boolean(attachment?.sections.some((section) => section.rows.some((row) => row.label === 'Призначення' && row.value === 'Інше'))),
   };
+}
+
+function inquiryEventParameters(method: ContactMethod, direction: string) {
+  return { contact_method: method.toLowerCase(), project_direction: direction };
 }
 
 function statusLine(status: string, successMessage: string, changedSinceSent: boolean) {
@@ -219,7 +227,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   // The disabled button only takes effect after a re-render; this ref blocks a second submit
   // event that arrives before it (a fast double click or a double Enter).
   const submittingRef = useRef(false);
-  const lastAttempt = useRef<{ id: string; signature: string } | null>(null);
+  const lastAttempt = useRef<SubmitAttempt | null>(null);
   const acknowledgedLeadIds = useRef(new Set<number>());
   const formRef = useRef<HTMLFormElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -264,7 +272,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     report('phone', null);
   };
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submittingRef.current) return;
     setConsentError(false);
@@ -288,8 +296,6 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     setStatus('');
     setStatusAction(null);
 
-    // One business payload belongs to one idempotency key. Changed fields (including
-    // attachments) are a new inquiry, never a silent acknowledgement of an old payload.
     const businessPayload = {
       name, phone, contactMethod, direction,
       details: {
@@ -302,13 +308,9 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       },
     };
     const signature = JSON.stringify(businessPayload);
-    const requestId = lastAttempt.current
-      ? lastAttempt.current.signature === signature ? lastAttempt.current.id : createSubmissionId()
-      : submissionId;
+    const requestId = attemptSubmissionId(lastAttempt.current, signature, submissionId);
     lastAttempt.current = { id: requestId, signature };
-    queueInquiryAnalyticsEvent('inquiry_contact_attempt', {
-      contact_method: contactMethod.toLowerCase(), project_direction: direction,
-    });
+    queueInquiryAnalyticsEvent('inquiry_contact_attempt', inquiryEventParameters(contactMethod, direction));
 
     setIsSubmitting(true);
     let saved = false;
@@ -358,19 +360,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       return;
     }
 
-    // Count a saved lead once per mounted form, including a duplicate acknowledgement
-    // after a lost response. Server identity also protects against repeated acknowledgements;
-    // isNew=false alone cannot distinguish a lost response from an already-counted lead.
-    const firstAcknowledgement = typeof savedLeadId === 'number' && savedLeadId > 0
-      && !acknowledgedLeadIds.current.has(savedLeadId);
-    if (firstAcknowledgement) {
-      const consentGranted = hasAnalyticsConsent();
-      const queued = consentGranted && queueInquiryAnalyticsEvent('generate_lead', {
-        contact_method: contactMethod.toLowerCase(), project_direction: direction,
-      });
-      // No retroactive event after denial; eligible events are deduplicated only once queued.
-      if (!consentGranted || queued) acknowledgedLeadIds.current.add(savedLeadId!);
-    }
+    acknowledgeSavedLead(savedLeadId, acknowledgedLeadIds.current, inquiryEventParameters(contactMethod, direction));
 
     // Retries before success keep the same key. A confirmed save completes that lifecycle, so the
     // next explicit submit on this mounted page is a genuinely new lead with a fresh key.
