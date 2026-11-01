@@ -3,7 +3,8 @@
    does not, because it depicts nothing and grows out of the dark.
 
    Rules of the layer:
-     · one material a page, its dark side and its paper side;
+     · one material a page, on its dark block; its paper block carries a scene of the page's own subject, falling grain being
+       the first (owner 01.11: «ось такі елементи прям дуже солідно виглядають», and pages must not repeat one image);
      · only blocks with no drawing or photo of their own in view, and only in the void beside the heading: --material-void is
        that void's measured height, and the surface is gone before the block's text starts;
      · contours belong to the form (conversation.css), nothing lies under the footer's text;
@@ -25,6 +26,12 @@
   --material-dots-size: 28px 48.5px;
   --material-concrete: url('/media/materials/concrete-paper.webp');
   --material-grain: url('/media/materials/grainfall-paper.svg');
+  --scene-sparks: url('/media/materials/scene-sparks-paper.svg');
+  --scene-pour: url('/media/materials/scene-pour-paper.svg');
+  --scene-snow: url('/media/materials/scene-snow-paper.svg');
+  --scene-rain: url('/media/materials/scene-rain-paper.svg');
+  --scene-order: url('/media/materials/scene-order-paper.svg');
+  --scene-mark: url('/media/materials/scene-mark-paper.svg');
 }
 /* In Dark a paper block is graphite, so it takes the surface's dark side */
 :root[data-theme="dark"] {
@@ -36,6 +43,12 @@
   --material-dots-size: 16px 16px;
   --material-concrete: url('/media/materials/concrete-dark.webp');
   --material-grain: url('/media/materials/grainfall-dark.svg');
+  --scene-sparks: url('/media/materials/scene-sparks-dark.svg');
+  --scene-pour: url('/media/materials/scene-pour-dark.svg');
+  --scene-snow: url('/media/materials/scene-snow-dark.svg');
+  --scene-rain: url('/media/materials/scene-rain-dark.svg');
+  --scene-order: url('/media/materials/scene-order-dark.svg');
+  --scene-mark: url('/media/materials/scene-mark-dark.svg');
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
@@ -47,6 +60,12 @@
     --material-dots-size: 16px 16px;
     --material-concrete: url('/media/materials/concrete-dark.webp');
     --material-grain: url('/media/materials/grainfall-dark.svg');
+    --scene-sparks: url('/media/materials/scene-sparks-dark.svg');
+    --scene-pour: url('/media/materials/scene-pour-dark.svg');
+    --scene-snow: url('/media/materials/scene-snow-dark.svg');
+    --scene-rain: url('/media/materials/scene-rain-dark.svg');
+    --scene-order: url('/media/materials/scene-order-dark.svg');
+    --scene-mark: url('/media/materials/scene-mark-dark.svg');
   }
 }
 
@@ -71,14 +90,22 @@
   }
 }
 
-/* The paper blocks, on a desktop only */
+/* A phone: the pool of light is wider than the screen, so the material would stand at full strength under the label. It ends above it */
+@media (max-width: 760px) {
+  :is(.metal-page > .page-section-dark, .directions-page > .dhow, .concrete-page > .page-section-dark, .angary-page > .angary-process,
+    .roofing-page > .page-section-dark, .grain-page > .grain-process-band, .process-page > .proc-route, .about-page > .about-principles) {
+    --material-void: 76px;
+  }
+}
+
+/* The paper blocks, on a desktop only: a scene in the void beside the heading, cut by the block's colour on both sides */
 @media (min-width: 1181px) {
-  .metal-page > .cost-section { --material: var(--material-tread); --material-size: var(--material-tread-size); --material-void: 390px; --material-ground: var(--color-surface-alt); }
-  .concrete-page > .cost-section { --material: var(--material-concrete); --material-size: 640px 320px; --material-void: 500px; --material-ground: var(--color-surface-alt); }
-  .angary-page > .angary-cost { --material: var(--material-panel); --material-size: var(--material-panel-size); --material-void: 430px; --material-ground: var(--color-surface-alt); }
-  .roofing-page > .direction-entry { --material: var(--material-sheet); --material-size: var(--material-sheet-size); --material-void: 400px; --material-ground: var(--color-bg); }
-  .process-page > .proc-terms { --material: var(--material-dots); --material-size: var(--material-dots-size); --material-void: 375px; --material-ground: var(--color-bg); }
-  .about-page > .team-about { --material: var(--material-concrete); --material-size: 640px 320px; --material-void: 358px; --material-ground: var(--color-bg); }
+  .metal-page > .cost-section { --scene: var(--scene-sparks); --material-ground: var(--color-surface-alt); }
+  .concrete-page > .cost-section { --scene: var(--scene-pour); --material-ground: var(--color-surface-alt); }
+  .angary-page > .angary-cost { --scene: var(--scene-snow); --material-ground: var(--color-surface-alt); }
+  .roofing-page > .direction-entry { --scene: var(--scene-rain); --material-ground: var(--color-bg); }
+  .process-page > .proc-terms { --scene: var(--scene-order); --material-ground: var(--color-bg); }
+  .about-page > .team-about { --scene: var(--scene-mark); --material-ground: var(--color-bg); }
 
   /* Grain is a picture, not a surface: it falls into its heap in the void and is cut by the block's colour on both sides */
   .grain-page > .cost-section {
@@ -92,8 +119,26 @@
     background-size: auto, auto, 760px 760px;
   }
 
-  .metal-page > .cost-section, .concrete-page > .cost-section, .angary-page > .angary-cost, .roofing-page > .direction-entry,
-  .process-page > .proc-terms, .about-page > .team-about { background-image: var(--material-layers); background-repeat: no-repeat, no-repeat, repeat; background-position: 0 0, 0 0, right top; background-size: auto, auto, var(--material-size); }
+  :is(.metal-page > .cost-section, .concrete-page > .cost-section, .angary-page > .angary-cost, .roofing-page > .direction-entry,
+    .process-page > .proc-terms, .about-page > .team-about) {
+    background-image:
+      linear-gradient(to bottom, transparent 330px, var(--material-ground) 430px),
+      linear-gradient(to right, var(--material-ground) 700px, transparent 900px),
+      var(--scene);
+    background-repeat: no-repeat;
+    background-position: 0 0, 0 0, right top;
+    background-size: auto, auto, 760px 430px;
+  }
+  /* The hub names all five directions, so it takes a stream of each instead of a second page's perforated steel */
+  .directions-page > .dhow {
+    --material: url('/media/materials/scene-five-dark.svg');
+    --material-size: 760px 430px;
+    --material-repeat: no-repeat;
+    background-image:
+      linear-gradient(to bottom, transparent 330px, var(--material-ground) 430px),
+      linear-gradient(to right, var(--material-ground) 700px, transparent 900px),
+      var(--material);
+  }
 }
 
 .metal-page > .page-section-dark, .directions-page > .dhow, .concrete-page > .page-section-dark, .angary-page > .angary-process,
