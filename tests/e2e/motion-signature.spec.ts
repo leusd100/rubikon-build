@@ -54,9 +54,13 @@ test.describe('the stack', () => {
     await expect.poll(() => shift(page)).toBe(0);
   });
 
-  test('the configurator stays out: a transformed ancestor would catch its full screen', async ({ page }) => {
+  test('blocks a visitor works in stay out: they must not move under the hand', async ({ page }) => {
+    const held = (selector: string) => page.locator(selector).evaluateAll((blocks) => blocks.map((block) => getComputedStyle(block).animationName));
     await open(page, '/angary');
-    expect(await page.locator('main > .hangar-configurator').evaluate((block) => getComputedStyle(block).animationName)).toBe('none');
+    expect(await held('main > .hangar-configurator'), 'a transformed ancestor would catch its full screen').toEqual(['none']);
+    expect(await held('main > .conversation'), 'a field would jump when it takes focus').toEqual(['none']);
+    await open(page, '/planner-preview');
+    expect(await held('main > .grain-planner-root'), 'the scale shrinks its buttons, the shortcut waits for the result to pass').toEqual(['none', 'none']);
   });
 
   test('reduced motion: no hold, no reveal, no light, no page transition', async ({ page }) => {

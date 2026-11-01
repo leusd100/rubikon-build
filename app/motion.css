@@ -13,12 +13,15 @@
    a held block is drawn away from its place, so Shift+Tab left controls under the fixed header (WCAG 2.4.11,
    responsive-a11y-phase1.spec.ts).
 
-   The configurator's block stays out: its full-screen mode is position: fixed, and a transformed ancestor would catch it. */
+   Blocks a visitor works in stay out, because they must not move under the hand. The configurator: its full-screen mode is
+   position: fixed, and a transformed ancestor would catch it. The grain planner: the scale took its buttons under 44 px, and
+   the shortcut waits for the result's handoff to scroll by, which a held block never does (grain-planner-mobile.spec.ts,
+   grain-planner-handoff.spec.ts). The form: a field in a held block would jump to its place the moment it takes focus. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     :root { --stack-hold: 55vh; }
     main[data-field] { background: var(--color-dark); }
-    main[data-field] > section:not(.hangar-configurator) {
+    main[data-field] > section:not(.hangar-configurator, .grain-planner-root, .conversation) {
       transform-origin: 50% calc(100% - var(--stack-hold) / 2);
       animation: stack-hold linear both;
       animation-timeline: view();
