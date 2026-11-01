@@ -5,9 +5,9 @@
 | Дата | 2026-11-01 |
 | Виконавець | Claude Code |
 | Підстава | Власник, 01.11: «поправ підвал… зараз воно більше до правого краю», після макетів обрав варіант «Підпис» («Так, футер у PR») |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#291](https://github.com/leusd100/rubikon-build/pull/291), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `design/footer-signature` від `main` `299a161d` |
-| Коміти | `079e73f3` — футер і тести · наступний коміт — цей handoff |
+| Коміти | `079e73f3` — футер і тести · `61d7b9aa` — handoff |
 | Змінено | `app/globals.css` (сітка футера, слово, відступи телефона), `app/components/FooterSignature.tsx` (новий), `app/components/SiteChrome.tsx` (вставка), `tests/e2e/footer-composition.spec.ts` |
 | Не змінено | Тексти, посилання, контакти, логотип, планшетна розкладка колонок, еталони, бюджети, залежності |
 
