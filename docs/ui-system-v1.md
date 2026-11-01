@@ -151,7 +151,11 @@ stands:
   reads `--ease-standard`, the literal curves are the four tokens of 6.2, and HOME's direction cards and sheets no longer lift.
 - **In the code (M1-3).** Lenis at rest (rule 8).
 - **In the code (M1-4).** One rule for the auto-shows (rule 7).
-- **Next (M2, M3).** The five gestures of 6.3 and the controller of 6.5, the three signature moments.
+- **In the code (01.11).** The deck in motion, cross-document page transitions, the reveal of a block's rule, heading and lead,
+  the light that follows the pointer over a material, the band of light across the footer's word: `app/motion.css`,
+  `SiteReveal.tsx`, `MaterialLight.tsx`. The deck's hold is the owner's decision of 01.11 and goes beyond 6.8: the whole block
+  follows the scroll, not a line of a drawing, without a pin and without taking the scroll away.
+- **Next (M2, M3).** The rest of the gestures of 6.3 and the controller of 6.5, the hero's entrance and the sent stamp.
 - **Allowed, not built (30.10).** Drawings whose lines follow the scroll, under the rules of 6.8. Nothing on the site uses
   this yet.
 

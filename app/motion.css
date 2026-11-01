@@ -1,0 +1,73 @@
+/* The deck in motion (owner 01.11, «преміальні анімації»). page-sheets.css draws the blocks as a stack of sheets; here the
+   stack works: a block that has been read stops under the one coming up, sinks a little into the page and is covered, as a
+   sheet presented over another on a phone. Nothing takes the scroll away: the page keeps its length and its pace, the block
+   only stays where it is while the next one travels over it.
+
+   One scroll-driven transform for each block, no script. The hold is exact because the block moves down exactly as far as
+   the page scrolls over the range, on the linear timing. It starts when the block's foot is --stack-hold below the top of the
+   screen and not at the bottom edge, so the end of a block has come up past the middle, where it can be read, before the next
+   sheet comes over it. The layout box does not move, so anchors and the page's height are untouched, and the end of the
+   animation is the page without it. Off without view() (old browsers), with reduced motion and in print.
+
+   Keyboard focus turns the hold off inside the page: a browser brings a focused control into view by where it is drawn, and
+   a held block is drawn away from its place, so Shift+Tab left controls under the fixed header (WCAG 2.4.11,
+   responsive-a11y-phase1.spec.ts).
+
+   The configurator's block stays out: its full-screen mode is position: fixed, and a transformed ancestor would catch it. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root { --stack-hold: 55vh; }
+    main[data-field] { background: var(--color-dark); }
+    main[data-field] > section:not(.hangar-configurator) {
+      transform-origin: 50% calc(100% - var(--stack-hold) / 2);
+      animation: stack-hold linear both;
+      animation-timeline: view();
+      animation-range: cover calc(100% - var(--stack-hold)) cover 100%;
+    }
+    main[data-field]:has(:focus-visible) > section { animation: none; }
+    @keyframes stack-hold {
+      from { transform: none; }
+      to { transform: translateY(var(--stack-hold)) scale(.94); }
+    }
+  }
+}
+
+/* The signature's smaller moments. Each ends in the look of the page without motion. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Pages change as the sheets do: the old page sinks, the new one comes up over it, under a header that stays. Cross-document
+     view transitions, CSS only (ui-system §6, M3-1); a browser without them simply changes the page. */
+  @view-transition { navigation: auto; }
+  .site-header { view-transition-name: site-header; }
+  ::view-transition { background: var(--color-dark); }
+  ::view-transition-group(site-header) { z-index: 3; animation: none; }
+  ::view-transition-old(root) { transform-origin: 50% 40vh; animation: page-sink var(--motion-enter) var(--ease-premium) both; }
+  ::view-transition-new(root) { border-radius: var(--sheet-radius) var(--sheet-radius) 0 0; animation: page-rise var(--motion-enter) var(--ease-premium) both; }
+  @keyframes page-sink { to { transform: scale(.94); opacity: .55; } }
+  @keyframes page-rise { from { transform: translateY(100vh); } }
+
+  /* The gestures of ui-system §6.3, armed by SiteReveal.tsx below the first screen */
+  [data-reveal="rule"] { transform: scaleX(0); transform-origin: left; transition: transform var(--motion-draw) var(--ease-plot); }
+  [data-reveal="mask"] { clip-path: inset(-.25em -.25em 100% -.25em); transform: translateY(100%); transition: clip-path var(--motion-enter) var(--ease-premium) var(--motion-stagger), transform var(--motion-enter) var(--ease-premium) var(--motion-stagger); }
+  [data-reveal="rise"] { opacity: 0; transform: translateY(var(--motion-rise)); transition: opacity var(--motion-enter) var(--ease-premium) calc(3 * var(--motion-stagger)), transform var(--motion-enter) var(--ease-premium) calc(3 * var(--motion-stagger)); }
+  [data-reveal][data-reveal-state="on"] { opacity: 1; clip-path: inset(-.25em); transform: none; }
+
+  /* The light that follows the pointer (MaterialLight.tsx), under the block's text */
+  main[data-field] > section:has(> .material-light) { isolation: isolate; overflow: clip; }
+  .material-light {
+    position: absolute; top: -380px; left: -380px; z-index: -1; width: 760px; height: 760px; border-radius: 50%; opacity: 0; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, .42), transparent); mix-blend-mode: color-dodge;
+    transition: opacity var(--motion-ui) var(--ease-standard);
+  }
+  .material-light[data-on] { opacity: 1; }
+  :is(.cost-section, .direction-entry, .proc-terms, .team-about, .angary-cost) > .material-light { background: radial-gradient(closest-side, rgba(255, 255, 255, .9), transparent); mix-blend-mode: soft-light; }
+}
+
+/* A band of light crosses the embossed word as the footer comes up: a line of our own that follows the scroll, under the
+   rules of ui-system §6.8, no pin, and the end is the still state */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    footer { view-timeline: --footer; }
+    .footer-signature-sheen { animation: signature-sheen linear both; animation-timeline: --footer; animation-range: entry 30% entry 100%; }
+    @keyframes signature-sheen { to { transform: translateX(1060px); } }
+  }
+}
