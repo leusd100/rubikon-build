@@ -779,6 +779,12 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-form .form-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 
 .inner-page { background: var(--color-bg); }
+/* The long inner pages lay out and paint only the blocks near the screen (MT-03, 27.10): their first full layout was the
+   biggest single task on a phone (/yak 1 100 objects at once). Not HOME — its cost is in the first screen — and not the
+   block right under the hero: it starts a screen down, always within the ~2.5 screens the browser renders at load, so
+   skipping it saves nothing and only lays the first frame out twice (/angary's later LCP, DebugBear 27.10). `auto`
+   keeps a block's real height once it has been drawn; 1000 px stands in for it until then. */
+.inner-page > section:nth-of-type(n + 3), .inner-page ~ footer { content-visibility: auto; contain-intrinsic-size: auto 1000px; }
 .subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
 .subhero-grid { position: absolute; inset: 0; opacity: .16; background-image: linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px); background-size: 96px 96px; mask-image: linear-gradient(90deg, black, transparent 82%); pointer-events: none; }
 .subhero-media > img,
