@@ -13,12 +13,12 @@ export function FooterSignature() {
     <svg className="footer-signature" xmlns="http://www.w3.org/2000/svg" viewBox="521 140 802 79" fillRule="evenodd" aria-hidden="true" focusable="false">
       <defs>
         <filter id="footer-signature-relief" x="-1%" y="-6%" width="102%" height="112%" colorInterpolationFilters="sRGB">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="soft" />
-          <feOffset in="soft" dx="1" dy="-1" result="to-light" />
-          <feOffset in="soft" dx="-1" dy="1" result="from-light" />
+          <feGaussianBlur in="SourceAlpha" stdDeviation=".55" result="soft" />
+          <feOffset in="soft" dx=".7" dy="-.7" result="to-light" />
+          <feOffset in="soft" dx="-.7" dy=".7" result="from-light" />
           <feComposite in="to-light" in2="from-light" operator="arithmetic" k2="1" k3="-1" result="lit" />
           <feComposite in="from-light" in2="to-light" operator="arithmetic" k2="1" k3="-1" result="shaded" />
-          <feFlood floodColor="#F5F2EB" floodOpacity=".3" />
+          <feFlood floodColor="#F5F2EB" floodOpacity=".36" />
           <feComposite in2="lit" operator="in" result="edge-light" />
           <feFlood floodColor="#000" floodOpacity=".66" />
           <feComposite in2="shaded" operator="in" result="edge-shade" />

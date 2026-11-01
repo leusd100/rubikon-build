@@ -74,7 +74,7 @@ test.describe('the pages\' materials', () => {
     ['/zernoskhovyshcha', 'main > .cost-section', 'grainfall-paper'],
     ['/pokrivelni-roboty', 'main > .direction-entry', 'sheet-paper'],
     ['/yak-pratsyuiemo', 'main > .proc-route', 'knurl-dark'],
-    ['/pro-nas', 'main > .about-principles', 'brushed-dark'],
+    ['/pro-nas', 'main > .about-principles', 'concrete-dark'],
     ['/napryamky', 'main > .dhow', 'perforated-dark'],
   ] as const) {
     test(`${path} ${selector}: ${file}, and the file answers`, async ({ page, request }) => {

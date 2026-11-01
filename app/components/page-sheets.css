@@ -13,7 +13,13 @@
   --sheet-radius: 32px;
   --sheet-shadow: 0 -14px 44px rgba(8, 8, 7, .13);
   /* charcoal on charcoal has no edge of its own: a line of light along the top gives it one */
-  --sheet-shadow-dark: inset 0 1px 0 rgba(245, 242, 235, .13), 0 -14px 44px rgba(8, 8, 7, .42);
+  --sheet-shadow-dark: inset 0 1px 0 rgba(245, 242, 235, .13), 0 -8px 28px rgba(8, 8, 7, .2);
+}
+/* Over paper a heavier shadow dirtied the sheet below (#E6E2D9 to #A7A29C near the edge). Over charcoal it ate the difference
+   between the tones, so there the line of light does the work */
+:root[data-theme="dark"] { --sheet-shadow-dark: inset 0 1px 0 rgba(245, 242, 235, .2), 0 -10px 30px rgba(0, 0, 0, .28); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { --sheet-shadow-dark: inset 0 1px 0 rgba(245, 242, 235, .2), 0 -10px 30px rgba(0, 0, 0, .28); }
 }
 @media (max-width: 760px) { :root { --sheet-radius: 20px; } }
 
@@ -31,6 +37,10 @@ main[data-field] ~ footer {
   position: relative; margin-top: calc(-1 * var(--sheet-radius)); border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
   overflow: clip; box-shadow: var(--sheet-shadow-dark);
 }
+
+/* Neighbours of one tone read as one long sheet: a tone apart they stay two */
+main[data-field] > .proc-responsibility { background-color: var(--color-surface); }
+main[data-field] > .cost-section + .faq-section { background-color: var(--color-bg); }
 
 @media print {
   main[data-field] > section:not(:first-of-type), main[data-field] ~ footer { margin-top: 0; border: 0; border-radius: 0; box-shadow: none; }

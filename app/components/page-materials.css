@@ -58,7 +58,7 @@
 .roofing-page > .page-section-dark { --material: url('/media/materials/sheet-dark.webp'); --material-size: 124px 2px; --material-void: 460px; }
 .grain-page > .grain-process-band { --material: url('/media/materials/silo-dark.webp'); --material-size: 230px 30px; --material-void: 340px; }
 .process-page > .proc-route { --material: url('/media/materials/knurl-dark.webp'); --material-size: 16px 16px; --material-void: 370px; }
-.about-page > .about-principles { --material: url('/media/materials/brushed-dark.webp'); --material-size: 1000px 640px; --material-repeat: no-repeat; --material-void: 340px; }
+.about-page > .about-principles { --material: url('/media/materials/concrete-dark.webp'); --material-size: 640px 320px; --material-void: 340px; }
 
 :is(.metal-page > .page-section-dark, .directions-page > .dhow, .concrete-page > .page-section-dark, .angary-page > .angary-process,
   .roofing-page > .page-section-dark, .grain-page > .grain-process-band, .process-page > .proc-route, .about-page > .about-principles) {
@@ -68,6 +68,14 @@
   :is(.metal-page > .page-section-dark, .directions-page > .dhow, .concrete-page > .page-section-dark, .angary-page > .angary-process,
     .roofing-page > .page-section-dark, .grain-page > .grain-process-band, .process-page > .proc-route, .about-page > .about-principles) {
     --material-void: 124px;
+  }
+}
+
+/* A phone: the pool of light is wider than the screen, so the material would stand at full strength under the label. It ends above it */
+@media (max-width: 760px) {
+  :is(.metal-page > .page-section-dark, .directions-page > .dhow, .concrete-page > .page-section-dark, .angary-page > .angary-process,
+    .roofing-page > .page-section-dark, .grain-page > .grain-process-band, .process-page > .proc-route, .about-page > .about-principles) {
+    --material-void: 76px;
   }
 }
 
