@@ -66,16 +66,19 @@ test.describe('the pages\' materials', () => {
 
   for (const [path, selector, file] of [
     ['/metalokonstruktsii', 'main > .page-section-dark', 'perforated-dark'],
-    ['/metalokonstruktsii', 'main > .cost-section', 'tread-paper'],
+    ['/metalokonstruktsii', 'main > .cost-section', 'scene-sparks-paper'],
     ['/betonni-roboty', 'main > .page-section-dark', 'concrete-dark'],
-    ['/betonni-roboty', 'main > .cost-section', 'concrete-paper'],
+    ['/betonni-roboty', 'main > .cost-section', 'scene-pour-paper'],
+    ['/angary', 'main > .angary-cost', 'scene-snow-paper'],
     ['/angary', 'main > .angary-process', 'panel-dark'],
     ['/zernoskhovyshcha', 'main > .grain-process-band', 'silo-dark'],
     ['/zernoskhovyshcha', 'main > .cost-section', 'grainfall-paper'],
-    ['/pokrivelni-roboty', 'main > .direction-entry', 'sheet-paper'],
+    ['/pokrivelni-roboty', 'main > .direction-entry', 'scene-rain-paper'],
+    ['/yak-pratsyuiemo', 'main > .proc-terms', 'scene-order-paper'],
+    ['/pro-nas', 'main > .team-about', 'scene-mark-paper'],
     ['/yak-pratsyuiemo', 'main > .proc-route', 'knurl-dark'],
-    ['/pro-nas', 'main > .about-principles', 'concrete-dark'],
-    ['/napryamky', 'main > .dhow', 'perforated-dark'],
+    ['/pro-nas', 'main > .about-principles', 'brushed-dark'],
+    ['/napryamky', 'main > .dhow', 'scene-five-dark'],
   ] as const) {
     test(`${path} ${selector}: ${file}, and the file answers`, async ({ page, request }) => {
       await open(page, path, 1440);
@@ -89,7 +92,7 @@ test.describe('the pages\' materials', () => {
   test('a paper block takes the surface\'s dark side in Dark', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('rubikon-theme', 'dark'));
     await open(page, '/metalokonstruktsii', 1440);
-    expect(await material(page, 'main > .cost-section')).toContain('tread-dark');
+    expect(await material(page, 'main > .cost-section')).toContain('scene-sparks-dark');
   });
 
   test('a phone: dark blocks keep their band, paper blocks carry nothing', async ({ page }) => {
