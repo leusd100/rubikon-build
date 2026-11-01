@@ -1033,8 +1033,9 @@ footer { color: var(--color-dark-text-secondary); background: var(--color-dark);
 footer > .section-divider { position: relative; z-index: 1; }
 footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-grid { min-height: 230px; display: grid; grid-template-columns: auto auto auto auto; justify-content: space-between; align-items: start; gap: clamp(30px, 3.6vw, 72px); padding-block: 52px; font-size: 11px; }
-/* Desktop: the brand column takes the free width, so its sentence has room beside the three link groups */
-@media (min-width: 1181px) { .footer-grid { grid-template-columns: minmax(260px, 1.2fr) auto auto auto; row-gap: 36px; } }
+/* Desktop: four columns across the whole width, on the page's twelve (owner 01.11). With a 1.2fr brand column beside three
+   auto ones that column took all the free width and the rest stood against the right edge. */
+@media (min-width: 1181px) { .footer-grid { grid-template-columns: 4fr 2fr 3fr 3fr; justify-content: stretch; gap: 40px 32px; padding-block: 76px 28px; } }
 @media (min-width: 761px) and (max-width: 1180px) { .footer-about { display: none; } }
 .footer-nav, .footer-directions { display: grid; grid-template-columns: 1fr; justify-content: start; align-content: start; gap: 3px; padding-top: 3px; color: var(--color-dark-text-secondary); font-size: 12px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
 .footer-group-title { margin-bottom: 7px; color: var(--color-dark-text-muted); font-size: var(--type-label-ui-size); font-weight: var(--type-label-ui-weight); letter-spacing: var(--type-label-ui-track); white-space: nowrap; }
@@ -1054,8 +1055,11 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
    keep the logo alone, as before (owner 21.10: their composition was the more balanced one). */
 .footer-brand { display: grid; align-content: start; justify-items: start; gap: 20px; min-width: 0; }
 .footer-about { max-width: 36ch; margin: 0; color: var(--color-dark-text-secondary); font-size: 14px; line-height: 1.6; }
+/* The signature (FooterSignature.tsx): the word stands between the columns and the legal line, so that line needs no rule
+   of its own. Its relief is drawn by the SVG's own filter and may lie a little past its box. */
+.footer-signature { grid-column: 1 / -1; flex: 1 1 100%; display: block; width: 100%; height: auto; overflow: visible; pointer-events: none; }
 /* The legal level on a line of its own under the rest: © on the left, the policy and the cookie settings on the right */
-.footer-bottom { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.12); color: var(--color-dark-text-muted); font-size: 13px; letter-spacing: .02em; }
+.footer-bottom { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px; color: var(--color-dark-text-muted); font-size: 13px; letter-spacing: .02em; }
 .footer-legal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; color: var(--color-dark-text-muted); font-size: 13px; letter-spacing: .02em; }
 .footer-legal a, .footer-legal-link { display: inline-flex; align-items: center; min-height: 24px; color: inherit; transition: color var(--duration-fast) var(--ease-standard); }
 .footer-legal-link { padding: 0; border: 0; font: inherit; letter-spacing: inherit; background: none; cursor: pointer; }
@@ -1448,7 +1452,8 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .footer-messengers { order: 3; margin: 0 0 0 auto; }
   .footer-email { flex: 1 1 100%; order: 4; min-height: 42px; margin: 0; overflow-wrap: anywhere; }
   .footer-messengers .messenger-link { width: 42px; height: 42px; }
-  .footer-bottom { margin-top: 22px; padding-top: 12px; gap: 0 20px; }
+  .footer-signature { min-width: 0; margin-top: 24px; }
+  .footer-bottom { margin-top: 16px; gap: 0 20px; }
   /* Phones: the sentence and its links, then the two answers side by side */
   .cookie-banner { grid-template-columns: 1fr; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
   .cookie-banner-text, .cookie-banner p { font-size: 13px; line-height: 1.4; }

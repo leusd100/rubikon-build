@@ -2,6 +2,7 @@ import { Mail, Phone } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { CookieSettingsButton } from './AnalyticsConsent';
 import BrandLogo from './BrandLogo';
+import { FooterSignature } from './FooterSignature';
 import { HeroHeaderState } from './HeroHeaderState';
 import MobileMenu from './MobileMenu';
 import PrimaryNavLinks from './PrimaryNavLinks';
@@ -239,6 +240,7 @@ export function SiteFooter() {
           </a>
           <MessengerLinks className="footer-messengers" />
         </div>
+        <FooterSignature />
         {/* The legal level on a line of its own under the rest, apart from the ways to reach us (PDO-46) */}
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} {company.name}</span>
