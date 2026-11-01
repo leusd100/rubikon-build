@@ -59,8 +59,34 @@ test.describe('the stack', () => {
     await open(page, '/angary');
     expect(await held('main > .hangar-configurator'), 'a transformed ancestor would catch its full screen').toEqual(['none']);
     expect(await held('main > .conversation'), 'a field would jump when it takes focus').toEqual(['none']);
+    expect(await held('main > .faq-section'), 'an answer that opens would push its question up').toEqual(['none']);
+    await open(page, '/yak-pratsyuiemo');
+    expect(await held('main > .proc-responsibility'), 'an answer that opens, and a sticky switch').toEqual(['none']);
     await open(page, '/planner-preview');
     expect(await held('main > .grain-planner-root'), 'the scale shrinks its buttons, the shortcut waits for the result to pass').toEqual(['none', 'none']);
+  });
+
+  test('a click in a form field leaves the block above the form where it is', async ({ page }) => {
+    await open(page, '/pro-nas');
+    const form = page.locator('main > .conversation');
+    const top = await form.evaluate((block) => block.getBoundingClientRect().top + scrollY);
+    await scrollTo(page, top - 300);
+    const above = () => form.evaluate((block) => new DOMMatrix(getComputedStyle(block.previousElementSibling!).transform).m42);
+    const before = await above();
+    expect(before).toBeGreaterThan(0);
+    await form.locator('input[type="text"]:visible').first().click();
+    expect(Math.abs(await above() - before)).toBeLessThanOrEqual(1);
+  });
+
+  test('a sheet going down gets darker, and only a block that holds has a shade', async ({ page }) => {
+    await open(page);
+    await expect(page.locator(`${BLOCK} > .stack-shade`)).toHaveCount(1);
+    await expect(page.locator('main > .conversation > .stack-shade, main > .faq-section > .stack-shade')).toHaveCount(0);
+    const shade = () => page.locator(`${BLOCK} > .stack-shade`).evaluate((element) => Number(getComputedStyle(element).opacity));
+    expect(await shade()).toBe(0);
+    const foot = await page.locator(BLOCK).evaluate((block) => block.getBoundingClientRect().bottom + scrollY);
+    await scrollTo(page, foot - 150);
+    expect(await shade()).toBeGreaterThan(.2);
   });
 
   test('reduced motion: no hold, no reveal, no light, no page transition', async ({ page }) => {
@@ -114,9 +140,9 @@ test.describe('the reveal', () => {
 test.describe('the light on a material', () => {
   test.skip(({ isMobile }) => isMobile, 'explicit windows');
 
-  test('follows the pointer on a block with a material, and goes when it leaves', async ({ page }) => {
+  test('follows the pointer on a dark block with a material, and goes when it leaves', async ({ page }) => {
     await open(page);
-    await expect(page.locator('.material-light')).toHaveCount(2);
+    await expect(page.locator('.material-light')).toHaveCount(1);
     const block = page.locator(BLOCK);
     await block.scrollIntoViewIfNeeded();
     const box = (await block.boundingBox())!;
@@ -136,5 +162,39 @@ test.describe('the light on a material', () => {
     await page.goto(PAGE, { waitUntil: 'networkidle' });
     await expect(page.locator('.material-light')).toHaveCount(0);
     await context.close();
+  });
+});
+
+test.describe('on a phone', () => {
+  test.skip(({ isMobile }) => !isMobile, 'touch and the phone header');
+
+  const openPhone = async (page: Page, path: string) => {
+    await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+    await page.goto(`${path}?lenis=off`, { waitUntil: 'load' });
+  };
+  const headerFoot = (page: Page) => page.locator('.site-header').evaluate((header) => header.getBoundingClientRect().bottom);
+
+  test('an anchor brings a heading that has not shown yet to rest below the header', async ({ page }) => {
+    await openPhone(page, '/pokrivelni-roboty');
+    const link = page.locator('a[href$="#direction-entry-title"]').first();
+    await link.scrollIntoViewIfNeeded();
+    await link.tap();
+    const heading = page.locator('#direction-entry-title');
+    await expect.poll(() => heading.evaluate((element) => element.dataset.revealState)).toBe('on');
+    await expect.poll(async () => (await heading.boundingBox())?.y).toBeGreaterThanOrEqual(await headerFoot(page));
+  });
+
+  test('an answer that opens leaves its question in view', async ({ page }) => {
+    await openPhone(page, '/metalokonstruktsii');
+    const foot = await page.locator('main > .faq-section').evaluate((block) => block.getBoundingClientRect().bottom + scrollY);
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), foot - 330);
+    const question = page.locator('main > .faq-section summary').last();
+    const before = (await question.boundingBox())!.y;
+    await question.tap();
+    await expect(question.locator('..')).toHaveAttribute('open', '');
+    await page.waitForTimeout(600);
+    const after = (await question.boundingBox())!.y;
+    expect(after).toBeGreaterThanOrEqual(await headerFoot(page));
+    expect(Math.abs(after - before)).toBeLessThanOrEqual(120);
   });
 });

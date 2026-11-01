@@ -28,6 +28,7 @@ import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
 import { FocusClearance } from './components/FocusClearance';
 import { MaterialLight } from './components/MaterialLight';
+import { StackShade } from './components/StackShade';
 import { SiteReveal } from './components/SiteReveal';
 import { SmoothScroll } from './components/SmoothScroll';
 import { company } from './data/company';
@@ -195,6 +196,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SiteFooter />
         <SmoothScroll />
         <SiteReveal />
+        <StackShade />
         <MaterialLight />
         <FocusClearance />
       </body>

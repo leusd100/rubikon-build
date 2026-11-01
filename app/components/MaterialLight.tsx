@@ -6,14 +6,14 @@ const SMOOTHING = .14;
 
 /**
  * The material answers the hand (owner 01.11): a soft light follows the pointer across a block's surface, a little behind
- * it, the way a lamp moves over steel. Only with a mouse or a trackpad, only on the blocks that carry a material, and one
- * transform a frame while the pointer is there: the loop stops as soon as the light has arrived. It lies under the block's
+ * it, the way a lamp moves over steel. Only with a mouse or a trackpad, only on the dark blocks that carry a material (on
+ * paper it does nothing you can see: ≤10/255, review 01.11), and one transform a frame while the pointer is there: the loop stops as soon as the light has arrived. It lies under the block's
  * text, and nothing depends on it.
  */
 export function MaterialLight() {
   useEffect(() => {
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const blocks = [...document.querySelectorAll<HTMLElement>('main[data-field] > section:not(.conversation)')]
+    const blocks = [...document.querySelectorAll<HTMLElement>('main[data-field] > section:not(.conversation, .cost-section, .direction-entry, .proc-terms, .team-about, .angary-cost)')]
       .filter((block) => getComputedStyle(block).backgroundImage.includes('/media/materials/'));
     const cleanups = blocks.map((block) => {
       const light = document.createElement('span');
@@ -30,8 +30,10 @@ export function MaterialLight() {
       };
       const move = (event: PointerEvent) => {
         const box = block.getBoundingClientRect();
-        targetX = event.clientX - box.left;
-        targetY = event.clientY - box.top;
+        // A held block is scaled, and the light lives in its unscaled box
+        const scale = block.offsetWidth / box.width;
+        targetX = (event.clientX - box.left) * scale;
+        targetY = (event.clientY - box.top) * scale;
         if (!inside) { inside = true; x = targetX; y = targetY; place(); light.dataset.on = ''; }
         if (!frame) frame = requestAnimationFrame(step);
       };
