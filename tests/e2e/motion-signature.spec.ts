@@ -62,9 +62,10 @@ test.describe('the stack', () => {
   test('reduced motion: no hold, no reveal, no light, no page transition', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await open(page);
+    await page.waitForLoadState('networkidle');
     expect(await page.locator(BLOCK).evaluate((block) => getComputedStyle(block).animationName)).toBe('none');
-    expect(await page.locator('[data-reveal]').count()).toBe(0);
-    expect(await page.locator('.material-light').count()).toBe(0);
+    await expect(page.locator('[data-reveal]')).toHaveCount(0);
+    await expect(page.locator('.material-light')).toHaveCount(0);
     expect(await page.evaluate(() => [...document.styleSheets].flatMap((sheet) => [...sheet.cssRules]).some((rule) => rule instanceof CSSMediaRule && window.matchMedia(rule.media.mediaText).matches && rule.cssText.includes('@view-transition')))).toBe(false);
   });
 });
@@ -74,7 +75,7 @@ test.describe('the reveal', () => {
 
   test('the first screen is never held back; a block below it shows once, as it comes up', async ({ page }) => {
     await open(page);
-    expect(await page.locator('.service-subhero [data-reveal]').count()).toBe(0);
+    await expect(page.locator('.service-subhero [data-reveal]')).toHaveCount(0);
     const heading = page.locator('main > .cost-section h2');
     await expect(heading).toHaveAttribute('data-reveal', 'mask');
     await expect(heading).not.toHaveAttribute('data-reveal-state', 'on');
@@ -94,14 +95,14 @@ test.describe('the reveal', () => {
     await open(page);
     await expect(page.locator('[data-reveal]').first()).toBeAttached();
     await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
-    expect(await page.locator('[data-reveal]:not([data-reveal-state="on"])').count()).toBe(0);
+    await expect(page.locator('[data-reveal]:not([data-reveal-state="on"])')).toHaveCount(0);
   });
 
   test('without script the page is whole', async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
     await page.goto(PAGE, { waitUntil: 'domcontentloaded' });
-    expect(await page.locator('[data-reveal]').count()).toBe(0);
+    await expect(page.locator('[data-reveal]')).toHaveCount(0);
     await context.close();
   });
 });
@@ -128,8 +129,8 @@ test.describe('the light on a material', () => {
     const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
     await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
     const page = await context.newPage();
-    await page.goto(PAGE, { waitUntil: 'load' });
-    expect(await page.locator('.material-light').count()).toBe(0);
+    await page.goto(PAGE, { waitUntil: 'networkidle' });
+    await expect(page.locator('.material-light')).toHaveCount(0);
     await context.close();
   });
 });
