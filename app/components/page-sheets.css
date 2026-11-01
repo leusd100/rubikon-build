@@ -1,0 +1,37 @@
+/* «Колода» (owner 01.11): a page reads as a stack of sheets. Every block after the first lies on the one before it, with
+   rounded top corners and a soft shadow on the block beneath, and the footer closes the stack.
+
+   Each block is pulled up by the radius and grows by the same amount at its foot, in a transparent border under which its
+   background still paints, so no content moves against its own block and the page keeps its height. A border rather than
+   padding because the blocks' paddings differ and are not ours to know. Later blocks paint over earlier ones by document
+   order alone. A block without a background of its own takes the page's, or its corners would show the sheet below as a
+   hole: :where() keeps that rule weaker than any block's own.
+
+   The first block (the hero) is not a sheet: it lies at the bottom of the stack and the first sheet covers its foot.
+   Inert until a page's <main> carries data-field, so the privacy page, the 404 and the labs stay as they are. */
+:root {
+  --sheet-radius: 32px;
+  --sheet-shadow: 0 -14px 44px rgba(8, 8, 7, .13);
+  /* charcoal on charcoal has no edge of its own: a line of light along the top gives it one */
+  --sheet-shadow-dark: inset 0 1px 0 rgba(245, 242, 235, .13), 0 -14px 44px rgba(8, 8, 7, .42);
+}
+@media (max-width: 760px) { :root { --sheet-radius: 20px; } }
+
+:where(main[data-field] > section:not(:first-of-type)) { background-color: var(--color-bg); }
+main[data-field] > section:not(:first-of-type) {
+  position: relative; margin-top: calc(-1 * var(--sheet-radius)); border-bottom: var(--sheet-radius) solid transparent;
+  border-radius: var(--sheet-radius) var(--sheet-radius) 0 0; box-shadow: var(--sheet-shadow);
+}
+main[data-field] > :is(.page-section-dark, .proc-route, .angary-process, .hv2-signature, .conversation):not(:first-of-type) { box-shadow: var(--sheet-shadow-dark); }
+:root[data-theme="dark"] main[data-field] > section:not(:first-of-type) { box-shadow: var(--sheet-shadow-dark); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) main[data-field] > section:not(:first-of-type) { box-shadow: var(--sheet-shadow-dark); }
+}
+main[data-field] ~ footer {
+  position: relative; margin-top: calc(-1 * var(--sheet-radius)); border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+  overflow: clip; box-shadow: var(--sheet-shadow-dark);
+}
+
+@media print {
+  main[data-field] > section:not(:first-of-type), main[data-field] ~ footer { margin-top: 0; border: 0; border-radius: 0; box-shadow: none; }
+}

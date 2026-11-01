@@ -163,7 +163,7 @@
    an arrow, a focus ring) reads correctly on the band in either mode without a per-band rule. */
 :is(.site-header, footer, .cookie-banner, .hero, .subhero, .service-subhero, .privacy-hero, .page-section-dark,
   .proc-hero, .proc-route,
-  .directions:not(.hv2-directions), .angary-process, .planner-change, .planner-brief-aside, .planner-development-head,
+  .directions:not(.hv2-directions), .angary-process, .conversation-intro, .conversation-journey-wrap, .conversation-form-toggle, .planner-change, .planner-brief-aside, .planner-development-head,
   .planner-tablist) {
   --color-accent-strong: var(--color-accent-on-dark);
   --color-accent-hover: var(--color-accent-on-dark-hover);
@@ -177,7 +177,7 @@
    heroes' button since #206 — so one action has one look on one surface, at every width and in both modes; on paper it
    stays #A0522A with a paper label. The header and the footer hold no filled button and are left out, and so is the
    cookie banner: its «Прийняти все» must not grow stronger. */
-:is(.hero, .subhero, .service-subhero, .proc-hero, .privacy-hero, .page-section-dark, .angary-process) {
+:is(.hero, .subhero, .service-subhero, .proc-hero, .privacy-hero, .page-section-dark, .angary-process, .conversation-intro) {
   --color-action: var(--color-accent-on-dark);
   --color-action-hover: var(--color-accent-on-dark-hover);
   --color-on-action: var(--color-dark);

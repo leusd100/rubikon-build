@@ -2,8 +2,9 @@ import { expect, test } from '@playwright/test';
 
 // W2-17 · PDO-92 B (owner 24.10): no picture behind the form or behind «Кошторис і строки». The stock frame of hands on a
 // drawing (51 / 111 KB on every page with the form) and the AI watercolour behind the estimate (241 KB on /yak) were the
-// last backdrops under content; the sheet's own marks stay in the margins (sheet-field.css). Every test denies the optional
-// cookies and answers any Google request with an empty 200, so no tag can load.
+// last backdrops under content; the sheet's own marks stay in the margins (sheet-field.css). Owner 01.11: the form's block
+// is now the charcoal band with contours (conversation.css, page-sheets.spec.ts), but those two pictures stay gone. Every
+// test denies the optional cookies and answers any Google request with an empty 200, so no tag can load.
 
 test.beforeEach(async ({ context, isMobile }) => {
   test.skip(isMobile, 'each test sets its own windows');
@@ -31,7 +32,8 @@ for (const [path, section] of [['/', '#inquiry'], ['/yak-pratsyuiemo', '#koshtor
         page: getComputedStyle(document.body).backgroundColor,
       }));
       expect(ground.backdrops, `${width}px`).toBe(0);
-      expect(ground.section, `${width}px`).toBe(ground.page);
+      // the form lies on the charcoal band in both themes, the estimate on the page's own ground
+      expect(ground.section, `${width}px`).toBe(section === '#inquiry' ? 'rgb(23, 25, 24)' : ground.page);
       expect(fetched, `${width}px`).toEqual([]);
     }
   });

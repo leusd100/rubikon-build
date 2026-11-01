@@ -5,12 +5,24 @@
    and «Що буде після звернення» under the call. Pages change only the words: heading, lead, the preselected direction
    and the four step texts (app/data/conversation.ts). Colours come from the theme roles (app/theme.css). */
 
-/* Paper in Light, graphite in Dark — no picture behind the form (owner 24.10, W2-17 · PDO-92 B): the stock frame of hands
-   on a drawing was the last backdrop under content; the sheet's own marks stay in the margins (sheet-field.css). */
+/* The charcoal band in both themes, on the contours of a site (owner 01.11: the block «проситься» on something behind the
+   form; the backdrops removed on 24.10, W2-17, were a stock photo and a watercolour, this is the sheet's own line work).
+   The contours belong to this block alone, and they are generated, not a real terrain. The veil keeps them low under the
+   text on the left and lets them show around the form. The form itself keeps the theme's roles: paper in Light, graphite in
+   Dark, so only the text beside it takes the band's. */
 .conversation {
   /* clip, not hidden: hidden would make this section the scroll container and break the sticky intro */
-  position: relative; overflow: clip; isolation: isolate; color: var(--color-text); background: var(--color-bg);
-  --conv-tg: .57; --conv-wa: .51; --conv-vb: .77; /* messenger-icon greys, see the channels below */
+  position: relative; overflow: clip; isolation: isolate; color: var(--color-dark-text);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-dark) 82%, transparent) 42%, color-mix(in srgb, var(--color-dark) 10%, transparent) 54%),
+    url('/media/materials/contours-dark.svg') -120px -120px / 1800px auto no-repeat,
+    var(--color-dark);
+  /* messenger-icon greys, see the channels below */
+  --conv-tg: 1.35; --conv-wa: 1.2; --conv-vb: 1.82;
+}
+.conversation-intro, .conversation-journey-wrap, .conversation-form-toggle {
+  --color-text: var(--color-dark-text); --color-text-secondary: var(--color-dark-text-secondary); --color-text-muted: var(--color-dark-text-muted);
+  --color-border: var(--color-dark-line); --color-border-strong: #6A6C66; --color-surface-elevated: var(--color-dark-surface);
 }
 .conversation-kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--color-accent-strong); font: var(--type-label-ui-weight) var(--type-label-ui-size)/1.2 var(--font-manrope), sans-serif; letter-spacing: var(--type-label-ui-track); text-transform: uppercase; }
 .conversation-kicker > span { width: 26px; height: 2px; flex: none; background: var(--color-accent); }
@@ -56,11 +68,7 @@
    hover/focus, when each takes its own brand colour back — the saturated blue/green/purple never compete with the
    copper call. */
 /* Greyscale luminance differs per brand (Telegram blue ≈148, WhatsApp green ≈166, Viber purple ≈110 of 255), so each
-   icon gets its own brightness factor to land on one grey: ≈85 on paper, ≈200 on graphite. */
-:root[data-theme="dark"] .conversation { --conv-tg: 1.35; --conv-wa: 1.2; --conv-vb: 1.82; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .conversation { --conv-tg: 1.35; --conv-wa: 1.2; --conv-vb: 1.82; }
-}
+   icon gets its own brightness factor to land on one grey, ≈200 on the band. */
 .conversation-channels { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0 20px; margin-top: 2px; }
 .conversation-messengers { display: contents; }
 .conversation-channels-label { color: var(--color-text-secondary); font: 500 15px/1.4 var(--font-manrope), sans-serif; text-align: center; }
@@ -124,6 +132,15 @@
 @media (max-width: 1180px) {
   .conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; row-gap: 40px; }
   .conversation-journey-wrap { max-width: none; }
+}
+/* Up to here the text runs the block's whole width, so the contours keep to a band above it */
+@media (max-width: 1180px) {
+  .conversation {
+    background:
+      linear-gradient(to bottom, color-mix(in srgb, var(--color-dark) 45%, transparent) 40px, var(--color-dark) 210px),
+      url('/media/materials/contours-dark.svg') -300px -20px / 1000px auto no-repeat,
+      var(--color-dark);
+  }
 }
 @media (max-width: 760px) {
   .conversation-lead { margin-top: 16px; }

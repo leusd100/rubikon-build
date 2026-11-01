@@ -1,0 +1,114 @@
+/* The page's own material behind its text-only blocks (owner 01.11): perforated steel on the steel page, concrete with its
+   tie holes on the concrete page, and so on. Line drawings behind the text read as cheap next to these; a surface in light
+   does not, because it depicts nothing and grows out of the dark.
+
+   Rules of the layer:
+     · one material a page, its dark side and its paper side;
+     · only blocks with no drawing or photo of their own in view, and only in the void beside the heading: --material-void is
+       that void's measured height, and the surface is gone before the block's text starts;
+     · contours belong to the form (conversation.css), nothing lies under the footer's text;
+     · on a phone and a tablet the void beside the heading does not exist: dark blocks keep a band along their top edge, paper
+       blocks nothing.
+
+   No element and no script: a block's own background, three layers of it. Bottom: one period of the surface, repeating
+   (public/media/materials, scripts/generate-material-tiles.mjs), a few kilobytes because the fade is not in the picture.
+   Over it: a pool of light from the top right corner, drawn as the block's colour closing in, and a cut-off at the void's
+   foot. So --material-ground has to be the block's own colour, and a tile works on any ground of its side. */
+:root {
+  --material-tread: url('/media/materials/tread-paper.webp');
+  --material-tread-size: 92px 92px;
+  --material-panel: url('/media/materials/panel-paper.webp');
+  --material-panel-size: 9px 2px;
+  --material-sheet: url('/media/materials/sheet-paper.webp');
+  --material-sheet-size: 124px 2px;
+  --material-dots: url('/media/materials/dots-paper.webp');
+  --material-dots-size: 28px 48.5px;
+  --material-concrete: url('/media/materials/concrete-paper.webp');
+  --material-grain: url('/media/materials/grainfall-paper.svg');
+}
+/* In Dark a paper block is graphite, so it takes the surface's dark side */
+:root[data-theme="dark"] {
+  --material-tread: url('/media/materials/tread-dark.webp');
+  --material-panel: url('/media/materials/panel-dark.webp');
+  --material-panel-size: 210px 2px;
+  --material-sheet: url('/media/materials/sheet-dark.webp');
+  --material-dots: url('/media/materials/knurl-dark.webp');
+  --material-dots-size: 16px 16px;
+  --material-concrete: url('/media/materials/concrete-dark.webp');
+  --material-grain: url('/media/materials/grainfall-dark.svg');
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --material-tread: url('/media/materials/tread-dark.webp');
+    --material-panel: url('/media/materials/panel-dark.webp');
+    --material-panel-size: 210px 2px;
+    --material-sheet: url('/media/materials/sheet-dark.webp');
+    --material-dots: url('/media/materials/knurl-dark.webp');
+    --material-dots-size: 16px 16px;
+    --material-concrete: url('/media/materials/concrete-dark.webp');
+    --material-grain: url('/media/materials/grainfall-dark.svg');
+  }
+}
+
+/* The dark blocks */
+.metal-page > .page-section-dark, .directions-page > .dhow { --material: url('/media/materials/perforated-dark.webp'); --material-size: 28px 48.5px; --material-void: 460px; }
+.directions-page > .dhow { --material-void: 430px; }
+.concrete-page > .page-section-dark { --material: url('/media/materials/concrete-dark.webp'); --material-size: 640px 320px; --material-void: 398px; }
+.angary-page > .angary-process { --material: url('/media/materials/panel-dark.webp'); --material-size: 210px 2px; --material-void: 376px; }
+.roofing-page > .page-section-dark { --material: url('/media/materials/sheet-dark.webp'); --material-size: 124px 2px; --material-void: 460px; }
+.grain-page > .grain-process-band { --material: url('/media/materials/silo-dark.webp'); --material-size: 230px 30px; --material-void: 340px; }
+.process-page > .proc-route { --material: url('/media/materials/knurl-dark.webp'); --material-size: 16px 16px; --material-void: 370px; }
+.about-page > .about-principles { --material: url('/media/materials/brushed-dark.webp'); --material-size: 1000px 640px; --material-repeat: no-repeat; --material-void: 340px; }
+
+:is(.metal-page > .page-section-dark, .directions-page > .dhow, .concrete-page > .page-section-dark, .angary-page > .angary-process,
+  .roofing-page > .page-section-dark, .grain-page > .grain-process-band, .process-page > .proc-route, .about-page > .about-principles) {
+  --material-ground: var(--color-dark);
+}
+@media (max-width: 1180px) {
+  :is(.metal-page > .page-section-dark, .directions-page > .dhow, .concrete-page > .page-section-dark, .angary-page > .angary-process,
+    .roofing-page > .page-section-dark, .grain-page > .grain-process-band, .process-page > .proc-route, .about-page > .about-principles) {
+    --material-void: 124px;
+  }
+}
+
+/* The paper blocks, on a desktop only */
+@media (min-width: 1181px) {
+  .metal-page > .cost-section { --material: var(--material-tread); --material-size: var(--material-tread-size); --material-void: 390px; --material-ground: var(--color-surface-alt); }
+  .concrete-page > .cost-section { --material: var(--material-concrete); --material-size: 640px 320px; --material-void: 500px; --material-ground: var(--color-surface-alt); }
+  .angary-page > .angary-cost { --material: var(--material-panel); --material-size: var(--material-panel-size); --material-void: 430px; --material-ground: var(--color-surface-alt); }
+  .roofing-page > .direction-entry { --material: var(--material-sheet); --material-size: var(--material-sheet-size); --material-void: 400px; --material-ground: var(--color-bg); }
+  .process-page > .proc-terms { --material: var(--material-dots); --material-size: var(--material-dots-size); --material-void: 375px; --material-ground: var(--color-bg); }
+  .about-page > .team-about { --material: var(--material-concrete); --material-size: 640px 320px; --material-void: 358px; --material-ground: var(--color-bg); }
+
+  /* Grain is a picture, not a surface: it falls into its heap in the void and is cut by the block's colour on both sides */
+  .grain-page > .cost-section {
+    --material-ground: var(--color-surface-alt);
+    background-image:
+      linear-gradient(to bottom, transparent 320px, var(--material-ground) 430px),
+      linear-gradient(to right, var(--material-ground) 790px, transparent 930px),
+      var(--material-grain);
+    background-repeat: no-repeat;
+    background-position: 0 0, 0 0, right -30px top -190px;
+    background-size: auto, auto, 760px 760px;
+  }
+
+  .metal-page > .cost-section, .concrete-page > .cost-section, .angary-page > .angary-cost, .roofing-page > .direction-entry,
+  .process-page > .proc-terms, .about-page > .team-about { background-image: var(--material-layers); background-repeat: no-repeat, no-repeat, repeat; background-position: 0 0, 0 0, right top; background-size: auto, auto, var(--material-size); }
+}
+
+.metal-page > .page-section-dark, .directions-page > .dhow, .concrete-page > .page-section-dark, .angary-page > .angary-process,
+.roofing-page > .page-section-dark, .grain-page > .grain-process-band, .process-page > .proc-route, .about-page > .about-principles {
+  background-image: var(--material-layers);
+  background-repeat: no-repeat, no-repeat, var(--material-repeat, repeat);
+  background-position: 0 0, 0 0, right top;
+  background-size: auto, auto, var(--material-size);
+}
+
+/* The three layers, resolved on each block from its own values */
+.metal-page > section, .concrete-page > section, .angary-page > section, .roofing-page > section, .grain-page > section,
+.process-page > section, .about-page > section, .directions-page > section {
+  --material-layers:
+    linear-gradient(to bottom, transparent calc(var(--material-void) - 110px), var(--material-ground) var(--material-void)),
+    radial-gradient(ellipse 872px 775px at 100% 0, transparent 16%, color-mix(in srgb, var(--material-ground) 15%, transparent) 37%, color-mix(in srgb, var(--material-ground) 50%, transparent) 58%, color-mix(in srgb, var(--material-ground) 85%, transparent) 78%, var(--material-ground) 100%),
+    var(--material);
+}
