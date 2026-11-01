@@ -151,7 +151,11 @@ stands:
   reads `--ease-standard`, the literal curves are the four tokens of 6.2, and HOME's direction cards and sheets no longer lift.
 - **In the code (M1-3).** Lenis at rest (rule 8).
 - **In the code (M1-4).** One rule for the auto-shows (rule 7).
-- **Next (M2, M3).** The five gestures of 6.3 and the controller of 6.5, the three signature moments.
+- **In the code (01.11).** The deck in motion, cross-document page transitions, the reveal of a block's rule, heading and lead,
+  the light that follows the pointer over a material, the band of light across the footer's word: `app/motion.css`,
+  `SiteReveal.tsx`, `MaterialLight.tsx`. The deck's hold is the owner's decision of 01.11 and goes beyond 6.8: the whole block
+  follows the scroll, not a line of a drawing, without a pin and without taking the scroll away.
+- **Next (M2, M3).** The rest of the gestures of 6.3 and the controller of 6.5, the hero's entrance and the sent stamp.
 - **Allowed, not built (30.10).** Drawings whose lines follow the scroll, under the rules of 6.8. Nothing on the site uses
   this yet.
 
@@ -199,7 +203,7 @@ without motion. They arrive with M2-1; the table is the contract.
 |---|---|---|---|
 | Reveal | `rise` | `opacity: 0; translateY(var(--motion-rise))` → `1; none` | enter · premium |
 | Reveal as a group | `rise-group` | the same for the first 4 direct children, each delayed by `i × --motion-stagger`; with more than 4 children the whole container reveals as one `rise` | enter · premium |
-| Heading mask | `mask` | `clip-path: inset(-.25em -.25em 100% -.25em); translateY(100%)` → `inset(-.25em); none` — the text rises from under its own bottom edge as one block, never split into lines; the negative inset keeps «Й», «Ї» and descenders from being cut | enter · premium |
+| Heading mask | `mask` | `clip-path: inset(-.25em -.25em 100% -.25em)` → `inset(-.25em)` — the text uncovers from its top edge as one block, never split into lines. No translate: a browser aims an anchor by where the heading is drawn, and a heading held lower came to rest under the header (01.11); the negative inset keeps «Й», «Ї» and descenders from being cut | enter · premium |
 | Photo wipe | `wipe` | the box: `clip-path: inset(0 100% 0 0)` → `inset(0)`; its content (`img`, `picture`, `video`, `svg`): `scale(1.06)` → `none` | draw · plot (box), draw-long · premium (content) |
 | Copper rule | `rule` | `transform: scaleX(0)`, `transform-origin: left` → `none` | draw · plot |
 | Response | — (CSS `:hover`, `:focus-visible`, `:active`) | border colour → copper; the arrow shifts 3 px (`globals.css`, `.link-arrow`); no card lift | micro · premium |

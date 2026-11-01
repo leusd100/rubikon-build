@@ -23,9 +23,13 @@ import './components/sheet-field.css';
 // The blocks as a stack of sheets and each page's material (owner 01.11); inert until a page's <main> carries data-field
 import './components/page-sheets.css';
 import './components/page-materials.css';
+import './motion.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
 import { FocusClearance } from './components/FocusClearance';
+import { MaterialLight } from './components/MaterialLight';
+import { StackShade } from './components/StackShade';
+import { SiteReveal } from './components/SiteReveal';
 import { SmoothScroll } from './components/SmoothScroll';
 import { company } from './data/company';
 import { directions } from './data/directions';
@@ -191,6 +195,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <SiteFooter />
         <SmoothScroll />
+        <SiteReveal />
+        <StackShade />
+        <MaterialLight />
         <FocusClearance />
       </body>
     </html>

@@ -27,8 +27,20 @@ export function FooterSignature() {
             <feMergeNode in="edge-light" />
           </feMerge>
         </filter>
+        <clipPath id="footer-signature-letters">
+          <path d={LETTERS} clipRule="evenodd" />
+        </clipPath>
+        <linearGradient id="footer-signature-sheen-fill">
+          <stop stopColor="#F5F2EB" stopOpacity="0" />
+          <stop offset=".5" stopColor="#F5F2EB" stopOpacity=".5" />
+          <stop offset="1" stopColor="#F5F2EB" stopOpacity="0" />
+        </linearGradient>
       </defs>
       <path d={LETTERS} filter="url(#footer-signature-relief)" />
+      {/* A band of light crosses the letters once as the footer comes up (motion.css). It waits left of the word, clipped to nothing */}
+      <g clipPath="url(#footer-signature-letters)">
+        <rect className="footer-signature-sheen" x="281" y="140" width="240" height="79" fill="url(#footer-signature-sheen-fill)" />
+      </g>
     </svg>
   );
 }

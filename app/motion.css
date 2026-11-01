@@ -1,0 +1,127 @@
+/* The deck in motion (owner 01.11, «преміальні анімації»). page-sheets.css draws the blocks as a stack of sheets; here the
+   stack works: a block that has been read stops under the one coming up, sinks a little into the page and is covered, as a
+   sheet presented over another on a phone. Nothing takes the scroll away: the page keeps its length and its pace, the block
+   only stays where it is while the next one travels over it.
+
+   One scroll-driven transform for each block, no script. The block brakes over the first 8vh of the range, a parabola that
+   starts at the page's speed and ends at rest, so it settles instead of hitting a wall (review 01.11: 16 → 8.5 → 0 px per
+   16 px of scroll). From there the hold is exact: the block moves down exactly as far as the page scrolls, and its foot stays
+   --stack-hold below the top of the screen, past the middle, where the end of a block can be read before the next sheet comes
+   over it. The layout box does not move, so anchors and the page's height are untouched. Off without view() (old browsers),
+   with reduced motion and in print. A sheet going down gets darker (.stack-shade, StackShade.tsx), or in the dark theme
+   charcoal sinks under charcoal with nothing to show it.
+
+   Keyboard focus turns the hold off for its own block: a browser brings a focused control into view by where it is drawn, and
+   a held block is drawn away from its place, so Shift+Tab left controls under the fixed header (WCAG 2.4.11,
+   responsive-a11y-phase1.spec.ts). Its own block only, or a click in a form field shook the block above the form.
+
+   Blocks a visitor works in stay out, because they must not move under the hand. The configurator: its full-screen mode is
+   position: fixed, and a transformed ancestor would catch it. The grain planner: the scale took its buttons under 44 px, and
+   the shortcut waits for the result's handoff to scroll by, which a held block never does (grain-planner-mobile.spec.ts,
+   grain-planner-handoff.spec.ts). The form: a field in a held block would jump to its place the moment it takes focus. The
+   questions: an answer that opens makes a held block taller, which pushed the question under the header (164 → 17 px at
+   390). How we answer: the same, and its switch is sticky and slid 131 px down. */
+:root {
+  --sheets-for-page: 560ms;
+  --sheets-for-page-phone: 320ms;
+  --sheets-for-reveal-phone: 320ms;
+  --sheets-for-rule-phone: 400ms;
+}
+@supports (animation-timeline: view()) {
+  @media screen and (prefers-reduced-motion: no-preference) {
+    :root { --stack-hold: 55vh; --stack-range: 59vh; }
+    main[data-field] { background: var(--color-dark); }
+    main[data-field] > section:not(.hangar-configurator, .grain-planner-root, .conversation, .faq-section, .proc-responsibility) {
+      transform-origin: 50% calc(100% - var(--stack-hold) / 2);
+      view-timeline: --stack;
+      animation: stack-hold linear both;
+      animation-timeline: view();
+      animation-range: cover calc(100% - var(--stack-range)) cover 100%;
+    }
+    main[data-field] > section:has(:focus-visible) { animation: none; }
+    /* 13.56 % of the 59vh range is the 8vh of braking: a parabola, s²/16, in four straight steps, each a quarter faster. The
+       block covers half of those 8vh, so from there on translateY = scroll − 4vh */
+    @keyframes stack-hold {
+      0% { transform: translateY(0) scale(1); }
+      3.39% { transform: translateY(.25vh) scale(1); }
+      6.78% { transform: translateY(1vh) scale(1); }
+      10.17% { transform: translateY(2.25vh) scale(1); }
+      13.56% { transform: translateY(4vh) scale(1); }
+      50% { transform: translateY(25.5vh) scale(.955); }
+      100% { transform: translateY(55vh) scale(.94); }
+    }
+    main[data-field] > section:has(> .stack-shade) { position: relative; }
+    /* A sheet's foot is its transparent border, under which its background paints: the shade reaches it there, and a hero has none */
+    main[data-field] > section:has(> .stack-shade):not(:first-of-type) > .stack-shade { bottom: calc(-1 * var(--sheet-radius)); }
+    .stack-shade {
+      position: absolute; z-index: 40; inset: 0; border-radius: inherit; background: #080807; opacity: 0; pointer-events: none;
+      animation: stack-shade linear both;
+      animation-timeline: --stack;
+      animation-range: cover calc(100% - var(--stack-range)) cover 100%;
+    }
+    main[data-field] > section:has(:focus-visible) > .stack-shade { animation: none; }
+    @keyframes stack-shade {
+      13.56% { opacity: 0; }
+      55% { opacity: .46; }
+      100% { opacity: .62; }
+    }
+  }
+}
+
+/* The signature's smaller moments. Each ends in the look of the page without motion. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Pages change as the sheets do: the old page sinks, the new one comes up over it, under a header that stays. Cross-document
+     view transitions, CSS only (ui-system §6, M3-1); a browser without them simply changes the page. */
+  @view-transition { navigation: auto; }
+  .site-header { view-transition-name: site-header; }
+  ::view-transition { background: var(--color-dark); }
+  ::view-transition-group(site-header) { z-index: 3; animation: none; }
+  /* A pseudo-element's image takes no border-radius: the corners are a clip, the shadow lies on the pair */
+  ::view-transition-image-pair(root) { filter: drop-shadow(0 -14px 44px rgba(8, 8, 7, .35)); }
+  ::view-transition-old(root) { transform-origin: 50% 40vh; animation: page-sink var(--sheets-for-page) var(--ease-premium) both; }
+  ::view-transition-new(root) { clip-path: inset(0 round var(--sheet-radius) var(--sheet-radius) 0 0); animation: page-rise var(--sheets-for-page) var(--ease-premium) both; }
+  @keyframes page-sink { to { transform: scale(.94); opacity: .4; } }
+  @keyframes page-rise { from { transform: translateY(100vh); } }
+  /* A phone: a whole screen travelling with no scroll to cause it is a vestibular trigger, and the tap has already waited */
+  @media (max-width: 760px) {
+    ::view-transition-image-pair(root) { filter: none; }
+    ::view-transition-old(root) { animation: page-leave var(--sheets-for-page-phone) var(--ease-standard) both; }
+    ::view-transition-new(root) { clip-path: none; animation: page-arrive var(--sheets-for-page-phone) var(--ease-premium) both; }
+  }
+  @keyframes page-leave { to { opacity: 0; } }
+  @keyframes page-arrive { from { transform: translateY(32px); opacity: 0; } }
+
+  /* The gestures of ui-system §6.3, armed by SiteReveal.tsx below the first screen */
+  [data-reveal="rule"] { transform: scaleX(0); transform-origin: left; transition: transform var(--motion-draw) var(--ease-plot); }
+  /* No translate: a browser aims an anchor by where the heading is drawn, and a heading held 100 % lower came to rest under the header */
+  [data-reveal="mask"] { clip-path: inset(-.25em -.25em 100% -.25em); transition: clip-path var(--motion-enter) var(--ease-premium) var(--motion-stagger); }
+  [data-reveal="rise"] { opacity: 0; transform: translateY(var(--motion-rise)); transition: opacity var(--motion-enter) var(--ease-premium) calc(3 * var(--motion-stagger)), transform var(--motion-enter) var(--ease-premium) calc(3 * var(--motion-stagger)); }
+  [data-reveal][data-reveal-state="on"] { opacity: 1; transform: none; }
+  [data-reveal="mask"][data-reveal-state="on"] { clip-path: inset(-.25em); }
+  /* A phone scrolls past a block in moments, and a sheet that waits for its heading reads as empty */
+  @media (max-width: 760px) {
+    [data-reveal="rule"] { transition-duration: var(--sheets-for-rule-phone); }
+    [data-reveal="mask"], [data-reveal="rise"] { transition-duration: var(--sheets-for-reveal-phone); }
+  }
+
+  /* The light that follows the pointer (MaterialLight.tsx), under the block's text. Grey and not white, because a dodge of
+     white is a fog over everything; a dodge of grey leaves black black and catches only the metal's edges */
+  main[data-field] > section:has(> .material-light) { isolation: isolate; overflow: clip; }
+  .material-light {
+    position: absolute; top: -310px; left: -310px; z-index: -1; width: 620px; height: 620px; border-radius: 50%; opacity: 0; pointer-events: none;
+    background: radial-gradient(closest-side, #8a8a86, #000 92%); mix-blend-mode: color-dodge;
+    transition: opacity var(--motion-ui) var(--ease-standard);
+  }
+  .material-light[data-on] { opacity: 1; }
+}
+
+/* A band of light crosses the embossed word as the word itself comes up, on its own timeline, or it was gone before the word
+   arrived (36 % at 1440, 90 % at 390): a line of our own that follows the scroll, under the rules of ui-system §6.8, no pin,
+   and the end is the still state */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .footer-signature { view-timeline: --signature; }
+    .footer-signature-sheen { animation: signature-sheen linear both; animation-timeline: --signature; animation-range: cover 0px cover 130px; }
+    @keyframes signature-sheen { to { transform: translateX(1060px); } }
+  }
+}
