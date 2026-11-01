@@ -178,6 +178,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   },
   metalokonstruktsii: {
     id: 'metalokonstruktsii',
+    pageClassName: 'metal-page',
     // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
     // on /angary (PDO-15)
     related: { placement: 'after-inquiry' },
@@ -280,6 +281,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   },
   'betonni-roboty': {
     id: 'betonni-roboty',
+    pageClassName: 'concrete-page',
     // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
     // on /angary (PDO-15)
     related: { placement: 'after-inquiry' },
@@ -380,6 +382,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   },
   'pokrivelni-roboty': {
     id: 'pokrivelni-roboty',
+    pageClassName: 'roofing-page',
     // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
     // on /angary (PDO-15)
     related: { placement: 'after-inquiry' },
