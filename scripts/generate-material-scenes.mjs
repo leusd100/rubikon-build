@@ -98,12 +98,12 @@ const render = (ink, copper) => {
   const mark = (s) => {
     const r = rng(17), k = .76, ox = 540, oy = 16, top = new Path2D('M0 0H182C240 0 278 34 278 85C278 139 240 173 186 173H74V130H181C210 130 227 113 227 87C227 59 209 44 181 44H39Z'), leg = new Path2D('M0 130H139L278 280H208L115 181H52V280H0Z'), c = document.createElement('canvas').getContext('2d');
     const inside = (x, y) => c.isPointInPath(top, (x - ox) / k, (y - oy) / k) || c.isPointInPath(leg, (x - ox) / k, (y - oy) / k);
-    for (let i = 0; i < 7000; i++) {
+    for (let i = 0; i < 13000; i++) {
       const x = 280 + r() * 480, y = r() * 270; if (inside(x, y)) continue;
       const near = [[3, 0], [-3, 0], [0, 3], [0, -3], [7, 0], [-7, 0], [0, 7], [0, -7]].some(([dx, dy]) => inside(x + dx, y + dy));
-      if (!near && r() > .42) continue;
+      if (!near && r() > .17) continue;
       const q = r() * 6.3, l = .6 + r() * 1.5;
-      s.line(x, y, x + Math.cos(q) * l, y + Math.sin(q) * l, .95, ink, Math.min(1, (x - 280) / 130) * Math.min(1, (270 - y) / 50) * (near ? 1 : .26 + r() * .4));
+      s.line(x, y, x + Math.cos(q) * l, y + Math.sin(q) * l, .95, ink, Math.min(1, (x - 280) / 130) * Math.min(1, (270 - y) / 50) * (near ? 1 : .3 + r() * .4));
     }
     s.extra.push(`<path fill="${copper}" fill-opacity=".9" transform="translate(${ox} ${oy}) scale(${k})" d="M79 190H117L203 280H161Z"/>`);
   };
