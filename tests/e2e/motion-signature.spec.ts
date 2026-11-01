@@ -192,7 +192,7 @@ test.describe('on a phone', () => {
     const before = (await question.boundingBox())!.y;
     await question.tap();
     await expect(question.locator('..')).toHaveAttribute('open', '');
-    await page.waitForTimeout(600);
+    await expect(page.locator('main > .faq-section details[open] > p')).toBeVisible();
     const after = (await question.boundingBox())!.y;
     expect(after).toBeGreaterThanOrEqual(await headerFoot(page));
     expect(Math.abs(after - before)).toBeLessThanOrEqual(120);
