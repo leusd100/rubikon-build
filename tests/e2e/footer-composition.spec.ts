@@ -5,6 +5,8 @@ import { company } from '../../app/data/company';
 // approved description, the legal level on a line of its own under the rest. Tablets (761–1180 px): the composition they
 // had — the logo alone — with the legal line moved under the rest. Phones: the description too, link groups that wrap
 // instead of widening the page, 40 px links. Every test denies the optional cookies and answers Google with an empty 200.
+// Owner 01.11: on a desktop the columns share the width (they used to stand against the right edge), and the word RUBIKON
+// pressed into the band stands between them and the legal line at every width.
 
 test.beforeEach(async ({ context }) => {
   await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
@@ -33,6 +35,7 @@ const footer = (page: Page) => page.locator('footer').evaluate((root) => {
   return {
     logo: box('.footer-brand .brand-link'), about: box('.footer-about'), aboutText: about?.textContent ?? null, aboutLines: lines,
     nav: box('.footer-nav'), directions: box('.footer-directions'), contacts: box('.footer-contact-stack'), bottom: box('.footer-bottom'),
+    signature: box('.footer-signature'), signatureHidden: root.querySelector('.footer-signature')?.getAttribute('aria-hidden') ?? null,
     bottomText: [...root.querySelectorAll('.footer-bottom > span, .footer-bottom a, .footer-bottom button')].map((part) => part.textContent?.trim()).join(' '),
     legalInContacts: root.querySelectorAll('.footer-contact-stack .footer-legal, .footer-contact-stack a[href="/polityka-konfidentsiinosti"]').length,
   };
@@ -52,8 +55,18 @@ test.describe('W2-13 · desktop and tablet footer', () => {
       // the legal line: © and both legal controls, under every column, the whole width of the footer
       expect(parts.legalInContacts, `${width}`).toBe(0);
       expect(parts.bottomText, `${width}`).toBe(`© ${new Date().getFullYear()} ${company.name} Політика конфіденційності Налаштування cookie`);
-      for (const column of [parts.logo, parts.about, parts.nav, parts.directions, parts.contacts]) expect(parts.bottom!.top, `${width}`).toBeGreaterThanOrEqual(column!.bottom);
+      for (const column of [parts.logo, parts.about, parts.nav, parts.directions, parts.contacts]) expect(parts.signature!.top, `${width}`).toBeGreaterThanOrEqual(column!.bottom);
+      expect(parts.bottom!.top, `${width}: the word above the legal line`).toBeGreaterThanOrEqual(parts.signature!.bottom);
       expect(Math.round(parts.bottom!.left), `${width}`).toBe(Math.round(parts.logo!.left));
+      // the signature runs the width of the footer's content, and it is decoration
+      expect(Math.round(parts.signature!.left), `${width}`).toBe(Math.round(parts.bottom!.left));
+      expect(Math.round(parts.signature!.right), `${width}`).toBe(Math.round(parts.bottom!.right));
+      expect(parts.signatureHidden, `${width}`).toBe('true');
+      // the columns stand on 4 + 2 + 3 + 3 of the twelve, gaps of 32 px, so none of the free width collects on one side
+      const unit = (parts.bottom!.right - parts.bottom!.left - 3 * 32) / 12;
+      expect(Math.abs(parts.nav!.left - (parts.logo!.left + 4 * unit + 32)), `${width}: navigation`).toBeLessThanOrEqual(1);
+      expect(Math.abs(parts.directions!.left - (parts.logo!.left + 6 * unit + 2 * 32)), `${width}: directions`).toBeLessThanOrEqual(1);
+      expect(Math.abs(parts.contacts!.left - (parts.logo!.left + 9 * unit + 3 * 32)), `${width}: contacts`).toBeLessThanOrEqual(1);
       expect(Math.abs(parts.bottom!.right - parts.contacts!.right) <= 1 || parts.bottom!.right >= parts.contacts!.right, `${width}`).toBe(true);
     }
   });
@@ -74,7 +87,8 @@ test.describe('W2-13 · desktop and tablet footer', () => {
       const parts = await footer(page);
       expect(parts.about, `${width}: no description on a tablet`).toBeNull();
       expect(parts.legalInContacts, `${width}`).toBe(0);
-      for (const column of [parts.logo, parts.nav, parts.directions, parts.contacts]) expect(parts.bottom!.top, `${width}`).toBeGreaterThanOrEqual(column!.bottom);
+      for (const column of [parts.logo, parts.nav, parts.directions, parts.contacts]) expect(parts.signature!.top, `${width}`).toBeGreaterThanOrEqual(column!.bottom);
+      expect(parts.bottom!.top, `${width}: the word above the legal line`).toBeGreaterThanOrEqual(parts.signature!.bottom);
       if (width >= 961) {
         // one row: logo, the two link groups and the contacts start on one line, as before
         for (const column of [parts.nav, parts.directions, parts.contacts]) expect(Math.abs(column!.top - parts.logo!.top), `${width}: one row`).toBeLessThanOrEqual(12);
@@ -97,7 +111,8 @@ test.describe('W2-13 · phone footer', () => {
     expect(parts.aboutText).toBe(company.description);
     expect(parts.about!.top).toBeGreaterThan(parts.logo!.bottom);
     expect(parts.legalInContacts).toBe(0);
-    expect(parts.bottom!.top).toBeGreaterThanOrEqual(parts.contacts!.bottom);
+    expect(parts.signature!.top).toBeGreaterThanOrEqual(parts.contacts!.bottom);
+    expect(parts.bottom!.top).toBeGreaterThanOrEqual(parts.signature!.bottom);
     const targets = await page.locator('footer').locator('.footer-nav a, .footer-directions a, .footer-legal a, .footer-legal button').evaluateAll((elements) => elements.map((element) => ({
       label: element.textContent?.trim(), height: element.getBoundingClientRect().height,
     })));
