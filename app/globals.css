@@ -1220,6 +1220,9 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .mobile-call { display: inline-flex; }
   body { --phone-hero-menu-alpha: 97%; }
   body .site-header :is(.mobile-call, .mobile-menu summary) { min-width: 44px; min-height: 44px; background: rgba(17, 21, 18, .6); }
+  /* Deep in a page the header's call is the only contact on the screen, so it stops being quiet there (review 01.11) */
+  :root[data-hero-header="scrolled"] body .site-header .mobile-call { border-color: var(--color-accent); background: var(--color-accent); }
+  :root[data-hero-header="scrolled"] body .site-header .mobile-call svg { color: var(--color-dark); }
 }
 /* Tablets from 960 px (owner 22.10): the four sections in one row between the logo and the call / «Меню» — the header
    had room for them and kept everything behind one button. The contacts and the theme stay in the menu. Below 960 px the

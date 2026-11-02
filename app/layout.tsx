@@ -30,6 +30,7 @@ import { FocusClearance } from './components/FocusClearance';
 import { MaterialLight } from './components/MaterialLight';
 import { StackShade } from './components/StackShade';
 import { SiteReveal } from './components/SiteReveal';
+import { LiveScene } from './components/LiveScene';
 import { SmoothScroll } from './components/SmoothScroll';
 import { company } from './data/company';
 import { directions } from './data/directions';
@@ -194,6 +195,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SiteHeader />
         {children}
         <SiteFooter />
+        <LiveScene />
         <SmoothScroll />
         <SiteReveal />
         <StackShade />

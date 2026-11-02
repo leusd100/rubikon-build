@@ -42,7 +42,9 @@ export function useHeroControlPlacement() {
         control.dataset.compact = '';
         if (!clear(right - size, top)) top = row.top - GAP - size;
       }
-      control.style.bottom = `${Math.max(0, Math.round(box.bottom - top - size))}px`;
+      // CSS `bottom` counts from the padding box, and a hero has a border along its foot (page-sheets.css)
+      const foot = box.top + frame.clientTop + frame.clientHeight;
+      control.style.bottom = `${Math.max(0, Math.round(foot - top - size))}px`;
     };
     place();
     const observer = new ResizeObserver(place);
