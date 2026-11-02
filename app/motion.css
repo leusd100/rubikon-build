@@ -20,7 +20,7 @@
    the shortcut waits for the result's handoff to scroll by, which a held block never does (grain-planner-mobile.spec.ts,
    grain-planner-handoff.spec.ts). The form: a field in a held block would jump to its place the moment it takes focus. The
    questions: an answer that opens makes a held block taller, which pushed the question under the header (164 → 17 px at
-   390). How we answer: the same, and its switch is sticky and slid 131 px down. */
+   390). How we answer: the same, and its switch is sticky and slid 131 px down. «Наш обсяг» runs into it as one band, so it stays too. */
 :root {
   --sheets-for-page: 560ms;
   --sheets-for-page-phone: 320ms;
@@ -31,7 +31,7 @@
   @media screen and (prefers-reduced-motion: no-preference) {
     :root { --stack-hold: 55vh; --stack-range: 59vh; }
     main[data-field] { background: var(--color-dark); }
-    main[data-field] > section:not(.hangar-configurator, .grain-planner-root, .conversation, .faq-section, .proc-responsibility) {
+    main[data-field] > section:not(.hangar-configurator, .grain-planner-root, .conversation, .faq-section, .proc-responsibility, #obsiah) {
       transform-origin: 50% calc(100% - var(--stack-hold) / 2);
       view-timeline: --stack;
       animation: stack-hold linear both;
