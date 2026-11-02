@@ -28,10 +28,11 @@
   --material-grain: url('/media/materials/grainfall-paper.svg');
   --scene-sparks: url('/media/materials/scene-sparks-paper.svg');
   --scene-pour: url('/media/materials/scene-pour-paper.svg');
-  --scene-snow: url('/media/materials/scene-snow-paper.svg');
+  --scene-bays: url('/media/materials/scene-bays-paper.svg');
   --scene-rain: url('/media/materials/scene-rain-paper.svg');
-  --scene-order: url('/media/materials/scene-order-paper.svg');
-  --scene-mark: url('/media/materials/scene-mark-paper.svg');
+  --scene-roof: url('/media/materials/scene-roof-paper.svg');
+  --scene-beams: url('/media/materials/scene-beams-paper.svg');
+  --scene-merge: url('/media/materials/scene-merge-paper.svg');
 }
 /* In Dark a paper block is graphite, so it takes the surface's dark side */
 :root[data-theme="dark"] {
@@ -45,10 +46,11 @@
   --material-grain: url('/media/materials/grainfall-dark.svg');
   --scene-sparks: url('/media/materials/scene-sparks-dark.svg');
   --scene-pour: url('/media/materials/scene-pour-dark.svg');
-  --scene-snow: url('/media/materials/scene-snow-dark.svg');
+  --scene-bays: url('/media/materials/scene-bays-dark.svg');
   --scene-rain: url('/media/materials/scene-rain-dark.svg');
-  --scene-order: url('/media/materials/scene-order-dark.svg');
-  --scene-mark: url('/media/materials/scene-mark-dark.svg');
+  --scene-roof: url('/media/materials/scene-roof-dark.svg');
+  --scene-beams: url('/media/materials/scene-beams-dark.svg');
+  --scene-merge: url('/media/materials/scene-merge-dark.svg');
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
@@ -62,10 +64,11 @@
     --material-grain: url('/media/materials/grainfall-dark.svg');
     --scene-sparks: url('/media/materials/scene-sparks-dark.svg');
     --scene-pour: url('/media/materials/scene-pour-dark.svg');
-    --scene-snow: url('/media/materials/scene-snow-dark.svg');
+    --scene-bays: url('/media/materials/scene-bays-dark.svg');
     --scene-rain: url('/media/materials/scene-rain-dark.svg');
-    --scene-order: url('/media/materials/scene-order-dark.svg');
-    --scene-mark: url('/media/materials/scene-mark-dark.svg');
+    --scene-roof: url('/media/materials/scene-roof-dark.svg');
+    --scene-beams: url('/media/materials/scene-beams-dark.svg');
+    --scene-merge: url('/media/materials/scene-merge-dark.svg');
   }
 }
 
@@ -102,10 +105,10 @@
 @media (min-width: 1181px) {
   .metal-page > .cost-section { --scene: var(--scene-sparks); --material-ground: var(--color-surface-alt); }
   .concrete-page > .cost-section { --scene: var(--scene-pour); --material-ground: var(--color-surface-alt); }
-  .angary-page > .angary-cost { --scene: var(--scene-snow); --material-ground: var(--color-surface-alt); }
+  .angary-page > .angary-cost { --scene: var(--scene-bays); --material-ground: var(--color-surface-alt); }
   .roofing-page > .direction-entry { --scene: var(--scene-rain); --material-ground: var(--color-bg); }
-  .process-page > .proc-terms { --scene: var(--scene-order); --material-ground: var(--color-bg); }
-  .about-page > .team-about { --scene: var(--scene-mark); --material-ground: var(--color-bg); }
+  .process-page > .proc-terms { --scene: var(--scene-beams); --material-ground: var(--color-bg); }
+  .about-page > .team-about { --scene: var(--scene-merge); --material-ground: var(--color-bg); }
 
   /* Grain is a picture, not a surface: it falls into its heap in the void and is cut by the block's colour on both sides */
   .grain-page > .cost-section {
@@ -128,6 +131,13 @@
     background-repeat: no-repeat;
     background-position: 0 0, 0 0, right top;
     background-size: auto, auto, 760px 430px;
+  }
+  /* Live scenes (LiveScene.tsx) lie under the block's text and fade as the block's background layers do */
+  main[data-field] > section:has(> .live-scene) { isolation: isolate; }
+  .live-scene {
+    position: absolute; z-index: -1; top: 0; right: 0; width: 760px; height: 430px; pointer-events: none;
+    mask-image: linear-gradient(to right, transparent 20px, #000 220px), linear-gradient(to bottom, #000 330px, transparent 430px);
+    mask-composite: intersect;
   }
   /* The hub names all five directions, so it takes a stream of each instead of a second page's perforated steel */
   .directions-page > .dhow {

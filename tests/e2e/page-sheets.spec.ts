@@ -96,13 +96,13 @@ test.describe('the pages\' materials', () => {
     ['/metalokonstruktsii', 'main > .cost-section', 'scene-sparks-paper'],
     ['/betonni-roboty', 'main > .page-section-dark', 'concrete-dark'],
     ['/betonni-roboty', 'main > .cost-section', 'scene-pour-paper'],
-    ['/angary', 'main > .angary-cost', 'scene-snow-paper'],
+    ['/angary', 'main > .angary-cost', 'scene-bays-paper'],
     ['/angary', 'main > .angary-process', 'panel-dark'],
     ['/zernoskhovyshcha', 'main > .grain-process-band', 'silo-dark'],
     ['/zernoskhovyshcha', 'main > .cost-section', 'grainfall-paper'],
     ['/pokrivelni-roboty', 'main > .direction-entry', 'scene-rain-paper'],
-    ['/yak-pratsyuiemo', 'main > .proc-terms', 'scene-order-paper'],
-    ['/pro-nas', 'main > .team-about', 'scene-mark-paper'],
+    ['/yak-pratsyuiemo', 'main > .proc-terms', 'scene-beams-paper'],
+    ['/pro-nas', 'main > .team-about', 'scene-merge-paper'],
     ['/yak-pratsyuiemo', 'main > .proc-route', 'knurl-dark'],
     ['/pro-nas', 'main > .about-principles', 'brushed-dark'],
     ['/napryamky', 'main > .dhow', 'scene-five-dark'],
@@ -150,5 +150,34 @@ test.describe('the form on the band', () => {
     await open(page, '/metalokonstruktsii', 1440);
     const others = await page.evaluate(() => [...document.querySelectorAll('main > section:not(.conversation), footer')].filter((block) => getComputedStyle(block).backgroundImage.includes('contours')).length);
     expect(others).toBe(0);
+  });
+});
+
+test.describe('the live scenes', () => {
+  test.skip(({ isMobile }) => isMobile, 'explicit windows');
+
+  for (const [path, selector] of [
+    ['/metalokonstruktsii', 'main > .cost-section'], ['/betonni-roboty', 'main > .cost-section'], ['/angary', 'main > .angary-cost'],
+    ['/zernoskhovyshcha', 'main > .cost-section'], ['/pokrivelni-roboty', 'main > .direction-entry'], ['/yak-pratsyuiemo', 'main > .proc-terms'],
+    ['/pro-nas', 'main > .team-about'], ['/napryamky', 'main > .dhow'],
+  ] as const) {
+    test(`${path}: the scene wakes on the screen, and its pixels change`, async ({ page }) => {
+      await open(page, path, 1440);
+      const canvas = page.locator(`${selector} > canvas.live-scene`);
+      await expect(canvas).toHaveCount(1);
+      await canvas.scrollIntoViewIfNeeded();
+      const pixels = () => canvas.evaluate((element: HTMLCanvasElement) => element.toDataURL());
+      const first = await pixels();
+      await expect.poll(pixels).not.toBe(first);
+    });
+  }
+
+  test('a width without room, and reduced motion, keep the still picture', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await open(page, '/metalokonstruktsii', 1440);
+    await expect(page.locator('.live-scene')).toHaveCount(0);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await open(page, '/metalokonstruktsii', 1000);
+    await expect(page.locator('.live-scene')).toHaveCount(0);
   });
 });

@@ -62,15 +62,6 @@ const render = (ink, copper) => {
     s.extra.push(`<g stroke="${copper}" stroke-width="1.8">${bars.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6.5"/>`).join('')}</g>`);
   };
 
-  const snow = (s) => {
-    const r = rng(5), px = 560, py = 150, ey = 330, ex = 250, roof = (x) => (x < px ? py + (px - x) / (px - ex) * (ey - py) : py + (x - px) / (px - ex) * (ey - py));
-    for (let i = 0; i < 620; i++) { const x = r() * 760, y = r() * 330; if (y > roof(x) - 3) continue; const q = .7 + r() * 1.2; s.line(x, y, x - .4, y + q * 1.1, q, r() < .05 ? copper : ink, Math.min(1, (x - 170) / 200) * (.3 + r() * .55)); }
-    for (let i = 0; i < 2000; i++) {
-      const x = ex + r() * (760 - ex), lee = x > px ? 1.5 : 1, depth = (8 + 13 * Math.sin(Math.min(1, Math.abs(x - px) / 310) * 3.14)) * lee, d = Math.pow(r(), 1.8), y = roof(x) - d * depth;
-      s.line(x, y, x + .7, y + .3, .9 + r() * .9, ink, (.96 - d * .5) * Math.min(1, (x - ex) / 90));
-    }
-  };
-
   const rain = (s) => {
     const r = rng(13), slope = (x) => 96 + (760 - x) * .38, eave = 270, a = .26;
     for (let i = 0; i < 780; i++) { const x = 120 + r() * 700, y = r() * 300, l = 12 + r() * 26; if (y + l > slope(x - a * l)) continue; s.line(x, y, x - a * l, y + l, .9, ink, Math.min(1, (x - 200) / 170) * (.18 + r() * .5)); }
@@ -85,27 +76,45 @@ const render = (ink, copper) => {
     for (let i = 0; i < 44; i++) { const y = slope(eave) + i * 8.4 + r() * 6, x = eave - 3 + gauss(r) * 2.4, size = 1.2 + r() * .9; s.line(x, y, x, y + 3 + size, size, i % 6 === 2 ? copper : ink, Math.max(.1, .92 - i * .018)); }
   };
 
-  const order = (s) => {
-    const r = rng(3), columns = [430, 520, 610, 700];
-    for (let i = 0; i < 2100; i++) {
-      const gx = columns[i % 4] + ((i >> 2) % 9 - 4) * 8.4, gy = 44 + ((i >> 6) % 34) * 10.4, sx = 190 + r() * 420, sy = 20 + r() * 380, p = r(), k = p * p * (3 - 2 * p);
-      const x = sx + (gx - sx) * k, y = sy + (gy - sy) * k, q = (1 - k) * r() * 6.3, l = 3 + (1 - k) * 2;
-      s.line(x, y, x + Math.sin(q) * l, y + Math.cos(q) * l, 1.15, ink, Math.min(1, (x - 170) / 150) * (.28 + k * .62));
+  // Portal frames going away in tone, sheet behind sheet, as the deck does
+  const bays = (s) => {
+    const vx = 590, vy = 236;
+    for (let i = 6; i >= 0; i--) {
+      const k = Math.pow(.74, i), w = 620 * k, h = 300 * k, e = 118 * k, t = 20 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = y - h + e;
+      const f = (n) => fixed(n);
+      s.extra.push(`<path fill="${i === 3 ? copper : ink}" fill-opacity="${i === 3 ? .95 : Math.max(.1, .94 - i * .13).toFixed(2)}" d="M${f(x)} ${f(y)}V${f(eave)}L${vx} ${f(top)}L${f(x + w)} ${f(eave)}V${f(y)}H${f(x + w - t)}V${f(eave + t * .5)}L${vx} ${f(top + t * 1.25)}L${f(x + t)} ${f(eave + t * .5)}V${f(y)}Z"/>`);
     }
-    s.extra.push(`<path stroke="${copper}" stroke-width="2" d="M330 225C372 170 392 230 430 222H700"/><g fill="${copper}">${columns.map((x) => `<circle cx="${x}" cy="222" r="4.4"/>`).join('')}</g>`);
   };
 
-  const mark = (s) => {
-    const r = rng(17), k = .76, ox = 540, oy = 16, top = new Path2D('M0 0H182C240 0 278 34 278 85C278 139 240 173 186 173H74V130H181C210 130 227 113 227 87C227 59 209 44 181 44H39Z'), leg = new Path2D('M0 130H139L278 280H208L115 181H52V280H0Z'), c = document.createElement('canvas').getContext('2d');
-    const inside = (x, y) => c.isPointInPath(top, (x - ox) / k, (y - oy) / k) || c.isPointInPath(leg, (x - ox) / k, (y - oy) / k);
-    for (let i = 0; i < 13000; i++) {
-      const x = 280 + r() * 480, y = r() * 270; if (inside(x, y)) continue;
-      const near = [[3, 0], [-3, 0], [0, 3], [0, -3], [7, 0], [-7, 0], [0, 7], [0, -7]].some(([dx, dy]) => inside(x + dx, y + dy));
-      if (!near && r() > .17) continue;
-      const q = r() * 6.3, l = .6 + r() * 1.5;
-      s.line(x, y, x + Math.cos(q) * l, y + Math.sin(q) * l, .95, ink, Math.min(1, (x - 280) / 130) * Math.min(1, (270 - y) / 50) * (near ? 1 : .3 + r() * .4));
+  // A stack of I-beams end on, in order. The last one comes down on its slings, live (liveScenes.ts)
+  const beams = (s) => {
+    const r = rng(41), w = 50, h = 58, web = 7, flange = 9;
+    const shape = (x, y) => `M${x} ${y}h${w}v${flange}H${x + w / 2 + web / 2}V${y + h - flange}H${x + w}v${flange}H${x}v${-flange}H${x + w / 2 - web / 2}V${y + flange}H${x}Z`;
+    for (let row = 0; row < 4; row++) {
+      const y = 300 - row * (h + 3), count = 9 - row;
+      for (let i = 0; i < count; i++) {
+        const x = 776 - (i + 1) * (w + 4) + (row % 2 ? 27 : 0), alpha = Math.min(1, (.5 + r() * .45) * Math.min(1, (x - 270) / 120));
+        if (alpha > .02) s.extra.push(`<path fill="${ink}" fill-opacity="${alpha.toFixed(2)}" d="${shape(x, y)}"/>`);
+      }
     }
-    s.extra.push(`<path fill="${copper}" fill-opacity=".9" transform="translate(${ox} ${oy}) scale(${k})" d="M79 190H117L203 280H161Z"/>`);
+  };
+
+  // Two streams into one, as the page's own «два покоління — одна відповідальність»
+  const merge = (s) => {
+    const r = rng(53), end = [566, 214], at = (a, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * t * (1 - t) * b[0] + t * t * end[0], (1 - t) * (1 - t) * a[1] + 2 * t * (1 - t) * b[1] + t * t * end[1]];
+    for (const [a, b, colour] of [[[372, -14], [430, 170], ink], [[764, -14], [706, 170], copper]]) {
+      for (let i = 0; i < 620; i++) { const t = r(), [x, y] = at(a, b, t), w = 22 - t * 12, q = r() * 6.3, X = x + gauss(r) * w, Y = y + gauss(r) * w * .4; s.line(X, Y, X + Math.cos(q) * 2, Y + Math.sin(q) * 2, 1.7, colour, .4 + r() * .55); }
+    }
+    for (let i = 0; i < 560; i++) { const t = r(), y = 214 + t * 170, x = 566 + gauss(r) * (9 + t * 6), q = r() * 6.3; s.line(x, y, x + Math.cos(q) * 2, y + Math.sin(q) * 2, 1.9, r() < .5 ? copper : ink, (.5 + r() * .5) * (1 - t * .3)); }
+  };
+
+  // The roof alone: what the live rain falls on (liveScenes.ts)
+  const roof = (s) => {
+    const r = rng(14), slope = (x) => 96 + (760 - x) * .38, eave = 270;
+    for (let n = 0; n < 150; n++) {
+      const u = Math.pow(r(), 1.5), x = eave + u * (760 - eave), near = 1 - u, l = 4 + near * 22 + r() * 9, off = -r() * 3.5;
+      s.line(x, slope(x) + off, x - l, slope(x - l) + off, .8 + near * 1.3, ink, .3 + near * .62);
+    }
   };
 
   const five = (s) => {
@@ -117,7 +126,7 @@ const render = (ink, copper) => {
     for (let i = 0; i < 300; i++) { const y = r() * base, x = xs[4] + gauss(r) * 8, l = 9 + r() * 20; s.line(x, y, x - l * .1, y + l, .9, ink, .25 + r() * .55); }
   };
 
-  return Object.fromEntries(Object.entries({ sparks, pour, snow, rain, order, mark, five }).map(([name, draw]) => { const s = scene(); draw(s); return [name, s.toSvg()]; }));
+  return Object.fromEntries(Object.entries({ sparks, pour, bays, rain, roof, beams, merge, five }).map(([name, draw]) => { const s = scene(); draw(s); return [name, s.toSvg()]; }));
 };
 
 const browser = await chromium.launch();
