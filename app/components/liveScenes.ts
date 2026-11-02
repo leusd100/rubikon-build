@@ -4,7 +4,8 @@
 // format for each browser and costs megabytes, and these colours follow the theme.
 
 export type Inks = { ink: string; copper: string; dark: boolean };
-export type Scene = { still?: string; step: (c: CanvasRenderingContext2D, dt: number, time: number, inks: Inks) => void };
+/** `still`: the custom property and the value that give the block the picture without what is drawn live */
+export type Scene = { still?: [string, string]; step: (c: CanvasRenderingContext2D, dt: number, time: number, inks: Inks) => void };
 type Bit = { x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; hit?: boolean };
 
 // Decoration, so a plain linear generator: nothing here is a secret
@@ -63,15 +64,27 @@ function sparks(): Scene {
   };
 }
 
-/** A stream landing in what the still picture already holds: the grain's heap, the concrete in its form */
-function stream(x0: number, floor: number, spread: number, size: number, count: number): Scene {
-  const bits: Bit[] = [];
+type Pile = { x0: number; from: number; apex: number; slope: number; lowest: number; spread: number; size: number; rate: number };
+
+/** A stream that lands and goes on moving: what falls bounces, then rolls down what is already there */
+function pile({ x0, from, apex, slope, lowest, spread, size, rate }: Pile, still: [string, string]): Scene {
+  const falling: Bit[] = [], rolling: Bit[] = [], surface = (x: number) => Math.min(lowest, apex + Math.abs(x - x0) * slope);
   return {
+    still,
     step(c, dt, _time, { ink, copper }) {
-      for (let i = 0; i < count; i++) bits.push({ x: x0 + gauss() * spread, y: -6 - random() * 30, vx: gauss() * 5, vy: 120 + random() * 60, age: 0, life: 3, size: size * (.6 + random() * .8) });
-      update(bits, dt, 520, (bit, px, py) => {
+      for (let i = 0; i < rate; i++) falling.push({ x: x0 + gauss() * spread, y: from - random() * 30, vx: gauss() * 5, vy: 120 + random() * 60, age: 0, life: 3, size: size * (.6 + random() * .8) });
+      update(falling, dt, 520, (bit, px, py) => {
         stroke(c, [px, py, bit.x, bit.y], bit.size, random() < .05 ? copper : ink, .85);
-        return bit.y < floor;
+        if (bit.y < surface(bit.x)) return true;
+        const side = random() < .5 ? -1 : 1;
+        rolling.push({ x: bit.x, y: bit.y, vx: side * (40 + random() * 150), vy: -30 - random() * 90, age: 0, life: .5 + random() * 1.3, size: bit.size });
+        return false;
+      });
+      update(rolling, dt, 420, (bit, px, py) => {
+        const ground = surface(bit.x) + random() * 2;
+        if (bit.y > ground) { bit.y = ground; bit.vy *= -.28; bit.vx *= .9; }
+        stroke(c, [px, py, bit.x + .4, bit.y], bit.size, random() < .05 ? copper : ink, .9 * (1 - bit.age / bit.life));
+        return true;
       });
     },
   };
@@ -80,7 +93,7 @@ function stream(x0: number, floor: number, spread: number, size: number, count: 
 function rain(): Scene {
   const drops: Bit[] = [], splash: Bit[] = [], beads: Bit[] = [], fall: Bit[] = [], slope = (x: number) => 96 + (760 - x) * .33, eave = 170;
   return {
-    still: '--scene-roof',
+    still: ['--scene', 'var(--scene-roof)'],
     step(c, dt, _time, { ink, copper }) {
       for (let i = 0; i < 3; i++) drops.push({ x: 40 + random() * 850, y: -30, vx: -150, vy: 580 + random() * 160, age: 0, life: 2, size: 12 + random() * 22 });
       update(drops, dt, 0, (bit) => {
@@ -123,10 +136,10 @@ function frames(): Scene {
 
 /** The last beam of the stack, coming down on its slings and swaying a little */
 function beam(): Scene {
-  const w = 50, h = 58, web = 7, flange = 9, x0 = 317, top = 26, rest = 120;
+  const w = 50, h = 58, web = 7, flange = 9, x0 = 236, top = 26, rest = 117;
   return {
     step(c, _dt, time, { copper }) {
-      // it settles on the stack's lower row, beside the top one, and rises again; the sway dies as it comes to rest
+      // it settles on the stack's second row, beside the top one, and rises again; the sway dies as it comes to rest
       const down = (1 - Math.cos(time * .5)) / 2, x = x0 + Math.sin(time * .9) * 7 * (1 - down), y = top + (rest - top) * down, hook = x0 + 25;
       c.fillStyle = copper;
       c.strokeStyle = copper;
@@ -186,8 +199,8 @@ function five(): Scene {
 
 export const SCENES: Record<string, { make: () => Scene; replaces?: string }> = {
   '.metal-page > .cost-section': { make: sparks, replaces: '--scene' },
-  '.concrete-page > .cost-section': { make: () => stream(470, 190, 12, 3.2, 3) },
-  '.grain-page > .cost-section': { make: () => stream(327, 150, 11, 2, 3) },
+  '.concrete-page > .cost-section': { make: () => pile({ x0: 470, from: 78, apex: 192, slope: .14, lowest: 216, spread: 9, size: 3, rate: 3 }, ['--scene', 'var(--scene-form)']) },
+  '.grain-page > .cost-section': { make: () => pile({ x0: 383, from: -6, apex: 181, slope: .62, lowest: 400, spread: 10, size: 2, rate: 3 }, ['--material-grain', 'var(--scene-heap)']) },
   '.angary-page > .angary-cost': { make: frames },
   '.roofing-page > .direction-entry': { make: rain },
   '.process-page > .proc-terms': { make: beam },

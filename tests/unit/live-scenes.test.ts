@@ -61,7 +61,9 @@ describe('the live scenes', () => {
     expect(replaced.sort()).toEqual(['--material', '--scene', '--scene']);
   });
 
-  it('the rain swaps the picture for the roof alone', () => {
-    expect(SCENES['.roofing-page > .direction-entry'].make().still).toBe('--scene-roof');
+  it('a stream swaps its picture for the one without the stream, and the rain for the roof alone', () => {
+    expect(SCENES['.concrete-page > .cost-section'].make().still).toEqual(['--scene', 'var(--scene-form)']);
+    expect(SCENES['.grain-page > .cost-section'].make().still).toEqual(['--material-grain', 'var(--scene-heap)']);
+    expect(SCENES['.roofing-page > .direction-entry'].make().still).toEqual(['--scene', 'var(--scene-roof)']);
   });
 });

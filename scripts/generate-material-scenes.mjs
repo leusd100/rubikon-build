@@ -4,7 +4,7 @@
 // One SVG for each side, grouped by colour, width and opacity, which is what keeps them near the grain's weight. Drawn in a
 // browser only for the point-in-shape test of the mark. Run by hand after changing a scene:
 // node scripts/generate-material-scenes.mjs
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 
 const OUT = new URL('../public/media/materials/', import.meta.url);
@@ -50,16 +50,19 @@ const render = (ink, copper) => {
     for (let i = 0; i < 130; i++) { const a = r() * 6.28, q = r() * r() * 16, l = 3 + r() * 9; s.line(ox + Math.cos(a) * q, oy + Math.sin(a) * q, ox + Math.cos(a) * (q + l), oy + Math.sin(a) * (q + l), 1, ink, .9); }
   };
 
-  const pour = (s) => {
-    const r = rng(11), sx = 470, left = 180, right = 760, bottom = 420, level = (x) => 214 + Math.sin(x * .021) * 3 + Math.exp(-((x - sx) ** 2) / 1500) * -26;
-    for (let i = 0; i < 420; i++) { const y = r() * level(sx); stone(s, r, sx + gauss(r) * (12 + y * .05), y, 1.1 + r() * 2.3, ink, .55 + r() * .4); }
-    const bars = []; for (let x = left + 46; x < right; x += 76) for (const y of [292, 362]) bars.push([x, y]);
-    for (let i = 0; i < 1800; i++) {
+  // A section through a foundation: the bucket, the formwork with its brace, the stirrups of the cage, and the concrete coming up
+  // around them. The stream itself is live (liveScenes.ts): with `stream` false this is the picture under it
+  const pour = (stream) => (s) => {
+    const r = rng(11), sx = 470, left = 196, right = 744, bottom = 420, level = (x) => 214 + Math.sin(x * .021) * 3 + Math.exp(-((x - sx) ** 2) / 1500) * -22;
+    if (stream) for (let i = 0; i < 300; i++) { const y = 78 + r() * (level(sx) - 78); stone(s, r, sx + gauss(r) * 9, y, 1.1 + r() * 2.3, ink, .55 + r() * .4); }
+    for (let i = 0; i < 1500; i++) {
       const x = left + r() * (right - left), lv = level(x), d = Math.pow(r(), 1.5), y = lv + d * (bottom - lv), size = .8 + r() * r() * 4.6;
-      if (bars.some(([bx, by]) => Math.hypot(x - bx, y - by) < 10.5 + size)) continue;
-      stone(s, r, x, y, size, r() < .03 ? copper : ink, (.82 - d * .62) * (.5 + r() * .5) * Math.min(1, (x - left) / 50));
+      stone(s, r, x, y, size, r() < .03 ? copper : ink, (.82 - d * .62) * (.5 + r() * .5));
     }
-    s.extra.push(`<g stroke="${copper}" stroke-width="1.8">${bars.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6.5"/>`).join('')}</g>`);
+    const cage = [240, 365, 490, 615].map((x) => `<rect x="${x}" y="256" width="74" height="112" rx="5"/>`).join('');
+    s.extra.push(`<path fill="${ink}" fill-opacity=".92" d="M405-6H535V22L492 66V78H448V66L405 22Z"/><path fill="${copper}" d="M448 70h44v8h-44z"/>`
+      + `<path fill="${ink}" fill-opacity=".86" d="M178 170h14v240h-14zM748 170h14v240h-14z"/><path stroke="${ink}" stroke-opacity=".6" stroke-width="3" d="M178 230L128 330M128 330H178"/>`
+      + `<g stroke="${copper}" stroke-width="1.7">${cage}<path d="M212 268H728M212 356H728"/></g>`);
   };
 
   const rain = (s) => {
@@ -90,8 +93,8 @@ const render = (ink, copper) => {
   const beams = (s) => {
     const r = rng(41), w = 50, h = 58, web = 7, flange = 9;
     const shape = (x, y) => `M${x} ${y}h${w}v${flange}H${x + w / 2 + web / 2}V${y + h - flange}H${x + w}v${flange}H${x}v${-flange}H${x + w / 2 - web / 2}V${y + flange}H${x}Z`;
-    for (let row = 0; row < 4; row++) {
-      const y = 300 - row * (h + 3), count = 11 - row;
+    for (let row = 0; row < 3; row++) {
+      const y = 239 - row * (h + 3), count = 11 - row;
       for (let i = 0; i < count; i++) {
         const x = 776 - (i + 1) * (w + 4) + (row % 2 ? 27 : 0), alpha = Math.min(1, (.5 + r() * .45) * Math.min(1, (x - 130) / 120));
         if (alpha > .02) s.extra.push(`<path fill="${ink}" fill-opacity="${alpha.toFixed(2)}" d="${shape(x, y)}"/>`);
@@ -126,7 +129,7 @@ const render = (ink, copper) => {
     for (let i = 0; i < 300; i++) { const y = r() * base, x = xs[4] + gauss(r) * 8, l = 9 + r() * 20; s.line(x, y, x - l * .1, y + l, .9, ink, .25 + r() * .55); }
   };
 
-  return Object.fromEntries(Object.entries({ sparks, pour, bays, rain, roof, beams, merge, five }).map(([name, draw]) => { const s = scene(); draw(s); return [name, s.toSvg()]; }));
+  return Object.fromEntries(Object.entries({ sparks, pour: pour(true), 'pour-form': pour(false), bays, rain, roof, beams, merge, five }).map(([name, draw]) => { const s = scene(); draw(s); return [name, s.toSvg()]; }));
 };
 
 const browser = await chromium.launch();
@@ -138,5 +141,8 @@ for (const [side, colours] of Object.entries(SIDES)) {
     await writeFile(new URL(`scene-${name}-${side}.svg`, OUT), svg);
     console.log(`scene-${name}-${side}.svg ${(svg.length / 1024).toFixed(1)} KB`);
   }
+  // The grain's heap without its stream: the live one falls in that place. The grains above the heap around the stream go
+  const grain = await readFile(new URL(`grainfall-${side}.svg`, OUT), 'utf8');
+  await writeFile(new URL(`scene-heap-${side}.svg`, OUT), grain.replace(/M(\d+\.?\d*) (\d+\.?\d*)l[-\d.]+[ -][-\d.]+/g, (grainStroke, x, y) => (Number(y) < 430 && Number(x) > 500 && Number(x) < 620 ? '' : grainStroke)));
 }
 await browser.close();

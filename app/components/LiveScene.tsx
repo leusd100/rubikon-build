@@ -58,8 +58,7 @@ export function LiveScene() {
         frame = requestAnimationFrame(tick);
       };
       const restore = () => {
-        block.style.removeProperty('--scene');
-        block.style.removeProperty('--material');
+        for (const property of [replaces, scene.still?.[0]]) if (property) block.style.removeProperty(property);
       };
       const observer = new IntersectionObserver(([entry]) => {
         cancelAnimationFrame(frame);
@@ -70,7 +69,7 @@ export function LiveScene() {
           return;
         }
         if (replaces) block.style.setProperty(replaces, 'none');
-        if (scene.still) block.style.setProperty('--scene', `var(${scene.still})`);
+        if (scene.still) block.style.setProperty(...scene.still);
         last = performance.now();
         frame = requestAnimationFrame(tick);
       // a block right after the hero starts exactly at the fold, and touching the edge counts as in view

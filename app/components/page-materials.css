@@ -31,6 +31,8 @@
   --scene-bays: url('/media/materials/scene-bays-paper.svg');
   --scene-rain: url('/media/materials/scene-rain-paper.svg');
   --scene-roof: url('/media/materials/scene-roof-paper.svg');
+  --scene-form: url('/media/materials/scene-pour-form-paper.svg');
+  --scene-heap: url('/media/materials/scene-heap-paper.svg');
   --scene-beams: url('/media/materials/scene-beams-paper.svg');
   --scene-merge: url('/media/materials/scene-merge-paper.svg');
 }
@@ -49,6 +51,8 @@
   --scene-bays: url('/media/materials/scene-bays-dark.svg');
   --scene-rain: url('/media/materials/scene-rain-dark.svg');
   --scene-roof: url('/media/materials/scene-roof-dark.svg');
+  --scene-form: url('/media/materials/scene-pour-form-dark.svg');
+  --scene-heap: url('/media/materials/scene-heap-dark.svg');
   --scene-beams: url('/media/materials/scene-beams-dark.svg');
   --scene-merge: url('/media/materials/scene-merge-dark.svg');
 }
@@ -67,6 +71,8 @@
     --scene-bays: url('/media/materials/scene-bays-dark.svg');
     --scene-rain: url('/media/materials/scene-rain-dark.svg');
     --scene-roof: url('/media/materials/scene-roof-dark.svg');
+    --scene-form: url('/media/materials/scene-pour-form-dark.svg');
+    --scene-heap: url('/media/materials/scene-heap-dark.svg');
     --scene-beams: url('/media/materials/scene-beams-dark.svg');
     --scene-merge: url('/media/materials/scene-merge-dark.svg');
   }
