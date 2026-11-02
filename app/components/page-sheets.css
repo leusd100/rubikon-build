@@ -38,9 +38,14 @@ main[data-field] ~ footer {
   overflow: clip; box-shadow: var(--sheet-shadow-dark);
 }
 
-/* The first sheet covers the hero's foot by its radius, so what stands on that foot stands a radius higher (the «Ілюстрація»
-   stamp was cut by 12 px). A margin moves it only where it is anchored to the foot: on a phone it hangs from the top */
-main[data-field] > :first-of-type :is(.hero-provenance, .proc-provenance) { margin-bottom: var(--sheet-radius); }
+/* A hero fills the screen and the first sheet lies on its foot, so 32 px of paper stood along the screen's bottom edge like a
+   stray strip (owner 02.11). The hero takes the radius below the screen as a border, the same trick as the sheets': the sheet
+   starts at the fold, and everything in the hero stays where it was, because the border is outside the padding box its
+   content and its absolutely placed parts measure from. Only the sheet's corners ever show it. A phone's hero is taller than
+   the screen already. */
+@media screen and (min-width: 761px) {
+  main[data-field] > section:first-of-type { box-sizing: border-box; min-height: calc(100svh + var(--sheet-radius)); border-bottom: var(--sheet-radius) solid var(--color-dark); }
+}
 
 /* Neighbours of one tone read as one long sheet: a tone apart they stay two */
 main[data-field] > .proc-responsibility { background-color: var(--color-surface); }

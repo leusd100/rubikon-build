@@ -62,6 +62,16 @@ test.describe('the blocks as a stack of sheets', () => {
 test.describe('the first sheet and the hero', () => {
   test.skip(({ isMobile }) => isMobile, 'explicit windows');
 
+  for (const path of ['/', '/metalokonstruktsii', '/betonni-roboty', '/angary', '/zernoskhovyshcha', '/pokrivelni-roboty', '/yak-pratsyuiemo', '/pro-nas', '/napryamky']) {
+    for (const [width, height] of [[1440, 900], [1280, 720], [768, 1024]]) {
+      test(`${path} at ${width}×${height}: no strip of the sheet along the first screen's foot`, async ({ page }) => {
+        await open(page, path, width, height);
+        const top = await page.locator('main > section').nth(1).evaluate((sheet) => sheet.getBoundingClientRect().top);
+        expect(top).toBeGreaterThanOrEqual(height);
+      });
+    }
+  }
+
   for (const path of ['/metalokonstruktsii', '/betonni-roboty', '/angary', '/zernoskhovyshcha', '/pokrivelni-roboty', '/yak-pratsyuiemo']) {
     for (const width of [1440, 1100, 768]) {
       test(`${path} at ${width}: the «Ілюстрація» stamp stays clear of the sheet`, async ({ page }) => {
