@@ -230,7 +230,7 @@ test.describe('HOME directions on a phone: one sheet and an index (B)', () => {
   }
 });
 
-test.describe('HOME directions from 761 px: the mosaic as it was', () => {
+test.describe('HOME directions from 761 px: the mosaic to 1180 px, one row of cards from 1181 px', () => {
   test.skip(({ isMobile }) => isMobile, 'a desktop and tablet check; the desktop project runs it');
 
   for (const viewport of [{ width: 761, height: 1024 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
@@ -265,6 +265,14 @@ test.describe('HOME directions from 761 px: the mosaic as it was', () => {
         }).concat([[g.width, g.height, 0, 0]]);
       });
       const gridWidth = geometry.pop()![0];
+      // From 1181 px (owner 02.11): one row, the first card open, the rest equal
+      if (viewport.width > 1180) {
+        const [first, ...rest] = geometry;
+        expect(new Set(geometry.map(([, top, , height]) => `${top} ${height}`)).size).toBe(1);
+        expect(first[2]).toBeGreaterThan(rest[0][2] * 2);
+        expect(new Set(rest.map(([, , width]) => Math.round(width))).size).toBe(1);
+        return;
+      }
       const wide = (gridWidth - 18) * 0.575;
       const narrow = gridWidth - 18 - wide;
       const expected = [[0, 0, wide, 738], [wide + 18, 0, narrow, 360], [wide + 18, 378, narrow, 360], [0, 756, wide, 330], [wide + 18, 756, narrow, 330]];

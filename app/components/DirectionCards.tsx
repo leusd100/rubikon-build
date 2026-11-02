@@ -2,6 +2,9 @@ import { directions } from '../data/directions';
 import ResponsiveImage from './ResponsiveImage';
 import { Arrow } from './Arrow';
 
+/** On a computer HOME's cards stand in one row (home-v2.css) and a closed one can be narrower than these two long titles */
+const breakable = (title: string) => title.replace('Метало', 'Метало\u00AD').replace('Зерно', 'Зерно\u00AD');
+
 export function DirectionImageCards() {
   // HOME's 4:5 phone cards are 84% of (100vw - 32px), or 88% at <=340px.
   // The hangar source is also 4:5. The other sources are 3:2: object-fit:cover
@@ -23,7 +26,7 @@ export function DirectionImageCards() {
           <span className="direction-number">{direction.number}</span>
           <span className="direction-provenance">Ілюстрація</span>
           <span className="direction-copy">
-            <strong>{direction.cardTitle}</strong>
+            <strong>{breakable(direction.cardTitle)}</strong>
             <small>{direction.cardText}</small>
           </span>
           <Arrow to="up-right" className="direction-arrow" />

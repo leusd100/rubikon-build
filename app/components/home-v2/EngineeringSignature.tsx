@@ -3,7 +3,8 @@ import { siteRoutes } from '../../data/navigation';
 import { leadership } from '../../data/people';
 import { ProofContour } from './ProofContour';
 import { IslandBoundary } from '../IslandBoundary';
-import { ScopeCells } from './ScopeCells';
+import { FrameTourIsland } from './FrameTourIsland';
+import { ScopeCells, type ScopeFrame } from './ScopeCells';
 import { keepHeadingWords } from '../../lib/typography';
 import { Arrow } from '../Arrow';
 
@@ -19,9 +20,24 @@ import { Arrow } from '../Arrow';
 // beside the photo is gone. Two explanation cards followed until 09.10; the second sheet («Вузол 1») left HOME after
 // the block's audit — node В on the sheet shows the same column base, larger, taken apart and with its load.
 //
+// Since 02.11 (owner: the site's best motion stood at the end of /angary and a client may never reach it) the block opens
+// on the frame tour, /angary's own drawing on the configurator's example, labelled «Приклад»; the real object follows it.
+// Its scope is three frames of the same retouched file (a part no photo shows, the frame, comes from the scheme, stamped so).
+//
 // Nothing here names a product: no «digital twin», explorer, load-path software or building passport.
 
 const people = leadership;
+
+const frameOf = (name: string, kind: ScopeFrame['kind']): ScopeFrame => ({
+  src: `/media/home-v2/scope-${name}-880w.webp`,
+  srcSet: `/media/home-v2/scope-${name}-480w.webp 480w, /media/home-v2/scope-${name}-880w.webp 880w`,
+  kind,
+});
+const SCOPE_FRAMES: Readonly<Record<string, ScopeFrame>> = {
+  Каркас: frameOf('frame', 'Схема'),
+  'Стінові панелі': frameOf('panels', 'Фото'),
+  Покрівля: frameOf('roof', 'Фото'),
+};
 
 function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
   const { photo, scope } = proof;
@@ -48,18 +64,18 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
           {/* the provenance in full, under the sheet (its title block says only what the two halves are): before RUBIKON
               BUILD, and the photo's foreground retouched */}
           <p>{proof.attribution} Фото з ретушшю переднього плану.</p>
-          <ScopeCells items={scope.subject} linked />
+          <ScopeCells items={scope.subject} linked frames={SCOPE_FRAMES} />
         </div>
-        {/* Roles sit next to the proof, compactly — no portraits (the generated ones were removed in #124). */}
+        {/* No portraits (the generated ones were removed in #124). */}
         <div className="hv2-people">
           <p className="hv2-kicker"><span aria-hidden="true" /> Хто веде роботу</p>
+          <p className="hv2-people-note">Родинна компанія — два покоління в одній команді.</p>
           {people.map(({ name, role }) => (
             <div className="hv2-person" key={name}>
               <h4>{name}</h4>
               <p>{role}</p>
             </div>
           ))}
-          <p className="hv2-people-note">Родинна компанія — два покоління в одній команді.</p>
         </div>
       </div>
     </div>
@@ -80,13 +96,26 @@ export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase 
           </p>
         </header>
 
+        {/* The tour is an enhancement like the sheet: if its code fails, the block simply opens on the real object */}
+        <div className="hv2-frame-room">
+          <IslandBoundary name="home-frame-tour" fallback={null}>
+            <FrameTourIsland />
+          </IslandBoundary>
+        </div>
+        <p className="hv2-frame-brief">
+          {/* The way from the example to the visitor's own hangar, in the sheet's own words */}
+          <a className="link-arrow hv2-people-link" href="/angary#configurator">Такий ангар, але ваш: сформувати бриф <Arrow to="right" /></a>
+        </p>
+
         {proof && <ProofStage proof={proof} />}
 
-        <p className="hv2-boundary">
-          Ілюстрації та схеми пояснюють підхід і не замінюють проєкт: розрахунки та проєктні рішення — за проєктувальником.
-        </p>
-        {/* The one way on from the explanation to how the work itself is organised; the band's own link style */}
-        <a className="link-arrow hv2-people-link hv2-process-link" href={siteRoutes.process}>Як працюємо <Arrow to="up-right" /></a>
+        <div className="hv2-signature-foot">
+          <p className="hv2-boundary">
+            Ілюстрації та схеми пояснюють підхід і не замінюють проєкт: розрахунки та проєктні рішення — за проєктувальником.
+          </p>
+          {/* The one way on from the explanation to how the work itself is organised; the band's own link style */}
+          <a className="link-arrow hv2-people-link hv2-process-link" href={siteRoutes.process}>Як працюємо <Arrow to="up-right" /></a>
+        </div>
       </div>
     </section>
   );

@@ -25,15 +25,7 @@
 
 main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1fr); }
 main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside { display: none; }
-@media (min-width: 1200px) {
-  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-aside {
-    display: grid; grid-column: 1; grid-row: 1 / span 2; align-self: stretch; justify-self: end; width: 54%; margin: 0;
-    padding-top: calc(18.6px + var(--rhythm-label) + .15 * var(--type-h2)); pointer-events: none;
-  }
-  /* Named rows for the title and the note: auto-placement would otherwise move them below the rows the aside spans */
-  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-copy { grid-row: 1; max-width: calc(46% - 36px); }
-  main[data-home="v2"] .hv2-directions .section-header.has-aside .section-header-support { grid-row: 2; max-width: min(640px, calc(46% - 36px)); }
-}
+/* (on a computer the row of cards stands alone since 02.11, home-v2.css; this row of sheets is not shown at any width) */
 
 main[data-home="v2"] .hv2-directions .dsh { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 8px; min-height: 0; user-select: none; }
 /* A sheet: the scheme on its own paper, in the free field over the title block. A mouse's shortcut to the direction. */

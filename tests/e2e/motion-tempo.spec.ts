@@ -65,7 +65,8 @@ test.describe('HOME directions', () => {
     await expect.poll(() => lift(page), 'focus').toEqual({ transform: 'none', boxShadow: expect.stringMatching(/ 0px 0px 0px 2px$/) });
   });
 
-  for (const target of [sheet, card]) {
+  // (the sheet itself is not shown since 02.11: on a computer the row of cards stands alone)
+  for (const target of [card]) {
     test(`answer hover on ${target} with the copper frame, not a lift`, async ({ page }) => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto('/', { waitUntil: 'load' });

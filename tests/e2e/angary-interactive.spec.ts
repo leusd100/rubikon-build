@@ -106,14 +106,15 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
       at: (letter.left + letter.right) / 2,
       top: letter.top,
       bottom: letter.bottom,
-      spansBottom: Math.max(...spans.map((rect) => rect.bottom)),
+      // the rows slope, so a span's words may stand lower on the screen than L's: what counts is that they never meet
+      spansOnL: spans.filter((rect) => rect.left < letter.right && rect.right > letter.left && rect.top < letter.bottom && rect.bottom > letter.top).length,
       a: bubbles[0].x + bubbles[0].width / 2, c: bubbles[2].x + bubbles[2].width / 2,
       bTop: bubbles[1].top,
       columns: root.querySelector('[data-part="1 2"] .ft-member')!.getAttribute('d')!.split('M').filter(Boolean).length,
     };
   });
   expect(Math.abs(span.at - (span.a + span.c) / 2)).toBeLessThanOrEqual(3);
-  expect(span.spansBottom).toBeLessThanOrEqual(span.top);
+  expect(span.spansOnL).toBe(0);
   expect(span.bottom).toBeLessThanOrEqual(span.bTop);
   expect(span.columns).toBe(3);
   // one way for the three dimensions (10.10: L measured between the outer columns' axes, its own extension lines down
@@ -1126,7 +1127,8 @@ for (const [width, length, height] of [[24, 60, 8], [12, 18, 4], [18, 36, 6]] as
     const drawing = page.locator('#configurator .ft-drawing');
     await expect(drawing.locator('[data-tags="3"] .ft-tag').first()).toBeVisible();
     const onLit = await drawing.evaluate((svg) => {
-      const lit = [...svg.querySelectorAll('[data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace)')] as SVGGeometryElement[];
+      // (without a tail, the part of a long line fading out past the last bay: it has dissolved by the name beside it)
+      const lit = [...svg.querySelectorAll('[data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace):not(.ft-tail)')] as SVGGeometryElement[];
       return [...svg.querySelectorAll('[data-tags="3"] .ft-tag')].filter((tag) => {
         const box = tag.getBoundingClientRect();
         return lit.some((path) => {

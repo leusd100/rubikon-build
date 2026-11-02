@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, type CSSProperties, type RefObject } from 'react';
+import { useMemo, useSyncExternalStore, type CSSProperties, type RefObject } from 'react';
 import type { StageSize, TourFocus } from '../useDrawingTour';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { deriveDomainModel, sizesProvenance, type HangarDomainModel } from '../../lib/configurator/domainModel';
@@ -40,7 +40,7 @@ import './frame-tour.css';
 // file keeps its model and its picture; the section and its «Змінити габарити ↑» link are gone.
 
 const VIEW = { width: 720, height: 440 };
-/** Bays drawn at most; a longer building continues past a break */
+/** Bays drawn at most; a longer building runs on past them, its long lines dissolving into the distance (02.11) */
 const BAYS = 3;
 /** How far in front of the end wall the wind arrows start, m */
 const WIND = 5.5;
@@ -65,8 +65,17 @@ const valueWidth = (text: string) => text.length * VALUE * 0.56;
 const LETTER_CAP = LETTER * 0.72;
 const VALUE_CAP = VALUE * 0.72;
 /** With a centre row the span is dimensioned in two rows (10.10, owner: «2 ряди розмірних ліній»): the spans between
- *  the axes, then L — this far apart on the sheet, room for the first row's figures between them */
-const ROW_GAP = 6 * 2 + VALUE_CAP + 12;
+ *  the axes, then L — this far apart on the sheet, just the first row's figures between them (02.11, owner: the rows stood
+ *  too far apart once the figures were set at a constant screen size, 13 px; on a phone 26 units are those 13 px) */
+const ROW_GAP = 26;
+/** …and on a computer's sheet, where a unit is more than a screen pixel and the figures between the rows need less of them */
+const ROW_GAP_WIDE = 17;
+const WIDE_SHEET = '(min-width: 1200px)';
+const watchWideSheet = (changed: () => void) => {
+  const query = window.matchMedia(WIDE_SHEET);
+  query.addEventListener('change', changed);
+  return () => query.removeEventListener('change', changed);
+};
 /** A dimension's words along its line, on its outer side: the letter (italic), its value and an answer after it */
 type DimLabel = {
   key: string; x: number; y: number; angle: number; side: 'below' | 'above'; letter?: string; value?: string; note?: string;
@@ -154,10 +163,10 @@ function dimLabel(key: string, from: Pt, to: Pt, side: DimLabel['side'], words: 
  * винести за межі ангару»): «· без колон» after L for their own «Так, без колон» — not for «Колони можна» on a portal
  * frame drawn without them — and with a centre row the spans' row, the answer's part (`answerDim`) in copper.
  */
-function spanDimensions(sheet: { xy: (point: P3) => Pt; k: number }, W: number, centre: boolean, answer: HangarDomainModel['internalSupports'], valueL: string) {
+function spanDimensions(sheet: { xy: (point: P3) => Pt; k: number }, W: number, centre: boolean, answer: HangarDomainModel['internalSupports'], valueL: string, rowGap: number) {
   const { xy, k } = sheet;
   const down = (point: P3, by: number): Pt => { const [x, y] = xy(point); return [x, y + by]; };
-  const rowL = centre ? ROW_GAP : 0;
+  const rowL = centre ? rowGap : 0;
   const [l0, l1] = [down([0, 0, DIM_Z], rowL), down([W, 0, DIM_Z], rowL)];
   const totalRow = `${pathOf(l0, l1)}${tickAt(l0)}${tickAt(l1)}`;
   const extensions = [0, W].map((x) => pathOf(xy([x, 0, -1.3]), down([x, 0, DIM_Z], rowL + 0.4 * k))).join('');
@@ -248,7 +257,7 @@ function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt
   return { label: chosen.label, lines: chosen.rows, d: chosen.d, x: chosen.x, y: chosen.y, anchor: chosen.anchor, box: chosen.box };
 }
 
-function frameGeometry(domain: HangarDomainModel) {
+function frameGeometry(domain: HangarDomainModel, rowGap = ROW_GAP) {
   const { widthM: W, lengthM, eaveHeightM: E } = domain.dimensions;
   const R = ridgeHeightM(W, E, domain.roof.pitchDeg);
   const layout = deriveBayLayout(lengthM);
@@ -296,7 +305,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const [minY, maxY] = [Math.min(...raw.map(([, y]) => y)), Math.max(...raw.map(([, y]) => y))];
   const fit = (reach: number, left = 22) => {
     // with a centre row, the spans' row under the frame above L's
-    const pad = { left, right: 22 + reach, top: 32, bottom: 10 + BUBBLE_DOWN + BUBBLE + (centre ? ROW_GAP : 0) };
+    const pad = { left, right: 22 + reach, top: 32, bottom: 10 + BUBBLE_DOWN + BUBBLE + (centre ? rowGap : 0) };
     const k = Math.min((VIEW.width - pad.left - pad.right) / (maxX - minX), (VIEW.height - pad.top - pad.bottom) / (maxY - minY));
     return {
       k,
@@ -323,17 +332,20 @@ function frameGeometry(domain: HangarDomainModel) {
   // …the same, columns and roofs apart: the first view raises the columns before it lays the trusses on them (10.10)
   const backColumns = frames.slice(1).map((d) => columnsAt(d)).join('');
   const backRoofs = frames.slice(1).map((d) => roofAt(d)).join('');
-  const zig = (point: P3) => { const [x, y] = xy(point); return `M${n(x)},${n(y)}l4,-7l5,7l4,-7`; };
+  // Past the last bay drawn a long line fades out (owner 02.11: the drawn zigzag breaks read as a doodle): each its own
+  // straight path, so its gradient runs along it (frame-tour.css .ft-tail)
+  const tail = (x: number, z: number) => (continues ? [line([x, DEP, z], [x, end, z])] : []);
   const edges: P3[] = [[0, 0, E], [W, 0, E], [W / 2, 0, R], [W, 0, 0], [0, 0, 0]];
-  const longitudinals = edges.map(([x, , z]) => `${line([x, 0, z], [x, end, z])}${continues ? zig([x, end, z]) : ''}`).join('');
+  const longitudinals = edges.map(([x, , z]) => line([x, 0, z], [x, DEP, z])).join('');
   // the far end wall, when all the building's bays are drawn
   const farEnd = continues ? '' : line([0, DEP, 0], [W, DEP, 0]);
 
   // Purlins on the roof; wall purlins on the near side wall and on the end wall, between its posts and stopping at its
   // openings; the openings themselves outlined, as the configurator draws them (04.10)
-  const purlins = purlinXs.map((x) => line([x, 0, roofZ(x)], [x, end, roofZ(x)])).join('');
+  const purlins = purlinXs.map((x) => line([x, 0, roofZ(x)], [x, DEP, roofZ(x)])).join('');
+  const sideGirts = [E / 3, (2 * E) / 3];
   const girts = [
-    ...[E / 3, (2 * E) / 3].map((z) => line([W, 0, z], [W, end, z])),
+    ...sideGirts.map((z) => line([W, 0, z], [W, DEP, z])),
     ...framing.girts.map(({ z, from, to }) => line([from, 0, z], [to, 0, z])),
   ].join('');
   const openingOutlines = openings.map(({ xM, widthM, heightM }) => line([xM, 0, 0], [xM, 0, heightM], [xM + widthM, 0, heightM], [xM + widthM, 0, 0])).join('');
@@ -399,14 +411,18 @@ function frameGeometry(domain: HangarDomainModel) {
   // The ground line along the footings' outer top edges — out at 1.4 m it ran through the side footings (03.10) — with
   // a short hatch under it, as a section marks the ground (10.10): strokes at 45° in the line's own vertical plane, the
   // same length and about the same spacing on the sheet along the front and along the side
-  const slab = line([-0.75, -0.75, 0], [W + 0.75, -0.75, 0], [W + 0.75, end, 0]);
+  const slab = line([-0.75, -0.75, 0], [W + 0.75, -0.75, 0], [W + 0.75, DEP, 0]);
+  const tails = {
+    back: [...edges.flatMap(([x, , z]) => tail(x, z)), ...tail(W + 0.75, 0)],
+    thin: [...purlinXs.flatMap((x) => tail(x, roofZ(x))), ...sideGirts.flatMap((z) => tail(W, z))],
+  };
   const hatchLength = 6 / k;
   const hatchAlong = (from: number, to: number, spacing: number, stroke: (at: number) => string) => {
     const count = Math.max(1, Math.floor((to - from) / spacing));
     return Array.from({ length: count }, (_, index) => stroke(from + ((index + 0.5) * (to - from)) / count)).join('');
   };
   const groundHatch = hatchAlong(-0.75, W + 0.75, 11 / k, (x) => line([x, -0.75, 0], [x - hatchLength, -0.75, -hatchLength]))
-    + hatchAlong(-0.75, end, 22 / k, (d) => line([W + 0.75, d, 0], [W + 0.75, d - hatchLength, -hatchLength]));
+    + hatchAlong(-0.75, DEP, 22 / k, (d) => line([W + 0.75, d, 0], [W + 0.75, d - hatchLength, -hatchLength]));
 
   // Dimensions: the span L under the front frame, below its footings (as on a section — in front of them it crossed the
   // foundations, 03.10), the wall height H at the near-left column, the frame spacing a along the side. One way for all
@@ -428,7 +444,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const bayDim = `${line([W + DIM_A, 0, 0], [W + DIM_A, s, 0])}${groundTick([W + DIM_A, 0, 0])}${groundTick([W + DIM_A, s, 0])}`
     + `${line([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0])}${line([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0])}`;
   const down = (point: P3, by: number) => { const [x, y] = xy(point); return [x, y + by] as const; };
-  const span = spanDimensions({ xy, k }, W, centre, domain.internalSupports, values.L);
+  const span = spanDimensions({ xy, k }, W, centre, domain.internalSupports, values.L, rowGap);
   const { rowL, spanDim, answerDim } = span;
 
   // Coordinate axes, dash-dot, with their bubbles past the dimension lines (03.10): across the span in letters, one after
@@ -644,7 +660,7 @@ function frameGeometry(domain: HangarDomainModel) {
 
   return {
     W, lengthM, E, truss, centre,
-    slab, groundHatch, footings: footings.map((footing) => footing.d), footingTops: footings.map((footing) => footing.top).join(''), backColumns, backRoofs, longitudinals, farEnd, purlins, girts, posts, openingOutlines,
+    slab, groundHatch, footings: footings.map((footing) => footing.d), footingTops: footings.map((footing) => footing.top).join(''), backColumns, backRoofs, longitudinals, farEnd, tails, purlins, girts, posts, openingOutlines,
     wallBracing, farBracing, roofBracing, laterBracing, laterFarBracing,
     windPosts: windPosts.map(({ x, top }) => line([x, 0, 0], [x, 0, top])).join(''),
     // the front frame's columns, the centre row's Б among them: on the span's step it stood stepped back with the frame's
@@ -679,7 +695,8 @@ export function useFrameTourModel() {
   const inquiry = useHangarInquiryContext();
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
   const domain = useMemo(() => deriveDomainModel(state), [state]);
-  const g = useMemo(() => frameGeometry(domain), [domain]);
+  const wide = useSyncExternalStore(watchWideSheet, () => window.matchMedia(WIDE_SHEET).matches, () => false);
+  const g = useMemo(() => frameGeometry(domain, wide ? ROW_GAP_WIDE : ROW_GAP), [domain, wide]);
   const summary = deriveSummary(domain);
   // the sizes said as the visitor gave them, one rule with the sheet and the stamp (08.10, audit): their own, the
   // example's, or an orientation while they look for theirs
@@ -767,13 +784,17 @@ export function frameNodes(g: ReturnType<typeof frameGeometry>): FrameNode[] {
  *  baseline (frame-tour.css .ft-dim-text). The answer keyed by itself, so a new one comes up anew. */
 function DimText({ label }: Readonly<{ label: DimLabel }>) {
   const valueClass = label.answer ? 'ft-value ft-answer' : 'ft-value';
+  const y = label.side === 'below' ? LETTER_GAP : -LETTER_GAP;
+  const words = `${label.letter ?? ''}${label.value ?? ''}${label.note ?? ''}`;
   return (
-    <g transform={`translate(${n(label.x)} ${n(label.y)}) rotate(${label.angle.toFixed(2)})`}>
+    <g className="ft-dim-word" transform={`translate(${n(label.x)} ${n(label.y)}) rotate(${label.angle.toFixed(2)})`}>
+      {/* the field's paint round the words, under them (frame-tour.css .ft-dim-halo) */}
+      <text className="ft-dim-halo" data-side={label.side} y={y} aria-hidden="true">{words}</text>
       <text
         className={label.letter ? 'ft-letter ft-dim-text' : 'ft-letter ft-dim-text ft-value'}
         data-side={label.side}
         data-cap={label.letter ? 'letter' : 'value'}
-        y={label.side === 'below' ? LETTER_GAP : -LETTER_GAP}
+        y={y}
       >
         {label.letter}
         {label.value && (label.letter ? <tspan className={valueClass}>{label.value}</tspan> : <tspan key={String(label.answer)} className={label.answer ? 'ft-answer' : undefined}>{label.value}</tspan>)}
@@ -858,8 +879,16 @@ export function FrameTourStage({
           <div className="ft-slot">
           <div className="ft-window" ref={visualRef}>
             <div className="dn-stage is-drawing" style={{ transform: frameStageTransform(size, active) }}>
-              <svg className="ft-drawing" viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру; фундаменти показано умовно`}>
+              <svg className="ft-drawing" style={pxPerUnit ? ({ '--ft-u': (1 / pxPerUnit).toFixed(3) } as CSSProperties) : undefined} viewBox={`0 0 ${VIEW.width} ${VIEW.height}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Схема каркаса: ${summary.structuralVisualizationLabel.toLowerCase()}, ${g.centre ? 'ширина' : 'проліт'} ${metres(g.W)}; шлях навантаження від снігу й вітру; фундаменти показано умовно`}>
                 <defs>
+                  {/* along a tail, from its near end to nothing: every tail runs up and right, so one direction serves all */}
+                  {(['ink', 'thin', 'lit'] as const).map((kind) => (
+                    <linearGradient key={kind} id={`ft-tail-${kind}`} x1="0" y1="1" x2="1" y2="0">
+                      <stop offset="0" className={`ft-tail-stop-${kind}`} />
+                      <stop offset="1" className={`ft-tail-stop-${kind}`} stopOpacity="0" />
+                    </linearGradient>
+                  ))}
+                  <marker id="ft-dot" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="6" markerHeight="6" markerUnits="userSpaceOnUse"><circle className="ft-dot" cx="3" cy="3" r="1.7" /></marker>
                   <filter id="ft-glow" x="-10%" y="-10%" width="120%" height="120%">
                     <feGaussianBlur stdDeviation="2.2" result="blur" />
                     <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
@@ -877,10 +906,12 @@ export function FrameTourStage({
                 {/* the structure, back to front */}
                 <path className="ft-back" data-build-stage="columns" pathLength={1} d={g.backColumns} />
                 <path className="ft-back" data-build-stage="roof" pathLength={1} d={`${g.backRoofs}${g.longitudinals}${g.farEnd}`} />
+                {g.tails.back.map((d) => <path key={d} className="ft-back ft-tail" d={d} />)}
                 {/* the gates and the door on the near end wall, as the configurator places them (04.10) */}
                 {g.openingOutlines && <path className="ft-opening" d={g.openingOutlines} />}
                 <g className="ft-part" data-part="3">
                   <path className="ft-thin" pathLength={1} d={`${g.purlins}${g.girts}`} />
+                  {g.tails.thin.map((d) => <path key={d} className="ft-thin ft-tail" d={d} />)}
                   <path className="ft-post" pathLength={1} d={g.posts} />
                   <path className="ft-brace ft-brace-far" pathLength={1} d={g.farBracing} />
                   <path className="ft-brace" pathLength={1} d={g.wallBracing} />
@@ -920,12 +951,15 @@ export function FrameTourStage({
                   <g key={part} className="ft-tags" data-tags={part} aria-hidden="true">
                     {list.map((item) => (
                       <g key={item.label}>
-                        <path className="ft-leader" d={item.d} />
-                        <text className="ft-tag" x={n(item.x)} y={n(item.y)} textAnchor={item.anchor}>
-                          {item.lines.length > 1
-                            ? item.lines.map((row, index) => <tspan key={row} x={n(item.x)} dy={index ? '1.1em' : undefined}>{row}</tspan>)
-                            : item.label}
-                        </text>
+                        <path className="ft-leader" d={item.d} markerStart="url(#ft-dot)" />
+                        {/* the halo first, as text of its own (frame-tour.css .ft-tag-halo) */}
+                        {['ft-tag-halo', 'ft-tag'].map((name) => (
+                          <text key={name} className={name} x={n(item.x)} y={n(item.y)} textAnchor={item.anchor}>
+                            {item.lines.length > 1
+                              ? item.lines.map((row, index) => <tspan key={row} x={n(item.x)} dy={index ? '1.1em' : undefined}>{row}</tspan>)
+                              : item.label}
+                          </text>
+                        ))}
                       </g>
                     ))}
                   </g>

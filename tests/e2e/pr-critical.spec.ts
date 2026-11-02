@@ -594,7 +594,8 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 800 }
       probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap';
       title.appendChild(probe);
       let widest = 0;
-      for (const word of (title.textContent ?? '').split(/\s+/).filter(Boolean)) {
+      // (a soft hyphen is a place a title may break: HOME's closed cards from 1181 px)
+      for (const word of (title.textContent ?? '').split(/[\s\u00AD]+/).filter(Boolean)) {
         probe.textContent = word;
         widest = Math.max(widest, probe.getBoundingClientRect().width);
       }

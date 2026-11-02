@@ -114,7 +114,8 @@ describe('type scale and labels (W3-02)', () => {
     expect(css['configurator-preview/configurator.css']).not.toMatch(/\.hangar-configurator-embedded \.hc-hero (h2|:is\(h1, h2\)) \{[^}]*font-size/);
     expect(css['components/directions/direction-template.css']).toMatch(/\.related-directions-title \{[^}]*font: 400 var\(--type-h2-minor\)/);
     expect(css['components/directions/direction-template.css']).toMatch(/\.direction-entry-list h3 \{[^}]*font: 400 var\(--type-h3\)/);
-    expect(css['home-v2.css']).toMatch(/\.hv2-evidence-lead h3 \{[^}]*font: 400 var\(--type-h3\)/);
+    // the object's heading since 02.11: a heading of its own over three full-width frames, the compact level
+    expect(css['home-v2.css']).toMatch(/\.hv2-evidence-lead h3 \{[^}]*font: 400 var\(--type-h2-compact\)/);
     expect(css['napryamky/directions.css']).toMatch(/\.dhow-formats h3 \{[^}]*font: 400 var\(--type-h3\)/);
     // the grain band's own 34–48 px clamp is gone: the band takes the node's compact level
     expect(css['zernoskhovyshcha/grain-editorial.css']).not.toMatch(/grain-implementation-band \.direction-editorial-copy h2 \{ font-size/);

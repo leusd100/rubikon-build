@@ -35,35 +35,54 @@
 
 /* --ft-k thickens the lines and enlarges the letters where the sheet is drawn small (configurator-sheet.css .hc-frame);
    the loads' colours are below */
-.ft { --ft-k: 1; --ft-snow: var(--color-load); --ft-wind: var(--color-wind); }
+/* Weightless (:where): since HOME loads this drawing on its own this sheet may arrive after the configurator's, and at one
+   weight the later file won: .ft's 1 over a phone's .hc-frame 1.55, the paper loads over the field's Dark ones */
+:where(.ft) { --ft-k: 1; --ft-snow: var(--color-load); --ft-wind: var(--color-wind); }
 .ft-window { position: relative; flex: none; overflow: hidden; aspect-ratio: 720 / 440; }
 .ft-drawing { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
-.ft-drawing path { fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke var(--ft-for-step-light) var(--ease-standard), opacity var(--ft-for-step-light) ease; }
-.ft-slab { stroke: var(--color-border-strong); stroke-width: calc(1.1px * var(--ft-k)); }
+.ft-drawing path { fill: none; stroke-linecap: butt; stroke-linejoin: miter; transition: stroke var(--ft-for-step-light) var(--ease-standard), opacity var(--ft-for-step-light) ease; }
+/* --ft-u is one CSS pixel of the screen in the drawing's units (FrameTourStage): names and letters stay one size on the
+   screen whatever the camera's zoom and the sheet's width (owner 02.11: pushed in, they stood 30 px tall). Three weights
+   of line, as on a drawing: the frame, the structure, and what is behind it or only measures it; ends and corners sharp. */
+.ft-slab { stroke: var(--color-border-strong); stroke-width: calc(.8px * var(--ft-k)); }
 /* The footings are the designer's (10.10): a pad foundation drawn under the ground, its edges dashed as hidden ones are —
    a finer dash than the 4 3 of the box it replaces, which on the pad's short edges read as dots — and only the
    pedestal's top, where the column stands, solid at the ground. The ground line has a short hatch under it. */
-.ft-footing { stroke: var(--color-text-muted); stroke-width: calc(.9px * var(--ft-k)); stroke-dasharray: 3 2; }
-.ft-footing-top { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); }
-.ft-ground { stroke: var(--color-border-strong); stroke-width: calc(.8px * var(--ft-k)); }
-.ft-back { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
+.ft-footing { stroke: var(--color-text-muted); stroke-width: calc(.7px * var(--ft-k)); stroke-dasharray: 2.5 2; opacity: .75; }
+.ft-footing-top { stroke: var(--color-text-muted); stroke-width: calc(.8px * var(--ft-k)); }
+.ft-ground { stroke: var(--color-border-strong); stroke-width: calc(.6px * var(--ft-k)); }
+.ft-back { stroke: var(--color-text-muted); stroke-width: calc(.8px * var(--ft-k)); }
+/* The building runs on past the bays drawn: its long lines fade out, no drawn break (FrameTour tails). The stops take the
+   same inks as the lines they continue, copper on the step that lights them */
+.ft-tail-stop-ink { stop-color: var(--color-text-muted); }
+.ft-tail-stop-thin { stop-color: var(--color-text-secondary); }
+.ft-tail-stop-lit { stop-color: var(--color-accent); }
+.ft-drawing .ft-back.ft-tail, .ft-drawing .ft-slab.ft-tail { stroke: url(#ft-tail-ink); }
+.ft-drawing .ft-thin.ft-tail { stroke: url(#ft-tail-thin); }
 /* the end wall's gates and door, outlined as the configurator places them (04.10) */
-.ft-opening { stroke: var(--color-text-muted); stroke-width: calc(1px * var(--ft-k)); }
-.ft-thin { stroke: var(--color-text-secondary); stroke-width: calc(1.1px * var(--ft-k)); }
-.ft-post { stroke: var(--color-text-secondary); stroke-width: calc(1.4px * var(--ft-k)); }
-.ft-brace { stroke: var(--color-text-secondary); stroke-width: calc(1.2px * var(--ft-k)); }
+.ft-opening { stroke: var(--color-text-muted); stroke-width: calc(.8px * var(--ft-k)); }
+.ft-thin { stroke: var(--color-text-secondary); stroke-width: calc(.8px * var(--ft-k)); }
+.ft-post { stroke: var(--color-text-secondary); stroke-width: calc(1.1px * var(--ft-k)); stroke-linecap: square; }
+.ft-brace { stroke: var(--color-text-secondary); stroke-width: calc(1px * var(--ft-k)); stroke-linecap: square; }
 /* the far wall's bracing in the back line's ink */
 .ft-brace-far { stroke: var(--color-text-muted); }
-.ft-member { stroke: var(--color-text); stroke-width: calc(2.2px * var(--ft-k)); }
-.ft-dim { stroke: var(--color-text-muted); stroke-width: calc(1.1px * var(--ft-k)); }
+.ft-member { stroke: var(--color-text); stroke-width: calc(1.9px * var(--ft-k)); stroke-linecap: square; }
+.ft-dim { stroke: var(--color-text-muted); stroke-width: calc(.75px * var(--ft-k)); }
 /* coordinate axes: dash-dot, a bubble at the end past the dimension lines; letters and figures only */
-.ft-axis { stroke: var(--color-text-muted); stroke-width: calc(.9px * var(--ft-k)); stroke-dasharray: 14 4 1 4; }
-.ft-bubble { transform: scale(var(--ft-k)); transform-box: fill-box; transform-origin: center; transition: opacity var(--ft-for-step-light) ease; }
-.ft-bubble circle { fill: var(--color-surface-alt); stroke: var(--color-text-muted); stroke-width: 1px; transition: stroke var(--ft-for-step-light) var(--ease-standard); }
+.ft-axis { stroke: var(--color-text-muted); stroke-width: calc(.7px * var(--ft-k)); stroke-dasharray: 14 4 1 4; }
+.ft-bubble { transform: scale(min(var(--ft-u, 1), var(--ft-k))); transform-box: fill-box; transform-origin: center; transition: opacity var(--ft-for-step-light) ease; }
+.ft-bubble circle { fill: var(--color-surface-alt); stroke: var(--color-text-muted); stroke-width: .8px; transition: stroke var(--ft-for-step-light) var(--ease-standard); }
 /* 14 px in the 22 px circle (12.5 before): the letters and figures as large as the circle takes, so a phone's read
    at ~10 px (04.10) */
 .ft-bubble text { fill: var(--color-text-secondary); font: 700 14px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill var(--ft-for-step-light) var(--ease-standard); }
-.ft-letter { fill: var(--color-text-secondary); font: italic 600 calc(19px * var(--ft-k)) var(--font-manrope), sans-serif; text-anchor: middle; dominant-baseline: central; transition: fill var(--ft-for-step-light) var(--ease-standard), opacity var(--ft-for-step-light) ease; paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(6px * var(--ft-k)); stroke-linejoin: round; }
+:is(.ft-letter, .ft-dim-halo) { font: 600 min(calc(13px * var(--ft-u, 1)), calc(19px * var(--ft-k))) var(--font-condensed), sans-serif; letter-spacing: .03em; text-anchor: middle; dominant-baseline: central; }
+.ft-letter { fill: var(--color-text-secondary); transition: fill var(--ft-for-step-light) var(--ease-standard), opacity var(--ft-for-step-light) ease; }
+/* The halo is text of its own under the words (DimText, the names), never a stroke on them: an engine that paints a line
+   glyph by glyph laid each glyph's stroke over the one before and ate it (owner 02.11 in his browser: «:2 м», «L = :4 м»;
+   Chromium paints the run whole and never showed it) */
+:is(.ft-dim-halo, .ft-tag-halo) { fill: none; stroke: var(--color-surface-alt); stroke-linejoin: round; }
+.ft-dim-halo { stroke-width: calc(6px * var(--ft-u, 1)); }
+.ft-dim-word { transition: opacity var(--ft-for-step-light) ease; }
 /* Set on its middle, beside its line (FrameTour letters, 09.10): H ends at its point, a starts at its own; the field's
    paint round it parts an axis that runs behind L, as the members' names part what they lie on */
 .ft-letter[data-anchor="end"] { text-anchor: end; }
@@ -71,11 +90,10 @@
 /* A dimension's words along its line (10.10, owner: «паралельно розмірних ліній», FrameTour DimText): letter, value and
    answer on one baseline — on the letter's middle the smaller figures rode high — a gap off the line on its outer side:
    below it the baseline moves down by the capitals' height, whatever the sheet's size (--ft-k) */
-.ft-dim-text { dominant-baseline: alphabetic; }
-.ft-dim-text[data-side="below"][data-cap="letter"] { transform: translateY(calc(13.7px * var(--ft-k))); }
-.ft-dim-text[data-side="below"][data-cap="value"] { transform: translateY(calc(10.8px * var(--ft-k))); }
+:is(.ft-dim-text, .ft-dim-halo) { dominant-baseline: alphabetic; }
+:is(.ft-dim-text, .ft-dim-halo)[data-side="below"] { transform: translateY(.72em); }
 /* A size's value beside its letter, once the visitor gave the sizes (10.10): upright figures, smaller than the letter */
-.ft-value { font-style: normal; font-weight: 600; font-size: calc(15px * var(--ft-k)); font-variant-numeric: tabular-nums; }
+.ft-value { font-variant-numeric: tabular-nums; }
 .ft-part, .ft-tags, .ft-load { transition: opacity var(--ft-for-step-light) ease; }
 .ft .dn-progress { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* the sheet follows the theme here (the nodes' pictures are light in both), so the bars still to come do too */
@@ -86,28 +104,32 @@
    (FrameTour placeTag), and the wider halo parts the lines it lies on from its letters (FrameTour's HALO lays names out
    at the 5 px) */
 .ft-tags { opacity: 0; }
-.ft-leader { stroke: var(--color-accent); stroke-width: calc(1px * var(--ft-k)); }
-.ft-tag {
-  fill: var(--color-accent-strong); font: 600 calc(15px * var(--ft-t, 1)) var(--font-manrope), sans-serif;
-  paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(7px * var(--ft-k)); stroke-linejoin: round;
+.ft-leader { stroke: var(--color-accent); stroke-width: calc(.7px * var(--ft-k)); }
+.ft-dot { fill: var(--color-accent-strong); }
+:is(.ft-tag, .ft-tag-halo) {
+  font: 600 min(calc(13px * var(--ft-u, 1)), calc(15px * var(--ft-t, 1))) var(--font-condensed), sans-serif;
+  letter-spacing: .08em; text-transform: uppercase;
 }
+.ft-tag { fill: var(--color-accent-strong); }
+.ft-tag-halo { stroke-width: calc(6px * var(--ft-u, 1)); }
 
 /* A step: its parts copper, the rest back */
 .ft[data-step] .ft-part { opacity: .28; }
 .ft[data-step] :is(.ft-back, .ft-opening) { opacity: .5; }
 /* …and the bubbles and letters of the parts stepped back go: a step's camera cut them at its window's edge into a half
    «H» or a half bubble (04.10). The wind's step, pushed in on the end wall, keeps no axes or dimension lines either. */
-.ft[data-step] .ft-part :is(.ft-bubble, .ft-letter) { opacity: 0; }
-.ft[data-step="1"] [data-part~="1"] :is(.ft-bubble, .ft-letter), .ft[data-step="3"] [data-part~="3"] :is(.ft-bubble, .ft-letter) { opacity: 1; }
+.ft[data-step] .ft-part :is(.ft-bubble, .ft-dim-word) { opacity: 0; }
+.ft[data-step="1"] [data-part~="1"] :is(.ft-bubble, .ft-dim-word), .ft[data-step="3"] [data-part~="3"] :is(.ft-bubble, .ft-dim-word) { opacity: 1; }
 /* …and the loads' steps, pushed in on the hangar since 10.10, none of the dimensions either */
 .ft:is([data-step="4"], [data-step="5"]) .ft-part :is(.ft-axis, .ft-dim) { opacity: 0; }
 .ft[data-step="1"] [data-part~="1"], .ft[data-step="2"] [data-part~="2"], .ft[data-step="3"] [data-part~="3"] { opacity: 1; }
 .ft[data-step="1"] [data-part~="1"] path, .ft[data-step="2"] [data-part~="2"] path,
 .ft[data-step="3"] [data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace, .ft-dim, .ft-axis) { stroke: var(--color-accent); }
-.ft[data-step="1"] [data-part~="1"] .ft-member, .ft[data-step="2"] [data-part~="2"] .ft-member { stroke-width: calc(2.8px * var(--ft-k)); }
-.ft[data-step="3"] [data-part~="3"] .ft-brace { stroke-width: calc(2.2px * var(--ft-k)); }
-.ft[data-step="3"] [data-part~="3"] .ft-brace-far { stroke-width: calc(1.5px * var(--ft-k)); }
-.ft[data-step="3"] [data-part~="3"] .ft-post { stroke-width: calc(2px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-thin.ft-tail { stroke: url(#ft-tail-lit); }
+.ft[data-step="1"] [data-part~="1"] .ft-member, .ft[data-step="2"] [data-part~="2"] .ft-member { stroke-width: calc(2.2px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-brace { stroke-width: calc(1.6px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-brace-far { stroke-width: calc(1.1px * var(--ft-k)); }
+.ft[data-step="3"] [data-part~="3"] .ft-post { stroke-width: calc(1.5px * var(--ft-k)); }
 .ft[data-step="1"] [data-part~="1"] .ft-letter, .ft[data-step="3"] [data-part~="3"] .ft-letter { fill: var(--color-accent-strong); }
 .ft[data-step="1"] [data-part~="1"] .ft-bubble circle, .ft[data-step="3"] [data-part~="3"] .ft-bubble circle { stroke: var(--color-accent); }
 .ft[data-step="1"] [data-part~="1"] .ft-bubble text, .ft[data-step="3"] [data-part~="3"] .ft-bubble text { fill: var(--color-accent-strong); }
@@ -133,16 +155,16 @@
 .ft-load { opacity: 0; pointer-events: none; }
 .ft[data-step="4"] [data-load="snow"], .ft[data-step="5"] [data-load="wind"] { opacity: 1; }
 .ft[data-step="4"] .ft-part, .ft[data-step="5"] .ft-part { opacity: .55; }
-.ft-link { stroke: var(--color-accent); stroke-width: calc(2.6px * var(--ft-k)); filter: url(#ft-glow); }
+.ft-link { stroke: var(--color-accent); stroke-width: calc(2px * var(--ft-k)); stroke-linecap: square; filter: url(#ft-glow); }
 .ft-drawing .ft-plane { fill: var(--color-accent); fill-opacity: .14; stroke: none; filter: none; }
-.ft-link-footing { stroke-width: calc(1.8px * var(--ft-k)); stroke-dasharray: 4 3; }
+.ft-link-footing { stroke-width: calc(1.4px * var(--ft-k)); stroke-dasharray: 4 3; stroke-linecap: butt; }
 /* the edges of the strip one frame carries */
-.ft-drawing .ft-edge { stroke-width: calc(1.2px * var(--ft-k)); stroke-dasharray: 5 4; filter: none; }
-.ft-arrows { stroke: var(--color-accent); stroke-width: calc(2px * var(--ft-k)); }
+.ft-drawing .ft-edge { stroke-width: calc(.9px * var(--ft-k)); stroke-dasharray: 5 4; stroke-linecap: butt; filter: none; }
+.ft-arrows { stroke: var(--color-accent); stroke-width: calc(1.4px * var(--ft-k)); }
 /* the load as drops, moving through the frame (as the water on the roofing node) — dashed, so no pathLength here */
-.ft-flow { stroke: var(--color-accent-strong); stroke-width: calc(4.5px * var(--ft-k)); stroke-dasharray: .5 12; }
+.ft-drawing .ft-flow { stroke: var(--color-accent-strong); stroke-width: calc(3.2px * var(--ft-k)); stroke-dasharray: .5 12; stroke-linecap: round; }
 /* the first bay as it would lean without the bracing: a dashed graphite ghost, shown only while it plays */
-.ft-drawing .ft-ghost { stroke: var(--color-text); stroke-width: calc(1.6px * var(--ft-k)); stroke-dasharray: 7 5; opacity: 0; }
+.ft-drawing .ft-ghost { stroke: var(--color-text); stroke-width: calc(1.2px * var(--ft-k)); stroke-dasharray: 7 5; opacity: 0; }
 
 /* The legend: the chain the load takes, its links joined by arrows, in one slot as tall as the taller chain or the note
    (all three always laid out, only the shown one visible), so the sheet keeps its height from step to step */
@@ -155,10 +177,10 @@
 .ft[data-step="4"] .ft-chain[data-load="snow"], .ft[data-step="5"] .ft-chain[data-load="wind"] { visibility: visible; }
 .ft-chain li:not(:last-child)::after { margin-inline: 6px; color: var(--color-text-muted); content: '→'; }
 /* The drawing's standing remark, where the loads' chains are not (10.10): the footings are drawn «умовно» */
-.ft-remark { margin: 0; color: var(--color-text-muted); font: italic 500 12.5px/1.25 var(--font-manrope), sans-serif; }
+.ft-remark { margin: 0; color: var(--color-text-muted); font: 500 12.5px/1.25 var(--font-manrope), sans-serif; }
 .ft:is([data-step="4"], [data-step="5"]) .ft-remark { visibility: hidden; }
 /* …and in its place, while the first bay leans, the note on the deformation */
-.ft-note { margin: 0; color: var(--color-text-secondary); font: italic 500 12.5px/1.25 var(--font-manrope), sans-serif; opacity: 0; pointer-events: none; }
+.ft-note { margin: 0; color: var(--color-text-secondary); font: 500 12.5px/1.25 var(--font-manrope), sans-serif; opacity: 0; pointer-events: none; }
 /* Reduced motion (04.10): the wind's step stands complete — the leaning bay drawn over the braced frame, and its note
    in a row of its own under the chain, so the step shows what its text says */
 @media (prefers-reduced-motion: reduce) {
@@ -231,7 +253,7 @@
    (home-v2.css --hv2-load / --hv2-wind): the snow blue, the wind teal — the arrows, the area they press on and the drops
    running through the frame. The members that carry the load stay copper, so the eye tells the load from the structure.
    Dark's colours are set with --ft-k on .ft (top). */
-:root[data-theme="light"] .ft { --ft-snow: #2f7fd6; --ft-wind: #16958a; }
+:root[data-theme="light"] :where(.ft) { --ft-snow: #2f7fd6; --ft-wind: #16958a; }
 .ft [data-load="snow"] { --ft-load: var(--ft-snow); }
 .ft [data-load="wind"] { --ft-load: var(--ft-wind); }
 .ft-load .ft-arrows { stroke: var(--ft-load); }
