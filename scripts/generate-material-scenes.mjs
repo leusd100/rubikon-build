@@ -61,7 +61,7 @@ const render = (ink, copper) => {
     }
     const cage = [240, 365, 490, 615].map((x) => `<rect x="${x}" y="256" width="74" height="112" rx="5"/>`).join('');
     s.extra.push(`<path fill="${ink}" fill-opacity=".92" d="M405-6H535V22L492 66V78H448V66L405 22Z"/><path fill="${copper}" d="M448 70h44v8h-44z"/>`
-      + `<path fill="${ink}" fill-opacity=".86" d="M178 170h14v240h-14zM748 170h14v240h-14z"/><path stroke="${ink}" stroke-opacity=".6" stroke-width="3" d="M178 230L128 330M128 330H178"/>`
+      + `<path fill="${ink}" fill-opacity=".86" d="M178 170h14v240h-14zM748 170h14v240h-14z"/><path stroke="${ink}" stroke-opacity=".6" stroke-width="3" d="M178 240L150 330H178"/>`
       + `<g stroke="${copper}" stroke-width="1.7">${cage}<path d="M212 268H728M212 356H728"/></g>`);
   };
 
