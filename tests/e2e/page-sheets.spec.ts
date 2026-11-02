@@ -108,6 +108,8 @@ test.describe('the pages\' materials', () => {
     ['/napryamky', 'main > .dhow', 'scene-five-dark'],
   ] as const) {
     test(`${path} ${selector}: ${file}, and the file answers`, async ({ page, request }) => {
+      // a live scene takes over from the still picture on the screen: this is the picture it falls back to
+      await page.emulateMedia({ reducedMotion: 'reduce' });
       await open(page, path, 1440);
       const image = await material(page, selector);
       expect(image).toContain(`/media/materials/${file}.`);
