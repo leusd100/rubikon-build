@@ -7,6 +7,7 @@ const HEIGHT = 430;
 const DESKTOP = '(min-width: 1181px)';
 /** After a long frame the particles carry on instead of jumping */
 const LONGEST_STEP = 1 / 20;
+const WARM_UP_STEPS = 240;
 
 /**
  * Wakes the still scene of a paper block (page-materials.css) once the block comes up: liveScenes.ts is fetched only on a page
@@ -42,6 +43,8 @@ export function LiveScene() {
         return dark ? { ink: '#F5F2EB', copper: '#C98A5E', dark } : { ink: '#25282A', copper: '#A0522A', dark };
       };
       let frame = 0, last = 0, count = 0, time = 0, colours = inks();
+      // it comes up already running, not from an empty sky
+      for (let i = 0; i < WARM_UP_STEPS; i++) scene.step(context, 1 / 30, time += 1 / 30, colours);
       const tick = (now: number) => {
         const dt = Math.min(LONGEST_STEP, (now - last) / 1000 || 0);
         last = now;

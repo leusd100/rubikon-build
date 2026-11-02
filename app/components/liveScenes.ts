@@ -118,10 +118,11 @@ function frames(): Scene {
 
 /** The last beam of the stack, coming down on its slings and swaying a little */
 function beam(): Scene {
-  const w = 50, h = 58, web = 7, flange = 9, x0 = 452, y0 = 62;
+  const w = 50, h = 58, web = 7, flange = 9, x0 = 423, top = 26, rest = 120;
   return {
     step(c, _dt, time, { copper }) {
-      const x = x0 + Math.sin(time * .9) * 7, y = y0 + (Math.sin(time * .45) + 1) * 26, hook = x0 + 25;
+      // it settles on the stack's lower row, beside the top one, and rises again; the sway dies as it comes to rest
+      const down = (1 - Math.cos(time * .5)) / 2, x = x0 + Math.sin(time * .9) * 7 * (1 - down), y = top + (rest - top) * down, hook = x0 + 25;
       c.fillStyle = copper;
       c.strokeStyle = copper;
       c.globalAlpha = 1;
@@ -165,13 +166,13 @@ function five(): Scene {
   return {
     step(c, dt, _time, { ink, copper }) {
       for (let kind = 0; kind < 5; kind++) {
-        for (let i = 0; i < [2, 2, 2, 1, 2][kind]; i++) bits.push({ kind, x: xs[kind] + gauss() * [8, 6, 9, 22, 8][kind], y: -8, vx: kind === 3 ? gauss() * 12 : 0, vy: [150, 240, 170, 46, 560][kind] * (.8 + random() * .4), age: 0, life: 12, size: 1 });
+        if (random() < [.9, .7, .7, .7, .5][kind]) bits.push({ kind, x: xs[kind] + gauss() * [12, 10, 13, 34, 11][kind], y: -8, vx: kind === 3 ? gauss() * 12 : 0, vy: [150, 240, 170, 46, 560][kind] * (.8 + random() * .4), age: 0, life: 12, size: 1 });
       }
       update(bits as Bit[], dt, 0, (bit, px, py) => {
         const { kind } = bit as Bit & { kind: number };
         if (kind === 1) stroke(c, px, py, bit.x, bit.y + 8, .9, copper, .85);
         else if (kind === 4) stroke(c, px, py, bit.x, bit.y + 22, .9, ink, .7);
-        else stroke(c, px, py, bit.x + .4, bit.y + 1.6, kind === 2 ? 3.4 : 1.8, ink, kind === 3 ? .75 : .85);
+        else stroke(c, px, py, bit.x + .4, bit.y + 1.6, kind === 2 ? 2.6 : 1.8, ink, kind === 3 ? .75 : .85);
         return bit.y < base;
       });
     },
