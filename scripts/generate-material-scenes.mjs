@@ -78,9 +78,9 @@ const render = (ink, copper) => {
 
   // Portal frames going away in tone, sheet behind sheet, as the deck does
   const bays = (s) => {
-    const vx = 468, vy = 226;
+    const vx = 490, vy = 220;
     for (let i = 6; i >= 0; i--) {
-      const k = Math.pow(.74, i), w = 570 * k, h = 276 * k, e = 108 * k, t = 18 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = y - h + e;
+      const k = Math.pow(.74, i), w = 530 * k, h = 256 * k, e = 100 * k, t = 17 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = y - h + e;
       const f = (n) => fixed(n);
       s.extra.push(`<path fill="${i === 3 ? copper : ink}" fill-opacity="${i === 3 ? .95 : Math.max(.1, .94 - i * .13).toFixed(2)}" d="M${f(x)} ${f(y)}V${f(eave)}L${vx} ${f(top)}L${f(x + w)} ${f(eave)}V${f(y)}H${f(x + w - t)}V${f(eave + t * .5)}L${vx} ${f(top + t * 1.25)}L${f(x + t)} ${f(eave + t * .5)}V${f(y)}Z"/>`);
     }

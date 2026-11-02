@@ -52,11 +52,11 @@ function sparks(): Scene {
         stroke(c, [px, py, bit.x, bit.y], 1.6 - age * .9, sparkColour(age), (1 - age * age) * .95);
         return bit.y < floor + 3;
       });
-      const radius = (18 + random() * 16 * burst) * 2.4, glow = c.createRadialGradient(x0, y0, 0, x0, y0, radius);
+      const radius = (18 + random() * 16 * burst) * (dark ? 2.4 : 1.1), glow = c.createRadialGradient(x0, y0, 0, x0, y0, radius);
       glow.addColorStop(0, hot);
       glow.addColorStop(.3, copper);
       glow.addColorStop(1, 'transparent');
-      c.globalAlpha = dark ? .9 : .7;
+      c.globalAlpha = dark ? .9 : .45;
       c.fillStyle = glow;
       c.fillRect(x0 - radius, y0 - radius, radius * 2, radius * 2);
     },
@@ -106,10 +106,10 @@ function rain(): Scene {
 
 /** A frame travels out of the depth of the bays towards the visitor */
 function frames(): Scene {
-  const vx = 468, vy = 226, loop = 6;
+  const vx = 490, vy = 220, loop = 6;
   return {
     step(c, _dt, time, { copper }) {
-      const t = (time / loop) % 1, k = Math.pow(.74, 6 * (1 - t)), w = 570 * k, h = 276 * k, e = 108 * k, width = 18 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = top + e;
+      const t = (time / loop) % 1, k = Math.pow(.74, 6 * (1 - t)), w = 530 * k, h = 256 * k, e = 100 * k, width = 17 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = top + e;
       c.globalAlpha = Math.sin(t * Math.PI) * .75;
       c.fillStyle = copper;
       c.beginPath();
