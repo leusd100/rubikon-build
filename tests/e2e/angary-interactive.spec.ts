@@ -1126,7 +1126,8 @@ for (const [width, length, height] of [[24, 60, 8], [12, 18, 4], [18, 36, 6]] as
     const drawing = page.locator('#configurator .ft-drawing');
     await expect(drawing.locator('[data-tags="3"] .ft-tag').first()).toBeVisible();
     const onLit = await drawing.evaluate((svg) => {
-      const lit = [...svg.querySelectorAll('[data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace)')] as SVGGeometryElement[];
+      // (without a tail, the part of a long line fading out past the last bay: it has dissolved by the name beside it)
+      const lit = [...svg.querySelectorAll('[data-part~="3"] :is(.ft-thin, .ft-post, .ft-brace):not(.ft-tail)')] as SVGGeometryElement[];
       return [...svg.querySelectorAll('[data-tags="3"] .ft-tag')].filter((tag) => {
         const box = tag.getBoundingClientRect();
         return lit.some((path) => {

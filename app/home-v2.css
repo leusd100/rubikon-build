@@ -291,9 +291,7 @@ main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-col
 
 main[data-home="v2"] .hv2-signature {
   position: relative; overflow: hidden; isolation: isolate; color: var(--hv2-text);
-  background:
-    radial-gradient(90% 60% at 88% 0%, rgba(183, 100, 50, .12), transparent 60%),
-    linear-gradient(180deg, var(--hv2-ink) 0%, var(--hv2-graphite) 38%, var(--hv2-ink) 100%);
+  background: var(--hv2-ink); /* one tone: the copper glow and the banding above the sheet are gone (owner 02.11) */
   --focus-ring: var(--hv2-copper-text);
 }
 /* A faint drawing grid under the whole block, fading out towards the bottom */
@@ -1171,8 +1169,8 @@ main[data-home="v2"] .hv2-frame-tour:not([data-step="1"]) [data-part="1"] :is(.f
 main[data-home="v2"] .hv2-frame-tour:not([data-touring]) .dn-progress { display: none; }
 main[data-home="v2"] .hv2-frame-tour.ft[data-step="2"] :is(.ft-back, .ft-opening) { opacity: .28; }
 main[data-home="v2"] .hv2-frame-tour.ft[data-step="2"] :is(.ft-footing, .ft-footing-top, .ft-slab, .ft-ground) { opacity: .35; }
-main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-member { stroke: var(--color-text); stroke-width: calc(2.6px * var(--ft-k)); }
-main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-brace { stroke: var(--color-accent); stroke-width: calc(1.4px * var(--ft-k)); }
+main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-member { stroke: var(--color-text); stroke-width: calc(2.1px * var(--ft-k)); }
+main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-brace { stroke: var(--color-accent); stroke-width: calc(1.1px * var(--ft-k)); }
 main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-brace-far { stroke: var(--color-accent); opacity: .5; }
 main[data-home="v2"] .hv2-frame-tour:not([data-step]) :is(.ft-back, .ft-opening) { opacity: .55; }
 main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-thin { opacity: .6; }
