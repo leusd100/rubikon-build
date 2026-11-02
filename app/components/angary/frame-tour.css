@@ -75,7 +75,14 @@
 /* 14 px in the 22 px circle (12.5 before): the letters and figures as large as the circle takes, so a phone's read
    at ~10 px (04.10) */
 .ft-bubble text { fill: var(--color-text-secondary); font: 700 14px var(--font-condensed), sans-serif; text-anchor: middle; transition: fill var(--ft-for-step-light) var(--ease-standard); }
-.ft-letter { fill: var(--color-text-secondary); font: 600 min(calc(14px * var(--ft-u, 1)), calc(19px * var(--ft-k))) var(--font-condensed), sans-serif; letter-spacing: .03em; text-anchor: middle; dominant-baseline: central; transition: fill var(--ft-for-step-light) var(--ease-standard), opacity var(--ft-for-step-light) ease; paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(6px * var(--ft-k)); stroke-linejoin: round; }
+:is(.ft-letter, .ft-dim-halo) { font: 600 min(calc(13px * var(--ft-u, 1)), calc(19px * var(--ft-k))) var(--font-condensed), sans-serif; letter-spacing: .03em; text-anchor: middle; dominant-baseline: central; }
+.ft-letter { fill: var(--color-text-secondary); transition: fill var(--ft-for-step-light) var(--ease-standard), opacity var(--ft-for-step-light) ease; }
+/* The halo is text of its own under the words (DimText, the names), never a stroke on them: an engine that paints a line
+   glyph by glyph laid each glyph's stroke over the one before and ate it (owner 02.11 in his browser: «:2 м», «L = :4 м»;
+   Chromium paints the run whole and never showed it) */
+:is(.ft-dim-halo, .ft-tag-halo) { fill: none; stroke: var(--color-surface-alt); stroke-linejoin: round; }
+.ft-dim-halo { stroke-width: calc(6px * var(--ft-u, 1)); }
+.ft-dim-word { transition: opacity var(--ft-for-step-light) ease; }
 /* Set on its middle, beside its line (FrameTour letters, 09.10): H ends at its point, a starts at its own; the field's
    paint round it parts an axis that runs behind L, as the members' names part what they lie on */
 .ft-letter[data-anchor="end"] { text-anchor: end; }
@@ -83,8 +90,8 @@
 /* A dimension's words along its line (10.10, owner: «паралельно розмірних ліній», FrameTour DimText): letter, value and
    answer on one baseline — on the letter's middle the smaller figures rode high — a gap off the line on its outer side:
    below it the baseline moves down by the capitals' height, whatever the sheet's size (--ft-k) */
-.ft-dim-text { dominant-baseline: alphabetic; }
-.ft-dim-text[data-side="below"] { transform: translateY(.72em); }
+:is(.ft-dim-text, .ft-dim-halo) { dominant-baseline: alphabetic; }
+:is(.ft-dim-text, .ft-dim-halo)[data-side="below"] { transform: translateY(.72em); }
 /* A size's value beside its letter, once the visitor gave the sizes (10.10): upright figures, smaller than the letter */
 .ft-value { font-variant-numeric: tabular-nums; }
 .ft-part, .ft-tags, .ft-load { transition: opacity var(--ft-for-step-light) ease; }
@@ -99,19 +106,20 @@
 .ft-tags { opacity: 0; }
 .ft-leader { stroke: var(--color-accent); stroke-width: calc(.7px * var(--ft-k)); }
 .ft-dot { fill: var(--color-accent-strong); }
-.ft-tag {
-  fill: var(--color-accent-strong); font: 600 min(calc(13px * var(--ft-u, 1)), calc(15px * var(--ft-t, 1))) var(--font-condensed), sans-serif;
+:is(.ft-tag, .ft-tag-halo) {
+  font: 600 min(calc(13px * var(--ft-u, 1)), calc(15px * var(--ft-t, 1))) var(--font-condensed), sans-serif;
   letter-spacing: .08em; text-transform: uppercase;
-  paint-order: stroke; stroke: var(--color-surface-alt); stroke-width: calc(6px * var(--ft-u, 1)); stroke-linejoin: round;
 }
+.ft-tag { fill: var(--color-accent-strong); }
+.ft-tag-halo { stroke-width: calc(6px * var(--ft-u, 1)); }
 
 /* A step: its parts copper, the rest back */
 .ft[data-step] .ft-part { opacity: .28; }
 .ft[data-step] :is(.ft-back, .ft-opening) { opacity: .5; }
 /* …and the bubbles and letters of the parts stepped back go: a step's camera cut them at its window's edge into a half
    «H» or a half bubble (04.10). The wind's step, pushed in on the end wall, keeps no axes or dimension lines either. */
-.ft[data-step] .ft-part :is(.ft-bubble, .ft-letter) { opacity: 0; }
-.ft[data-step="1"] [data-part~="1"] :is(.ft-bubble, .ft-letter), .ft[data-step="3"] [data-part~="3"] :is(.ft-bubble, .ft-letter) { opacity: 1; }
+.ft[data-step] .ft-part :is(.ft-bubble, .ft-dim-word) { opacity: 0; }
+.ft[data-step="1"] [data-part~="1"] :is(.ft-bubble, .ft-dim-word), .ft[data-step="3"] [data-part~="3"] :is(.ft-bubble, .ft-dim-word) { opacity: 1; }
 /* …and the loads' steps, pushed in on the hangar since 10.10, none of the dimensions either */
 .ft:is([data-step="4"], [data-step="5"]) .ft-part :is(.ft-axis, .ft-dim) { opacity: 0; }
 .ft[data-step="1"] [data-part~="1"], .ft[data-step="2"] [data-part~="2"], .ft[data-step="3"] [data-part~="3"] { opacity: 1; }

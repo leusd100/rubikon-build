@@ -54,6 +54,18 @@ for (const viewport of [{ width: 320, height: 640 }, { width: 390, height: 844 }
   });
 }
 
+// An engine that paints a line of text glyph by glyph laid each glyph's stroke over the one before: «12 м» read «:2 м» in
+// the owner's browser, never in Chromium, so this pins the cause: the words carry no stroke, their halo is its own text
+test('the drawing\'s words carry no stroke of their own', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/', { waitUntil: 'load' });
+  await page.locator('.hv2-frame-slot').scrollIntoViewIfNeeded();
+  await expect(page.locator('.hv2-frame-tour')).toBeVisible();
+  const strokes = await page.locator('.hv2-frame-tour').locator('.ft-letter, .ft-tag').evaluateAll((words) => [...new Set(words.map((word) => getComputedStyle(word).stroke))]);
+  expect(strokes).toEqual(['none']);
+  await expect(page.locator('.hv2-frame-tour .ft-dim-halo')).toHaveCount(await page.locator('.hv2-frame-tour .ft-dim-text').count());
+});
+
 test('without script the block reads on and leaves no empty room for the tour', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();

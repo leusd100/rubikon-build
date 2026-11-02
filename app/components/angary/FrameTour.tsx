@@ -65,8 +65,9 @@ const valueWidth = (text: string) => text.length * VALUE * 0.56;
 const LETTER_CAP = LETTER * 0.72;
 const VALUE_CAP = VALUE * 0.72;
 /** With a centre row the span is dimensioned in two rows (10.10, owner: «2 ряди розмірних ліній»): the spans between
- *  the axes, then L — this far apart on the sheet, room for the first row's figures between them */
-const ROW_GAP = 6 * 2 + VALUE_CAP + 12;
+ *  the axes, then L — this far apart on the sheet, just the first row's figures between them (02.11, owner: the rows stood
+ *  too far apart once the figures were set at a constant screen size, 13 px; on a phone 26 units are those 13 px) */
+const ROW_GAP = 26;
 /** A dimension's words along its line, on its outer side: the letter (italic), its value and an answer after it */
 type DimLabel = {
   key: string; x: number; y: number; angle: number; side: 'below' | 'above'; letter?: string; value?: string; note?: string;
@@ -774,13 +775,17 @@ export function frameNodes(g: ReturnType<typeof frameGeometry>): FrameNode[] {
  *  baseline (frame-tour.css .ft-dim-text). The answer keyed by itself, so a new one comes up anew. */
 function DimText({ label }: Readonly<{ label: DimLabel }>) {
   const valueClass = label.answer ? 'ft-value ft-answer' : 'ft-value';
+  const y = label.side === 'below' ? LETTER_GAP : -LETTER_GAP;
+  const words = `${label.letter ?? ''}${label.value ?? ''}${label.note ?? ''}`;
   return (
-    <g transform={`translate(${n(label.x)} ${n(label.y)}) rotate(${label.angle.toFixed(2)})`}>
+    <g className="ft-dim-word" transform={`translate(${n(label.x)} ${n(label.y)}) rotate(${label.angle.toFixed(2)})`}>
+      {/* the field's paint round the words, under them (frame-tour.css .ft-dim-halo) */}
+      <text className="ft-dim-halo" data-side={label.side} y={y} aria-hidden="true">{words}</text>
       <text
         className={label.letter ? 'ft-letter ft-dim-text' : 'ft-letter ft-dim-text ft-value'}
         data-side={label.side}
         data-cap={label.letter ? 'letter' : 'value'}
-        y={label.side === 'below' ? LETTER_GAP : -LETTER_GAP}
+        y={y}
       >
         {label.letter}
         {label.value && (label.letter ? <tspan className={valueClass}>{label.value}</tspan> : <tspan key={String(label.answer)} className={label.answer ? 'ft-answer' : undefined}>{label.value}</tspan>)}
@@ -938,11 +943,14 @@ export function FrameTourStage({
                     {list.map((item) => (
                       <g key={item.label}>
                         <path className="ft-leader" d={item.d} markerStart="url(#ft-dot)" />
-                        <text className="ft-tag" x={n(item.x)} y={n(item.y)} textAnchor={item.anchor}>
-                          {item.lines.length > 1
-                            ? item.lines.map((row, index) => <tspan key={row} x={n(item.x)} dy={index ? '1.1em' : undefined}>{row}</tspan>)
-                            : item.label}
-                        </text>
+                        {/* the halo first, as text of its own (frame-tour.css .ft-tag-halo) */}
+                        {['ft-tag-halo', 'ft-tag'].map((name) => (
+                          <text key={name} className={name} x={n(item.x)} y={n(item.y)} textAnchor={item.anchor}>
+                            {item.lines.length > 1
+                              ? item.lines.map((row, index) => <tspan key={row} x={n(item.x)} dy={index ? '1.1em' : undefined}>{row}</tspan>)
+                              : item.label}
+                          </text>
+                        ))}
                       </g>
                     ))}
                   </g>
