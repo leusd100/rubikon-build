@@ -303,11 +303,11 @@ test.describe('public route smoke tests', () => {
 
     const videos = page.locator('.hero video.direction-hero-video');
     const expectedSources = [
+      '/media/about/structure-v3.mp4',
       '/media/about/straight-line-14377591-v3.mp4',
       '/media/about/blueprint-v3.mp4',
       '/media/about/drilling-29913842-v3.mp4',
       '/media/about/welding-v3.mp4',
-      '/media/about/structure-v3.mp4',
     ];
 
     await expect.poll(
@@ -563,11 +563,11 @@ test.describe('public route smoke tests', () => {
       () => videos.evaluateAll((elements) => elements.map((video) => video.getAttribute('src'))),
       { timeout: 10_000 },
     ).toEqual([
+      '/media/about/structure-v3.mp4',
       '/media/about/straight-line-14377591-v3.mp4',
       '/media/about/blueprint-v3.mp4',
       '/media/about/drilling-29913842-v3.mp4',
       '/media/about/welding-v3.mp4',
-      '/media/about/structure-v3.mp4',
     ]);
   });
 
