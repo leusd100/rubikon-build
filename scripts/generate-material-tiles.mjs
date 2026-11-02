@@ -79,7 +79,7 @@ const render = () => {
   const tiles = {
     'perforated-dark': (() => { const a = perf(28, 9, 7); return shade(a.height, 28, 48.5, { k: 1.5, spec: .8, tone: .075, hole: a.hole }); })(),
     'tread-dark': shade(tread(46, 13, 5.4, 6.5), 92, 92, { k: 1.45, spec: 1.1, tone: .06 }),
-    'knurl-dark': shade((x, y) => (Math.abs(Math.sin((x + y) / 16 * Math.PI)) + Math.abs(Math.sin((x - y) / 16 * Math.PI))) * 2.1, 16, 16, { k: 1.05, spec: .7, tone: .05 }),
+    'knurl-dark': shade((x, y) => (Math.abs(Math.sin((x + y) / 16 * Math.PI)) + Math.abs(Math.sin((x - y) / 16 * Math.PI))) * 2.1, 16, 16, { k: .7, spec: .35, tone: .05 }),
     'panel-dark': shade(panel(210, 30), 210, 2, { k: 1.3, spec: .8, tone: .06 }),
     'sheet-dark': shade(trapezoid(124, 52, 13, 26), 124, 2, { k: .95, spec: .5, tone: .05 }),
     'silo-dark': (() => { const near = bolts(230, 30); return shade((x, y) => Math.sin(y / 30 * 2 * Math.PI) * 2.1 + smooth(4.5, 2, near(x, y)) * 2.2, 230, 30, { k: .8, spec: .22, tone: .05 }); })(),
@@ -88,7 +88,7 @@ const render = () => {
     'tread-paper': shade(tread(46, 12, 5, 4.5), 92, 92, { ground: 'paper', k: 1, spec: .2 }),
     'panel-paper': shade((x) => rib(9)(x) * .75, 9, 2, { ground: 'paper', k: 1.1, spec: .1 }),
     'sheet-paper': shade(trapezoid(124, 52, 3.2, 2.6), 124, 2, { ground: 'paper', k: 1.15, spec: .12 }),
-    'dots-paper': (() => { const near = staggered(28); return shade((x, y) => { const d = near(x, y); return smooth(8, 3.4, d) * 4.2; }, 28, 48.5, { ground: 'paper', k: 1.25, spec: .22 }); })(),
+    'dots-paper': (() => { const near = staggered(28); return shade((x, y) => { const d = near(x, y); return smooth(8, 3.4, d) * 4.2; }, 28, 48.5, { ground: 'paper', k: .7, spec: .22 }); })(),
   };
   // Brushed steel does not repeat: long streaks and one band of sheen, drawn once. The sheen is why it cannot be a tile.
   const brushed = (() => {

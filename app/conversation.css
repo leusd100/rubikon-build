@@ -15,7 +15,7 @@
   position: relative; overflow: clip; isolation: isolate; color: var(--color-dark-text);
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--color-dark) 82%, transparent) 42%, color-mix(in srgb, var(--color-dark) 10%, transparent) 54%),
-    url('/media/materials/contours-dark.svg') -120px -120px / 1800px auto no-repeat,
+    url('/media/materials/contours-dark.svg') var(--contours, -120px -120px / max(1800px, calc(100% + 240px)) auto) no-repeat,
     var(--color-dark);
   /* messenger-icon greys, see the channels below */
   --conv-tg: 1.35; --conv-wa: 1.2; --conv-vb: 1.82;
@@ -133,12 +133,25 @@
   .conversation-grid { grid-template-columns: 1fr; grid-template-areas: "intro" "form" "journey"; row-gap: 40px; }
   .conversation-journey-wrap { max-width: none; }
 }
+/* Every page its own part of the survey, so the form does not read as one stamped picture (owner 01.11). The size grows with
+   the screen and the offset stays inside the picture's 1800×1100 */
+@media (min-width: 1181px) {
+  .metal-page > .conversation { --contours: -760px -330px / max(2600px, calc(100% + 760px)) auto; }
+  .concrete-page > .conversation { --contours: -1500px -700px / max(3000px, calc(100% + 1500px)) auto; }
+  .angary-page > .conversation { --contours: -260px -420px / max(2300px, calc(100% + 260px)) auto; }
+  .roofing-page > .conversation { --contours: -1100px -200px / max(2800px, calc(100% + 1100px)) auto; }
+  .grain-page > .conversation { --contours: -400px -620px / max(2500px, calc(100% + 400px)) auto; }
+  .process-page > .conversation { --contours: -1700px -400px / max(3200px, calc(100% + 1700px)) auto; }
+  .about-page > .conversation { --contours: -900px -860px / max(2700px, calc(100% + 900px)) auto; }
+  .directions-page > .conversation { --contours: -100px -300px / max(2400px, calc(100% + 100px)) auto; }
+}
+/* The picture is only so wide: on a wider screen a fixed size cut the lines off in a straight vertical (x=1680 at 1920) */
 /* Up to here the text runs the block's whole width, so the contours keep to a band above it */
 @media (max-width: 1180px) {
   .conversation {
     background:
       linear-gradient(to bottom, color-mix(in srgb, var(--color-dark) 45%, transparent) 40px, var(--color-dark) 210px),
-      url('/media/materials/contours-dark.svg') -300px -20px / 1000px auto no-repeat,
+      url('/media/materials/contours-dark.svg') -300px -20px / max(1000px, calc(100% + 340px)) auto no-repeat,
       var(--color-dark);
   }
 }

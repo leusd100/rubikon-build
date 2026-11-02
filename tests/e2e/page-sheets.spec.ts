@@ -23,7 +23,7 @@ async function open(page: Page, path: string, width: number, height = 900) {
 const stack = (page: Page) => page.evaluate(() => {
   const sheets = [...document.querySelectorAll('main > section')].map((section) => {
     const box = section.getBoundingClientRect(), style = getComputedStyle(section);
-    return { top: box.top + scrollY, bottom: box.bottom + scrollY, radius: parseFloat(style.borderTopLeftRadius), filled: style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' };
+    return { band: section.id === 'vidpovidalnist', top: box.top + scrollY, bottom: box.bottom + scrollY, radius: parseFloat(style.borderTopLeftRadius), filled: style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' };
   });
   const footer = document.querySelector('footer')!, box = footer.getBoundingClientRect();
   return {
@@ -42,6 +42,12 @@ test.describe('the blocks as a stack of sheets', () => {
         const { sheets, footerTop, footerRadius, overflow } = await stack(page);
         expect(sheets[0].radius, `${path}: the hero is not a sheet`).toBe(0);
         sheets.slice(1).forEach((sheet, index) => {
+          // the one approved band of two blocks on /yak-pratsyuiemo: it runs on, with no seam of its own
+          if (sheet.band) {
+            expect(sheet.radius, path).toBe(0);
+            expect(Math.abs(sheets[index].bottom - sheet.top), path).toBeLessThanOrEqual(1);
+            return;
+          }
           expect(sheet.radius, `${path} ${index + 1}`).toBe(radius);
           expect(Math.abs(sheets[index].bottom - radius - sheet.top), `${path} ${index + 1}`).toBeLessThanOrEqual(1);
           expect(sheet.filled, `${path} ${index + 1}: a corner never shows a hole`).toBe(true);
@@ -59,6 +65,33 @@ test.describe('the blocks as a stack of sheets', () => {
   });
 });
 
+test.describe('the first sheet and the hero', () => {
+  test.skip(({ isMobile }) => isMobile, 'explicit windows');
+
+  for (const path of ['/', '/metalokonstruktsii', '/betonni-roboty', '/angary', '/zernoskhovyshcha', '/pokrivelni-roboty', '/yak-pratsyuiemo', '/pro-nas', '/napryamky']) {
+    for (const [width, height] of [[1440, 900], [1280, 720], [768, 1024]]) {
+      test(`${path} at ${width}×${height}: no strip of the sheet along the first screen's foot`, async ({ page }) => {
+        await open(page, path, width, height);
+        const top = await page.locator('main > section').nth(1).evaluate((sheet) => sheet.getBoundingClientRect().top);
+        expect(top).toBeGreaterThanOrEqual(height);
+      });
+    }
+  }
+
+  for (const path of ['/metalokonstruktsii', '/betonni-roboty', '/angary', '/zernoskhovyshcha', '/pokrivelni-roboty', '/yak-pratsyuiemo']) {
+    for (const width of [1440, 1100, 768]) {
+      test(`${path} at ${width}: the «Ілюстрація» stamp stays clear of the sheet`, async ({ page }) => {
+        await open(page, path, width);
+        const gap = await page.locator('main > :first-of-type').locator('.hero-provenance, .proc-provenance').evaluate((stamp) => {
+          const sheet = stamp.closest('section')!.nextElementSibling!;
+          return sheet.getBoundingClientRect().top - stamp.getBoundingClientRect().bottom;
+        });
+        expect(gap).toBeGreaterThanOrEqual(0);
+      });
+    }
+  }
+});
+
 test.describe('the pages\' materials', () => {
   test.skip(({ isMobile }) => isMobile, 'explicit windows');
 
@@ -66,18 +99,23 @@ test.describe('the pages\' materials', () => {
 
   for (const [path, selector, file] of [
     ['/metalokonstruktsii', 'main > .page-section-dark', 'perforated-dark'],
-    ['/metalokonstruktsii', 'main > .cost-section', 'tread-paper'],
+    ['/metalokonstruktsii', 'main > .cost-section', 'scene-sparks-paper'],
     ['/betonni-roboty', 'main > .page-section-dark', 'concrete-dark'],
-    ['/betonni-roboty', 'main > .cost-section', 'concrete-paper'],
+    ['/betonni-roboty', 'main > .cost-section', 'scene-pour-paper'],
+    ['/angary', 'main > .angary-cost', 'scene-bays-paper'],
     ['/angary', 'main > .angary-process', 'panel-dark'],
     ['/zernoskhovyshcha', 'main > .grain-process-band', 'silo-dark'],
     ['/zernoskhovyshcha', 'main > .cost-section', 'grainfall-paper'],
-    ['/pokrivelni-roboty', 'main > .direction-entry', 'sheet-paper'],
+    ['/pokrivelni-roboty', 'main > .direction-entry', 'scene-rain-paper'],
+    ['/yak-pratsyuiemo', 'main > .proc-terms', 'scene-beams-paper'],
+    ['/pro-nas', 'main > .team-about', 'scene-merge-paper'],
     ['/yak-pratsyuiemo', 'main > .proc-route', 'knurl-dark'],
     ['/pro-nas', 'main > .about-principles', 'brushed-dark'],
-    ['/napryamky', 'main > .dhow', 'perforated-dark'],
+    ['/napryamky', 'main > .dhow', 'scene-five-dark'],
   ] as const) {
     test(`${path} ${selector}: ${file}, and the file answers`, async ({ page, request }) => {
+      // a live scene takes over from the still picture on the screen: this is the picture it falls back to
+      await page.emulateMedia({ reducedMotion: 'reduce' });
       await open(page, path, 1440);
       const image = await material(page, selector);
       expect(image).toContain(`/media/materials/${file}.`);
@@ -89,7 +127,7 @@ test.describe('the pages\' materials', () => {
   test('a paper block takes the surface\'s dark side in Dark', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('rubikon-theme', 'dark'));
     await open(page, '/metalokonstruktsii', 1440);
-    expect(await material(page, 'main > .cost-section')).toContain('tread-dark');
+    expect(await material(page, 'main > .cost-section')).toContain('scene-sparks-dark');
   });
 
   test('a phone: dark blocks keep their band, paper blocks carry nothing', async ({ page }) => {
@@ -120,5 +158,45 @@ test.describe('the form on the band', () => {
     await open(page, '/metalokonstruktsii', 1440);
     const others = await page.evaluate(() => [...document.querySelectorAll('main > section:not(.conversation), footer')].filter((block) => getComputedStyle(block).backgroundImage.includes('contours')).length);
     expect(others).toBe(0);
+  });
+});
+
+test.describe('the live scenes', () => {
+  test.skip(({ isMobile }) => isMobile, 'explicit windows');
+
+  for (const [path, selector] of [
+    ['/metalokonstruktsii', 'main > .cost-section'], ['/betonni-roboty', 'main > .cost-section'], ['/angary', 'main > .angary-cost'],
+    ['/zernoskhovyshcha', 'main > .cost-section'], ['/pokrivelni-roboty', 'main > .direction-entry'], ['/yak-pratsyuiemo', 'main > .proc-terms'],
+    ['/pro-nas', 'main > .team-about'], ['/napryamky', 'main > .dhow'],
+  ] as const) {
+    test(`${path}: the scene wakes on the screen, and its pixels change`, async ({ page }) => {
+      await open(page, path, 1440);
+      const canvas = page.locator(`${selector} > canvas.live-scene`);
+      await expect(canvas).toHaveCount(1);
+      await canvas.scrollIntoViewIfNeeded();
+      const pixels = () => canvas.evaluate((element: HTMLCanvasElement) => element.toDataURL());
+      const first = await pixels();
+      await expect.poll(pixels).not.toBe(first);
+    });
+  }
+
+  test('a window narrowed after the page has loaded gets no sideways scroll, and the hub its band back', async ({ page }) => {
+    await open(page, '/napryamky', 1440);
+    const block = page.locator('main > .dhow');
+    await block.scrollIntoViewIfNeeded();
+    await expect.poll(() => block.evaluate((element) => element.style.getPropertyValue('--material'))).toBe('none');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('.live-scene')).toBeHidden();
+    await expect.poll(() => block.evaluate((element) => element.style.getPropertyValue('--material'))).toBe('');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  });
+
+  test('a width without room, and reduced motion, keep the still picture', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await open(page, '/metalokonstruktsii', 1440);
+    await expect(page.locator('.live-scene')).toHaveCount(0);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await open(page, '/metalokonstruktsii', 1000);
+    await expect(page.locator('.live-scene')).toHaveCount(0);
   });
 });
