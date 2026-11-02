@@ -38,6 +38,10 @@ main[data-field] ~ footer {
   overflow: clip; box-shadow: var(--sheet-shadow-dark);
 }
 
+/* The first sheet covers the hero's foot by its radius, so what stands on that foot stands a radius higher (the «Ілюстрація»
+   stamp was cut by 12 px). A margin moves it only where it is anchored to the foot: on a phone it hangs from the top */
+main[data-field] > :first-of-type :is(.hero-provenance, .proc-provenance) { margin-bottom: var(--sheet-radius); }
+
 /* Neighbours of one tone read as one long sheet: a tone apart they stay two */
 main[data-field] > .proc-responsibility { background-color: var(--color-surface); }
 main[data-field] > .cost-section + .faq-section { background-color: var(--color-bg); }

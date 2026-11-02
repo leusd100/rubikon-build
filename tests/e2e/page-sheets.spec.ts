@@ -59,6 +59,23 @@ test.describe('the blocks as a stack of sheets', () => {
   });
 });
 
+test.describe('the first sheet and the hero', () => {
+  test.skip(({ isMobile }) => isMobile, 'explicit windows');
+
+  for (const path of ['/metalokonstruktsii', '/betonni-roboty', '/angary', '/zernoskhovyshcha', '/pokrivelni-roboty', '/yak-pratsyuiemo']) {
+    for (const width of [1440, 1100, 768]) {
+      test(`${path} at ${width}: the «Ілюстрація» stamp stays clear of the sheet`, async ({ page }) => {
+        await open(page, path, width);
+        const gap = await page.locator('main > :first-of-type').locator('.hero-provenance, .proc-provenance').evaluate((stamp) => {
+          const sheet = stamp.closest('section')!.nextElementSibling!;
+          return sheet.getBoundingClientRect().top - stamp.getBoundingClientRect().bottom;
+        });
+        expect(gap).toBeGreaterThanOrEqual(0);
+      });
+    }
+  }
+});
+
 test.describe('the pages\' materials', () => {
   test.skip(({ isMobile }) => isMobile, 'explicit windows');
 
