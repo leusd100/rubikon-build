@@ -11,7 +11,7 @@ type Bit = { x: number; y: number; vx: number; vy: number; age: number; life: nu
 let seed = 9;
 const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 const gauss = () => (random() + random() + random() + random() - 2) / 2;
-const stroke = (c: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, width: number, colour: string, alpha: number) => {
+const stroke = (c: CanvasRenderingContext2D, [x0, y0, x1, y1]: number[], width: number, colour: string, alpha: number) => {
   c.globalAlpha = Math.max(0, Math.min(1, alpha));
   c.strokeStyle = colour;
   c.lineWidth = width;
@@ -36,6 +36,11 @@ function sparks(): Scene {
   let burst = 1;
   return {
     step(c, dt, _time, { ink, copper, dark }) {
+      const hot = dark ? '#FFECCD' : ink;
+      const sparkColour = (age: number) => {
+        if (age < .22) return hot;
+        return age < .4 && dark ? ink : copper;
+      };
       if (random() < .06) burst = .3 + random() * 1.1;
       for (let i = Math.round((10 + random() * 16) * burst); i > 0; i--) {
         const angle = 1.57 + gauss() * 1.9, speed = 90 + random() * random() * 420;
@@ -44,11 +49,11 @@ function sparks(): Scene {
       update(bits, dt, 620, (bit, px, py) => {
         if (bit.y > floor && !bit.hit) { bit.y = floor; bit.vy *= -.32; bit.vx *= .6; bit.hit = true; bit.life = Math.min(bit.life, bit.age + .25); }
         const age = bit.age / bit.life;
-        stroke(c, px, py, bit.x, bit.y, 1.6 - age * .9, age < .22 ? (dark ? '#FFECCD' : ink) : age < .4 && dark ? ink : copper, (1 - age * age) * .95);
+        stroke(c, [px, py, bit.x, bit.y], 1.6 - age * .9, sparkColour(age), (1 - age * age) * .95);
         return bit.y < floor + 3;
       });
       const radius = (18 + random() * 16 * burst) * 2.4, glow = c.createRadialGradient(x0, y0, 0, x0, y0, radius);
-      glow.addColorStop(0, dark ? '#FFECCD' : ink);
+      glow.addColorStop(0, hot);
       glow.addColorStop(.3, copper);
       glow.addColorStop(1, 'transparent');
       c.globalAlpha = dark ? .9 : .7;
@@ -65,7 +70,7 @@ function stream(x0: number, floor: number, spread: number, size: number, count: 
     step(c, dt, _time, { ink, copper }) {
       for (let i = 0; i < count; i++) bits.push({ x: x0 + gauss() * spread, y: -6 - random() * 30, vx: gauss() * 5, vy: 120 + random() * 60, age: 0, life: 3, size: size * (.6 + random() * .8) });
       update(bits, dt, 520, (bit, px, py) => {
-        stroke(c, px, py, bit.x, bit.y, bit.size, random() < .05 ? copper : ink, .85);
+        stroke(c, [px, py, bit.x, bit.y], bit.size, random() < .05 ? copper : ink, .85);
         return bit.y < floor;
       });
     },
@@ -80,21 +85,21 @@ function rain(): Scene {
       for (let i = 0; i < 3; i++) drops.push({ x: 130 + random() * 760, y: -30, vx: -150, vy: 580 + random() * 160, age: 0, life: 2, size: 12 + random() * 22 });
       update(drops, dt, 0, (bit) => {
         const x = bit.x, y = bit.y;
-        stroke(c, x, y, x + bit.size * .26, y - bit.size, .9, ink, Math.min(1, (x - 200) / 170) * .55);
+        stroke(c, [x, y, x + bit.size * .26, y - bit.size], .9, ink, Math.min(1, (x - 200) / 170) * .55);
         if (x < eave - 2 || y < slope(x)) return y < 430;
         for (let i = 0; i < 3; i++) splash.push({ x, y, vx: gauss() * 70, vy: -30 - random() * 70, age: 0, life: .2 + random() * .2, size: 1 });
         if (random() < .35) beads.push({ x, y, vx: -100 - random() * 60, vy: 0, age: 0, life: 9, size: 1.2 });
         return false;
       });
-      update(splash, dt, 500, (bit, px, py) => { stroke(c, px, py, bit.x, bit.y, .8, ink, .7); return true; });
+      update(splash, dt, 500, (bit, px, py) => { stroke(c, [px, py, bit.x, bit.y], .8, ink, .7); return true; });
       update(beads, dt, 0, (bit, px, py) => {
         bit.y = slope(bit.x) - 1;
-        stroke(c, px, py, bit.x, bit.y, 1.6, ink, .8);
+        stroke(c, [px, py, bit.x, bit.y], 1.6, ink, .8);
         if (bit.x > eave) return true;
         fall.push({ x: eave - 2, y: slope(eave), vx: 0, vy: 30, age: 0, life: 1.4, size: 1.6 });
         return false;
       });
-      update(fall, dt, 620, (bit, px, py) => { stroke(c, px, py, bit.x, bit.y + 3, bit.size, random() < .1 ? copper : ink, .9 - bit.age * .3); return bit.y < 430; });
+      update(fall, dt, 620, (bit, px, py) => { stroke(c, [px, py, bit.x, bit.y + 3], bit.size, random() < .1 ? copper : ink, .9 - bit.age * .3); return bit.y < 430; });
     },
   };
 }
@@ -150,10 +155,10 @@ function streams(): Scene {
         bit.t = (bit.t + bit.speed * dt) % 1;
         if (bit.side < 2) {
           const [x, y] = at(paths[bit.side][0], paths[bit.side][1], bit.t), w = 22 - bit.t * 12, X = x + bit.jitter * w, Y = y + bit.jitter * w * .3;
-          stroke(c, X, Y, X + 1.5, Y + 2, 1.7, bit.side ? copper : ink, .8);
+          stroke(c, [X, Y, X + 1.5, Y + 2], 1.7, bit.side ? copper : ink, .8);
         } else {
           const y = 214 + bit.t * 170, x = 566 + bit.jitter * (9 + bit.t * 6);
-          stroke(c, x, y, x + .6, y + 2.4, 1.9, bit.jitter > 0 ? copper : ink, .9 - bit.t * .3);
+          stroke(c, [x, y, x + .6, y + 2.4], 1.9, bit.jitter > 0 ? copper : ink, .9 - bit.t * .3);
         }
       }
     },
@@ -170,9 +175,9 @@ function five(): Scene {
       }
       update(bits as Bit[], dt, 0, (bit, px, py) => {
         const { kind } = bit as Bit & { kind: number };
-        if (kind === 1) stroke(c, px, py, bit.x, bit.y + 8, .9, copper, .85);
-        else if (kind === 4) stroke(c, px, py, bit.x, bit.y + 22, .9, ink, .7);
-        else stroke(c, px, py, bit.x + .4, bit.y + 1.6, kind === 2 ? 2.6 : 1.8, ink, kind === 3 ? .75 : .85);
+        if (kind === 1) stroke(c, [px, py, bit.x, bit.y + 8], .9, copper, .85);
+        else if (kind === 4) stroke(c, [px, py, bit.x, bit.y + 22], .9, ink, .7);
+        else stroke(c, [px, py, bit.x + .4, bit.y + 1.6], kind === 2 ? 2.6 : 1.8, ink, kind === 3 ? .75 : .85);
         return bit.y < base;
       });
     },

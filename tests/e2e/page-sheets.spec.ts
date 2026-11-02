@@ -174,6 +174,17 @@ test.describe('the live scenes', () => {
     });
   }
 
+  test('a window narrowed after the page has loaded gets no sideways scroll, and the hub its band back', async ({ page }) => {
+    await open(page, '/napryamky', 1440);
+    const block = page.locator('main > .dhow');
+    await block.scrollIntoViewIfNeeded();
+    await expect.poll(() => block.evaluate((element) => element.style.getPropertyValue('--material'))).toBe('none');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('.live-scene')).toBeHidden();
+    await expect.poll(() => block.evaluate((element) => element.style.getPropertyValue('--material'))).toBe('');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  });
+
   test('a width without room, and reduced motion, keep the still picture', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await open(page, '/metalokonstruktsii', 1440);

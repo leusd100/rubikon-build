@@ -44,7 +44,10 @@ export function LiveScene() {
       };
       let frame = 0, last = 0, count = 0, time = 0, colours = inks();
       // it comes up already running, not from an empty sky
-      for (let i = 0; i < WARM_UP_STEPS; i++) scene.step(context, 1 / 30, time += 1 / 30, colours);
+      for (let i = 0; i < WARM_UP_STEPS; i++) {
+        time += 1 / 30;
+        scene.step(context, 1 / 30, time, colours);
+      }
       const tick = (now: number) => {
         const dt = Math.min(LONGEST_STEP, (now - last) / 1000 || 0);
         last = now;
@@ -54,10 +57,18 @@ export function LiveScene() {
         scene.step(context, dt, time, colours);
         frame = requestAnimationFrame(tick);
       };
+      const restore = () => {
+        block.style.removeProperty('--scene');
+        block.style.removeProperty('--material');
+      };
       const observer = new IntersectionObserver(([entry]) => {
         cancelAnimationFrame(frame);
         frame = 0;
-        if (!entry.isIntersecting) return;
+        // off the screen, or a width without the scene (the canvas goes with it): the block has its still picture back
+        if (!entry.isIntersecting) {
+          restore();
+          return;
+        }
         if (replaces) block.style.setProperty(replaces, 'none');
         if (scene.still) block.style.setProperty('--scene', `var(${scene.still})`);
         last = performance.now();
@@ -69,8 +80,7 @@ export function LiveScene() {
         observer.disconnect();
         cancelAnimationFrame(frame);
         canvas.remove();
-        block.style.removeProperty('--scene');
-        block.style.removeProperty('--material');
+        restore();
       };
     });
     return () => {

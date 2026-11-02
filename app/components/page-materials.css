@@ -101,6 +101,9 @@
   }
 }
 
+/* A window narrowed after the page loaded keeps its canvas, without the room for it */
+.live-scene { display: none; }
+
 /* The paper blocks, on a desktop only: a scene in the void beside the heading, cut by the block's colour on both sides */
 @media (min-width: 1181px) {
   .metal-page > .cost-section { --scene: var(--scene-sparks); --material-ground: var(--color-surface-alt); }
@@ -135,7 +138,7 @@
   /* Live scenes (LiveScene.tsx) lie under the block's text and fade as the block's background layers do */
   main[data-field] > section:has(> .live-scene) { isolation: isolate; }
   .live-scene {
-    position: absolute; z-index: -1; top: 0; right: 0; width: 760px; height: 430px; pointer-events: none;
+    position: absolute; z-index: -1; top: 0; right: 0; display: block; width: 760px; height: 430px; pointer-events: none;
     mask-image: linear-gradient(to right, transparent 20px, #000 220px), linear-gradient(to bottom, #000 330px, transparent 430px);
     mask-composite: intersect;
   }
