@@ -15,6 +15,12 @@
 :root {
   /* the contour's layers: reveal and hide, the seam, the split */
   --hv2-for-reveal: 240ms;
+  /* a direction's card opening in the row; the proof's frames coming in, one after the other */
+  --hv2-for-card-open: 460ms;
+  --hv2-for-card-text: 240ms;
+  --hv2-at-card-text: 120ms;
+  --hv2-for-frame-in: 620ms;
+  --hv2-at-frame-step: 90ms;
   --hv2-for-held-fade: 160ms;
   --hv2-for-snap-fade: 200ms;
   --hv2-for-split: 420ms;
@@ -241,6 +247,44 @@ main[data-home="v2"] .hv2-directions .direction-card:focus-visible { outline-col
   /* A browser without :has() (Firefox < 121, Safari < 15.4) keeps every header's rule, but this list always follows the
      header here and opens on its strong line, so the header gives way to it as before W3-03 */
   @supports not selector(:has(*)) { main[data-home="v2"] .hv2-directions .section-header { padding-bottom: 0; border-bottom: 0; } }
+}
+
+/* On a computer (≥ 1181 px; owner 02.11, «не доходить») the block listed the five directions twice — the sheets, then a
+   mosaic of 1086 px — and stood between the first screen and the engineering block. Now one row of tall cards: one open
+   with its text, the first until the pointer or the keyboard reaches another, the rest showing their picture, number,
+   stamp and name. CSS only (:has), so it needs no script and the links are as they were. Without :has() every card stays
+   an equal closed one. The row of sheets is not shown at any width now; its markup stays until the owner has seen this. */
+@media (min-width: 1181px) {
+  main[data-home="v2"] .hv2-directions .section-header.has-aside { grid-template-columns: minmax(0, 1.4fr) minmax(300px, .7fr); align-items: end; }
+  main[data-home="v2"] .hv2-directions .section-header.has-aside > .section-header-support { grid-column: 2; grid-row: 1; }
+  main[data-home="v2"] .hv2-directions .section-header h2 { max-width: none; }
+  main[data-home="v2"] .hv2-directions .direction-grid {
+    --hv2-card-open: 2.25fr; --hv2-card-shut: 1fr;
+    grid-template-columns: var(--c1, var(--hv2-card-shut)) var(--c2, var(--hv2-card-shut)) var(--c3, var(--hv2-card-shut)) var(--c4, var(--hv2-card-shut)) var(--c5, var(--hv2-card-shut));
+    grid-template-rows: min(560px, 62vh); gap: 10px; transition: grid-template-columns var(--hv2-for-card-open) var(--ease-premium);
+  }
+  main[data-home="v2"] .hv2-directions .direction-grid:not(:has(.direction-card:is(:hover, :focus-visible))),
+  main[data-home="v2"] .hv2-directions .direction-grid:has(.direction-card:nth-child(1):is(:hover, :focus-visible)) { --c1: var(--hv2-card-open); }
+  main[data-home="v2"] .hv2-directions .direction-grid:has(.direction-card:nth-child(2):is(:hover, :focus-visible)) { --c2: var(--hv2-card-open); }
+  main[data-home="v2"] .hv2-directions .direction-grid:has(.direction-card:nth-child(3):is(:hover, :focus-visible)) { --c3: var(--hv2-card-open); }
+  main[data-home="v2"] .hv2-directions .direction-grid:has(.direction-card:nth-child(4):is(:hover, :focus-visible)) { --c4: var(--hv2-card-open); }
+  main[data-home="v2"] .hv2-directions .direction-grid:has(.direction-card:nth-child(5):is(:hover, :focus-visible)) { --c5: var(--hv2-card-open); }
+  main[data-home="v2"] .hv2-directions .direction-card { grid-row: 1; grid-column: auto; min-height: 0; border-radius: var(--radius-lg); }
+  main[data-home="v2"] .hv2-directions .direction-card img { object-position: center; }
+  main[data-home="v2"] .hv2-directions .direction-number { top: 24px; left: 22px; }
+  main[data-home="v2"] .hv2-directions .direction-provenance { top: 18px; right: 16px; }
+  main[data-home="v2"] .hv2-directions .direction-copy { left: 22px; right: 18px; bottom: 24px; container-type: normal; }
+  main[data-home="v2"] .hv2-directions .direction-copy strong { --title-overhang: 0px; font-size: clamp(20px, 1.6vw, 24px); line-height: 1.12; letter-spacing: -.02em; overflow-wrap: normal; hyphens: manual; transition: font-size var(--hv2-for-card-open) var(--ease-premium); }
+  /* the text keeps one width, so it never re-wraps while its card opens; it comes in after the card has room */
+  main[data-home="v2"] .hv2-directions .direction-copy small { width: min(400px, 30vw); max-width: none; margin-top: 12px; max-height: 0; overflow: hidden; opacity: 0; transition: opacity var(--hv2-for-card-text) ease; }
+  /* a closed card has no arrow at all, not a hidden one over its title; it grows from the corner as the card opens */
+  main[data-home="v2"] .hv2-directions .direction-arrow { right: 20px; bottom: 20px; width: 52px; height: 52px; opacity: 0; transform: scale(0); transform-origin: 100% 100%; transition: opacity var(--hv2-for-card-text) ease, transform var(--hv2-for-card-open) var(--ease-premium), color var(--motion-micro) var(--ease-standard), background var(--motion-micro) var(--ease-standard), border-color var(--motion-micro) var(--ease-standard); }
+  main[data-home="v2"] .hv2-directions .direction-grid:not(:has(.direction-card:is(:hover, :focus-visible))) .direction-card:first-child .direction-copy strong,
+  main[data-home="v2"] .hv2-directions .direction-card:is(:hover, :focus-visible) .direction-copy strong { font-size: clamp(34px, 3.1vw, 46px); }
+  main[data-home="v2"] .hv2-directions .direction-grid:not(:has(.direction-card:is(:hover, :focus-visible))) .direction-card:first-child .direction-copy small,
+  main[data-home="v2"] .hv2-directions .direction-card:is(:hover, :focus-visible) .direction-copy small { max-height: 8em; opacity: 1; transition-delay: var(--hv2-at-card-text); }
+  main[data-home="v2"] .hv2-directions .direction-grid:not(:has(.direction-card:is(:hover, :focus-visible))) .direction-card:first-child .direction-arrow,
+  main[data-home="v2"] .hv2-directions .direction-card:is(:hover, :focus-visible) .direction-arrow { opacity: 1; transform: none; transition-delay: var(--hv2-at-card-text), var(--hv2-at-card-text), 0s, 0s, 0s; }
 }
 
 /* ======================= 3 · ENGINEERING SIGNATURE + REAL OBJECT ======================= */
@@ -1012,16 +1056,13 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
 }
 
 /* Facts under the sheet: what the photo proves, and who stands behind the work */
-/* One title block (owner, 02.10: «підрівняти і приукрасити»): the scope cells fill the left column, so its content ends
-   where the divider begins; the people column is narrower, under the same kicker, its note and link down at the cells'
-   foot */
-/* (09.10: a caption under the sheet, not a box) */
-main[data-home="v2"] .hv2-proof-facts {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 400px); gap: 28px clamp(32px, 4vw, 64px); margin-top: 8px;
-  padding: 22px 0 0; background: none; border: 0;
-}
-main[data-home="v2"] .hv2-evidence-lead h3 { margin: 14px 0 10px; font: 400 var(--type-h3)/1.06 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; }
-main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { max-width: 560px; margin: 0; color: var(--hv2-text-2); font-size: 16px; line-height: 1.6; }
+/* Under the sheet (owner 02.11): the object said as large as the block's other headings, its scope in three real frames
+   across the whole width, then the people. (09.10: a caption under the sheet, not a box) */
+main[data-home="v2"] .hv2-proof-facts { display: block; margin-top: clamp(40px, 5vw, 64px); padding: 0; background: none; border: 0; }
+main[data-home="v2"] .hv2-evidence-lead { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, .7fr); gap: 20px var(--grid-gap); align-items: end; }
+main[data-home="v2"] .hv2-evidence-lead > .hv2-kicker, main[data-home="v2"] .hv2-evidence-lead > .hv2-scope-chips { grid-column: 1 / -1; }
+main[data-home="v2"] .hv2-evidence-lead h3 { margin: 0; font: 400 var(--type-h2-compact)/1.05 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.03em; text-wrap: balance; }
+main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { max-width: 460px; margin: 0; padding-left: 24px; color: var(--hv2-text-2); border-left: 2px solid var(--hv2-copper); font-size: 16px; line-height: 1.7; }
 /* The scope as the building it made (UX pass 2026-10): three cells, the same hangar in each, the named part in copper */
 main[data-home="v2"] .hv2-scope-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin: 26px 0 0; padding: 0; list-style: none; border: 1px solid var(--hv2-line-strong); }
 main[data-home="v2"] .hv2-scope-chips li { display: grid; gap: 14px; padding: 18px 20px 16px; color: var(--hv2-text); transition: background-color var(--hv2-for-scope-hover) var(--ease-standard); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
@@ -1067,12 +1108,88 @@ main[data-home="v2"] .hv2-scope-chips[data-draw="on"] .hv2-scope-part { animatio
 @keyframes hv2-scope-run { from { stroke-dashoffset: .35; } to { stroke-dashoffset: -1; } }
 
 /* --- people: compact, beside the proof, no portraits --- */
-main[data-home="v2"] .hv2-people { display: flex; flex-direction: column; gap: 16px; padding-left: clamp(28px, 3vw, 44px); border-left: 1px solid var(--hv2-line); }
-main[data-home="v2"] .hv2-people .hv2-kicker { margin-bottom: 8px; }
-main[data-home="v2"] .hv2-people-note { margin: auto 0 0; padding-top: 16px; color: var(--hv2-text-2); font-size: 15px; line-height: 1.5; }
-main[data-home="v2"] .hv2-person { padding-left: 16px; border-left: 2px solid var(--hv2-copper); }
-main[data-home="v2"] .hv2-person h4 { margin: 0 0 3px; color: var(--hv2-text); font-size: 17px; font-weight: 700; line-height: 1.3; }
+/* The people: no portraits (#124), but the block's weight: the family line as a statement, the two names beside it */
+main[data-home="v2"] .hv2-people { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 1fr); gap: 24px clamp(28px, 4vw, 64px); align-items: start; margin-top: clamp(40px, 5vw, 64px); padding-top: 32px; border-top: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-people .hv2-kicker { grid-column: 1 / -1; margin: 0; }
+main[data-home="v2"] .hv2-people-note { margin: 0; color: var(--hv2-text); font: 400 clamp(24px, 2.3vw, 32px)/1.16 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; text-wrap: balance; }
+main[data-home="v2"] .hv2-person { padding-left: 20px; border-left: 2px solid var(--hv2-copper); }
+main[data-home="v2"] .hv2-person h4 { margin: 0 0 8px; color: var(--hv2-text); font: 400 clamp(21px, 1.75vw, 25px)/1.14 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.015em; }
 main[data-home="v2"] .hv2-person p { margin: 0; color: var(--hv2-text-2); font-size: 15px; line-height: 1.5; }
+/* What the pictures are not, and the way on, on one line closing the block */
+main[data-home="v2"] .hv2-signature-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px 32px; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-signature-foot .hv2-boundary { margin: 0; }
+
+/* The scope as three frames of the real object (ScopeCells `frames`; the frame's own cell a scheme, stamped so): the
+   picture is the cell. Toned down at rest so the copper stays the block's one colour, whole on a pointer. */
+main[data-home="v2"] .hv2-scope-chips[data-frames] { gap: 12px; margin-top: 16px; border: 0; }
+main[data-home="v2"] .hv2-scope-chips[data-frames] li { padding: 0; overflow: hidden; border-radius: 4px; }
+main[data-home="v2"] .hv2-scope-chips[data-frames] li + li { border-left: 0; }
+main[data-home="v2"] .hv2-scope-chips[data-frames] .hv2-scope-cell { display: block; aspect-ratio: 4 / 3; padding: 0; overflow: hidden; color: #f5f2eb; background: #0d0f0e; isolation: isolate; }
+main[data-home="v2"] .hv2-scope-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.78) brightness(.92) contrast(1.04); transition: filter var(--hv2-for-frame-in) var(--ease-standard); }
+main[data-home="v2"] .hv2-scope-cell:is(:hover, :focus-visible, [aria-pressed="true"]) .hv2-scope-frame { filter: none; }
+main[data-home="v2"] .hv2-scope-chips[data-frames] .hv2-scope-cell::after { content: ''; position: absolute; z-index: 1; inset: 0; background: linear-gradient(180deg, rgba(10, 11, 10, .28) 0, transparent 30%, transparent 52%, rgba(10, 11, 10, .82) 100%); box-shadow: inset 0 0 0 1px rgba(245, 242, 235, .1); pointer-events: none; }
+main[data-home="v2"] .hv2-scope-chips[data-frames] .hv2-scope-cell[aria-pressed="true"]::after { box-shadow: inset 0 0 0 1px rgba(245, 242, 235, .1), inset 0 -3px 0 var(--hv2-copper); }
+main[data-home="v2"] .hv2-scope-kind { position: absolute; z-index: 2; top: 14px; left: 14px; padding: 5px 8px 4px; background: rgba(13, 15, 14, .78); border: 1px solid rgba(245, 242, 235, .24); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); }
+main[data-home="v2"] .hv2-scope-kind[data-kind="Схема"] { color: var(--hv2-copper-text); border-color: color-mix(in srgb, var(--hv2-copper) 70%, transparent); }
+main[data-home="v2"] .hv2-scope-chips[data-frames] .hv2-scope-hint { z-index: 2; top: 18px; right: 14px; }
+main[data-home="v2"] .hv2-scope-chips[data-frames] .hv2-scope-name { position: absolute; z-index: 2; left: 48px; right: 14px; bottom: 18px; font: 400 clamp(22px, 2.1vw, 30px)/1.1 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; text-transform: none; }
+/* the number beside the name, not in it: the name is what the page says the work is */
+main[data-home="v2"] .hv2-scope-number { position: absolute; z-index: 2; left: 20px; bottom: 23px; color: var(--hv2-copper-text); font: 700 12px/1 var(--font-condensed), sans-serif; font-style: normal; letter-spacing: .1em; }
+@media (prefers-reduced-motion: no-preference) {
+  /* armed only after hydration (ScopeCells), so the server's markup is the finished row */
+  main[data-home="v2"] .hv2-scope-chips[data-frames][data-draw="armed"] li { opacity: 0; transform: translateY(24px); }
+  main[data-home="v2"] .hv2-scope-chips[data-frames][data-draw="on"] li { transition: opacity var(--hv2-for-frame-in) ease, transform var(--hv2-for-frame-in) var(--ease-premium); transition-delay: calc(var(--i, 0) * var(--hv2-at-frame-step)); }
+  /* the picture settles as the page moves past it, on the compositor; a browser without view() keeps it still */
+  @supports (animation-timeline: view()) {
+    main[data-home="v2"] .hv2-scope-frame { animation: hv2-frame-settle linear both; animation-timeline: view(); animation-range: entry 0% cover 70%; }
+  }
+}
+@keyframes hv2-frame-settle { from { transform: scale(1.12); } to { transform: scale(1.02); } }
+
+/* The frame tour (HomeFrameTour.tsx): /angary's drawing, first in the block. The field is the sheet's dark one in both
+   themes, as on the configurator's sheet; the inks are its Dark roles, and what FrameTour.tsx's picture takes from
+   configurator-sheet.css, not loaded here, is restated below. The slot holds its room until the code arrives. */
+/* The slot's height is exact, not a guess: everything under it — the sheet, its pinned tests, a deep link to it — stands
+   where it will stay from hydration on, before the tour's code arrives. The picture is its width × 440 / 720 plus the
+   fixed rows round it; the side holds fixed rows too. Change a row here and in the formula together. */
+main[data-home="v2"] .hv2-frame-room {
+  --hv2-frame-legend: 41px; --hv2-frame-stamp: 38px; --hv2-frame-top: 25px; --hv2-frame-side: 340px; --hv2-frame-gap: 40px;
+  margin-top: 32px; container-type: inline-size;
+}
+main[data-home="v2"] .hv2-frame-slot[data-armed] { height: calc((100cqi - var(--hv2-frame-side) - var(--hv2-frame-gap)) * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px); }
+main[data-home="v2"] .hv2-frame-tour {
+  display: grid; grid-template-columns: minmax(0, 1fr) var(--hv2-frame-side); gap: var(--hv2-frame-gap); align-items: stretch; height: 100%; padding: 0;
+  color-scheme: dark;
+  --color-surface-alt: #111312; --color-text: var(--color-dark-text); --color-text-secondary: var(--color-dark-text-secondary); --color-text-muted: var(--color-dark-text-muted);
+  --color-accent-strong: var(--color-accent-on-dark); --color-border-strong: #6A6C66;
+}
+main[data-home="v2"] .hv2-frame-tour.ft { --ft-snow: var(--hv2-load); --ft-wind: var(--hv2-wind); }
+main[data-home="v2"] .hv2-frame-tour .ft-legend { box-sizing: border-box; height: var(--hv2-frame-legend); overflow: hidden; }
+main[data-home="v2"] .hv2-frame-picture { position: relative; display: flex; flex-direction: column; box-sizing: border-box; min-width: 0; padding-top: var(--hv2-frame-top); overflow: hidden; background: #111312; border: 1px solid var(--hv2-line-strong); border-radius: 4px; }
+main[data-home="v2"] .hv2-frame-tour .ft-window { width: 100%; }
+main[data-home="v2"] .hv2-frame-tour:not([data-step="1"]) [data-part="1"] :is(.ft-bubble, .ft-axis) { display: none; }
+main[data-home="v2"] .hv2-frame-tour:not([data-touring]) .dn-progress { display: none; }
+main[data-home="v2"] .hv2-frame-tour.ft[data-step="2"] :is(.ft-back, .ft-opening) { opacity: .28; }
+main[data-home="v2"] .hv2-frame-tour.ft[data-step="2"] :is(.ft-footing, .ft-footing-top, .ft-slab, .ft-ground) { opacity: .35; }
+main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-member { stroke: var(--color-text); stroke-width: calc(2.6px * var(--ft-k)); }
+main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-brace { stroke: var(--color-accent); stroke-width: calc(1.4px * var(--ft-k)); }
+main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-brace-far { stroke: var(--color-accent); opacity: .5; }
+main[data-home="v2"] .hv2-frame-tour:not([data-step]) :is(.ft-back, .ft-opening) { opacity: .55; }
+main[data-home="v2"] .hv2-frame-tour:not([data-step]) .ft-thin { opacity: .6; }
+main[data-home="v2"] .hv2-frame-stamp { display: flex; flex: none; justify-content: space-between; align-items: center; gap: 16px; box-sizing: border-box; height: var(--hv2-frame-stamp); margin: 0; padding: 0 16px; color: var(--hv2-text-2); border-top: 1px solid var(--hv2-line); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.2 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }
+main[data-home="v2"] .hv2-frame-side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+main[data-home="v2"] .hv2-frame-steps { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--hv2-line); }
+main[data-home="v2"] .hv2-frame-steps button { display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 100%; height: 48px; padding: 0; color: var(--hv2-text-2); text-align: left; background: none; border: 0; border-bottom: 1px solid var(--hv2-line); font: 400 18px/1.2 var(--font-display), var(--font-manrope), sans-serif; cursor: pointer; transition: color var(--motion-micro) var(--ease-standard); }
+main[data-home="v2"] .hv2-frame-steps i { color: var(--hv2-text-3); font: 700 12px/1 var(--font-condensed), sans-serif; font-style: normal; letter-spacing: .1em; }
+main[data-home="v2"] .hv2-frame-steps button[aria-pressed="true"] { color: var(--hv2-text); box-shadow: inset 0 -2px 0 var(--hv2-copper); }
+main[data-home="v2"] .hv2-frame-steps button[aria-pressed="true"] i { color: var(--hv2-copper-text); }
+@media (hover: hover) { main[data-home="v2"] .hv2-frame-steps button:hover { color: var(--hv2-text); } }
+main[data-home="v2"] .hv2-frame-text { flex: none; height: 6lh; overflow-y: auto; color: var(--hv2-text-2); font-size: 15px; line-height: 1.55; }
+main[data-home="v2"] .hv2-frame-text p { margin: 0; }
+main[data-home="v2"] .hv2-frame-side > .dn-control, main[data-home="v2"] .hv2-frame-side > :not(ol, .hv2-frame-text) { flex: none; min-height: 44px; }
+main[data-home="v2"] .hv2-frame-brief { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 20px; }
+main[data-home="v2"] .hv2-frame-brief a { margin-left: auto; }
+
 /* (an arrow link: .link-arrow; copper text on the charcoal is the light copper) */
 main[data-home="v2"] .hv2-people-link { --link-ink: var(--hv2-text); --color-accent-strong: var(--hv2-copper-text); align-self: flex-start; white-space: nowrap; }
 
@@ -1080,8 +1197,13 @@ main[data-home="v2"] .hv2-people-link { --link-ink: var(--hv2-text); --color-acc
 
 @media (max-width: 1050px) {
   main[data-home="v2"] .hv2-signature-head { grid-template-columns: 1fr; }
-  main[data-home="v2"] .hv2-proof-facts { grid-template-columns: 1fr; }
-  main[data-home="v2"] .hv2-people { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--hv2-line); }
+  main[data-home="v2"] .hv2-evidence-lead { grid-template-columns: 1fr; gap: 14px; }
+  main[data-home="v2"] .hv2-people { grid-template-columns: 1fr 1fr; }
+  main[data-home="v2"] .hv2-people-note { grid-column: 1 / -1; }
+  main[data-home="v2"] .hv2-frame-tour { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: 28px; }
+  /* one above the other: the picture, then the five rows, the control and the words (5 lines here) */
+  main[data-home="v2"] .hv2-frame-slot[data-armed] { height: calc(100cqi * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px + 28px + 246px + 18px + 44px + 18px + 116.25px); }
+  main[data-home="v2"] .hv2-frame-text { height: 5lh; }
 }
 
 /* ================================ Phone ================================ */
@@ -1090,6 +1212,28 @@ main[data-home="v2"] .hv2-people-link { --link-ink: var(--hv2-text); --color-acc
   main[data-home="v2"] .hv2-signature-head { gap: 16px; padding-bottom: 24px; }
   main[data-home="v2"] .hv2-signature-head h2 { font-size: var(--type-h2); line-height: 1.02; }
   main[data-home="v2"] .hv2-signature-support { padding-left: 16px; }
+  main[data-home="v2"] .hv2-frame-room { --hv2-frame-legend: 72px; --hv2-frame-stamp: 70px; --hv2-frame-top: 22px; margin-top: 24px; }
+  main[data-home="v2"] .hv2-frame-slot[data-armed] { height: calc(100cqi * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px + 18px + 148px + 18px + 44px + 18px + 162.75px); }
+  main[data-home="v2"] .hv2-frame-tour { --ft-k: 1.55; --ft-t: 1.5; gap: 18px; }
+  main[data-home="v2"] .hv2-frame-stamp { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding: 0 12px; }
+  /* the steps in one row of short numbers would hide their names: two columns of names, the text under them */
+  main[data-home="v2"] .hv2-frame-steps { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+  main[data-home="v2"] .hv2-frame-steps button { gap: 8px; font-size: 16px; line-height: 1.15; }
+  main[data-home="v2"] .hv2-frame-text { height: 7lh; }
+  main[data-home="v2"] .hv2-frame-brief a { margin-left: 0; }
+  main[data-home="v2"] .hv2-evidence-lead > p:not(.hv2-kicker) { padding-left: 16px; }
+  main[data-home="v2"] .hv2-scope-chips[data-frames] { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  main[data-home="v2"] .hv2-scope-chips[data-frames] li:first-child { grid-column: 1 / -1; }
+  main[data-home="v2"] .hv2-scope-chips[data-frames] li:first-child .hv2-scope-cell { aspect-ratio: 16 / 10; }
+  main[data-home="v2"] .hv2-scope-chips[data-frames] li:not(:first-child) .hv2-scope-cell { aspect-ratio: 1; }
+  main[data-home="v2"] .hv2-scope-chips[data-frames] .hv2-scope-name { left: 12px; right: 8px; bottom: 34px; font-size: 19px; }
+  main[data-home="v2"] .hv2-scope-number { left: 12px; bottom: 14px; }
+  main[data-home="v2"] .hv2-scope-chips[data-frames] li:first-child .hv2-scope-name { left: 44px; bottom: 14px; font-size: 24px; }
+  main[data-home="v2"] .hv2-scope-chips[data-frames] li:first-child .hv2-scope-number { left: 16px; bottom: 19px; }
+  main[data-home="v2"] .hv2-scope-kind { top: 10px; left: 10px; }
+  main[data-home="v2"] .hv2-scope-chips[data-frames] .hv2-scope-hint { display: none; }
+  main[data-home="v2"] .hv2-people { grid-template-columns: 1fr; margin-top: 40px; padding-top: 24px; }
+  main[data-home="v2"] .hv2-signature-foot { flex-direction: column; align-items: flex-start; margin-top: 32px; }
   main[data-home="v2"] .hv2-proof { margin-top: 26px; }
   /* The sheet keeps the page's gutter (the photo used to run edge to edge as a bare picture) */
   main[data-home="v2"] .hv2-contour .sheet-cell-note b { font-size: 14.5px; }

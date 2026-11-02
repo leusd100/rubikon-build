@@ -38,8 +38,12 @@ const SCOPE_PARTS: Record<string, string> = {
 /** A part's lines one by one: a dash pattern starts over on every line, so the light runs along each of them */
 const linesOf = (path: string) => path.split('M').filter(Boolean).map((line) => `M${line}`);
 
+/** A cell's picture instead of its outline: a frame of the real photo or, for the part no photo shows, of the scheme.
+ *  `kind` says which, on the picture itself: an illustration explains, a photo proves */
+export type ScopeFrame = { src: string; srcSet: string; kind: 'Фото' | 'Схема' };
+
 /** `linked`: on HOME, where the proof's scheme stands above — elsewhere (/angary) the cells only name the scope */
-export function ScopeCells({ items, linked = false }: Readonly<{ items: readonly string[]; linked?: boolean }>) {
+export function ScopeCells({ items, linked = false, frames }: Readonly<{ items: readonly string[]; linked?: boolean; frames?: Readonly<Record<string, ScopeFrame>> }>) {
   const listRef = useRef<HTMLUListElement>(null);
   // The cell pressed, which keeps its part lit
   const [held, setHeld] = useState<ScopePart | null>(null);
@@ -89,10 +93,17 @@ export function ScopeCells({ items, linked = false }: Readonly<{ items: readonly
   }, [drawnParts]);
 
   return (
-    <ul className="hv2-scope-chips" aria-label="Роботи на цьому об’єкті" ref={listRef}>
+    <ul className="hv2-scope-chips" aria-label="Роботи на цьому об’єкті" ref={listRef} data-frames={frames ? '' : undefined}>
       {items.map((item, index) => {
         const part = linked ? SCOPE_PART_OF[item] : undefined;
-        const glyph = SCOPE_PARTS[item] && (
+        const frame = frames?.[item];
+        const glyph = frame ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- as ResponsiveImage: next/image resizing is a no-op in this build */}
+            <img className="hv2-scope-frame" src={frame.src} srcSet={frame.srcSet} sizes="(max-width: 760px) 92vw, 33vw" alt="" width={880} height={660} loading="lazy" decoding="async" />
+            <span className="hv2-scope-kind" data-kind={frame.kind}>{frame.kind}</span>
+          </>
+        ) : SCOPE_PARTS[item] && (
           <svg className="hv2-scope-glyph" viewBox="0 0 92 72" aria-hidden="true" focusable="false">
             <path className="hv2-scope-outline" d={SCOPE_OUTLINE} />
             <path className="hv2-scope-part" d={SCOPE_PARTS[item]} pathLength={1} />
@@ -115,6 +126,7 @@ export function ScopeCells({ items, linked = false }: Readonly<{ items: readonly
                 onClick={() => press(part)}
               >
                 {glyph}
+                {frame && <i className="hv2-scope-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</i>}
                 <span className="hv2-scope-name">{item}</span>
                 <span className="hv2-scope-hint" aria-hidden="true"><Arrow to="up" /> на схемі</span>
                 <span className="sr-only"> — показати на схемі вище</span>
