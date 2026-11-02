@@ -50,19 +50,19 @@ const render = (ink, copper) => {
     for (let i = 0; i < 130; i++) { const a = r() * 6.28, q = r() * r() * 16, l = 3 + r() * 9; s.line(ox + Math.cos(a) * q, oy + Math.sin(a) * q, ox + Math.cos(a) * (q + l), oy + Math.sin(a) * (q + l), 1, ink, .9); }
   };
 
-  // A section through a foundation: the bucket, the formwork with its brace, the stirrups of the cage, and the concrete coming up
+  // A section through a foundation: the bucket, the formwork, the stirrups of the cage, and the concrete coming up
   // around them. The stream itself is live (liveScenes.ts): with `stream` false this is the picture under it
   const pour = (stream) => (s) => {
-    const r = rng(11), sx = 470, left = 196, right = 744, bottom = 420, level = (x) => 214 + Math.sin(x * .021) * 3 + Math.exp(-((x - sx) ** 2) / 1500) * -22;
+    const r = rng(11), sx = 470, left = 222, right = 744, bottom = 420, level = (x) => 214 + Math.sin(x * .021) * 3 + Math.exp(-((x - sx) ** 2) / 1500) * -22;
     if (stream) for (let i = 0; i < 300; i++) { const y = 78 + r() * (level(sx) - 78); stone(s, r, sx + gauss(r) * 9, y, 1.1 + r() * 2.3, ink, .55 + r() * .4); }
     for (let i = 0; i < 1500; i++) {
       const x = left + r() * (right - left), lv = level(x), d = Math.pow(r(), 1.5), y = lv + d * (bottom - lv), size = .8 + r() * r() * 4.6;
       stone(s, r, x, y, size, r() < .03 ? copper : ink, (.82 - d * .62) * (.5 + r() * .5));
     }
-    const cage = [240, 365, 490, 615].map((x) => `<rect x="${x}" y="256" width="74" height="112" rx="5"/>`).join('');
+    const cage = [256, 376, 496, 616].map((x) => `<rect x="${x}" y="256" width="74" height="112" rx="5"/>`).join('');
     s.extra.push(`<path fill="${ink}" fill-opacity=".92" d="M405-6H535V22L492 66V78H448V66L405 22Z"/><path fill="${copper}" d="M448 70h44v8h-44z"/>`
-      + `<path fill="${ink}" fill-opacity=".86" d="M178 170h14v240h-14zM748 170h14v240h-14z"/><path stroke="${ink}" stroke-opacity=".6" stroke-width="3" d="M178 240L150 330H178"/>`
-      + `<g stroke="${copper}" stroke-width="1.7">${cage}<path d="M212 268H728M212 356H728"/></g>`);
+      + `<path fill="${ink}" fill-opacity=".86" d="M204 170h14v240h-14zM748 170h14v240h-14z"/>`
+      + `<g stroke="${copper}" stroke-width="1.7">${cage}<path d="M236 268H728M236 356H728"/></g>`);
   };
 
   const rain = (s) => {
