@@ -62,7 +62,8 @@ export function LiveScene() {
         if (scene.still) block.style.setProperty('--scene', `var(${scene.still})`);
         last = performance.now();
         frame = requestAnimationFrame(tick);
-      }, { rootMargin: '0px' });
+      // a block right after the hero starts exactly at the fold, and touching the edge counts as in view
+      }, { rootMargin: '0px 0px -2px 0px' });
       observer.observe(canvas);
       stop = () => {
         observer.disconnect();
