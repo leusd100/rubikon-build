@@ -23,7 +23,7 @@ async function open(page: Page, path: string, width: number, height = 900) {
 const stack = (page: Page) => page.evaluate(() => {
   const sheets = [...document.querySelectorAll('main > section')].map((section) => {
     const box = section.getBoundingClientRect(), style = getComputedStyle(section);
-    return { top: box.top + scrollY, bottom: box.bottom + scrollY, radius: parseFloat(style.borderTopLeftRadius), filled: style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' };
+    return { band: section.id === 'vidpovidalnist', top: box.top + scrollY, bottom: box.bottom + scrollY, radius: parseFloat(style.borderTopLeftRadius), filled: style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' };
   });
   const footer = document.querySelector('footer')!, box = footer.getBoundingClientRect();
   return {
@@ -42,6 +42,12 @@ test.describe('the blocks as a stack of sheets', () => {
         const { sheets, footerTop, footerRadius, overflow } = await stack(page);
         expect(sheets[0].radius, `${path}: the hero is not a sheet`).toBe(0);
         sheets.slice(1).forEach((sheet, index) => {
+          // the one approved band of two blocks on /yak-pratsyuiemo: it runs on, with no seam of its own
+          if (sheet.band) {
+            expect(sheet.radius, path).toBe(0);
+            expect(Math.abs(sheets[index].bottom - sheet.top), path).toBeLessThanOrEqual(1);
+            return;
+          }
           expect(sheet.radius, `${path} ${index + 1}`).toBe(radius);
           expect(Math.abs(sheets[index].bottom - radius - sheet.top), `${path} ${index + 1}`).toBeLessThanOrEqual(1);
           expect(sheet.filled, `${path} ${index + 1}: a corner never shows a hole`).toBe(true);
