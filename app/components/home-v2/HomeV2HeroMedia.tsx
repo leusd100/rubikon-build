@@ -1,17 +1,17 @@
 'use client';
 
-/* eslint-disable @next/next/no-img-element -- same reason as ResponsiveImage: next/image resizing is a no-op in
-   this vinext/Cloudflare deployment, so the static phone hero ships pre-generated WebP variants. */
 import { useSyncExternalStore } from 'react';
+import { homeMobileArtwork } from '../../data/mobileHeroArtwork';
+import { ThemedHeroPoster } from '../ThemedHeroPoster';
 import { DirectionHeroVideo } from '../DirectionHeroVideo';
 import { useViewportVariant } from '../../hooks/useViewportVariant';
 
 // HOME v2. Desktop and tablet keep the existing footage; ≤760 px gets one still instead of the 2.6 MB
-// phone montage. Owner selected creative direction C (24.10): linework becomes material.
+// phone montage. Owner selected B1 warm/dark architectural artwork (02.11).
 // This is an architectural concept, not a completed RUBIKON project. HOME keeps «Ілюстрація».
 const STATIC_QUERY = '(max-width: 760px)';
-export const HERO_STATIC_SRC = '/media/home-v2/concepts/hero-line-concept-v3-1024w.webp';
-const HERO_STATIC_SRCSET = '/media/home-v2/concepts/hero-line-concept-v3-480w.webp 480w, /media/home-v2/concepts/hero-line-concept-v3-768w.webp 768w, /media/home-v2/concepts/hero-line-concept-v3-1024w.webp 1024w';
+export const HERO_STATIC_SRC = '/media/mobile-b1/home-light-1024w.webp';
+const HERO_STATIC_SRCSET = '/media/mobile-b1/home-light-480w.webp 480w, /media/mobile-b1/home-light-768w.webp 768w, /media/mobile-b1/home-light-1024w.webp 1024w';
 
 // The desktop clips carry the hero's 0.85 slow-down in the file: re-timed and motion-interpolated to an even 30 fps
 // (scripts/retime-hero-clips.py), they play at 1.0 and every frame stays on screen for two 60 Hz refreshes. Slowed down
@@ -40,20 +40,7 @@ export function HomeV2HeroMedia() {
 
   if (isStatic) {
     return (
-      <img
-        className="direction-hero-poster hv2-hero-still"
-        src={HERO_STATIC_SRC}
-        srcSet={HERO_STATIC_SRCSET}
-        sizes="100vw"
-        width={1024}
-        height={1536}
-        alt=""
-        aria-hidden="true"
-        loading="eager"
-        fetchPriority="high"
-        decoding="async"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-      />
+      <ThemedHeroPoster artwork={homeMobileArtwork} className="direction-hero-poster hv2-hero-still" />
     );
   }
 
@@ -66,6 +53,7 @@ export function HomeV2HeroMedia() {
       mobilePoster={HERO_STATIC_SRC}
       mobilePosterSrcSet={HERO_STATIC_SRCSET}
       mobilePosterSizes="100vw"
+      mobileArtwork={homeMobileArtwork}
       clipDurationMs={2500}
       fadeDurationMs={800}
       loopSingleSource

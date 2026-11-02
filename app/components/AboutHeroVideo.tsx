@@ -1,18 +1,18 @@
 'use client';
 
-/* eslint-disable @next/next/no-img-element -- as HomeV2HeroMedia: next/image resizing is a no-op in this
-   vinext/Cloudflare deployment, so the phone still ships pre-generated WebP variants. */
 import { useSyncExternalStore } from 'react';
+import { aboutMobileArtwork } from '../data/mobileHeroArtwork';
+import { ThemedHeroPoster } from './ThemedHeroPoster';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { useViewportVariant, type ViewportVariant } from '../hooks/useViewportVariant';
 
-// Owner selected creative direction C, 24.10: a distinct line-to-material architectural concept.
+// Owner selected B1 warm/dark architectural artwork, 02.11.
 // It has no people and makes no claim to show a completed RUBIKON project; the existing
 // visible «Ілюстрація» label remains. Desktop/tablet footage and the 600px boundary are unchanged.
 // Owner preview is required before merging this selection.
 const STATIC_QUERY = '(max-width: 600px)';
-export const ABOUT_STATIC_SRC = '/media/about/about-line-concept-v3-1024w.webp';
-const ABOUT_STATIC_SRCSET = '/media/about/about-line-concept-v3-480w.webp 480w, /media/about/about-line-concept-v3-768w.webp 768w, /media/about/about-line-concept-v3-1024w.webp 1024w';
+export const ABOUT_STATIC_SRC = '/media/mobile-b1/about-light-1024w.webp';
+const ABOUT_STATIC_SRCSET = '/media/mobile-b1/about-light-480w.webp 480w, /media/mobile-b1/about-light-768w.webp 768w, /media/mobile-b1/about-light-1024w.webp 1024w';
 
 // As on HOME, the 0.85 slow-down is in the files (re-timed to an even 30 fps by scripts/retime-hero-clips.py), so the
 // desktop clips play at 1.0 (OD-S1 option B, 15.10)
@@ -54,20 +54,7 @@ export function AboutHeroVideo() {
 
   if (isStatic) {
     return (
-      <img
-        className="direction-hero-poster about-hero-still"
-        src={ABOUT_STATIC_SRC}
-        srcSet={ABOUT_STATIC_SRCSET}
-        sizes="100vw"
-        width={1024}
-        height={1536}
-        alt=""
-        aria-hidden="true"
-        loading="eager"
-        fetchPriority="high"
-        decoding="async"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-      />
+      <ThemedHeroPoster artwork={aboutMobileArtwork} className="direction-hero-poster about-hero-still" />
     );
   }
 
@@ -82,6 +69,7 @@ export function AboutHeroVideo() {
       mobilePoster={config.mobilePoster}
       mobilePosterSrcSet={isDesktop ? ABOUT_STATIC_SRCSET : undefined}
       mobilePosterSizes="100vw"
+      mobileArtwork={aboutMobileArtwork}
       mobilePosterMediaQuery="(max-width: 600px)"
       posterMediaQuery="(min-width: 601px)"
       clipDurationMs={isDesktop ? 3800 : 2500}

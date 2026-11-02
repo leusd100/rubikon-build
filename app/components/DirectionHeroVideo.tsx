@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { MobileHeroArtwork } from '../data/mobileHeroArtwork';
+import { ThemedHeroPoster } from './ThemedHeroPoster';
 import { useDeferredMedia } from '../hooks/useDeferredMedia';
 import { useHeroControlPlacement } from './useHeroControlPlacement';
 
@@ -8,6 +10,7 @@ type DirectionHeroVideoProps = {
   sources: string[];
   poster: string;
   mobilePoster: string;
+  mobileArtwork?: MobileHeroArtwork;
   mobilePosterSrcSet?: string;
   mobilePosterSizes?: string;
   mobilePosterMediaQuery?: string;
@@ -26,6 +29,7 @@ export function DirectionHeroVideo({
   sources,
   poster,
   mobilePoster,
+  mobileArtwork,
   mobilePosterSrcSet,
   mobilePosterSizes,
   mobilePosterMediaQuery = '(max-width: 760px)',
@@ -151,7 +155,7 @@ export function DirectionHeroVideo({
 
   return (
     <>
-      <link
+      {!mobileArtwork && <link
         rel="preload"
         as="image"
         href={mobilePoster}
@@ -159,7 +163,7 @@ export function DirectionHeroVideo({
         imageSizes={mobilePosterSizes}
         media={mobilePosterMediaQuery}
         fetchPriority="high"
-      />
+      />}
       <link
         rel="preload"
         as="image"
@@ -167,19 +171,28 @@ export function DirectionHeroVideo({
         media={posterMediaQuery}
         fetchPriority="high"
       />
-      <picture>
-        <source media={mobilePosterMediaQuery} srcSet={mobilePosterSrcSet ?? mobilePoster} sizes={mobilePosterSizes} />
-        <img
-          aria-hidden="true"
+      {mobileArtwork ? (
+        <ThemedHeroPoster
+          artwork={mobileArtwork}
+          media={mobilePosterMediaQuery}
+          fallback={poster}
           className={`direction-hero-poster${hasStartedPlayback && shouldAttachVideo ? ' is-hidden' : ''}`}
-          src={poster}
-          alt=""
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         />
-      </picture>
+      ) : (
+        <picture>
+          <source media={mobilePosterMediaQuery} srcSet={mobilePosterSrcSet ?? mobilePoster} sizes={mobilePosterSizes} />
+          <img
+            aria-hidden="true"
+            className={`direction-hero-poster${hasStartedPlayback && shouldAttachVideo ? ' is-hidden' : ''}`}
+            src={poster}
+            alt=""
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          />
+        </picture>
+      )}
       {/* The word names the next action and the name changes with it («Пауза відео» / «Відтворити відео»), so the
           button carries no aria-pressed; the icon beside it says the same */}
       {hasStartedPlayback && canUseVideo && shouldLoadMedia && (
