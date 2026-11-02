@@ -69,7 +69,7 @@ main[data-home="v2"] .hv2-directions .dsh[data-motion-state="on"] .dsh-sheet { a
 /* ---- On a phone (≤ 760 px): one large scheme sheet over an index of the five directions (DirectionsIndex; owner 21.10,
    B «Один аркуш + індекс»). It stands in for the image cards, which are not shown there (home-v2.css); hidden from 761 px,
    where the mosaic and the header's sheets are the band.
-   The sheet is the one link to the picked direction: its strip («Аркуш NN · Умовна схема»), the scheme, and its foot —
+   The sheet links to the picked direction: its strip («Аркуш NN · Умовна схема»), the scheme, and its foot —
    the direction's name and «Про напрям» with the site's arrow (an SVG in currentColor, never the ↗ character, which iOS
    draws as a blue emoji). Every drawing and every name stand in one grid cell and only the picked one is visible, so the
    sheet keeps one height whichever row is picked and nothing under it moves. A row only picks: 48 px, its number and
@@ -113,9 +113,17 @@ main[data-home="v2"] .hv2-directions .dxi { display: none; }
   }
 
   main[data-home="v2"] .hv2-directions .dxi-list { margin: 16px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border-strong); }
+  main[data-home="v2"] .hv2-directions .dxi-list li { display: flex; align-items: stretch; border-bottom: 1px solid var(--color-border); }
+  main[data-home="v2"] .hv2-directions .dxi-open {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 48px; padding: 0 8px;
+    color: var(--color-accent-strong); text-decoration: none;
+    font: 600 13px/1.2 var(--font-condensed), sans-serif; letter-spacing: .04em; text-transform: uppercase;
+  }
+  main[data-home="v2"] .hv2-directions .dxi-open svg { width: 18px; height: 18px; }
+  main[data-home="v2"] .hv2-directions .dxi-open:focus-visible { outline-offset: -4px; }
   main[data-home="v2"] .hv2-directions .dxi-row {
-    position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; width: 100%; min-height: 48px;
-    padding: 6px 0 6px 12px; color: var(--color-text); text-align: left; background: none; border: 0; border-bottom: 1px solid var(--color-border);
+    position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; flex: 1; min-width: 0; min-height: 48px;
+    padding: 6px 0 6px 12px; color: var(--color-text); text-align: left; background: none; border: 0;
     border-radius: 0; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
   main[data-home="v2"] .hv2-directions .dxi-row:focus-visible { outline-offset: -4px; box-shadow: none; } /* a full-width row: the inner ring */
@@ -137,3 +145,8 @@ main[data-home="v2"] .hv2-directions .dxi[data-active="pokrivelni-roboty"] .dxi-
 @keyframes dxi-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: no-preference) { main[data-home="v2"] .hv2-directions .dxi { --dxi-in: dxi-in 200ms ease; } }
 @media (prefers-reduced-motion: reduce) { main[data-home="v2"] .hv2-directions :is(.dxi-sheet, .dxi-more svg) { transition: none; } }
+
+@media (max-width: 360px) {
+  main[data-home="v2"] .hv2-directions .dxi-open { min-width: 44px; justify-content: center; padding: 0; }
+  main[data-home="v2"] .hv2-directions .dxi-open-label { display: none; }
+}

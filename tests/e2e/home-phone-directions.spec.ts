@@ -4,7 +4,7 @@ import { directions } from '../../app/data/directions';
 // HOME «П’ять напрямів» on a phone (≤ 760 px) — B «Один аркуш + індекс» (owner 21.10, after PDO-42 a's five mini sheets of
 // 20.10). One large scheme sheet over an index of the five directions, one action per control: a row only picks the
 // direction (its sheet takes the scheme, number and name; nothing scrolls, nothing under the sheet moves, the change is
-// read out), and the sheet is the one link to the picked direction's page, «Про напрям», with the site's SVG arrow — the
+// read out), and the sheet and the active row link to the picked direction's page, with the site's SVG arrow — the
 // bare ↗ of #219 became a blue emoji on the owner's iPhone. The first direction is picked from the first paint. The
 // intro's second sentence speaks of the card images, so it is not shown where there are none; its words are unchanged.
 // From 761 px nothing changes: the mosaic, its labelled illustrations and the wide-screen sheets.
@@ -66,7 +66,7 @@ test.describe('HOME directions on a phone: one sheet and an index (B)', () => {
   test.skip(({ isMobile }) => !isMobile, 'a phone check; the mobile project runs it');
 
   for (const viewport of PHONES) {
-    test(`${viewport.width}×${viewport.height}: one sheet link and five pick buttons, the first picked, no rail and no sideways scroll`, async ({ page }) => {
+    test(`${viewport.width}×${viewport.height}: a sheet link, an active-row link and five pick buttons, the first picked, no rail and no sideways scroll`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await open(page);
       const section = band(page);
@@ -79,11 +79,11 @@ test.describe('HOME directions on a phone: one sheet and an index (B)', () => {
       // each named by the direction alone: its number is a mark for the eye
       for (const { cardTitle } of directions) await expect(list.getByRole('button', { name: cardTitle, exact: true }), cardTitle).toHaveCount(1);
       expect(await rows(page).evaluateAll((buttons) => buttons.map((b) => b.getAttribute('aria-pressed')))).toEqual(directions.map((_, i) => String(i === 0)));
-      await expect(list.getByRole('link')).toHaveCount(0);
+      await expect(list.getByRole('link')).toHaveCount(1);
 
-      // The sheet: the one link of the band, to the first direction, «Аркуш 01 · Умовна схема», its name and «Про напрям»
+      // The sheet and active row both link to the selected direction; the sheet shows to the first direction, «Аркуш 01 · Умовна схема», its name and «Про напрям»
       const [first] = directions;
-      await expect(section.getByRole('link')).toHaveCount(1);
+      await expect(section.getByRole('link')).toHaveCount(2);
       await expect(section.getByRole('link', { name: `Про напрям: ${first.cardTitle}`, exact: true })).toHaveAttribute('href', first.href);
       const state = await shown(page);
       expect(state.strip).toBe(`Аркуш ${first.number} · Умовна схема`);
@@ -104,10 +104,10 @@ test.describe('HOME directions on a phone: one sheet and an index (B)', () => {
         .map((el) => el.className))).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
-      // Targets: every row full width and at least 44 px tall, and so is «Про напрям» inside the sheet
+      // Targets: every pick button leaves space for the separate active link and at least 44 px tall, and so is «Про напрям» inside the sheet
       for (const target of await rows(page).evaluateAll((buttons) => buttons.map((b) => { const r = b.getBoundingClientRect(); return { width: r.width, height: r.height }; }))) {
         expect(target.height).toBeGreaterThanOrEqual(44);
-        expect(target.width).toBeGreaterThanOrEqual(viewport.width * 0.8);
+        expect(target.width).toBeGreaterThanOrEqual(viewport.width * 0.55);
       }
       expect((await sheet(page).locator('.dxi-more').boundingBox())!.height).toBeGreaterThanOrEqual(44);
     });
@@ -126,6 +126,7 @@ test.describe('HOME directions on a phone: one sheet and an index (B)', () => {
         const row = rows(page).nth(index);
         await pick(page, row, direction.href);
         const after = await shown(page);
+        await expect(band(page).locator('.dxi-open')).toHaveAttribute('href', direction.href);
         expect(after.label).toBe(`Про напрям: ${direction.cardTitle}`);
         expect(after.strip).toBe(`Аркуш ${direction.number} · Умовна схема`);
         expect(after.names).toEqual([direction.cardTitle]);
@@ -144,23 +145,23 @@ test.describe('HOME directions on a phone: one sheet and an index (B)', () => {
     });
   }
 
-  test('390: Tab reaches the sheet, then the five rows in order, each with a visible focus ring; Enter and Space pick, Enter on the sheet opens the picked page', async ({ page }) => {
+  test('390: Tab reaches the sheet, rows and active link with visible focus; Enter and Space pick, the active link opens the page', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page);
     // Start from the intro (not focusable itself), so the next Tab is the band's first stop
     await page.locator('#directions .section-header-support').evaluate((el) => { el.setAttribute('tabindex', '-1'); (el as HTMLElement).focus(); });
     const stops: string[] = [];
-    for (let i = 0; i <= directions.length; i += 1) {
+    for (let i = 0; i <= directions.length + 1; i += 1) {
       await page.keyboard.press('Tab');
       stops.push(await page.evaluate(() => {
         const el = document.activeElement as HTMLElement;
         const style = getComputedStyle(el);
         const ring = style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2;
-        const what = el.matches('a.dxi-sheet') ? 'sheet' : el.matches('#directions ul button') ? `row ${el.textContent?.trim()}` : 'other';
+        const what = el.matches('a.dxi-sheet') ? 'sheet' : el.matches('a.dxi-open') ? 'open' : el.matches('#directions ul button') ? `row ${el.textContent?.trim()}` : 'other';
         return `${what} ${ring ? 'ring' : 'no-ring'}`;
       }));
     }
-    expect(stops).toEqual(['sheet ring', ...directions.map(({ number, cardTitle }) => `row ${number}${cardTitle} ring`)]);
+    expect(stops).toEqual(['sheet ring', `row ${directions[0].number}${directions[0].cardTitle} ring`, 'open ring', ...directions.slice(1).map(({ number, cardTitle }) => `row ${number}${cardTitle} ring`)]);
     await page.keyboard.press('Tab');
     expect(await page.evaluate(() => Boolean(document.activeElement?.closest('#directions .dxi')))).toBe(false);
 
@@ -175,8 +176,8 @@ test.describe('HOME directions on a phone: one sheet and an index (B)', () => {
     await page.keyboard.press('Space');
     await expect(sheet(page)).toHaveAttribute('href', directions[2].href);
     await expect(rows(page).nth(2)).toHaveAttribute('aria-pressed', 'true');
-    // Enter on the sheet opens the picked direction
-    await sheet(page).focus();
+    // Enter on the active row's link opens the picked direction
+    await band(page).getByRole('link', { name: `Відкрити напрям: ${directions[2].cardTitle}`, exact: true }).focus();
     await page.keyboard.press('Enter');
     await page.waitForURL(`**${directions[2].href}`);
   });

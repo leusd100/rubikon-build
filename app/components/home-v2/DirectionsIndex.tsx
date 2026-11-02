@@ -9,7 +9,7 @@ export type DirectionsIndexItem = Readonly<{ id: string; number: string; href: s
  * HOME «П’ять напрямів» on a phone (≤ 760 px; owner 21.10, B «Один аркуш + індекс»): one large scheme sheet over an index
  * of the five directions. One action per control: a row only picks the direction — its sheet takes the scheme, number and
  * name, nothing scrolls and nothing moves (every drawing and every name stand in one grid cell, so the sheet is always as
- * tall as its tallest state) — and the sheet is the one link to the picked direction's page, «Про напрям». A row says it
+ * tall as its tallest state) — and the sheet links to the picked direction's page, «Про напрям». The active row also has a separate link. A row says it
  * is the picked one by its state (aria-pressed), a copper bar beside its number and its copper words, never by colour
  * alone; the change is read out in one polite sentence. The first direction is picked from the first paint, so without
  * JavaScript the sheet still links to it and the five names are still on the page.
@@ -52,6 +52,11 @@ export function DirectionsIndex({ items, children }: Readonly<{ items: readonly 
               <span className="dxi-num" aria-hidden="true">{item.number}</span>
               <span className="dxi-row-name">{item.name}</span>
             </button>
+            {index === active && (
+              <a className="dxi-open" href={item.href} aria-label={`Відкрити напрям: ${item.name}`}>
+                <span className="dxi-open-label">Відкрити</span> <ArrowRight aria-hidden="true" />
+              </a>
+            )}
           </li>
         ))}
       </ul>

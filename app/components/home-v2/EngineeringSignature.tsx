@@ -90,14 +90,18 @@ export function EngineeringSignature({ proof }: Readonly<{ proof: HomeProofCase 
         <header className="hv2-signature-head">
           <p className="hv2-kicker"><span aria-hidden="true" /> Інженерний погляд</p>
           <h2 id="hv2-signature-title">{keepHeadingWords('Як ми дивимося на об’єкт')}</h2>
-          <p className="hv2-signature-support">
-            Пояснюємо об’єкт через його конструкцію — на фото, кресленні чи простій схемі. Так легше разом визначити,
-            які роботи потрібні.
-          </p>
+          <div className="hv2-signature-support">
+            <p>
+              Пояснюємо об’єкт через його конструкцію — на фото, кресленні чи простій схемі. Так легше разом визначити,
+              які роботи потрібні.
+            </p>
+            {proof && <a className="link-arrow hv2-proof-shortcut" href="#real-object">Фото реального ангара <Arrow to="down" /></a>}
+          </div>
         </header>
 
         {/* The tour is an enhancement like the sheet: if its code fails, the block simply opens on the real object */}
         <div className="hv2-frame-room">
+          <p className="hv2-kicker hv2-frame-label">Приклад каркаса</p>
           <IslandBoundary name="home-frame-tour" fallback={null}>
             <FrameTourIsland />
           </IslandBoundary>
