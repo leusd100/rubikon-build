@@ -106,10 +106,10 @@ function rain(): Scene {
 
 /** A frame travels out of the depth of the bays towards the visitor */
 function frames(): Scene {
-  const vx = 420, vy = 236, loop = 6;
+  const vx = 468, vy = 226, loop = 6;
   return {
     step(c, _dt, time, { copper }) {
-      const t = (time / loop) % 1, k = Math.pow(.74, 6 * (1 - t)), w = 620 * k, h = 300 * k, e = 118 * k, width = 20 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = top + e;
+      const t = (time / loop) % 1, k = Math.pow(.74, 6 * (1 - t)), w = 570 * k, h = 276 * k, e = 108 * k, width = 18 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = top + e;
       c.globalAlpha = Math.sin(t * Math.PI) * .75;
       c.fillStyle = copper;
       c.beginPath();
