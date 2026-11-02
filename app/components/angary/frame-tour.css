@@ -70,7 +70,7 @@
 .ft-dim { stroke: var(--color-text-muted); stroke-width: calc(.75px * var(--ft-k)); }
 /* coordinate axes: dash-dot, a bubble at the end past the dimension lines; letters and figures only */
 .ft-axis { stroke: var(--color-text-muted); stroke-width: calc(.7px * var(--ft-k)); stroke-dasharray: 14 4 1 4; }
-.ft-bubble { transform: scale(var(--ft-k)); transform-box: fill-box; transform-origin: center; transition: opacity var(--ft-for-step-light) ease; }
+.ft-bubble { transform: scale(min(var(--ft-u, 1), var(--ft-k))); transform-box: fill-box; transform-origin: center; transition: opacity var(--ft-for-step-light) ease; }
 .ft-bubble circle { fill: var(--color-surface-alt); stroke: var(--color-text-muted); stroke-width: .8px; transition: stroke var(--ft-for-step-light) var(--ease-standard); }
 /* 14 px in the 22 px circle (12.5 before): the letters and figures as large as the circle takes, so a phone's read
    at ~10 px (04.10) */
