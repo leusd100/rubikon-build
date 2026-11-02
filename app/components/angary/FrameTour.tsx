@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, type CSSProperties, type RefObject } from 'react';
+import { useMemo, useSyncExternalStore, type CSSProperties, type RefObject } from 'react';
 import type { StageSize, TourFocus } from '../useDrawingTour';
 import { useHangarInquiryContext } from '../configurator/HangarInquiryContext';
 import { deriveDomainModel, sizesProvenance, type HangarDomainModel } from '../../lib/configurator/domainModel';
@@ -68,6 +68,14 @@ const VALUE_CAP = VALUE * 0.72;
  *  the axes, then L — this far apart on the sheet, just the first row's figures between them (02.11, owner: the rows stood
  *  too far apart once the figures were set at a constant screen size, 13 px; on a phone 26 units are those 13 px) */
 const ROW_GAP = 26;
+/** …and on a computer's sheet, where a unit is more than a screen pixel and the figures between the rows need less of them */
+const ROW_GAP_WIDE = 17;
+const WIDE_SHEET = '(min-width: 1200px)';
+const watchWideSheet = (changed: () => void) => {
+  const query = window.matchMedia(WIDE_SHEET);
+  query.addEventListener('change', changed);
+  return () => query.removeEventListener('change', changed);
+};
 /** A dimension's words along its line, on its outer side: the letter (italic), its value and an answer after it */
 type DimLabel = {
   key: string; x: number; y: number; angle: number; side: 'below' | 'above'; letter?: string; value?: string; note?: string;
@@ -155,10 +163,10 @@ function dimLabel(key: string, from: Pt, to: Pt, side: DimLabel['side'], words: 
  * винести за межі ангару»): «· без колон» after L for their own «Так, без колон» — not for «Колони можна» on a portal
  * frame drawn without them — and with a centre row the spans' row, the answer's part (`answerDim`) in copper.
  */
-function spanDimensions(sheet: { xy: (point: P3) => Pt; k: number }, W: number, centre: boolean, answer: HangarDomainModel['internalSupports'], valueL: string) {
+function spanDimensions(sheet: { xy: (point: P3) => Pt; k: number }, W: number, centre: boolean, answer: HangarDomainModel['internalSupports'], valueL: string, rowGap: number) {
   const { xy, k } = sheet;
   const down = (point: P3, by: number): Pt => { const [x, y] = xy(point); return [x, y + by]; };
-  const rowL = centre ? ROW_GAP : 0;
+  const rowL = centre ? rowGap : 0;
   const [l0, l1] = [down([0, 0, DIM_Z], rowL), down([W, 0, DIM_Z], rowL)];
   const totalRow = `${pathOf(l0, l1)}${tickAt(l0)}${tickAt(l1)}`;
   const extensions = [0, W].map((x) => pathOf(xy([x, 0, -1.3]), down([x, 0, DIM_Z], rowL + 0.4 * k))).join('');
@@ -249,7 +257,7 @@ function placeTag(label: string, ways: readonly { from: Pt; leaders: readonly Pt
   return { label: chosen.label, lines: chosen.rows, d: chosen.d, x: chosen.x, y: chosen.y, anchor: chosen.anchor, box: chosen.box };
 }
 
-function frameGeometry(domain: HangarDomainModel) {
+function frameGeometry(domain: HangarDomainModel, rowGap = ROW_GAP) {
   const { widthM: W, lengthM, eaveHeightM: E } = domain.dimensions;
   const R = ridgeHeightM(W, E, domain.roof.pitchDeg);
   const layout = deriveBayLayout(lengthM);
@@ -297,7 +305,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const [minY, maxY] = [Math.min(...raw.map(([, y]) => y)), Math.max(...raw.map(([, y]) => y))];
   const fit = (reach: number, left = 22) => {
     // with a centre row, the spans' row under the frame above L's
-    const pad = { left, right: 22 + reach, top: 32, bottom: 10 + BUBBLE_DOWN + BUBBLE + (centre ? ROW_GAP : 0) };
+    const pad = { left, right: 22 + reach, top: 32, bottom: 10 + BUBBLE_DOWN + BUBBLE + (centre ? rowGap : 0) };
     const k = Math.min((VIEW.width - pad.left - pad.right) / (maxX - minX), (VIEW.height - pad.top - pad.bottom) / (maxY - minY));
     return {
       k,
@@ -436,7 +444,7 @@ function frameGeometry(domain: HangarDomainModel) {
   const bayDim = `${line([W + DIM_A, 0, 0], [W + DIM_A, s, 0])}${groundTick([W + DIM_A, 0, 0])}${groundTick([W + DIM_A, s, 0])}`
     + `${line([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0])}${line([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0])}`;
   const down = (point: P3, by: number) => { const [x, y] = xy(point); return [x, y + by] as const; };
-  const span = spanDimensions({ xy, k }, W, centre, domain.internalSupports, values.L);
+  const span = spanDimensions({ xy, k }, W, centre, domain.internalSupports, values.L, rowGap);
   const { rowL, spanDim, answerDim } = span;
 
   // Coordinate axes, dash-dot, with their bubbles past the dimension lines (03.10): across the span in letters, one after
@@ -687,7 +695,8 @@ export function useFrameTourModel() {
   const inquiry = useHangarInquiryContext();
   const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
   const domain = useMemo(() => deriveDomainModel(state), [state]);
-  const g = useMemo(() => frameGeometry(domain), [domain]);
+  const wide = useSyncExternalStore(watchWideSheet, () => window.matchMedia(WIDE_SHEET).matches, () => false);
+  const g = useMemo(() => frameGeometry(domain, wide ? ROW_GAP_WIDE : ROW_GAP), [domain, wide]);
   const summary = deriveSummary(domain);
   // the sizes said as the visitor gave them, one rule with the sheet and the stamp (08.10, audit): their own, the
   // example's, or an orientation while they look for theirs

@@ -106,14 +106,15 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
       at: (letter.left + letter.right) / 2,
       top: letter.top,
       bottom: letter.bottom,
-      spansBottom: Math.max(...spans.map((rect) => rect.bottom)),
+      // the rows slope, so a span's words may stand lower on the screen than L's: what counts is that they never meet
+      spansOnL: spans.filter((rect) => rect.left < letter.right && rect.right > letter.left && rect.top < letter.bottom && rect.bottom > letter.top).length,
       a: bubbles[0].x + bubbles[0].width / 2, c: bubbles[2].x + bubbles[2].width / 2,
       bTop: bubbles[1].top,
       columns: root.querySelector('[data-part="1 2"] .ft-member')!.getAttribute('d')!.split('M').filter(Boolean).length,
     };
   });
   expect(Math.abs(span.at - (span.a + span.c) / 2)).toBeLessThanOrEqual(3);
-  expect(span.spansBottom).toBeLessThanOrEqual(span.top);
+  expect(span.spansOnL).toBe(0);
   expect(span.bottom).toBeLessThanOrEqual(span.bTop);
   expect(span.columns).toBe(3);
   // one way for the three dimensions (10.10: L measured between the outer columns' axes, its own extension lines down
