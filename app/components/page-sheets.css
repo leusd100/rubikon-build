@@ -47,8 +47,11 @@ main[data-field] ~ footer {
   main[data-field] > section:first-of-type { box-sizing: border-box; min-height: calc(100svh + var(--sheet-radius)); border-bottom: var(--sheet-radius) solid var(--color-dark); }
 }
 
+/* «Наш обсяг» and the map of responsibility are one approved band, so one sheet: no seam, no corners, no shadow between them */
+main[data-field] > #obsiah { border-bottom: 0; }
+main[data-field] > #vidpovidalnist { margin-top: 0; border-radius: 0; box-shadow: none; }
+
 /* Neighbours of one tone read as one long sheet: a tone apart they stay two */
-main[data-field] > .proc-responsibility { background-color: var(--color-surface); }
 main[data-field] > .cost-section + .faq-section { background-color: var(--color-bg); }
 
 @media print {
