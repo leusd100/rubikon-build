@@ -104,8 +104,11 @@
 /* A window narrowed after the page loaded keeps its canvas, without the room for it */
 .live-scene { display: none; }
 
-/* The paper blocks, on a desktop only: a scene in the void beside the heading, cut by the block's colour on both sides */
+/* The paper blocks, on a desktop only: a scene in the void beside the heading, cut by the block's colour on both sides. The
+   scene stays on the page's own 1440 px column instead of drifting to the edge of a wider screen. Below 1400 px the headings
+   reach further than the void does, so the fade starts later and takes the scene's left side (owner 02.11: «більш лівіше»). */
 @media (min-width: 1181px) {
+  :root { --scene-inset: max(0px, calc(50vw - 720px)); --scene-fade-from: 700px; --scene-fade-to: 900px; --scene-mask: 300px; }
   .metal-page > .cost-section { --scene: var(--scene-sparks); --material-ground: var(--color-surface-alt); }
   .concrete-page > .cost-section { --scene: var(--scene-pour); --material-ground: var(--color-surface-alt); }
   .angary-page > .angary-cost { --scene: var(--scene-bays); --material-ground: var(--color-surface-alt); }
@@ -118,10 +121,10 @@
     --material-ground: var(--color-surface-alt);
     background-image:
       linear-gradient(to bottom, transparent 320px, var(--material-ground) 430px),
-      linear-gradient(to right, var(--material-ground) 790px, transparent 930px),
+      linear-gradient(to right, var(--material-ground) var(--scene-fade-from), transparent var(--scene-fade-to)),
       var(--material-grain);
     background-repeat: no-repeat;
-    background-position: 0 0, 0 0, right -30px top -190px;
+    background-position: 0 0, 0 0, right calc(var(--scene-inset) + 90px) top -190px;
     background-size: auto, auto, 760px 760px;
   }
 
@@ -129,17 +132,20 @@
     .process-page > .proc-terms, .about-page > .team-about) {
     background-image:
       linear-gradient(to bottom, transparent 330px, var(--material-ground) 430px),
-      linear-gradient(to right, var(--material-ground) 700px, transparent 900px),
+      linear-gradient(to right, var(--material-ground) var(--scene-fade-from), transparent var(--scene-fade-to)),
       var(--scene);
     background-repeat: no-repeat;
-    background-position: 0 0, 0 0, right top;
+    background-position: 0 0, 0 0, right var(--scene-inset) top;
     background-size: auto, auto, 760px 430px;
+  }
+  @media (min-width: 1400px) {
+    :root { --scene-fade-from: calc(var(--scene-inset) + 620px); --scene-fade-to: calc(var(--scene-inset) + 760px); --scene-mask: 60px; }
   }
   /* Live scenes (LiveScene.tsx) lie under the block's text and fade as the block's background layers do */
   main[data-field] > section:has(> .live-scene) { isolation: isolate; }
   .live-scene {
-    position: absolute; z-index: -1; top: 0; right: 0; display: block; width: 760px; height: 430px; pointer-events: none;
-    mask-image: linear-gradient(to right, transparent 20px, #000 220px), linear-gradient(to bottom, #000 330px, transparent 430px);
+    position: absolute; z-index: -1; top: 0; right: var(--scene-inset); display: block; width: 760px; height: 430px; pointer-events: none;
+    mask-image: linear-gradient(to right, transparent calc(var(--scene-mask) - 60px), #000 var(--scene-mask)), linear-gradient(to bottom, #000 330px, transparent 430px);
     mask-composite: intersect;
   }
   /* The hub names all five directions, so it takes a stream of each instead of a second page's perforated steel */
@@ -149,8 +155,9 @@
     --material-repeat: no-repeat;
     background-image:
       linear-gradient(to bottom, transparent 330px, var(--material-ground) 430px),
-      linear-gradient(to right, var(--material-ground) 700px, transparent 900px),
+      linear-gradient(to right, var(--material-ground) var(--scene-fade-from), transparent var(--scene-fade-to)),
       var(--material);
+    background-position: 0 0, 0 0, right var(--scene-inset) top;
   }
 }
 

@@ -32,7 +32,7 @@ const render = (ink, copper) => {
   const stone = (s, r, x, y, size, colour, alpha) => { const q = r() * 6.3, l = size * .35; s.line(x - Math.cos(q) * l, y - Math.sin(q) * l, x + Math.cos(q) * l, y + Math.sin(q) * l, size * 1.3, colour, alpha); };
 
   const sparks = (s) => {
-    const r = rng(7), ox = 510, oy = 44, g = 620, floor = 372;
+    const r = rng(7), ox = 460, oy = 44, g = 620, floor = 372;
     for (let i = 0; i < 1150; i++) {
       const a = 1.57 + gauss(r) * 1.9, v = 90 + r() * r() * 420, vx = Math.cos(a) * v, vy = Math.sin(a) * v - 60, t = r() * r() * 1.05 + .02, dt = .022 + r() * .03;
       let x = ox + vx * t, y = oy + vy * t + .5 * g * t * t, x2 = ox + vx * (t + dt), y2 = oy + vy * (t + dt) + .5 * g * (t + dt) * (t + dt);
@@ -51,7 +51,7 @@ const render = (ink, copper) => {
   };
 
   const pour = (s) => {
-    const r = rng(11), sx = 540, left = 250, right = 760, bottom = 420, level = (x) => 214 + Math.sin(x * .021) * 3 + Math.exp(-((x - sx) ** 2) / 1500) * -26;
+    const r = rng(11), sx = 470, left = 180, right = 760, bottom = 420, level = (x) => 214 + Math.sin(x * .021) * 3 + Math.exp(-((x - sx) ** 2) / 1500) * -26;
     for (let i = 0; i < 420; i++) { const y = r() * level(sx); stone(s, r, sx + gauss(r) * (12 + y * .05), y, 1.1 + r() * 2.3, ink, .55 + r() * .4); }
     const bars = []; for (let x = left + 46; x < right; x += 76) for (const y of [292, 362]) bars.push([x, y]);
     for (let i = 0; i < 1800; i++) {
@@ -63,8 +63,8 @@ const render = (ink, copper) => {
   };
 
   const rain = (s) => {
-    const r = rng(13), slope = (x) => 96 + (760 - x) * .38, eave = 270, a = .26;
-    for (let i = 0; i < 780; i++) { const x = 120 + r() * 700, y = r() * 300, l = 12 + r() * 26; if (y + l > slope(x - a * l)) continue; s.line(x, y, x - a * l, y + l, .9, ink, Math.min(1, (x - 200) / 170) * (.18 + r() * .5)); }
+    const r = rng(13), slope = (x) => 96 + (760 - x) * .33, eave = 170, a = .26;
+    for (let i = 0; i < 780; i++) { const x = 40 + r() * 780, y = r() * 300, l = 12 + r() * 26; if (y + l > slope(x - a * l)) continue; s.line(x, y, x - a * l, y + l, .9, ink, Math.min(1, x / 150) * (.18 + r() * .5)); }
     for (let n = 0; n < 150; n++) { // beads running down the sheet, sparse high up, gathering towards the eave
       const u = Math.pow(r(), 1.5), x = eave + u * (760 - eave), near = 1 - u, l = 4 + near * 22 + r() * 9, off = -r() * 3.5;
       s.line(x, slope(x) + off, x - l, slope(x - l) + off, .8 + near * 1.3, ink, .3 + near * .62);
@@ -78,7 +78,7 @@ const render = (ink, copper) => {
 
   // Portal frames going away in tone, sheet behind sheet, as the deck does
   const bays = (s) => {
-    const vx = 590, vy = 236;
+    const vx = 420, vy = 236;
     for (let i = 6; i >= 0; i--) {
       const k = Math.pow(.74, i), w = 620 * k, h = 300 * k, e = 118 * k, t = 20 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = y - h + e;
       const f = (n) => fixed(n);
@@ -91,9 +91,9 @@ const render = (ink, copper) => {
     const r = rng(41), w = 50, h = 58, web = 7, flange = 9;
     const shape = (x, y) => `M${x} ${y}h${w}v${flange}H${x + w / 2 + web / 2}V${y + h - flange}H${x + w}v${flange}H${x}v${-flange}H${x + w / 2 - web / 2}V${y + flange}H${x}Z`;
     for (let row = 0; row < 4; row++) {
-      const y = 300 - row * (h + 3), count = 9 - row;
+      const y = 300 - row * (h + 3), count = 11 - row;
       for (let i = 0; i < count; i++) {
-        const x = 776 - (i + 1) * (w + 4) + (row % 2 ? 27 : 0), alpha = Math.min(1, (.5 + r() * .45) * Math.min(1, (x - 270) / 120));
+        const x = 776 - (i + 1) * (w + 4) + (row % 2 ? 27 : 0), alpha = Math.min(1, (.5 + r() * .45) * Math.min(1, (x - 130) / 120));
         if (alpha > .02) s.extra.push(`<path fill="${ink}" fill-opacity="${alpha.toFixed(2)}" d="${shape(x, y)}"/>`);
       }
     }
@@ -101,16 +101,16 @@ const render = (ink, copper) => {
 
   // Two streams into one, as the page's own «два покоління — одна відповідальність»
   const merge = (s) => {
-    const r = rng(53), end = [566, 214], at = (a, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * t * (1 - t) * b[0] + t * t * end[0], (1 - t) * (1 - t) * a[1] + 2 * t * (1 - t) * b[1] + t * t * end[1]];
-    for (const [a, b, colour] of [[[372, -14], [430, 170], ink], [[764, -14], [706, 170], copper]]) {
+    const r = rng(53), end = [430, 214], at = (a, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * t * (1 - t) * b[0] + t * t * end[0], (1 - t) * (1 - t) * a[1] + 2 * t * (1 - t) * b[1] + t * t * end[1]];
+    for (const [a, b, colour] of [[[236, -14], [294, 170], ink], [[628, -14], [570, 170], copper]]) {
       for (let i = 0; i < 620; i++) { const t = r(), [x, y] = at(a, b, t), w = 22 - t * 12, q = r() * 6.3, X = x + gauss(r) * w, Y = y + gauss(r) * w * .4; s.line(X, Y, X + Math.cos(q) * 2, Y + Math.sin(q) * 2, 1.7, colour, .4 + r() * .55); }
     }
-    for (let i = 0; i < 560; i++) { const t = r(), y = 214 + t * 170, x = 566 + gauss(r) * (9 + t * 6), q = r() * 6.3; s.line(x, y, x + Math.cos(q) * 2, y + Math.sin(q) * 2, 1.9, r() < .5 ? copper : ink, (.5 + r() * .5) * (1 - t * .3)); }
+    for (let i = 0; i < 560; i++) { const t = r(), y = 214 + t * 170, x = 430 + gauss(r) * (9 + t * 6), q = r() * 6.3; s.line(x, y, x + Math.cos(q) * 2, y + Math.sin(q) * 2, 1.9, r() < .5 ? copper : ink, (.5 + r() * .5) * (1 - t * .3)); }
   };
 
   // The roof alone: what the live rain falls on (liveScenes.ts)
   const roof = (s) => {
-    const r = rng(14), slope = (x) => 96 + (760 - x) * .38, eave = 270;
+    const r = rng(14), slope = (x) => 96 + (760 - x) * .33, eave = 170;
     for (let n = 0; n < 150; n++) {
       const u = Math.pow(r(), 1.5), x = eave + u * (760 - eave), near = 1 - u, l = 4 + near * 22 + r() * 9, off = -r() * 3.5;
       s.line(x, slope(x) + off, x - l, slope(x - l) + off, .8 + near * 1.3, ink, .3 + near * .62);
@@ -118,7 +118,7 @@ const render = (ink, copper) => {
   };
 
   const five = (s) => {
-    const r = rng(29), xs = [326, 434, 542, 650, 742], base = 380;
+    const r = rng(29), xs = [190, 300, 410, 520, 630], base = 380;
     for (let i = 0; i < 620; i++) { const y = r() * base, x = xs[0] + gauss(r) * (6 + y * .02), q = r() * 6.3; s.line(x, y, x + Math.cos(q) * 1.8, y + Math.sin(q) * 1.8, 1.8, r() < .06 ? copper : ink, .3 + r() * .6); }
     for (let i = 0; i < 460; i++) { const y = r() * base, x = xs[1] + gauss(r) * (4 + y * .09), l = 4 + r() * 10; s.line(x, y, x + gauss(r) * 2, y + l, .9, r() < .7 ? copper : ink, .3 + r() * .65); }
     for (let i = 0; i < 460; i++) { const y = r() * base; stone(s, r, xs[2] + gauss(r) * (7 + y * .03), y, 1 + r() * 3.3, ink, .35 + r() * .55); }

@@ -32,7 +32,7 @@ const update = (bits: Bit[], dt: number, gravity: number, each: (bit: Bit, px: n
 };
 
 function sparks(): Scene {
-  const bits: Bit[] = [], x0 = 510, y0 = 44, floor = 372;
+  const bits: Bit[] = [], x0 = 460, y0 = 44, floor = 372;
   let burst = 1;
   return {
     step(c, dt, _time, { ink, copper, dark }) {
@@ -78,14 +78,14 @@ function stream(x0: number, floor: number, spread: number, size: number, count: 
 }
 
 function rain(): Scene {
-  const drops: Bit[] = [], splash: Bit[] = [], beads: Bit[] = [], fall: Bit[] = [], slope = (x: number) => 96 + (760 - x) * .38, eave = 270;
+  const drops: Bit[] = [], splash: Bit[] = [], beads: Bit[] = [], fall: Bit[] = [], slope = (x: number) => 96 + (760 - x) * .33, eave = 170;
   return {
     still: '--scene-roof',
     step(c, dt, _time, { ink, copper }) {
-      for (let i = 0; i < 3; i++) drops.push({ x: 130 + random() * 760, y: -30, vx: -150, vy: 580 + random() * 160, age: 0, life: 2, size: 12 + random() * 22 });
+      for (let i = 0; i < 3; i++) drops.push({ x: 40 + random() * 850, y: -30, vx: -150, vy: 580 + random() * 160, age: 0, life: 2, size: 12 + random() * 22 });
       update(drops, dt, 0, (bit) => {
         const x = bit.x, y = bit.y;
-        stroke(c, [x, y, x + bit.size * .26, y - bit.size], .9, ink, Math.min(1, (x - 200) / 170) * .55);
+        stroke(c, [x, y, x + bit.size * .26, y - bit.size], .9, ink, Math.min(1, x / 150) * .55);
         if (x < eave - 2 || y < slope(x)) return y < 430;
         for (let i = 0; i < 3; i++) splash.push({ x, y, vx: gauss() * 70, vy: -30 - random() * 70, age: 0, life: .2 + random() * .2, size: 1 });
         if (random() < .35) beads.push({ x, y, vx: -100 - random() * 60, vy: 0, age: 0, life: 9, size: 1.2 });
@@ -106,7 +106,7 @@ function rain(): Scene {
 
 /** A frame travels out of the depth of the bays towards the visitor */
 function frames(): Scene {
-  const vx = 590, vy = 236, loop = 6;
+  const vx = 420, vy = 236, loop = 6;
   return {
     step(c, _dt, time, { copper }) {
       const t = (time / loop) % 1, k = Math.pow(.74, 6 * (1 - t)), w = 620 * k, h = 300 * k, e = 118 * k, width = 20 * k, x = vx - w / 2, y = vy + h * .52, top = y - h, eave = top + e;
@@ -123,7 +123,7 @@ function frames(): Scene {
 
 /** The last beam of the stack, coming down on its slings and swaying a little */
 function beam(): Scene {
-  const w = 50, h = 58, web = 7, flange = 9, x0 = 423, top = 26, rest = 120;
+  const w = 50, h = 58, web = 7, flange = 9, x0 = 317, top = 26, rest = 120;
   return {
     step(c, _dt, time, { copper }) {
       // it settles on the stack's lower row, beside the top one, and rises again; the sway dies as it comes to rest
@@ -146,7 +146,7 @@ function beam(): Scene {
 
 /** Two streams into one */
 function streams(): Scene {
-  const end = [566, 214], paths = [[[372, -14], [430, 170]], [[764, -14], [706, 170]]];
+  const end = [430, 214], paths = [[[236, -14], [294, 170]], [[628, -14], [570, 170]]];
   const bits = Array.from({ length: 900 }, (_, i) => ({ side: i % 3, t: random(), jitter: gauss(), speed: .22 + random() * .12 }));
   const at = (a: number[], b: number[], t: number) => [(1 - t) * (1 - t) * a[0] + 2 * t * (1 - t) * b[0] + t * t * end[0], (1 - t) * (1 - t) * a[1] + 2 * t * (1 - t) * b[1] + t * t * end[1]];
   return {
@@ -157,7 +157,7 @@ function streams(): Scene {
           const [x, y] = at(paths[bit.side][0], paths[bit.side][1], bit.t), w = 22 - bit.t * 12, X = x + bit.jitter * w, Y = y + bit.jitter * w * .3;
           stroke(c, [X, Y, X + 1.5, Y + 2], 1.7, bit.side ? copper : ink, .8);
         } else {
-          const y = 214 + bit.t * 170, x = 566 + bit.jitter * (9 + bit.t * 6);
+          const y = 214 + bit.t * 170, x = 430 + bit.jitter * (9 + bit.t * 6);
           stroke(c, [x, y, x + .6, y + 2.4], 1.9, bit.jitter > 0 ? copper : ink, .9 - bit.t * .3);
         }
       }
@@ -167,7 +167,7 @@ function streams(): Scene {
 
 /** The hub: all five directions, each falling its own way */
 function five(): Scene {
-  const xs = [326, 434, 542, 650, 742], base = 380, bits: (Bit & { kind: number })[] = [];
+  const xs = [190, 300, 410, 520, 630], base = 380, bits: (Bit & { kind: number })[] = [];
   return {
     step(c, dt, _time, { ink, copper }) {
       for (let kind = 0; kind < 5; kind++) {
@@ -186,8 +186,8 @@ function five(): Scene {
 
 export const SCENES: Record<string, { make: () => Scene; replaces?: string }> = {
   '.metal-page > .cost-section': { make: sparks, replaces: '--scene' },
-  '.concrete-page > .cost-section': { make: () => stream(540, 190, 12, 3.2, 3) },
-  '.grain-page > .cost-section': { make: () => stream(447, 150, 11, 2, 3) },
+  '.concrete-page > .cost-section': { make: () => stream(470, 190, 12, 3.2, 3) },
+  '.grain-page > .cost-section': { make: () => stream(327, 150, 11, 2, 3) },
   '.angary-page > .angary-cost': { make: frames },
   '.roofing-page > .direction-entry': { make: rain },
   '.process-page > .proc-terms': { make: beam },
