@@ -62,3 +62,15 @@
   /* About stills end at600px; its tablet footage retains the approved treatment. */
   main.about-page .about-subhero .subhero-overlay { background: var(--phone-media-shade); }
 }
+
+/* B1 keeps the existing full-scene image box, with a soft paper edge above the actions. */
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-hero .hero-media img.direction-hero-poster {
+    mask-image: linear-gradient(to bottom, black calc(var(--hv2-header) + 87vw), transparent calc(var(--hv2-header) + 150vw));
+  }
+}
+@media (max-width: 600px) {
+  main.about-page .about-hero-media img.direction-hero-poster {
+    mask-image: linear-gradient(to bottom, black calc(var(--phone-scene-header) + 87vw), transparent calc(var(--phone-scene-header) + 150vw));
+  }
+}

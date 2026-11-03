@@ -197,11 +197,11 @@ test.describe('public route smoke tests', () => {
           if (route.path === '/') {
             // Owner-selected line-to-material illustration instead of the phone montage.
             expectedHeroPosterMessage = 'Home should use its static phone still';
-            expectedHeroPosterSubstring = '/media/home-v2/concepts/hero-line-concept-v3-';
+            expectedHeroPosterSubstring = '/media/mobile-b1/home-light-';
           } else if (route.path === '/pro-nas') {
             // Distinct people-free About concept instead of the phone montage or HOME illustration.
             expectedHeroPosterMessage = 'About should use its static phone still';
-            expectedHeroPosterSubstring = '/media/about/about-line-concept-v3-';
+            expectedHeroPosterSubstring = '/media/mobile-b1/about-light-';
           } else {
             expectedHeroPosterMessage = `${route.path} should use its mobile hero poster`;
             expectedHeroPosterSubstring = '-768w.webp';
@@ -459,7 +459,7 @@ test.describe('public route smoke tests', () => {
     const still = hero.locator('img.about-hero-still');
     await expect(still).toBeVisible();
     await expect.poll(() => still.evaluate((element) => (element as HTMLImageElement).currentSrc), { timeout: 10_000 })
-      .toContain('/media/about/about-line-concept-v3-');
+      .toContain('/media/mobile-b1/about-light-');
     // The still is decorative for a screen reader (no alt), but a sighted visitor is told it is an illustration.
     // The people-free candidate preserves the provenance decision of 20.10 (OD-PX-12 A; PDO-04). The stamp sits in the first screen,
     // under the compact header, clear of the crumbs and the title
@@ -532,7 +532,7 @@ test.describe('public route smoke tests', () => {
     const still = hero.locator('img.hv2-hero-still');
     await expect(still).toBeVisible();
     await expect.poll(() => still.evaluate((element) => (element as HTMLImageElement).currentSrc), { timeout: 10_000 })
-      .toContain('/media/home-v2/concepts/hero-line-concept-v3-');
+      .toContain('/media/mobile-b1/home-light-');
     // It is a concept image, so it says so.
     await expect(hero.locator('.hv2-hero-provenance')).toHaveText('Ілюстрація');
   });
