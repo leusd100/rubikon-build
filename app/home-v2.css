@@ -1574,6 +1574,7 @@ main[data-home="v2"] #real-object { scroll-margin-top: 116px; }
 
 /* The real photo is reachable before the example tour. */
 main[data-home="v2"] .hv2-signature-support p { margin: 0; }
-main[data-home="v2"] .hv2-proof-shortcut { min-height: 44px; margin-top: 8px; color: var(--hv2-copper); }
+/* Use the arrow-link tokens so its shared hover/focus rule can answer even without motion (Nightly 03.11). */
+main[data-home="v2"] .hv2-proof-shortcut { min-height: 44px; margin-top: 8px; --link-ink: var(--hv2-copper); --link-hover-ink: var(--hv2-text); }
 main[data-home="v2"] .hv2-frame-label { display: none; margin: 0 0 12px; }
 main[data-home="v2"] .hv2-frame-room:has(.hv2-frame-slot[data-armed]) .hv2-frame-label { display: block; }

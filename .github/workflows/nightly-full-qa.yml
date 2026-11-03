@@ -38,14 +38,14 @@ jobs:
           retention-days: 2
 
   e2e:
-    name: Nightly E2E (${{ matrix.shard }}/6)
+    name: Nightly E2E (${{ matrix.shard }}/8)
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     env:
       PLAYWRIGHT_USE_PRODUCTION_BUILD: 'true'
       PLAYWRIGHT_BLOB_REPORT: 'true'
@@ -59,10 +59,11 @@ jobs:
           path: dist
       - uses: ./.github/actions/setup-playwright
       - name: Run full E2E shard
+        # Eight count-based shards reduce the configurator-heavy buckets; the 12-min cap stays (Nightly 03.11).
         # The split and limits of Main Regression (#232): 12 min of tests + ~1 min of setup and upload fit the 15-min job
         # limit, so a slow shard fails with a named global timeout and still uploads its blob report, instead of being
         # cancelled without one, as shard 1/4 was on 23.10 and nearly was on 28.10 (17.8 of 18 min).
-        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --shard=${{ matrix.shard }}/6 --global-timeout=720000
+        run: pnpm exec playwright test --project=desktop-chromium --project=mobile-chromium --shard=${{ matrix.shard }}/8 --global-timeout=720000
       - name: Upload shard report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

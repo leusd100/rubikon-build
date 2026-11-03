@@ -258,7 +258,15 @@ test.describe('English test copy (laboratory)', () => {
                 const range = document.createRange();
                 range.setStart(node, m.index);
                 range.setEnd(node, m.index + m[0].length);
-                const tops = new Set([...range.getClientRects()].filter((r) => r.width > 0.5).map((r) => Math.round(r.top / 3)));
+                // Exclude only Chromium's extra rectangle for a U+00AD immediately before this word.
+                // It is the discretionary hyphen of the preceding line, not a split inside the word.
+                const hyphen = range.cloneRange();
+                hyphen.setStart(node, Math.max(0, m.index - 1));
+                hyphen.setEnd(node, m.index);
+                const previousHyphen = node.textContent?.[m.index - 1] === '\u00ad' ? [...hyphen.getClientRects()] : [];
+                const tops = new Set([...range.getClientRects()].filter((r) => r.width > 0.5 && !previousHyphen.some(
+                  (h) => h.x === r.x && h.y === r.y && h.width === r.width && h.height === r.height,
+                )).map((r) => Math.round(r.top / 3)));
                 if (tops.size > 1) out.push(`${width}px «${m[0]}» split`);
               }
             }
