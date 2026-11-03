@@ -7,6 +7,7 @@ import { FrameTourIsland } from './FrameTourIsland';
 import { ScopeCells, type ScopeFrame } from './ScopeCells';
 import { keepHeadingWords } from '../../lib/typography';
 import { Arrow } from '../Arrow';
+import './RefinedGallery.css';
 
 // HOME v2 — the signature block. Its rule: an illustration EXPLAINS, a photo PROVES.
 //
@@ -57,14 +58,14 @@ function ProofStage({ proof }: Readonly<{ proof: HomeProofCase }>) {
         <ProofContour photo={photo} />
       </IslandBoundary>
 
-      <div className="hv2-proof-facts">
+      <div className="hv2-proof-facts hv2-gallery-a" id="proof-gallery">
         <div className="hv2-evidence-lead">
           <p className="hv2-kicker"><span aria-hidden="true" /> Реалізований об’єкт до створення RUBIKON BUILD</p>
           <h3>Ангар: каркас, стінові панелі, покрівля</h3>
           {/* the provenance in full, under the sheet (its title block says only what the two halves are): before RUBIKON
               BUILD, and the photo's foreground retouched */}
-          <p>{proof.attribution} Фото з ретушшю переднього плану.</p>
           <ScopeCells items={scope.subject} linked frames={SCOPE_FRAMES} />
+          <p className="hv2-gallery-provenance">{proof.attribution} Фото з ретушшю переднього плану.</p>
         </div>
         {/* No portraits (the generated ones were removed in #124). */}
         <div className="hv2-people">
