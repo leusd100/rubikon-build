@@ -38,8 +38,58 @@ const VIEWPORTS = [
   { width: 1440, height: 900 },
 ];
 
+function splitWordsInPage() {
+  const out: string[] = [];
+  const root = document.querySelector('main') ?? document.body;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    const el = node.parentElement;
+    if (!el) continue;
+    // .route-service h3 (the /napryamky route list) intentionally lets its longest word run on
+    // into the empty top of the card's arrow column instead of wrapping or breaking mid-letter —
+    // see the rule's own comment in globals.css. That is reserved whitespace, not an overflow bug.
+    if (el.closest('#planner, [aria-hidden="true"], [hidden], script, style, svg, video, .visually-hidden, .sr-only, .route-service h3')) continue;
+    const cs = getComputedStyle(el);
+    const box = el.getBoundingClientRect();
+    if (cs.display === 'none' || cs.visibility === 'hidden' || box.width === 0 || box.height === 0) continue;
+    const text = node.textContent ?? '';
+    const re = /[\p{L}\p{N}'’ʼ]{6,}/gu;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text))) {
+      const range = document.createRange();
+      range.setStart(node, m.index);
+      range.setEnd(node, m.index + m[0].length);
+      // Chromium includes the preceding discretionary hyphen in this Range even though it starts
+      // after U+00AD (Nightly 03.11). That glyph belongs to the previous segment, not this word.
+      const hyphen = range.cloneRange();
+      hyphen.setStart(node, Math.max(0, m.index - 1));
+      hyphen.setEnd(node, m.index);
+      const previousHyphen = text[m.index - 1] === '\u00ad' ? [...hyphen.getClientRects()] : [];
+      const rects = [...range.getClientRects()].filter((r) => r.width > 0.5 && !previousHyphen.some(
+        (h) => h.x === r.x && h.y === r.y && h.width === r.width && h.height === r.height,
+      ));
+      // A word broken across more than one line is a mid-letter split — the defect this guards against.
+      // (Overflow past a block's own edge is not checked here: several cards intentionally let their
+      // longest word run into reserved whitespace next to it rather than wrap — see e.g. .route-service h3.)
+      const lines = new Set(rects.map((r) => Math.round(r.top / 3)));
+      if (lines.size > 1) out.push(`${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} «${m[0]}» split`);
+    }
+  }
+  return out.slice(0, 6);
+}
+
 test.describe('words stay whole on public pages', () => {
   test.skip(({ isMobile }) => isMobile, 'viewports are set explicitly; one project is enough');
+
+  test('a manual hyphen is allowed, while real splits before and after it are still detected', async ({ page }) => {
+    await page.setContent('<style>strong{display:block;width:135px;font:20px Arial;hyphens:manual;overflow-wrap:normal}</style><main><strong>Метало\u00adконструкції</strong></main>');
+    expect(await page.evaluate(splitWordsInPage)).toEqual([]);
+    await page.addStyleTag({ content: 'strong{width:42px;overflow-wrap:anywhere}' });
+    expect(await page.evaluate(splitWordsInPage)).toContain('strong. «конструкції» split');
+    await page.locator('strong').evaluate((el) => { el.textContent = 'конструкції'; });
+    expect(await page.evaluate(splitWordsInPage)).toContain('strong. «конструкції» split');
+  });
 
   for (const route of ROUTES) {
     test(`${route}`, async ({ page }) => {
@@ -57,38 +107,7 @@ test.describe('words stay whole on public pages', () => {
         await page.goto(route, { waitUntil: 'load' });
         await page.evaluate(() => document.fonts.ready);
 
-        const found = await page.evaluate(() => {
-          const out: string[] = [];
-          const root = document.querySelector('main') ?? document.body;
-          const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-          let node: Node | null;
-          while ((node = walker.nextNode())) {
-            const el = node.parentElement;
-            if (!el) continue;
-            // .route-service h3 (the /napryamky route list) intentionally lets its longest word run on
-            // into the empty top of the card's arrow column instead of wrapping or breaking mid-letter —
-            // see the rule's own comment in globals.css. That is reserved whitespace, not an overflow bug.
-            if (el.closest('#planner, [aria-hidden="true"], [hidden], script, style, svg, video, .visually-hidden, .sr-only, .route-service h3')) continue;
-            const cs = getComputedStyle(el);
-            const box = el.getBoundingClientRect();
-            if (cs.display === 'none' || cs.visibility === 'hidden' || box.width === 0 || box.height === 0) continue;
-            const text = node.textContent ?? '';
-            const re = /[\p{L}\p{N}'’ʼ]{6,}/gu;
-            let m: RegExpExecArray | null;
-            while ((m = re.exec(text))) {
-              const range = document.createRange();
-              range.setStart(node, m.index);
-              range.setEnd(node, m.index + m[0].length);
-              const rects = [...range.getClientRects()].filter((r) => r.width > 0.5);
-              // A word broken across more than one line is a mid-letter split — the defect this guards against.
-              // (Overflow past a block's own edge is not checked here: several cards intentionally let their
-              // longest word run into reserved whitespace next to it rather than wrap — see e.g. .route-service h3.)
-              const lines = new Set(rects.map((r) => Math.round(r.top / 3)));
-              if (lines.size > 1) out.push(`${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} «${m[0]}» split`);
-            }
-          }
-          return out.slice(0, 6);
-        });
+        const found = await page.evaluate(splitWordsInPage);
         for (const item of found) problems.push(`${viewport.width}px ${item}`);
       }
 
