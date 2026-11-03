@@ -69,3 +69,20 @@ WebKit перевірено в емуляції, не на фізичному iP
 ## Пропоновані оновлення control
 
 Немає; governance-файли не змінювалися.
+
+## CI visual-freeze · 03.11.2026
+
+Власник після перегляду окремо погодив п’ять еталонів поза A («Так, оновити всі 5 переглянутих еталонів»). Оновлено 8 Linux-PNG: real-object ×3 (погоджений A), directions ×2, inquiry ×2, footer-logo mobile. Джерело — `changed-area-visual-diff`, artifact **13228980859**, run **41630829237**, production code head **8edec06cf4dc1538bf089ba527bf7dd10529c035**. Знімки переглянуті; змін коду/допусків/тестів у цьому виправленні немає.
+
+Причина червоного PR Gate: 8 screenshot comparisons; Fast Gate і Hero playback regression пройшли. 7 із цих перевірок уже падали на main того самого base (Main Regression run 41503970166, visual jobs 125478718537/125478718549). Додаткова desktop inquiry — висота capture 805 → 806 px після зміни висоти галереї. Для directions desktop чинний еталон ще містив попередню сітку, хоча main вже має ряд карток.
+
+SHA-256 перенесених actual PNG (байти з CI без змін):
+
+- `footer-logo-mobile-390-linux.png`: `09965855b6de42f414731b3f949e75e9f0b737d46a02af53f77c9c1dae4c84cd`
+- `homepage-directions-desktop-1440-linux.png`: `01c27fe091a03c79c96295d8d38572185b8db9cc8afab01a68f6948f13dc40fd`
+- `homepage-inquiry-desktop-1440-linux.png`: `727c672611f80fb05be0508be3e4491efa8472bd13af8c55dacc796e16bd17d3`
+- `homepage-real-object-desktop-1440-linux.png`: `b539ac71c5d3644309846d20230b3b3e7c572179e4042cd8e60af0c9736b6c0d`
+- `homepage-directions-mobile-375-linux.png`: `13812965f363b1187e663dd6d4f5f4d32ae1aa4e1b9c8b2a8a860aefcc2f6e77`
+- `homepage-inquiry-mobile-375-linux.png`: `2ef6d01cbeef2855aa6126f3b95c0421b69c4a7f398fc0dc27af7795b5136dbe`
+- `homepage-real-object-mobile-375-linux.png`: `87d597ad3bf14b4685922c315acfdf16d9bd79f643f33abcb90baab6c27b71b6`
+- `homepage-real-object-tablet-768-linux.png`: `424e0032f4cf78b9bb1432fc1c87ae5ada2eba6d4a93323b4e81fcd09fff0786`
