@@ -616,6 +616,14 @@ test('phone and tablet pages share a clear top header and dense scroll/menu stat
       if (route === '/napryamky' && width <= 760) {
         expect(box.y, 'mobile hub scene starts at the header edge').toBeCloseTo((await header.boundingBox())!.height, 0);
         expect(box.height, 'mobile hub preserves the full 3:2 scene').toBeCloseTo(width * 2 / 3, 0);
+      } else if (route === '/napryamky') {
+        // Owner photo review, 03.11: the sequence now starts below the header instead of cropping behind it.
+        const headerBox = (await header.boundingBox())!;
+        // The sheet's lower border overlaps the next section and is outside the photo's containing block.
+        const sceneBottom = await page.locator('.directions-subhero').evaluate((element) =>
+          element.getBoundingClientRect().bottom - Number.parseFloat(getComputedStyle(element).borderBottomWidth));
+        expect(box.y, 'hub photo starts exactly below the header').toBeCloseTo(headerBox.y + headerBox.height, 0);
+        expect(box.y + box.height, 'hub photo fills the rest of its scene').toBeCloseTo(sceneBottom, 0);
       } else {
         expect(box.y, `${route}: image extends behind header`).toBe(0);
       }
