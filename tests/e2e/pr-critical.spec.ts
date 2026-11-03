@@ -253,7 +253,10 @@ test('homepage invites a project conversation while showing real team experience
   });
   const main = text.main.join(' ');
 
-  expect(text.proof.join(' ')).toMatch(/Реалізований об’єкт до створення RUBIKON BUILD.*Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD.*Каркас.*Стінові панелі.*Покрівля/);
+  // Provenance follows the images in the refined gallery; the same evidence remains in server HTML.
+  expect(text.proof.join(' ')).toContain('Реалізований об’єкт до створення RUBIKON BUILD');
+  expect(text.proof.join(' ')).toContain('Сергій Іванович працював над цим об’єктом до створення RUBIKON BUILD');
+  expect(text.proof.join(' ')).toMatch(/Каркас.*Стінові панелі.*Покрівля/);
   expect(text.proof.join(' ')).not.toContain('Виконала наша команда');
   // The P01 limit on «комплексної реалізації» stays in the hero.
   expect(text.lead.join(' ')).toMatch(/Спеціалізовані роботи\s+координуємо з профільними виконавцями/);

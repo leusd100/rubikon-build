@@ -145,10 +145,22 @@ export function SmoothScroll() {
             instance.scrollTo(decodeURIComponent(link.hash));
             loop.wake();
           };
+          // A HOME scope press already guides the native window to its drawing. Cancel only the old
+          // wheel destination first; otherwise the next Lenis frame pulls that native scroll back.
+          // Capture runs before ProofContour's existing scope listener; no second scroll or loop.
+          const onScopePress = (event: Event) => {
+            const detail = (event as CustomEvent<{ part: string | null; sticky: boolean }>).detail;
+            if (detail?.sticky && detail.part && instance.isScrolling === 'smooth') {
+              instance.stop();
+              instance.start();
+            }
+          };
+          window.addEventListener('hv2:scope-focus', onScopePress, { capture: true });
           window.addEventListener('wheel', wake, { capture: true, passive: true });
           window.addEventListener('click', wake, { capture: true, passive: true });
           window.addEventListener('click', onAnchor);
           stopLoop = () => {
+            window.removeEventListener('hv2:scope-focus', onScopePress, { capture: true });
             window.removeEventListener('wheel', wake, { capture: true });
             window.removeEventListener('click', wake, { capture: true });
             window.removeEventListener('click', onAnchor);

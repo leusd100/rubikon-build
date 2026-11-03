@@ -1,0 +1,37 @@
+/* Approved proof gallery: keep the existing reveal and guided contour interaction. */
+main[data-home="v2"] .hv2-gallery-a .hv2-evidence-lead { gap: 16px; }
+main[data-home="v2"] .hv2-gallery-a .hv2-evidence-lead h3 { grid-column: 1 / -1; max-width: 880px; }
+main[data-home="v2"] .hv2-gallery-a .hv2-evidence-lead > .hv2-gallery-provenance { grid-column: 1 / -1; max-width: 960px; padding-left: 14px; font-size: 14px; line-height: 1.55; }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] { margin-top: 4px; gap: 12px; }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell { color: var(--hv2-text); background: var(--hv2-ink); }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] .hv2-scope-cell { aspect-ratio: 4 / 3; }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-frame { height: calc(100% - 80px); object-position: 50% 35%; filter: saturate(.9); }
+main[data-home="v2"] .hv2-gallery-a li[data-scope="roof"] .hv2-scope-frame { object-position: 50% 22%; filter: saturate(.9) brightness(1.08); }
+main[data-home="v2"] .hv2-gallery-a li[data-scope="frame"] .hv2-scope-frame { filter: brightness(1.08) contrast(1.06); }
+/* The pre-existing view-timeline remains the only image animation. A solid caption masks its overscan. */
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell::before { content: ''; position: absolute; z-index: 1; inset: auto 0 0; height: 80px; background: var(--hv2-ink); }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] .hv2-scope-cell::after { background: linear-gradient(180deg, rgb(10 11 10 / .15), transparent 25%); box-shadow: inset 0 0 0 1px var(--hv2-line-strong); }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] .hv2-scope-cell[aria-pressed="true"]::after { box-shadow: inset 0 0 0 2px var(--hv2-copper); }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] .hv2-scope-name { left: 46px; right: 12px; bottom: 44px; font-size: clamp(20px, 1.9vw, 28px); line-height: 1.1; }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-number { left: 16px; bottom: 50px; }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-kind { color: #f5f2eb; }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-kind[data-kind="Схема"] { color: #e2aa80; }
+main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] .hv2-scope-hint { display: flex; align-items: center; gap: 7px; top: auto; right: auto; left: 16px; bottom: 14px; opacity: 1; font-size: 13px; line-height: 1.3; color: var(--hv2-copper-text); }
+main[data-home="v2"] .hv2-gallery-a .hv2-people { gap: 18px 32px; margin-top: 32px; padding-top: 24px; }
+main[data-home="v2"] .hv2-gallery-a .hv2-people-note { font-size: clamp(22px, 2vw, 28px); line-height: 1.2; }
+main[data-home="v2"] .hv2-gallery-a .hv2-person { padding-left: 16px; }
+main[data-home="v2"] .hv2-gallery-a .hv2-person h4 { font-size: clamp(20px, 1.7vw, 24px); line-height: 1.2; }
+@media (max-width: 760px) {
+  main[data-home="v2"] .hv2-gallery-a .hv2-evidence-lead { gap: 14px; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] { grid-template-columns: 1fr; gap: 8px; margin-top: 2px; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] li { grid-column: auto; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] li .hv2-scope-cell { aspect-ratio: auto; height: 108px; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-frame { width: 38%; height: 100%; object-position: 50% 35%; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell::before { inset: 0 0 0 38%; height: auto; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-kind { top: 8px; left: 8px; padding: 4px 6px; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] li .hv2-scope-cell .hv2-scope-name { top: 16px; bottom: auto; left: calc(38% + 34px); right: 10px; font-size: 20px; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] li .hv2-scope-cell .hv2-scope-number { top: 21px; bottom: auto; left: calc(38% + 12px); font-size: 11px; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] .hv2-scope-hint { left: calc(38% + 12px); right: 10px; bottom: 12px; font-size: 12px; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-scope-hint [data-arrow] { flex-shrink: 0; }
+  main[data-home="v2"] .hv2-gallery-a .hv2-people { gap: 18px; margin-top: 26px; padding-top: 22px; }
+}
