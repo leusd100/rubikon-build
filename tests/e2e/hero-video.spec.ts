@@ -121,7 +121,7 @@ for (const [density, width] of [[1, 480], [2, 1024]] as const) {
       const posters: string[] = [];
       page.on('request', (request) => {
         const path = new URL(request.url()).pathname;
-        if (path.includes('/hero-line-concept-v3-') || path.includes('/hero-h1-') || path.includes('/hero-mobile-band-')) posters.push(path);
+        if (path.includes('/hero-frame-photo-v1-') || path.includes('/hero-line-concept-v3-') || path.includes('/hero-h1-') || path.includes('/hero-mobile-band-')) posters.push(path);
       });
       await page.goto('/');
       const still = page.locator('.hero img.hv2-hero-still');
@@ -129,8 +129,9 @@ for (const [density, width] of [[1, 480], [2, 1024]] as const) {
       await expect.poll(() => still.evaluate((element) => {
         const image = element as HTMLImageElement;
         return image.complete && image.naturalWidth > 0 ? new URL(image.currentSrc).pathname : null;
-      })).toBe(`/media/home-v2/concepts/hero-line-concept-v3-${width}w.webp`);
-      expect(posters).toEqual([`/media/home-v2/concepts/hero-line-concept-v3-${width}w.webp`]);
+      })).toMatch(new RegExp(`/media/home-v2/concepts/hero-frame-photo-v1-${width}w\\.[a-f0-9]{8}\\.webp$`));
+      const selected = await still.evaluate(element => new URL((element as HTMLImageElement).currentSrc).pathname);
+      expect(posters).toEqual([selected]);
       await expect(page.locator('.hero video')).toHaveCount(0);
     } finally {
       await context.close();
@@ -209,11 +210,11 @@ async function denyOptionalCookies(page: Page) {
 }
 
 const pages = [
-  { path: '/', hero: '.hv2-hero', image: '.hv2-hero-still', family: 'hero-line-concept-v3-', old: 'hero-mobile-band-' },
-  { path: '/pro-nas', hero: '.about-subhero', image: '.about-hero-still', family: 'about-line-concept-v3-', old: 'about-p5-' },
+  { path: '/', hero: '.hv2-hero', image: '.hv2-hero-still', family: 'hero-frame-photo-v1-', old: 'hero-line-concept-v3-' },
+  { path: '/pro-nas', hero: '.about-subhero', image: '.about-hero-still', family: 'about-planning-photo-v1-', old: 'about-line-concept-v3-' },
 ] as const;
 
-test('About phone concept keeps its full framing before and after hydration', async ({ browser, baseURL }, testInfo) => {
+test('About selected phone photo keeps its full framing before and after hydration', async ({ browser, baseURL }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'compare explicit phone contexts once');
   const framing = [];
   for (const javaScriptEnabled of [false, true]) {
@@ -333,7 +334,7 @@ for (const deviceScaleFactor of [1, 2]) {
         const videos: string[] = [];
         page.on('request', request => {
           const path = new URL(request.url()).pathname;
-          if (path.includes(target.family)
+          if (path.includes(target.family) || path.includes(target.old)
             || ['hero-h1-', 'hero-mobile-band-', 'about-p5-', 'about-frame-concept-v2-'].some(family => path.includes(family))
             || (target.path === '/pro-nas' && path.includes('/hero-line-concept-v3-'))) posters.push(path);
           if (/\.(mp4|m4v)$/.test(path)) videos.push(path);
@@ -344,7 +345,7 @@ for (const deviceScaleFactor of [1, 2]) {
         await expect.poll(() => image.evaluate(element => (element as HTMLImageElement).currentSrc)).toContain(target.family);
         await expect.poll(() => image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
         const selected = await image.evaluate(element => new URL((element as HTMLImageElement).currentSrc).pathname);
-        expect(selected).toMatch(/-(480|768|1024)w\.webp$/);
+        expect(selected).toMatch(target.path === '/' ? /-(480|768|1024)w\.[a-f0-9]{8}\.webp$/ : /-(480|683)w\.[a-f0-9]{8}\.webp$/);
         expect(posters, 'SSR preload and hydrated img select the same resource, with no old poster').toEqual([selected]);
         expect(videos, 'a phone must not request any hero montage').toEqual([]);
         await expect(image).toHaveAttribute('loading', 'eager');
@@ -355,8 +356,8 @@ for (const deviceScaleFactor of [1, 2]) {
 }
 
 for (const target of [
-  { path: '/', width: 761, family: 'hero-line-concept-v3-' },
-  { path: '/pro-nas', width: 601, family: 'about-line-concept-v3-' },
+  { path: '/', width: 761, family: 'hero-frame-photo-v1-' },
+  { path: '/pro-nas', width: 601, family: 'about-planning-photo-v1-' },
 ]) {
   test(`${target.path}: the phone poster is not fetched above its ${target.width - 1}px boundary`, async ({ page }) => {
     await denyOptionalCookies(page);

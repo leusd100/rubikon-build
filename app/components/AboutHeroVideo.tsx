@@ -6,13 +6,12 @@ import { useSyncExternalStore } from 'react';
 import { DirectionHeroVideo } from './DirectionHeroVideo';
 import { useViewportVariant, type ViewportVariant } from '../hooks/useViewportVariant';
 
-// Owner selected creative direction C, 24.10: a distinct line-to-material architectural concept.
-// It has no people and makes no claim to show a completed RUBIKON project; the existing
-// visible «Ілюстрація» label remains. Desktop/tablet footage and the 600px boundary are unchanged.
-// Owner preview is required before merging this selection.
+// Owner selected photo B, «Продумана робота», on 03.11: planning tools with a construction site behind them.
+// Generated illustration, not a portrait of the team or a documented RUBIKON project.
+// The visible «Ілюстрація» label, desktop/tablet footage and 600px boundary remain.
 const STATIC_QUERY = '(max-width: 600px)';
-export const ABOUT_STATIC_SRC = '/media/about/about-line-concept-v3-1024w.webp';
-const ABOUT_STATIC_SRCSET = '/media/about/about-line-concept-v3-480w.webp 480w, /media/about/about-line-concept-v3-768w.webp 768w, /media/about/about-line-concept-v3-1024w.webp 1024w';
+export const ABOUT_STATIC_SRC = '/media/about/about-planning-photo-v1-683w.0470ec96.webp';
+const ABOUT_STATIC_SRCSET = '/media/about/about-planning-photo-v1-480w.b6f12476.webp 480w, /media/about/about-planning-photo-v1-683w.0470ec96.webp 683w';
 
 // As on HOME, the 0.85 slow-down is in the files (re-timed to an even 30 fps by scripts/retime-hero-clips.py), so the
 // desktop clips play at 1.0 (OD-S1 option B, 15.10)
@@ -59,8 +58,8 @@ export function AboutHeroVideo() {
         src={ABOUT_STATIC_SRC}
         srcSet={ABOUT_STATIC_SRCSET}
         sizes="100vw"
-        width={1024}
-        height={1536}
+        width={683}
+        height={1024}
         alt=""
         aria-hidden="true"
         loading="eager"

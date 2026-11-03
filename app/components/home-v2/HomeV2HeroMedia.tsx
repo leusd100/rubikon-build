@@ -7,11 +7,11 @@ import { DirectionHeroVideo } from '../DirectionHeroVideo';
 import { useViewportVariant } from '../../hooks/useViewportVariant';
 
 // HOME v2. Desktop and tablet keep the existing footage; ≤760 px gets one still instead of the 2.6 MB
-// phone montage. Owner selected creative direction C (24.10): linework becomes material.
-// This is an architectural concept, not a completed RUBIKON project. HOME keeps «Ілюстрація».
+// phone montage. Owner selected photo A, «Каркас і простір», on 03.11.
+// This is a generated illustration, not a completed RUBIKON project. HOME keeps «Ілюстрація».
 const STATIC_QUERY = '(max-width: 760px)';
-export const HERO_STATIC_SRC = '/media/home-v2/concepts/hero-line-concept-v3-1024w.webp';
-const HERO_STATIC_SRCSET = '/media/home-v2/concepts/hero-line-concept-v3-480w.webp 480w, /media/home-v2/concepts/hero-line-concept-v3-768w.webp 768w, /media/home-v2/concepts/hero-line-concept-v3-1024w.webp 1024w';
+export const HERO_STATIC_SRC = '/media/home-v2/concepts/hero-frame-photo-v1-1024w.c735669a.webp';
+const HERO_STATIC_SRCSET = '/media/home-v2/concepts/hero-frame-photo-v1-480w.56dee54d.webp 480w, /media/home-v2/concepts/hero-frame-photo-v1-768w.d8b7e3a1.webp 768w, /media/home-v2/concepts/hero-frame-photo-v1-1024w.c735669a.webp 1024w';
 
 // The desktop clips carry the hero's 0.85 slow-down in the file: re-timed and motion-interpolated to an even 30 fps
 // (scripts/retime-hero-clips.py), they play at 1.0 and every frame stays on screen for two 60 Hz refreshes. Slowed down
