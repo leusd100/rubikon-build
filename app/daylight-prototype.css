@@ -1,57 +1,107 @@
-/* Architectural Daylight A — isolated visual prototype, based on main 503a438b.
-   All rules require both prototype and Light. Media sources, theme lifecycle,
-   drawing inks, provenance and production baselines are deliberately untouched. */
+/* Architectural Daylight A2: paper remains a material; the scene keeps depth.
+   Only public phone-hero templates participate. Legacy preview tools keep their own design. */
 html[data-daylight="a"][data-theme="light"] {
   --day-paper: #f3f0e9;
   --day-sheet: #e7e2d9;
   --day-ink: #20211f;
   --day-secondary: #4c504a;
   --day-rule: #c4bdb1;
-  --day-copper: #92502b;
+  --day-copper: #934923;
 }
-/* Light is photographic daylight through a warm architectural tracing sheet.
-   The vertical veil protects text even when a moving frame changes beneath it. */
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .angary-service-subhero, .about-subhero) {
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) {
   color: var(--day-ink);
-  background-color: var(--day-paper);
-  --focus-ring: #874520;
+  background-color: var(--day-sheet);
+  --color-action: #a0522a;
+  --color-action-hover: #7f3d1d;
+  --color-on-action: #f5f2eb;
+  --color-accent-strong: #934923;
+  --color-accent-hover: #7f3d1d;
+  --color-focus: #934923;
+  --focus-ring: #934923;
+  --focus-gap: #e7e2d9;
 }
+/* Remove the all-over horizontal wash. The upper scene stays natural, while a
+   denser lower veil protects graphite copy across the changing footage. */
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-shade,
-html[data-daylight="a"][data-theme="light"] .angary-page .service-subhero-overlay,
-html[data-daylight="a"][data-theme="light"] .about-page .about-subhero .subhero-overlay {
+html[data-daylight="a"][data-theme="light"] .service-subhero.phone-hero .service-subhero-overlay,
+html[data-daylight="a"][data-theme="light"] .about-page .about-subhero .subhero-overlay,
+html[data-daylight="a"][data-theme="light"] .directions-page .directions-subhero .subhero-overlay,
+html[data-daylight="a"][data-theme="light"] .process-page .proc-hero .proc-hero-shade {
   mask-image: none;
-  background: linear-gradient(0deg, #f3f0e9 0%, rgb(243 240 233 / .96) 17%, rgb(243 240 233 / .87) 51%, rgb(243 240 233 / .10) 84%), linear-gradient(90deg, rgb(243 240 233 / .54), rgb(243 240 233 / .08));
+  background: linear-gradient(0deg, #e7e2d9 0%, rgb(231 226 217 / .96) 18%, rgb(231 226 217 / .84) 51%, rgb(231 226 217 / .08) 82%, transparent 100%);
 }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) :is(img, video) {
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) :is(img, video) {
   filter: saturate(.92) contrast(1.02);
 }
-html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-grid,
-html[data-daylight="a"][data-theme="light"] .about-subhero .subhero-grid { opacity: .035; }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) h1 { color: var(--day-ink); }
-html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero h1 em,
-html[data-daylight="a"][data-theme="light"] main.inner-page > .phone-hero h1 em { color: var(--day-copper); }
-html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-lead,
-html[data-daylight="a"][data-theme="light"] .angary-page .service-subhero-content :is(.service-subhero-lead, .service-subhero-note),
-html[data-daylight="a"][data-theme="light"] .about-page .about-subhero-side > p { color: #373c36; border-color: var(--day-rule); }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) :is(.eyebrow, .breadcrumb, .breadcrumb a, .phone-hero-scroll) { color: var(--day-copper); }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .button-primary {
-  color: #faf8f3; background: #92502b; border-color: #92502b;
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .service-subhero.phone-hero) :is(.hero-grid, .subhero-grid) { opacity: .035; }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) h1 { color: var(--day-ink); }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) h1 em { color: var(--day-copper); }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) :is(.hero-lead, .service-subhero-lead, .service-subhero-note, .subhero-side > p, .proc-hero-lead) {
+  color: #373c36; border-color: var(--day-rule);
 }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .button-primary:is(:hover, :focus-visible) { background: #713c20; border-color: #713c20; }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .button-hero-secondary {
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) :is(.eyebrow, .phone-hero-scroll) { color: #783c1e; }
+html[data-daylight="a"][data-theme="light"] :is(.service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) .breadcrumb,
+html[data-daylight="a"][data-theme="light"] :is(.service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) .breadcrumb :is(a, b, span, i) { color: var(--day-ink); text-shadow: none; }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) :is(.button-hero-secondary, .grain-hero-secondary) {
   color: var(--day-ink); border-color: #8b8b80; background: rgb(243 240 233 / .55);
 }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .button-hero-secondary:is(:hover, :focus-visible) { background: var(--day-sheet); border-color: var(--day-copper); }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .hero-video-control {
-  color: var(--day-ink); --control-ink: var(--day-ink);
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) :is(.button-hero-secondary, .grain-hero-secondary):is(:hover, :focus-visible) {
+  color: var(--day-ink); background: var(--day-paper); border-color: var(--day-copper);
 }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .hero-video-control button {
-  color: var(--day-ink); background: var(--day-paper); border-color: #8b8b80;
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) .text-link { --link-ink: var(--day-ink); --link-hover-ink: var(--day-copper); }
+html[data-daylight="a"][data-theme="light"] .hv2-hero .hero-actions > a > span[aria-hidden="true"] { color: var(--day-ink); }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) .hero-video-control,
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) .hero-video-control-label { color: #373c36; }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) .hero-video-control-icon {
+  color: var(--day-ink); background: var(--day-paper); border-color: #857f76;
+}
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) .hero-video-control:hover .hero-video-control-icon {
+  color: var(--day-ink); background: var(--day-sheet); border-color: var(--day-copper);
+}
+/* Inner-page breadcrumbs can sit higher than HOME's long heading. Protect their
+   left text column locally; keep the right-hand structure open to natural light. */
+@media (min-width: 761px) {
+  html[data-daylight="a"][data-theme="light"] .service-subhero.phone-hero .service-subhero-overlay,
+  html[data-daylight="a"][data-theme="light"] .about-page .about-subhero .subhero-overlay,
+  html[data-daylight="a"][data-theme="light"] .directions-page .directions-subhero .subhero-overlay,
+  html[data-daylight="a"][data-theme="light"] .process-page .proc-hero .proc-hero-shade {
+    background: linear-gradient(0deg, #e7e2d9 0%, rgb(231 226 217 / .96) 18%, rgb(231 226 217 / .84) 51%, rgb(231 226 217 / .08) 82%, transparent 100%), linear-gradient(90deg, rgb(231 226 217 / .86), rgb(231 226 217 / .84) 45%, transparent 95%);
+  }
+}
+/* Keep the native media window behind the 92% header on its established breakpoints. */
+@media (min-width: 761px) {
+  html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-shade {
+    mask-image: linear-gradient(180deg, transparent calc(var(--header-h) - 24px), #000 var(--header-h));
+  }
+}
+@media (min-width: 601px) {
+  html[data-daylight="a"][data-theme="light"] .about-page .about-subhero .subhero-overlay {
+    mask-image: linear-gradient(180deg, transparent calc(var(--header-h) - 24px), #000 var(--header-h));
+  }
+}
+@media (min-width: 601px) and (max-width: 760px) {
+  html[data-daylight="a"][data-theme="light"] .about-page .about-subhero .subhero-overlay {
+    mask-image: linear-gradient(180deg, transparent 53px, #000 77px);
+  }
 }
 @media (max-width: 760px) {
   html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-shade,
-  html[data-daylight="a"][data-theme="light"] main.inner-page > .phone-hero:is(.angary-service-subhero, .about-subhero) :is(.service-subhero-overlay, .subhero-overlay) {
-    background: linear-gradient(180deg, rgb(243 240 233 / .03) 67px, rgb(243 240 233 / .38) 140px, rgb(243 240 233 / .92) 214px, #f3f0e9 58%);
+  html[data-daylight="a"][data-theme="light"] main.inner-page > .phone-hero :is(.service-subhero-overlay, .subhero-overlay, .proc-hero-shade) {
+    background: linear-gradient(180deg, transparent 67px, rgb(231 226 217 / .04) 140px, rgb(231 226 217 / .80) 214px, rgb(231 226 217 / .96) 340px, #e7e2d9 70%);
+  }
+  /* The first-visit/short-screen native rule reads this variable with higher
+     specificity than the shared overlay. Its ground must follow Light too. */
+  html[data-daylight="a"][data-theme="light"] .directions-page .directions-subhero {
+    --directions-phone-early-shade: linear-gradient(180deg,
+      rgb(231 226 217 / .12) var(--phone-scene-header),
+      rgb(231 226 217 / .48) calc(var(--phone-scene-header) + 50px),
+      rgb(231 226 217 / .86) calc(var(--phone-scene-header) + 100px),
+      rgb(231 226 217 / .96) calc(var(--phone-scene-header) + 180px),
+      #e7e2d9 calc(var(--phone-scene-header) + 100vw * 2 / 3 + 80px));
+  }
+  /* /napryamky keeps its approved 3:2 picture window. Its lower fade meets paper. */
+  html[data-daylight="a"][data-theme="light"] .directions-page .directions-subhero .hero-video-control-label {
+    color: var(--day-ink); background: rgb(243 240 233 / .94);
   }
 }
 /* The outer engineering sheet gets graphite text. Dark ink tokens stay on main
@@ -110,10 +160,10 @@ html[data-theme="light"][data-daylight="a"] .conversation :is(.conversation-intr
   --focus-gap: #F3F0E9;
 }
 
-/* One opaque paper header at the hero, after scrolling, and with the menu open. */
+/* Reuse the existing header state machine: 92% at top, 100% scrolled, 97% menu. */
 html[data-theme="light"][data-daylight="a"] .site-header {
   color: #20211F;
-  background: #F3F0E9;
+  background: color-mix(in srgb, #F3F0E9 var(--phone-hero-header-alpha, 94%), transparent);
   border-bottom-color: #C8C2B7;
   backdrop-filter: none;
 }
@@ -271,20 +321,7 @@ html[data-theme="light"][data-daylight="a"] .conversation .conversation-form-tog
     mask-image: linear-gradient(#000, transparent 300px);
   }
 }
-/* Final photo-control contrast pass. */
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) :is(.hero-video-control-label, .hero-video-control:hover .hero-video-control-label) { color: #373c36; }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .hero-video-control-icon { color: #20211f; background: #f3f0e9; border-color: #857f76; }
-html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .hero-video-control:hover .hero-video-control-icon { color: #20211f; background: #e7e2d9; border-color: #92502b; }
-html[data-daylight="a"][data-theme="light"] .hv2-hero .hero-actions > a > span[aria-hidden="true"] { color: #20211f; }
-html[data-daylight="a"][data-theme="light"] :is(.about-subhero, .angary-service-subhero) .breadcrumb :is(a, b, span, i) { color: #373c36; text-shadow: none; }
-html[data-daylight="a"][data-theme="light"] :is(.about-subhero, .angary-service-subhero) .eyebrow { color: #783c1e; }
-html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-proof-shortcut { --link-ink: #92502b; --link-hover-ink: #20211f; }
-@media (max-width: 760px) {
-  html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-shade,
-  html[data-daylight="a"][data-theme="light"] main.inner-page > .phone-hero:is(.angary-service-subhero, .about-subhero) :is(.service-subhero-overlay, .subhero-overlay) {
-    background: linear-gradient(180deg, rgb(243 240 233 / .03) 67px, rgb(243 240 233 / .08) 140px, rgb(243 240 233 / .80) 214px, rgb(243 240 233 / .96) 340px, #f3f0e9 70%);
-  }
-}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-proof-shortcut { --link-ink: #934923; --link-hover-ink: #20211f; }
 /* Header's single-colour brand SVGs become graphite, including hover/focus. */
 html[data-daylight="a"][data-theme="light"] .site-header .messenger-link .messenger-brand-icon {
   filter: brightness(0); opacity: .72;
