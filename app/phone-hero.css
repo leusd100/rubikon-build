@@ -28,7 +28,7 @@
     inset: 0; mask-image: none;
     background: linear-gradient(180deg, rgba(18,22,19,.18), rgba(18,22,19,.28) var(--phone-scene-header), rgba(18,22,19,.79) calc(var(--phone-scene-header) + 140px), rgba(18,22,19,.82) 60%, rgba(18,22,19,.88));
   }
-  main.inner-page > .phone-hero :is(.subhero-grid, .proc-hero-trace) { display: none; }
+  main.inner-page > .phone-hero .subhero-grid { display: none; }
   main.inner-page > .phone-hero :is(.hero-provenance, .proc-provenance) { top: calc(var(--phone-scene-header) + 14px); right: 20px; bottom: auto; }
   main.inner-page > .phone-hero .hero-video-control { top: calc(var(--phone-scene-header) + 48px); }
   /* The crumbs and the eyebrow at the UI label's 12 px like everywhere else (PDO-16; they were 10 and 11.2 px). At 320 px

@@ -136,14 +136,6 @@ export default function DeliveryModelPage() {
           />
         </div>
         <div className="proc-hero-shade" aria-hidden="true" />
-        {/* Drawing lines over the illustration: set out once on load, then still */}
-        <svg className="proc-hero-trace" data-motion viewBox="0 0 1440 900" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
-          <path className="ht-grid" d="M900 0 V900 M1080 0 V900 M1260 0 V900 M720 300 H1440 M720 600 H1440" pathLength={1} />
-          <path className="ht-trace" d="M760 820 L1180 250 L1440 120" pathLength={1} />
-          <path className="ht-trace ht-trace-2" d="M1030 900 L1310 470" pathLength={1} />
-          <path className="ht-dim" d="M1180 250 L1180 170 M1440 120 L1440 40 M1180 190 H1440" pathLength={1} />
-          <circle className="ht-node" cx="1180" cy="250" r="5" />
-        </svg>
         <div className="shell proc-hero-layout phone-hero-content">
           <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Як працюємо', href: siteRoutes.process }]} />
           <p className="eyebrow light"><span /> Як працюємо</p>

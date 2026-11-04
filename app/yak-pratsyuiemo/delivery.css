@@ -58,19 +58,6 @@
 }
 /* The hero standard (globals.css --hero-*): this block is the owner's model for every page's first block */
 .proc-hero-layout { position: relative; z-index: 1; padding-top: var(--hero-pad-top); padding-bottom: var(--hero-pad-bottom); }
-.proc-hero-trace { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.proc-hero-trace path { fill: none; stroke-dasharray: 1; stroke-dashoffset: 0; }
-.ht-grid { stroke: rgba(245, 242, 235, .07); stroke-width: 1; }
-.ht-trace { stroke: var(--color-accent-on-dark); stroke-width: 1.2; opacity: .55; }
-.ht-trace-2 { opacity: .3; }
-.ht-dim { stroke: rgba(245, 242, 235, .28); stroke-width: 1; }
-.ht-node { fill: var(--color-accent-on-dark); opacity: .8; }
-.process-page[data-motion-ready="on"] .proc-hero-trace path { transition: stroke-dashoffset var(--motion-draw-long) var(--m-ease); }
-.process-page[data-motion-ready="on"] .proc-hero-trace .ht-trace { transition-delay: var(--proc-at-hero-trace); }
-.process-page[data-motion-ready="on"] .proc-hero-trace .ht-dim { transition-delay: var(--proc-at-hero-dim); }
-.process-page[data-motion-ready="on"] .proc-hero-trace .ht-node { transition: opacity var(--m-reveal) ease var(--proc-at-hero-node); }
-.process-page[data-motion-ready] .proc-hero-trace:not([data-motion-state="on"]) path { stroke-dashoffset: 1; }
-.process-page[data-motion-ready] .proc-hero-trace:not([data-motion-state="on"]) .ht-node { opacity: 0; }
 .proc-hero h1 { max-width: 900px; margin: 0; font: 400 var(--type-h1)/1.03 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.04em; text-wrap: balance; }
 .proc-hero h1 em { color: var(--color-accent-strong); font-style: normal; }
 .proc-hero-lead { max-width: 640px; margin: var(--hero-gap-lead) 0 0; color: color-mix(in srgb, var(--color-dark-text) 88%, transparent); font-size: var(--hero-lead); line-height: 1.7; }
@@ -266,5 +253,4 @@
   .proc-resp-switch { top: var(--compact-hero-header-edge, 77px); margin-bottom: 24px; padding: 8px 0; }
   .proc-resp-switch > div { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
   .proc-resp-switch span { min-height: 48px; padding: 6px; font-size: 12px; letter-spacing: .04em; }
-  .proc-hero-trace { display: none; }
 }

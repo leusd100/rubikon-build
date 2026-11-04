@@ -1,0 +1,71 @@
+{
+  "ownerSelection": "03.11.2026: Home A + About B",
+  "aboutCrop": {
+    "left": 554,
+    "top": 0,
+    "width": 683,
+    "height": 1024
+  },
+  "prompts": [
+    {
+      "variant": "home-a",
+      "prompt": "Use case: photorealistic-natural. Asset: a high-quality vertical 1024x1536 (2:3 portrait) hero photo for the MOBILE homepage of RUBIKON BUILD, a Ukrainian industrial construction company. Natural, believable, tactile architectural documentary photography, not a CGI render or AI fantasy. Restrained steel grey, soft sky, concrete and earth tones; quiet premium character. No text, no typography, logos, watermark, orange lines, blueprint overlays, glowing outlines, saturated sunset, HDR, plastic surfaces or fake team portraits. Composition for a mobile website: dominant recognizable construction subject in the UPPER HALF between 15 and 52 percent of image height, clearance above it for the top header; lower half quiet and less busy to accept white and copper website copy. Make the scene attractive without dramatic effects. Concept A — FRAME AND SPACE. A real-looking single-storey gabled steel warehouse frame on concrete foundations, front three-quarter view, a few visible repeated bays receding right. Coherent columns, roof purlins and bracing, plausible bolted connections. Steel roof apex clearly outlined against softly clouded sky in upper third, some partly clad rear bays. Close enough to read the actual construction on a small phone; avoid a tiny building in an empty field. Slightly low 35mm architectural camera but straight verticals, softly directional morning daylight, subtly weathered graphite-grey steel. Foreground is quiet concrete and compacted ground occupying lower 40 percent. No people.",
+      "method": "built-in image_gen"
+    },
+    {
+      "variant": "about-b",
+      "prompt": "Use case: photorealistic-natural. Asset: a landscape 1536x1024 photographic hero option for the About Company page of RUBIKON BUILD, a family industrial construction company in Dnipro, Ukraine. Premium but honest architectural/editorial photography, believable modest local construction scale, real material textures and restrained natural colour. Primary subject in centre-right, clearly readable when cropped vertically around 65 percent horizontal position; keep quiet darker negative space in left third for a website heading. Leave clearance around key details, do not cut the primary subject at the frame top. No people or invented team portraits, no text, logos, readable document lettering, watermarks, blueprint overlays or orange decorative lines; no dramatic sunset, HDR, plastic CGI, extreme cinematic effects or fake perfection. Concept B — A PROJECT THAT IS THOUGHT THROUGH. An authentic construction planning desk in a practical small site office overlooking a real industrial steel frame through a broad window. On centre-right upper-middle of a sturdy wooden worktop: rolled architectural drawings with only subtle unlabelled line geometry, a worn metal tape measure, a simple steel rule, pencil and a small piece of structural angle steel. All objects have believable scale and use marks, no office glamour, no invented numbers or written claims on plans. Soft morning window light, natural grey-steel and subdued warm oak tones, tactile paper and tools. The window’s steel frame is softly out of focus; left third quieter darker tabletop and office space. A carefully composed documentary still life expressing preparation and clear organization, not a stock-photo handshake.",
+      "method": "built-in image_gen"
+    }
+  ],
+  "media": {
+    "home": {
+      "sourceSize": [
+        1024,
+        1536
+      ],
+      "quality": 82,
+      "variants": [
+        {
+          "width": 480,
+          "height": 720,
+          "bytes": 51380,
+          "path": "/media/home-v2/concepts/hero-frame-photo-v1-480w.56dee54d.webp"
+        },
+        {
+          "width": 768,
+          "height": 1152,
+          "bytes": 126382,
+          "path": "/media/home-v2/concepts/hero-frame-photo-v1-768w.d8b7e3a1.webp"
+        },
+        {
+          "width": 1024,
+          "height": 1536,
+          "bytes": 212476,
+          "path": "/media/home-v2/concepts/hero-frame-photo-v1-1024w.c735669a.webp"
+        }
+      ]
+    },
+    "about": {
+      "sourceSize": [
+        683,
+        1024
+      ],
+      "quality": 82,
+      "variants": [
+        {
+          "width": 480,
+          "height": 720,
+          "bytes": 37864,
+          "path": "/media/about/about-planning-photo-v1-480w.b6f12476.webp"
+        },
+        {
+          "width": 683,
+          "height": 1024,
+          "bytes": 63942,
+          "path": "/media/about/about-planning-photo-v1-683w.0470ec96.webp"
+        }
+      ]
+    }
+  }
+}

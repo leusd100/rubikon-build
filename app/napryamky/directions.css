@@ -21,12 +21,16 @@
 .directions-page .directions-hero-actions :is(.subhero-side-cta, .text-link) { margin: 0; }
 /* the arrow link's words on the button's line (.link-arrow); a phone stacks the two as 56 px rows */
 @media (min-width: 761px) { .directions-page .directions-hero-actions .text-link { margin-top: -10px; } }
-/* The clean photographs carry the visual detail; no blueprint grid or blur over their geometry. From y 0, behind the
-   header, at every width (PDO-18: the 101 px band above the slides on ≥1100 px is gone; ≤1099 px it already was). */
+/* The clean photographs carry the visual detail; no blueprint grid or blur over their geometry. */
 .directions-page .directions-hero-sequence-image { top: 0; height: 100%; filter: saturate(.88) contrast(1.02); }
 @media (max-width: 760px) {
   .directions-page .directions-hero-sequence-image { top: 77px; height: calc(100% - 77px); }
 }
+/* Owner photo review, 03.11: keep the image's top below the header, including the compact tablet reset in globals.css. */
+@media (min-width: 761px) {
+  .directions-page .directions-subhero .directions-hero-sequence-image { top: var(--header-h); height: calc(100% - var(--header-h)); mask-image: linear-gradient(180deg, transparent, #000 28px); }
+}
+
 /* The theme is set before paint; hide the SSR fallback until React selects the matching art. */
 :root[data-theme="dark"] .directions-page .directions-hero-sequence-image[data-art-theme="light"],
 :root[data-theme="light"] .directions-page .directions-hero-sequence-image[data-art-theme="dark"] { visibility: hidden; opacity: 0; }
@@ -44,6 +48,9 @@
       linear-gradient(90deg, rgba(10, 11, 12, .64), rgba(10, 11, 12, .5)),
       linear-gradient(180deg, rgba(10, 11, 12, .15) 0%, rgba(10, 11, 12, .32) 36%, rgba(10, 11, 12, .82) 100%);
   }
+}
+@media (min-width: 1051px) {
+  :root[data-theme="dark"] .directions-page .directions-subhero .subhero-overlay { background: linear-gradient(90deg, rgba(10,11,12,.94), rgba(10,11,12,.7) 50%, rgba(10,11,12,.2)), linear-gradient(0deg, rgba(10,11,12,.72), transparent 62%); }
 }
 /* Clear of the window's edges at every height: the hero standard (globals.css --hero-*) sizes by the window's height */
 /* Which direction the slide shows, top right: five bars (the current one filling for the slide's 6 s) and its name */

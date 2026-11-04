@@ -35,14 +35,11 @@
 /* /planner-preview's hero only (grainPage.direction, legacyCallLink): /zernoskhovyshcha leads with the call since Phase 2 */
 .grain-page .grain-hero-secondary { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .58); background: rgba(12, 13, 15, .18); }
 .grain-page .grain-hero-secondary:hover { border-color: var(--color-dark-text); background: rgba(255, 255, 255, .09); transform: translateY(-2px); }
-/* The concept picture's lower strip carries a generated «drawing» with made-up sizes (Ø14500, +27,100, «ПЛАН» and
-   «РОЗРІЗ 1–1» as one circle twice): the site draws nothing that passes for a project drawing, so the picture fades into
-   the dark band above that strip (owner, 06.10). The silos keep their footing. */
-.grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 66%, transparent 79%); mask-image: linear-gradient(#000 66%, transparent 79%); }
-/* A screen narrower than the picture's 3 : 2 (a tablet, 1366 × 1024, a phone) shows its full height, the made-up strip
-   from ~70 % of it: the fade ends above that, the silos' footings (~58 %) still in view */
+/* Owner photo review, 03.11: photographic heroes have no drawing strip to conceal. Keep the silo bases visible
+   and blend the foreground gradually into the page, instead of cutting the photo away behind the buttons. */
+.grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 76%, rgba(0,0,0,.84) 86%, transparent 100%); mask-image: linear-gradient(#000 76%, rgba(0,0,0,.84) 86%, transparent 100%); }
 @media (max-aspect-ratio: 3 / 2) {
-  .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 56%, transparent 68%); mask-image: linear-gradient(#000 56%, transparent 68%); }
+  .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 68%, transparent 100%); mask-image: linear-gradient(#000 68%, transparent 100%); }
 }
 
 /* ---------- 04 Як RUBIKON реалізує: the building part as a tour of one drawing (GrainStoreDrawing in DirectionNode) ---------- */
@@ -216,7 +213,7 @@
   .grain-page .direction-entry-list li, .grain-page .direction-entry-list li:first-child { flex: 0 0 82%; padding: 20px 18px; border: 1px solid var(--color-border-strong); background: var(--color-surface-elevated); scroll-snap-align: start; }
   .grain-page .cost-list article { padding-block: 14px; }
   .grain-page .cost-list p { margin-top: 4px; font-size: 15px; line-height: 1.55; }
-  .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 56%, transparent 67%); mask-image: linear-gradient(#000 56%, transparent 67%); }
+  .grain-page .grain-service-subhero .service-subhero-media { -webkit-mask-image: linear-gradient(#000 64%, transparent 100%); mask-image: linear-gradient(#000 64%, transparent 100%); }
   /* 126 px like every direction hero, so the crumbs sit under the «Ілюстрація» stamp (UX pass 2026-10) */
   .grain-page .service-subhero-content { padding-top: 126px; padding-bottom: 44px; }
   .grain-page .grain-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 24px; }

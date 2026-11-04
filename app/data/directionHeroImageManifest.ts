@@ -49,18 +49,16 @@ const blueHour = (name: string, hashes: readonly string[], portraitHashes: Portr
 
 export const directionHeroImageAssets = {
   angary: {
-    dark: blueHour('angary', ['a576a977', '4d31470a', '71bd21db', '244cc20d'], { avif: '32d5e6e4', webp: 'cd0dde67' }),
-    fallbackSrc: '/media-responsive/direction-hero-photo-variant-angary-1536w.b4e0c501.webp',
-    srcSet: responsiveSrcSet('angary', {
-      w480: 'e1c31e55', w768: '9908c455', w1200: '6e7f3686', w1536: 'b4e0c501',
-    }),
-    portrait: portrait('direction-hero-photo-variant', 'angary', { avif: 'fc8f2270', webp: '9643c898' }),
+    dark: blueHour('angary', ['71582417', '6a77e891', '02cc7516', 'c0b42098'], { avif: '16131ec7', webp: '12bde85e' }),
+    fallbackSrc: '/media-responsive/direction-hero-photo-variant-angary-1536w.ff7e8c1a.webp',
+    srcSet: responsiveSrcSet('angary', { w480: '7891bedb', w768: '78a42fed', w1200: 'c45ee5de', w1536: 'ff7e8c1a' }),
+    portrait: portrait('direction-hero-photo-variant', 'angary', { avif: '49b633f8', webp: '476428bc' }),
     focalPosition: `56% ${ART_TOP}`,
     mobileFocalPosition: '58% center',
     artTop: ART_TOP,
   },
   zernoskhovyshcha: {
-    dark: blueHour('zernoskhovyshcha', ['262dafeb', 'cea9cba2', 'c879a152', '731f0864'], { avif: '104a3372', webp: '8c9c8882' }),
+    dark: blueHour('zernoskhovyshcha', ['5a79f6ba', '2f78371a', '7ffff1ab', '9fe7da9c'], { avif: 'a1cbbcca', webp: 'd538b9fe' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-zernoskhovyshcha-1536w.90934f90.webp',
     srcSet: responsiveSrcSet('zernoskhovyshcha', {
       w480: 'be87c7d8', w768: '7c67f3ef', w1200: 'b394ed98', w1536: '90934f90',
@@ -70,23 +68,19 @@ export const directionHeroImageAssets = {
     mobileFocalPosition: '62% center',
   },
   metalokonstruktsii: {
-    dark: blueHour('metalokonstruktsii', ['4c1ae364', '18ffb0d1', '8e156e55', '2213066e'], { avif: 'e397bcbb', webp: '09c9ea0e' }),
-    fallbackSrc: '/media-responsive/direction-hero-photo-variant-metalokonstruktsii-1536w.d2fbc0e0.webp',
-    srcSet: responsiveSrcSet('metalokonstruktsii', {
-      w480: 'f09543fd', w768: '6df1407d', w1200: 'c4c53f5e', w1536: 'd2fbc0e0',
-    }),
-    portrait: portrait('direction-hero-photo-variant', 'metalokonstruktsii', { avif: 'c6e7a820', webp: '65df7e70' }),
+    dark: blueHour('metalokonstruktsii', ['e7aed6ee', '81efe464', 'e02e6b56', 'ec750520'], { avif: '6bd96938', webp: '3032c3f6' }),
+    fallbackSrc: '/media-responsive/direction-hero-photo-variant-metalokonstruktsii-1536w.ec2184d1.webp',
+    srcSet: responsiveSrcSet('metalokonstruktsii', { w480: '3ed1b208', w768: 'd09493a3', w1200: 'f005df53', w1536: 'ec2184d1' }),
+    portrait: portrait('direction-hero-photo-variant', 'metalokonstruktsii', { avif: '2366c8f5', webp: 'd533bf1f' }),
     focalPosition: `55% ${ART_TOP}`,
     mobileFocalPosition: '58% center',
     artTop: ART_TOP,
   },
   'betonni-roboty': {
-    dark: blueHour('betonni-roboty', ['fd4ed433', '2a32c945', '9a9fb729', 'de3f3916'], { avif: 'bb4408e1', webp: '7066e860' }),
-    fallbackSrc: '/media-responsive/direction-hero-photo-variant-betonni-roboty-1536w.23e60c07.webp',
-    srcSet: responsiveSrcSet('betonni-roboty', {
-      w480: '27aabc64', w768: 'a5cfbf73', w1200: 'bb20c5f9', w1536: '23e60c07',
-    }),
-    portrait: portrait('direction-hero-photo-variant', 'betonni-roboty', { avif: 'e05e8267', webp: '83fd957c' }),
+    dark: blueHour('betonni-roboty', ['0cb83a64', '45c050c5', '91423a3f', '49ecb41b'], { avif: 'f90f90fc', webp: 'fd178407' }),
+    fallbackSrc: '/media-responsive/direction-hero-photo-variant-betonni-roboty-1536w.82ef0687.webp',
+    srcSet: responsiveSrcSet('betonni-roboty', { w480: 'ac51425f', w768: '5b92afff', w1200: 'd89f0df8', w1536: '82ef0687' }),
+    portrait: portrait('direction-hero-photo-variant', 'betonni-roboty', { avif: '7c3c6b2f', webp: '7f09c390' }),
     focalPosition: '53% 4%',
     mobileFocalPosition: '55% center',
   },
@@ -97,12 +91,12 @@ export const directionHeroImageAssets = {
         webp: '/media-responsive/direction-hero-roof-mobile-light-784w.a91d7c08.webp',
       },
       dark: {
-        avif: '/media-responsive/direction-hero-roof-mobile-dark-784w.752881d0.avif',
-        webp: '/media-responsive/direction-hero-roof-mobile-dark-784w.89d72003.webp',
+        avif: '/media-responsive/direction-hero-roof-mobile-dark-784w.777cdb44.avif',
+        webp: '/media-responsive/direction-hero-roof-mobile-dark-784w.173f83b4.webp',
       },
       position: '45% center',
     },
-    dark: blueHour('pokrivelni-roboty', ['98a4ea3b', '690f84d1', '6fd2fef5', '25db180e'], { avif: 'fdead887', webp: 'efc25e91' }),
+    dark: blueHour('pokrivelni-roboty', ['ad1d869e', 'e973dec4', 'd2853a0c', '9040f15b'], { avif: '777cdb44', webp: '173f83b4' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-pokrivelni-roboty-1536w.9e89e366.webp',
     srcSet: responsiveSrcSet('pokrivelni-roboty', {
       w480: 'a8e0dc26', w768: '8519ff54', w1200: '016676cf', w1536: '9e89e366',
