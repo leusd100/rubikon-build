@@ -1,0 +1,294 @@
+/* Architectural Daylight A — isolated visual prototype, based on main 503a438b.
+   All rules require both prototype and Light. Media sources, theme lifecycle,
+   drawing inks, provenance and production baselines are deliberately untouched. */
+html[data-daylight="a"][data-theme="light"] {
+  --day-paper: #f3f0e9;
+  --day-sheet: #e7e2d9;
+  --day-ink: #20211f;
+  --day-secondary: #4c504a;
+  --day-rule: #c4bdb1;
+  --day-copper: #92502b;
+}
+/* Light is photographic daylight through a warm architectural tracing sheet.
+   The vertical veil protects text even when a moving frame changes beneath it. */
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .angary-service-subhero, .about-subhero) {
+  color: var(--day-ink);
+  background-color: var(--day-paper);
+  --focus-ring: #874520;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-shade,
+html[data-daylight="a"][data-theme="light"] .angary-page .service-subhero-overlay,
+html[data-daylight="a"][data-theme="light"] .about-page .about-subhero .subhero-overlay {
+  mask-image: none;
+  background: linear-gradient(0deg, #f3f0e9 0%, rgb(243 240 233 / .96) 17%, rgb(243 240 233 / .87) 51%, rgb(243 240 233 / .10) 84%), linear-gradient(90deg, rgb(243 240 233 / .54), rgb(243 240 233 / .08));
+}
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) :is(img, video) {
+  filter: saturate(.92) contrast(1.02);
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-grid,
+html[data-daylight="a"][data-theme="light"] .about-subhero .subhero-grid { opacity: .035; }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) h1 { color: var(--day-ink); }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero h1 em,
+html[data-daylight="a"][data-theme="light"] main.inner-page > .phone-hero h1 em { color: var(--day-copper); }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-lead,
+html[data-daylight="a"][data-theme="light"] .angary-page .service-subhero-content :is(.service-subhero-lead, .service-subhero-note),
+html[data-daylight="a"][data-theme="light"] .about-page .about-subhero-side > p { color: #373c36; border-color: var(--day-rule); }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) :is(.eyebrow, .breadcrumb, .breadcrumb a, .phone-hero-scroll) { color: var(--day-copper); }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .button-primary {
+  color: #faf8f3; background: #92502b; border-color: #92502b;
+}
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .button-primary:is(:hover, :focus-visible) { background: #713c20; border-color: #713c20; }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .button-hero-secondary {
+  color: var(--day-ink); border-color: #8b8b80; background: rgb(243 240 233 / .55);
+}
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .button-hero-secondary:is(:hover, :focus-visible) { background: var(--day-sheet); border-color: var(--day-copper); }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .hero-video-control {
+  color: var(--day-ink); --control-ink: var(--day-ink);
+}
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .hero-video-control button {
+  color: var(--day-ink); background: var(--day-paper); border-color: #8b8b80;
+}
+@media (max-width: 760px) {
+  html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-shade,
+  html[data-daylight="a"][data-theme="light"] main.inner-page > .phone-hero:is(.angary-service-subhero, .about-subhero) :is(.service-subhero-overlay, .subhero-overlay) {
+    background: linear-gradient(180deg, rgb(243 240 233 / .03) 67px, rgb(243 240 233 / .38) 140px, rgb(243 240 233 / .92) 214px, #f3f0e9 58%);
+  }
+}
+/* The outer engineering sheet gets graphite text. Dark ink tokens stay on main
+   so the contour, snow/wind load paths and portalled node sheets are unchanged. */
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-signature {
+  color: var(--day-ink); background: #eae6dd; --focus-ring: #874520;
+  box-shadow: inset 0 1px 0 #c4bdb1, 0 -8px 24px rgb(44 40 32 / .06);
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-signature-lines {
+  background-image: linear-gradient(rgb(75 67 53 / .055) 1px, transparent 1px), linear-gradient(90deg, rgb(75 67 53 / .055) 1px, transparent 1px);
+  opacity: .7;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] :is(.hv2-signature-head, .hv2-proof-facts, .hv2-signature-foot, .hv2-frame-brief) {
+  --hv2-text: #20211f; --hv2-text-2: #4c504a; --hv2-text-3: #5c6059;
+  --hv2-copper-text: #92502b; --hv2-line: #c4bdb1; --hv2-line-strong: #a49e92;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-signature-head { border-color: var(--day-rule); }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room {
+  background: #121413; color: #f3f0e9;
+  box-shadow: 0 0 0 16px #121413;
+  margin-top: 48px; margin-bottom: 32px;
+  --focus-ring: #e2aa80;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour { box-shadow: 0 0 0 1px #a49e92; }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell { color: var(--day-ink); background: #f3f0e9; }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell::before { background: #f3f0e9; }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] .hv2-scope-cell { color: var(--day-ink); }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-kind { color: #f5f2eb; }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-kind[data-kind="Схема"] { color: #e2aa80; }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell::after { box-shadow: inset 0 0 0 1px #a49e92; }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-people { border-color: var(--day-rule); }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-signature-foot { border-color: var(--day-rule); }
+@media (max-width: 760px) {
+  html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room { box-shadow: 0 0 0 10px #121413; margin-top: 34px; }
+}
+/* Architectural Daylight A — isolated prototype, explicit Light only.
+   Append after the existing styles. No footer, layout or theme-behaviour changes. */
+html[data-theme="light"][data-daylight="a"] .site-header,
+html[data-theme="light"][data-daylight="a"] .conversation,
+html[data-theme="light"][data-daylight="a"] .conversation :is(.conversation-intro, .conversation-journey-wrap, .conversation-form-toggle) {
+  --color-text: #20211F;
+  --color-text-secondary: #474944;
+  --color-text-muted: #5E615D;
+  --color-border: #C8C2B7;
+  --color-border-strong: #A39C90;
+  --color-border-control: #857F76;
+  --color-surface-elevated: #FAF8F3;
+  --color-field: #FBFAF6;
+  --color-accent-strong: #934923;
+  --color-accent-hover: #7F3D1D;
+  --color-action: #A0522A;
+  --color-action-hover: #7F3D1D;
+  --color-on-action: #F5F2EB;
+  --color-focus: #934923;
+  --focus-ring: #934923;
+  --focus-gap: #F3F0E9;
+}
+
+/* One opaque paper header at the hero, after scrolling, and with the menu open. */
+html[data-theme="light"][data-daylight="a"] .site-header {
+  color: #20211F;
+  background: #F3F0E9;
+  border-bottom-color: #C8C2B7;
+  backdrop-filter: none;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .brand {
+  /* Exact approved .brand-on-light steel stops; the SVG geometry stays intact. */
+  --logo-mark-0: #3A3E3C; --logo-mark-1: #202321; --logo-mark-2: #4A4E4B;
+  --logo-mark-3: #1B1E1C; --logo-mark-4: #343836;
+  --logo-word-0: #2A2D2B; --logo-word-1: #1D201E; --logo-word-2: #2E312F;
+  --logo-rule: #857F76;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .desktop-nav a::after {
+  background: #934923;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .desktop-nav a:is(:hover, :focus-visible) {
+  color: #934923;
+}
+html[data-theme="light"][data-daylight="a"] body .site-header :is(.header-phone, .mobile-call) {
+  color: #F5F2EB;
+  background: #A0522A;
+  border-color: #A0522A;
+}
+html[data-theme="light"][data-daylight="a"] body .site-header :is(.header-phone, .mobile-call):is(:hover, :focus-visible) {
+  color: #F5F2EB;
+  background: #7F3D1D;
+  border-color: #7F3D1D;
+}
+html[data-theme="light"][data-daylight="a"] body .site-header :is(.header-phone strong, .header-phone svg, .mobile-call svg) {
+  color: #F5F2EB;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .messenger-link {
+  color: #474944;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .messenger-link:is(:hover, :focus-visible) {
+  color: #20211F;
+  background: #E7E2D9;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .header-email svg {
+  color: #934923;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .header-email:is(:hover, :focus-visible) svg {
+  color: #7F3D1D;
+}
+html[data-theme="light"][data-daylight="a"] body .site-header .mobile-menu summary {
+  color: #20211F;
+  background: #FAF8F3;
+  border-color: #857F76;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .mobile-menu nav {
+  color: #20211F;
+  background: #FAF8F3;
+  border-color: #A39C90;
+  box-shadow: 0 18px 40px rgb(32 33 31 / 14%);
+}
+html[data-theme="light"][data-daylight="a"] .site-header .mobile-menu nav a,
+html[data-theme="light"][data-daylight="a"] .site-header .mobile-messengers {
+  border-color: #C8C2B7;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .mobile-menu nav :is(a[aria-current], small) {
+  color: #934923;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .mobile-menu nav .mobile-messengers .messenger-link {
+  border-color: #857F76;
+}
+
+/* The existing switch and radios retain their state, labels and keyboard behavior. */
+html[data-theme="light"][data-daylight="a"] .site-header .theme-switch,
+html[data-theme="light"][data-daylight="a"] .site-header .theme-switch:hover {
+  color: #5E615D;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .theme-switch-track {
+  border-color: #857F76;
+  background: #E7E2D9;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .theme-switch:hover .theme-switch-track {
+  border-color: #474944;
+  background: #E7E2D9;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .theme-switch-knob {
+  background: #474944;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .theme-switch-sun {
+  color: #FAF8F3;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .theme-switch:focus-visible .theme-switch-track,
+html[data-theme="light"][data-daylight="a"] .site-header .theme-options input:focus-visible + span {
+  outline-color: #934923;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .theme-options :is(legend, span),
+html[data-theme="light"][data-daylight="a"] .site-header .theme-options-note {
+  color: #474944;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .theme-options-row,
+html[data-theme="light"][data-daylight="a"] .site-header .theme-options label + label {
+  border-color: #857F76;
+}
+html[data-theme="light"][data-daylight="a"] .site-header .theme-options label:hover span {
+  color: #20211F;
+  background: #E7E2D9;
+}
+html[data-theme="light"][data-daylight="a"]:not([data-theme-preference]) .site-header .theme-options [data-theme-option="system"] span,
+html[data-theme="light"][data-daylight="a"][data-theme-preference="system"] .site-header .theme-options [data-theme-option="system"] span,
+html[data-theme="light"][data-daylight="a"][data-theme-preference="light"] .site-header .theme-options [data-theme-option="light"] span {
+  color: #FAF8F3;
+  background: #474944;
+}
+
+html[data-theme="light"][data-daylight="a"] .site-header .theme-options input:checked:focus-visible + span {
+  outline-color: #FAF8F3;
+}
+
+/* A paper drawing sheet: keep the original contour vector and route-specific crop. */
+html[data-theme="light"][data-daylight="a"] .conversation {
+  color: #20211F;
+  background: #F3F0E9;
+  box-shadow: none;
+  --conv-tg: .59;
+  --conv-wa: .53;
+  --conv-vb: .8;
+}
+html[data-theme="light"][data-daylight="a"] .conversation > .conversation-grid::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background: url('/media/materials/contours-dark.svg') var(--contours, -120px -120px / max(1800px, calc(100% + 240px)) auto) no-repeat;
+  filter: brightness(0);
+  opacity: .19;
+  mask-image: linear-gradient(90deg, transparent 10%, #000 65%);
+}
+html[data-theme="light"][data-daylight="a"] .conversation h2 {
+  color: #20211F;
+}
+html[data-theme="light"][data-daylight="a"] .conversation .inquiry-form {
+  --focus-gap: #FAF8F3;
+  background: #FAF8F3;
+  border-color: #A39C90;
+  border-top-color: #B76432;
+}
+/* Explicit boundaries for the compact form toggle; all form fields, validity states,
+   consent text and privacy links use the restored Light roles above. */
+html[data-theme="light"][data-daylight="a"] .conversation .conversation-form-toggle {
+  color: #20211F;
+  background: #FAF8F3;
+  border-color: #857F76;
+}
+html[data-theme="light"][data-daylight="a"] .conversation .conversation-form-toggle:is(:hover, :focus-visible) {
+  border-color: #934923;
+  background: #EDE9E1;
+}
+@media (max-width: 1180px) {
+  html[data-theme="light"][data-daylight="a"] .conversation > .conversation-grid::before {
+    background-position: -300px -20px;
+    background-size: max(1000px, calc(100% + 340px)) auto;
+    mask-image: linear-gradient(#000, transparent 300px);
+  }
+}
+/* Final photo-control contrast pass. */
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) :is(.hero-video-control-label, .hero-video-control:hover .hero-video-control-label) { color: #373c36; }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .hero-video-control-icon { color: #20211f; background: #f3f0e9; border-color: #857f76; }
+html[data-daylight="a"][data-theme="light"] :is(.hv2-hero, .about-subhero, .angary-service-subhero) .hero-video-control:hover .hero-video-control-icon { color: #20211f; background: #e7e2d9; border-color: #92502b; }
+html[data-daylight="a"][data-theme="light"] .hv2-hero .hero-actions > a > span[aria-hidden="true"] { color: #20211f; }
+html[data-daylight="a"][data-theme="light"] :is(.about-subhero, .angary-service-subhero) .breadcrumb :is(a, b, span, i) { color: #373c36; text-shadow: none; }
+html[data-daylight="a"][data-theme="light"] :is(.about-subhero, .angary-service-subhero) .eyebrow { color: #783c1e; }
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-proof-shortcut { --link-ink: #92502b; --link-hover-ink: #20211f; }
+@media (max-width: 760px) {
+  html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-hero .hero-shade,
+  html[data-daylight="a"][data-theme="light"] main.inner-page > .phone-hero:is(.angary-service-subhero, .about-subhero) :is(.service-subhero-overlay, .subhero-overlay) {
+    background: linear-gradient(180deg, rgb(243 240 233 / .03) 67px, rgb(243 240 233 / .08) 140px, rgb(243 240 233 / .80) 214px, rgb(243 240 233 / .96) 340px, #f3f0e9 70%);
+  }
+}
+/* Header's single-colour brand SVGs become graphite, including hover/focus. */
+html[data-daylight="a"][data-theme="light"] .site-header .messenger-link .messenger-brand-icon {
+  filter: brightness(0); opacity: .72;
+}
+html[data-daylight="a"][data-theme="light"] .site-header .messenger-link:is(:hover, :focus-visible) .messenger-brand-icon {
+  filter: brightness(0); opacity: 1;
+}

@@ -24,6 +24,7 @@ import './components/sheet-field.css';
 import './components/page-sheets.css';
 import './components/page-materials.css';
 import './motion.css';
+import './daylight-prototype.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
 import { FocusClearance } from './components/FocusClearance';
@@ -142,7 +143,7 @@ const websiteData = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uk" suppressHydrationWarning>
+    <html lang="uk" data-daylight="a" suppressHydrationWarning>
       <head>
         {/* Resolves system/light/dark onto <html> before the first paint, so the first frame already has the right
             theme (app/lib/theme.ts, app/theme.css). */}
