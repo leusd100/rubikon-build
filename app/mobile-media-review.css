@@ -5,13 +5,14 @@
     object-position: var(--direction-phone-image-position, var(--direction-hero-image-position-mobile, center 60%));
   }
 }
-/* Direction C: retain the entire line-to-material illustration in the upper scene.
-   The graphite image background fills the hero tail even with enlarged copy. */
+/* Owner phone review, 04.11: lift the selected warehouse by 48px so its roof clears the title
+   on a short Safari viewport. Clip the moved sky below the header to keep its graphite backing. */
 @media (max-width: 760px) {
   main[data-home="v2"] .hv2-hero .hero-media img.direction-hero-poster {
     height: 100%;
     object-fit: contain;
-    object-position: center var(--hv2-header);
+    object-position: center calc(var(--hv2-header) - 48px);
+    clip-path: inset(var(--hv2-header) 0 0);
     background: #121613;
     filter: none;
   }
