@@ -66,7 +66,24 @@ html[data-daylight="a"][data-theme="light"] .about-page .about-subhero .subhero-
 html[data-daylight="a"][data-theme="light"] .directions-page .directions-subhero .subhero-overlay,
 html[data-daylight="a"][data-theme="light"] .process-page .proc-hero .proc-hero-shade {
  --day-copy-edge: calc(max(var(--container-gutter), (100vw - var(--container-max)) / 2) + min(780px, 58vw));
- background: linear-gradient(90deg, rgb(231 226 217 / .96), rgb(231 226 217 / .92) var(--day-copy-edge), rgb(231 226 217 / .40) calc(var(--day-copy-edge) + 120px), transparent calc(var(--day-copy-edge) + 380px)), linear-gradient(0deg, #e7e2d9, rgb(231 226 217 / .82) 7%, rgb(231 226 217 / .38) 18%, rgb(231 226 217 / .06) 40%, transparent 65%);
+ /* Distribute the fade across an eased shoulder instead of a steep 120px edge (owner review, 05.11). */
+    --day-feather: clamp(360px, 32vw, 640px);
+    background:
+      linear-gradient(90deg,
+        rgb(231 226 217 / .96) calc(var(--day-copy-edge) - 160px),
+        rgb(231 226 217 / .94) calc(var(--day-copy-edge) - 80px),
+        rgb(231 226 217 / .90) var(--day-copy-edge),
+        rgb(231 226 217 / .82) calc(var(--day-copy-edge) + var(--day-feather) * .16),
+        rgb(231 226 217 / .65) calc(var(--day-copy-edge) + var(--day-feather) * .34),
+        rgb(231 226 217 / .42) calc(var(--day-copy-edge) + var(--day-feather) * .55),
+        rgb(231 226 217 / .20) calc(var(--day-copy-edge) + var(--day-feather) * .76),
+        rgb(231 226 217 / .06) calc(var(--day-copy-edge) + var(--day-feather) * .92),
+        transparent calc(var(--day-copy-edge) + var(--day-feather))),
+      linear-gradient(0deg, #e7e2d9,
+        rgb(231 226 217 / .93) 4%, rgb(231 226 217 / .78) 8%,
+        rgb(231 226 217 / .56) 14%, rgb(231 226 217 / .34) 21%,
+        rgb(231 226 217 / .17) 30%, rgb(231 226 217 / .06) 40%,
+        rgb(231 226 217 / .01) 51%, transparent 62%);
 }
 html[data-daylight="a"][data-theme="light"] :is(.service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) h1 { max-width: min(780px, 58vw); }
 html[data-daylight="a"][data-theme="light"] :is(.service-subhero.phone-hero, .about-subhero, .directions-subhero, .proc-hero) :is(.service-subhero-lead, .proc-hero-lead, .subhero-side > p) { max-width: 640px; }

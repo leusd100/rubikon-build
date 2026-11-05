@@ -1,0 +1,114 @@
+[
+  {
+    "engine": "chromium",
+    "route": "/napryamky",
+    "width": 1920,
+    "theme": "dark",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "chromium",
+    "route": "/angary",
+    "width": 1440,
+    "theme": "dark",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "chromium",
+    "route": "/pro-nas",
+    "width": 1440,
+    "theme": "dark",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "chromium",
+    "route": "/yak-pratsyuiemo",
+    "width": 1440,
+    "theme": "dark",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "chromium",
+    "route": "/napryamky",
+    "width": 390,
+    "theme": "light",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "chromium",
+    "route": "/napryamky",
+    "width": 768,
+    "theme": "light",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "chromium",
+    "route": "/",
+    "width": 1440,
+    "theme": "light",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "webkit",
+    "route": "/napryamky",
+    "width": 1920,
+    "theme": "dark",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "webkit",
+    "route": "/angary",
+    "width": 1440,
+    "theme": "dark",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "webkit",
+    "route": "/pro-nas",
+    "width": 1440,
+    "theme": "dark",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "webkit",
+    "route": "/yak-pratsyuiemo",
+    "width": 1440,
+    "theme": "dark",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "webkit",
+    "route": "/napryamky",
+    "width": 390,
+    "theme": "light",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "webkit",
+    "route": "/napryamky",
+    "width": 768,
+    "theme": "light",
+    "pass": true,
+    "removedRules": 1
+  },
+  {
+    "engine": "webkit",
+    "route": "/",
+    "width": 1440,
+    "theme": "light",
+    "pass": true,
+    "removedRules": 1
+  }
+]
