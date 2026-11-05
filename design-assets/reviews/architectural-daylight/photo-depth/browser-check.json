@@ -1,0 +1,133 @@
+{
+  "environment": "Chromium and WebKit emulation; not real Safari",
+  "checks": [
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "route": "/",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "route": "/napryamky",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "route": "/pro-nas",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "route": "/metalokonstruktsii",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "route": "/",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "route": "/napryamky",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "route": "/pro-nas",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "route": "/metalokonstruktsii",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "route": "/",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "route": "/napryamky",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "route": "/pro-nas",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "route": "/metalokonstruktsii",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "route": "/",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "route": "/napryamky",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "route": "/pro-nas",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "route": "/metalokonstruktsii",
+      "firstLight": true,
+      "darkPixelsIdentical": true,
+      "persisted": true
+    }
+  ]
+}
