@@ -598,13 +598,18 @@ function frameGeometry(domain: HangarDomainModel, rowGap = ROW_GAP) {
   // other lines, which a name crosses only where no clearer place is
   const bayLines: Segment[] = [segment([W + DIM_A, 0, 0], [W + DIM_A, s, 0]), segment([W + 0.9, 0, 0], [W + DIM_A + 0.4, 0, 0]), segment([W + 0.9, s, 0], [W + DIM_A + 0.4, s, 0])];
   const greyLines = [...segmentsOf(`${backFrames}${longitudinals}${farEnd}${columnsAt(0)}${roofAt(0)}`), ...dimLines];
+  // Keep bracing leaders horizontal so they cannot read as extensions of a diagonal; place roof names above
+  // the ridge-side purlins (owner visual review, 05.11), with a first-bay fallback for short buildings.
+  const rightPurlins = purlinXs.filter((x) => x > W / 2);
+  const ridgePurlins = rightPurlins.filter((x) => x < W * 0.8);
+  const tagPurlins = ridgePurlins.length ? ridgePurlins : rightPurlins;
   const baysTags = [
-    placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[34, -10], [30, 14], [26, -28]] as Pt[] })), baysBase.view, bayTaken, bayLines, { bars, others: greyLines }),
+    placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[64, 0], [82, 0], [100, 0]] as Pt[] })), baysBase.view, bayTaken, bayLines, { bars, others: greyLines, ring: false }),
     // up from a purlin, over the roof where the picture is free (10.10, owner: «"прогони" краще показати зверху де є
     // вільне місце» — the ring had put it under the side wall, among the other names)
-    placeTag('прогони', [...purlinXs].filter((x) => x > W / 2).reverse().flatMap((x) => [1.5, 1.2, 1.9, 2.3].filter((t) => t * s < end).map((t) => ({
+    placeTag('прогони', tagPurlins.flatMap((x) => [2.3, 1.9, 1.5, 0.7].filter((t) => t * s < end).map((t) => ({
       from: xy([x, s * t, roofZ(x)]),
-      leaders: [[0, -44], [16, -42], [-16, -42], [10, -60], [-10, -60], [26, -34], [0, -78], [22, -74]] as Pt[],
+      leaders: [[0, -44], [-16, -44], [0, -60]] as Pt[],
     }))), baysBase.view, bayTaken, bayLines, { bars, others: greyLines, ring: false }),
     // on a wall purlin of the end wall, the name above or below it; else out from the side wall's
     placeTag('стінові прогони', [
