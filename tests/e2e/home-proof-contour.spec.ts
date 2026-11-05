@@ -429,8 +429,8 @@ async function expectWindow(stage: Locator, value: number, message?: string) {
   expect({ clips, inner: inner < 0.05, drift: drift < 0.05 }, `${message ?? ''} inner ${inner} px, drift ${drift} px`).toEqual({ clips: true, inner: true, drift: true });
 }
 
-/** A load's tint as the legend writes it: the colour of its way's words — the tint is the key, no line is drawn */
-const tintOf = (sheet: Locator, load: Load) => sheet.locator(`.hv2-contour-legend-chain[data-load="${load}"] > .hv2-chain-step`).first().evaluate((word) => getComputedStyle(word).color);
+/** The drawing's canonical load tint; paper legend ink is verified separately below. */
+const tintOf = (sheet: Locator, load: Load) => tokenColour(sheet.page(), load === 'load' ? '--hv2-load' : '--hv2-wind');
 
 /** A load's way as the legend writes it, read with reduced motion: the active layer's set — the only one shown — holds
  *  one chain: its key first, not drawn (compact, so the title block keeps its height on a laptop — review, 05.10: the
@@ -455,7 +455,13 @@ async function expectChain(sheet: Locator, load: Load, tint: string) {
   expect({ key: lead.key, text: lead.text, n: lead.n, drawn: lead.drawn, word: lead.word }, load).toEqual({ key: load, text: '', n: '', drawn: false, word: null });
   expect(parts.slice(1).map(({ key, text, n, drawn, word }) => [key, text, Number(n), drawn, word]), load)
     .toEqual(CHAINS[load].words.map(([word, n]) => [null, word, n, true, 'button false']));
-  for (const part of parts.slice(1)) expect(part.color, `${load} ${part.text}`).toBe(tint);
+  // Light's paper legend needs deeper ink in the same hue family; the charcoal drawing keeps its luminous tint.
+  const paper = await sheet.evaluate(() => document.documentElement.dataset.daylight === 'a' && document.documentElement.dataset.theme === 'light');
+  const legendTint = paper ? (load === 'load' ? 'rgb(36, 104, 167)' : 'rgb(14, 117, 107)') : tint;
+  for (const part of parts.slice(1)) expect(part.color, `${load} ${part.text}`).toBe(legendTint);
+  const panel = await sheet.locator('.sheet-stamp').evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(contrast(legendTint, panel), `${load} legend on ${panel}`).toBeGreaterThanOrEqual(4.5);
+  expect(Math.abs(hueOf(legendTint) - hueOf(tint)), `${load} legend / drawing hue`).toBeLessThan(10);
   const stage = sheet.locator('.hv2-contour-stage');
   for (const [word, n, part] of CHAINS[load].words) {
     const steps = await stage.locator(`${CHAINS[load].group} > ${part}`).evaluateAll((elements) => elements.map((element) => `${(element as SVGElement).style.getPropertyValue('--n')} ${element.getAttribute('data-step')}`));
@@ -1428,7 +1434,7 @@ test('the title block switches the right side: the scheme with its names, each l
     await expect(stage.locator(hidden)).toBeHidden();
     expect(Number(await stage.locator('.hv2-proof-scheme').evaluate((element) => getComputedStyle(element).opacity))).toBeLessThan(0.6);
     await expect(stage.locator(`${shown} .hv2-proof-flow`)).toHaveCount(legs);
-    // the way's links in the tint the legend's words are written in, the drops in its light tone
+    // The drawing keeps its load tint and lighter drops; expectChain checks the legend's own ink against its ground.
     const tint = await tintOf(sheet, load);
     expect(await stage.locator(`${shown} .hv2-proof-link path:not(.hv2-proof-link-casing)`).first().evaluate((path) => getComputedStyle(path).stroke), button).toBe(tint);
     expect(await stage.locator(`${shown} .hv2-proof-flow`).first().evaluate((path) => getComputedStyle(path).stroke), button).toBe(light);
@@ -3688,13 +3694,30 @@ test('no horizontal overflow at 320 px, and the title block keeps every word who
   expect(overflowing).toEqual([]);
 });
 
-test('the sheet stays dark in the light theme', async ({ page }) => {
+test('the photographic drawing stays dark while the prototype shell follows the theme', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
   const { sheet } = await open(page);
-  const light = await sheet.evaluate((element) => getComputedStyle(element).backgroundColor);
+  const prototype = await page.locator('html').getAttribute('data-daylight') === 'a';
+  const backgrounds = () => sheet.evaluate((element) => {
+    const background = (node: Element) => getComputedStyle(node).backgroundColor;
+    return {
+      shell: background(element),
+      panel: background(element.querySelector('.sheet-stamp')!),
+      picture: background(element.querySelector('.sheet-image')!),
+      drawing: background(element.querySelector('.hv2-contour-trace')!),
+    };
+  });
+  const darkPlate = { picture: 'rgb(15, 17, 16)', drawing: 'rgb(22, 24, 23)' };
+  // Owner-approved hybrid (05.11): paper belongs to the shell, never to the photo or technical drawing.
+  const lightPaper = prototype ? 'rgb(243, 240, 233)' : 'rgb(29, 32, 30)';
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  expect(await backgrounds()).toEqual({ shell: lightPaper, panel: lightPaper, ...darkPlate });
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
-  expect(await sheet.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(light);
-  expect(light).toBe('rgb(29, 32, 30)');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  expect(await backgrounds()).toEqual({ shell: 'rgb(29, 32, 30)', panel: 'rgb(29, 32, 30)', ...darkPlate });
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  expect(await backgrounds()).toEqual({ shell: lightPaper, panel: lightPaper, ...darkPlate });
 });
 
 // The test mode /?xray=sketch (the old generated sketch beside the scheme, owner's comparison of 04.10) is gone with the

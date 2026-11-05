@@ -1,0 +1,137 @@
+{
+  "captureCount": 29,
+  "overflow": 0,
+  "pageErrors": 0,
+  "contrast": {
+    "pass": 712,
+    "total": 712
+  },
+  "scopeChecks": [
+    {
+      "engine": "chromium",
+      "route": "/napryamky",
+      "width": 1920,
+      "theme": "dark",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "chromium",
+      "route": "/angary",
+      "width": 1440,
+      "theme": "dark",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "chromium",
+      "route": "/pro-nas",
+      "width": 1440,
+      "theme": "dark",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "chromium",
+      "route": "/yak-pratsyuiemo",
+      "width": 1440,
+      "theme": "dark",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "chromium",
+      "route": "/napryamky",
+      "width": 390,
+      "theme": "light",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "chromium",
+      "route": "/napryamky",
+      "width": 768,
+      "theme": "light",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "chromium",
+      "route": "/",
+      "width": 1440,
+      "theme": "light",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "webkit",
+      "route": "/napryamky",
+      "width": 1920,
+      "theme": "dark",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "webkit",
+      "route": "/angary",
+      "width": 1440,
+      "theme": "dark",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "webkit",
+      "route": "/pro-nas",
+      "width": 1440,
+      "theme": "dark",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "webkit",
+      "route": "/yak-pratsyuiemo",
+      "width": 1440,
+      "theme": "dark",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "webkit",
+      "route": "/napryamky",
+      "width": 390,
+      "theme": "light",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "webkit",
+      "route": "/napryamky",
+      "width": 768,
+      "theme": "light",
+      "pass": true,
+      "removedRules": 1
+    },
+    {
+      "engine": "webkit",
+      "route": "/",
+      "width": 1440,
+      "theme": "light",
+      "pass": true,
+      "removedRules": 1
+    }
+  ],
+  "mobileSequenceUnchanged": true,
+  "release": {
+    "pass": 76,
+    "skip": 1
+  },
+  "unit": {
+    "pass": 1777,
+    "skip": 1
+  },
+  "lint": "pass",
+  "typecheck": "pass",
+  "build": "pass",
+  "cssGzipDeltaBytes": 170,
+  "performance": "LCP/CLS not benchmarked"
+}

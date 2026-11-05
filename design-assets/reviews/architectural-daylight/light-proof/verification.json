@@ -1,0 +1,928 @@
+{
+  "environment": "Chromium and WebKit emulation, not real Safari",
+  "checks": [
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "light",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        320,
+        668
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "light",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        320,
+        668
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "light",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(14, 117, 107)",
+      "overflow": false,
+      "dimensions": [
+        320,
+        668
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "light",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "light",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "dark",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        320,
+        668
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "dark",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        320,
+        668
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "dark",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(79, 216, 200)",
+      "overflow": false,
+      "dimensions": [
+        320,
+        668
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "dark",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "dark",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(14, 117, 107)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(79, 216, 200)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "light",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        710,
+        619
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "light",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        710,
+        619
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "light",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(14, 117, 107)",
+      "overflow": false,
+      "dimensions": [
+        710,
+        619
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "light",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "light",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "dark",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        710,
+        619
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "dark",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        710,
+        619
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "dark",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(79, 216, 200)",
+      "overflow": false,
+      "dimensions": [
+        710,
+        619
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "dark",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "dark",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(14, 117, 107)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(79, 216, 200)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(14, 117, 107)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(79, 216, 200)",
+      "overflow": false,
+      "dimensions": [
+        390,
+        677
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(36, 104, 167)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(243, 240, 233)",
+      "panel": "rgb(243, 240, 233)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(14, 117, 107)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "check": "frame",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "check": "load",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(90, 168, 255)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "check": "wind",
+      "pass": true,
+      "shell": "rgb(29, 32, 30)",
+      "panel": "rgb(29, 32, 30)",
+      "drawing": "rgb(22, 24, 23)",
+      "legend": "rgb(79, 216, 200)",
+      "overflow": false,
+      "dimensions": [
+        1332,
+        826
+      ]
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "check": "node-open-and-close",
+      "pass": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "check": "slider-keyboard",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "light",
+      "check": "light-photo-and-drawing-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "Same page, hybrid rules removed only. Exclude intentional frame edge by 1px inset. Content tolerance <=1 RGB channel unit; exact counts retained.",
+      "fullMismatchBounds": [
+        0,
+        142,
+        320,
+        201
+      ],
+      "insetPixels": 1,
+      "maximumContentChannelDifference": 1,
+      "contentMismatchPixels": 165
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "theme": "dark",
+      "check": "dark-whole-sheet-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "same page, only hybrid contour CSS rules removed; A3 hero/layout rules retained"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "light",
+      "check": "light-photo-and-drawing-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "Same page, hybrid rules removed only. Exclude intentional frame edge by 1px inset. Content tolerance <=1 RGB channel unit; exact counts retained.",
+      "fullMismatchBounds": [
+        0,
+        0,
+        390,
+        1
+      ],
+      "insetPixels": 1,
+      "maximumContentChannelDifference": 0,
+      "contentMismatchPixels": 0
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "theme": "dark",
+      "check": "dark-whole-sheet-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "same page, only hybrid contour CSS rules removed; A3 hero/layout rules retained"
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "light",
+      "check": "light-photo-and-drawing-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "Same page, hybrid rules removed only. Exclude intentional frame edge by 1px inset. Content tolerance <=1 RGB channel unit; exact counts retained.",
+      "fullMismatchBounds": [
+        0,
+        0,
+        666,
+        341
+      ],
+      "insetPixels": 1,
+      "maximumContentChannelDifference": 0,
+      "contentMismatchPixels": 0
+    },
+    {
+      "engine": "chromium",
+      "width": 768,
+      "theme": "dark",
+      "check": "dark-whole-sheet-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "same page, only hybrid contour CSS rules removed; A3 hero/layout rules retained"
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "light",
+      "check": "light-photo-and-drawing-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "Same page, hybrid rules removed only. Exclude intentional frame edge by 1px inset. Content tolerance <=1 RGB channel unit; exact counts retained.",
+      "fullMismatchBounds": [
+        0,
+        0,
+        1286,
+        1
+      ],
+      "insetPixels": 1,
+      "maximumContentChannelDifference": 0,
+      "contentMismatchPixels": 0
+    },
+    {
+      "engine": "chromium",
+      "width": 1440,
+      "theme": "dark",
+      "check": "dark-whole-sheet-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "same page, only hybrid contour CSS rules removed; A3 hero/layout rules retained"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "light",
+      "check": "light-photo-and-drawing-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "Same page, hybrid rules removed only. Exclude intentional frame edge by 1px inset. Content tolerance <=1 RGB channel unit; exact counts retained.",
+      "fullMismatchBounds": [
+        0,
+        0,
+        390,
+        1
+      ],
+      "insetPixels": 1,
+      "maximumContentChannelDifference": 0,
+      "contentMismatchPixels": 0
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "theme": "dark",
+      "check": "dark-whole-sheet-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "same page, only hybrid contour CSS rules removed; A3 hero/layout rules retained"
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "light",
+      "check": "light-photo-and-drawing-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "Same page, hybrid rules removed only. Exclude intentional frame edge by 1px inset. Content tolerance <=1 RGB channel unit; exact counts retained.",
+      "fullMismatchBounds": [
+        0,
+        0,
+        1286,
+        1
+      ],
+      "insetPixels": 1,
+      "maximumContentChannelDifference": 0,
+      "contentMismatchPixels": 0
+    },
+    {
+      "engine": "webkit",
+      "width": 1440,
+      "theme": "dark",
+      "check": "dark-whole-sheet-pixels",
+      "pass": true,
+      "removedRules": 7,
+      "method": "same page, only hybrid contour CSS rules removed; A3 hero/layout rules retained"
+    }
+  ],
+  "superseded": "The first all-Daylight off probe moved upstream layout. The isolated full-image probe includes a changed paper edge. Interior comparison removes 1px frame edge; 320px Chromium has 165 compositor pixels differing by at most 1 RGB unit. Other interiors match exactly. Dark whole-sheet images match exactly.",
+  "release": {
+    "proofScope": {
+      "pass": 17,
+      "skip": 3
+    },
+    "critical": {
+      "pass": 60
+    },
+    "unit": {
+      "pass": 1777,
+      "skip": 1
+    },
+    "lint": "pass",
+    "typecheck": "pass",
+    "build": "pass"
+  }
+}
