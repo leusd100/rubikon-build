@@ -1,3 +1,5 @@
+> Продовження 05.11.2026: HOME FrameTour отримав світлий інженерний аркуш. Деталі — [handoff](2026-11-05-light-frame-tour.md), [галерея](../../design-assets/reviews/architectural-daylight/light-frame/index.html). Попередні згадки темного FrameTour нижче описують A/A2 до цього уточнення; ProofContour із фото лишається темним.
+
 # Handoff · Architectural Daylight A — макет світлої теми
 
 | | |

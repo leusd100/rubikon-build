@@ -119,11 +119,33 @@ html[data-daylight="a"][data-theme="light"] main[data-home="v2"] :is(.hv2-signat
   --hv2-copper-text: #92502b; --hv2-line: #c4bdb1; --hv2-line-strong: #a49e92;
 }
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-signature-head { border-color: var(--day-rule); }
+/* This frame already supports paper through semantic inks. Scope the palette to
+   its room: the photographic ProofContour sheet below keeps its charcoal surface. */
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room {
-  background: #121413; color: #f3f0e9;
-  box-shadow: 0 0 0 16px #121413;
+  --hv2-text: #20211f; --hv2-text-2: #4c504a; --hv2-text-3: #50564f;
+  --hv2-copper-text: #934923; --hv2-line: #c4bdb1; --hv2-line-strong: #b7afa3;
+  background: var(--day-sheet); color: var(--hv2-text);
+  box-shadow: 0 0 0 16px var(--day-sheet);
   margin-top: 48px; margin-bottom: 32px;
-  --focus-ring: #e2aa80;
+  --focus-ring: #934923;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room .hv2-frame-tour {
+  color-scheme: light;
+  --color-surface-alt: #f3f0e9;
+  --color-text: #20211f; --color-text-secondary: #4c504a; --color-text-muted: #50564f;
+  --color-border-strong: #a49e92;
+  --color-accent: #a0522a; --color-accent-strong: #934923;
+  --color-focus: #934923; --focus-ring: #934923; --focus-gap: #f3f0e9;
+  /* Dark's luminous loads lose contrast on paper. These deeper inks clear 4.5:1
+     even where the same colour names the load in the small legend. */
+  --ft-snow: #2468a7; --ft-wind: #0e756b;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room .hv2-frame-picture {
+  background: #f3f0e9;
+  border-color: var(--hv2-line-strong);
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room .ft-link {
+  filter: none; /* paper reads as drawing ink; the charcoal view keeps its existing glow */
 }
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour { box-shadow: 0 0 0 1px #a49e92; }
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell { color: var(--day-ink); background: #f3f0e9; }
@@ -135,7 +157,7 @@ html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a 
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-people { border-color: var(--day-rule); }
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-signature-foot { border-color: var(--day-rule); }
 @media (max-width: 760px) {
-  html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room { box-shadow: 0 0 0 10px #121413; margin-top: 34px; }
+  html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room { box-shadow: 0 0 0 10px var(--day-sheet); margin-top: 34px; }
 }
 /* Architectural Daylight A — isolated prototype, explicit Light only.
    Append after the existing styles. No footer, layout or theme-behaviour changes. */
