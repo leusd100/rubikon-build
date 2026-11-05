@@ -195,7 +195,34 @@ html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-frame-room .ft-link {
   filter: none; /* paper reads as drawing ink; the charcoal view keeps its existing glow */
 }
-html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour { box-shadow: 0 0 0 1px #a49e92; }
+/* Light outer sheet and title block; the photographic drawing keeps its own charcoal inks. */
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour {
+  --sheet-paper: #f3f0e9; --sheet-ink: #b7afa3; --sheet-mark: #934923;
+  box-shadow: 0 0 0 1px #a49e92;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour > .sheet-stamp {
+  --hv2-text: #20211f; --hv2-text-2: #4c504a; --hv2-text-3: #50564f;
+  --hv2-copper-text: #934923; --hv2-line: #c4bdb1; --hv2-line-strong: #857f76;
+  --hv2-scheme: #4c504a; --hv2-load: #2468a7; --hv2-wind: #0e756b;
+  --color-text: #20211f; --color-text-secondary: #4c504a; --color-text-muted: #50564f;
+  --color-accent-strong: #934923; --color-focus: #934923;
+  --focus-ring: #934923; --focus-gap: #f3f0e9;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour .sheet-stamp .hv2-contour-nodes[data-place="block"] button:not([data-hint]) {
+  border-color: #8c7950;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour .sheet-stamp .hv2-contour-brief {
+  color: #f5f2eb; background: #a0522a; border-color: #a0522a;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour .sheet-stamp .hv2-contour-brief:is(:hover, :focus-visible) {
+  color: #f5f2eb; background: #7f3d1d; border-color: #7f3d1d;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour .sheet-stamp .hv2-contour-tour-btn i {
+  border-left-color: #934923;
+}
+html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-contour .sheet-stamp .hv2-contour-tour-btn i[data-stop] {
+  background: #934923;
+}
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell { color: var(--day-ink); background: #f3f0e9; }
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-cell::before { background: #f3f0e9; }
 html[data-daylight="a"][data-theme="light"] main[data-home="v2"] .hv2-gallery-a .hv2-scope-chips[data-frames] .hv2-scope-cell { color: var(--day-ink); }
