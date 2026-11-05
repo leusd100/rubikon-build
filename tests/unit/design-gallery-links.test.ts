@@ -18,9 +18,11 @@ type Node = {
 };
 
 function openGallery(name: (typeof GALLERIES)[number]) {
-  const html = readFileSync(resolve('design-assets/reviews/architectural-daylight', name, 'index.html'), 'utf8');
-  const script = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/i.exec(html)?.[1];
-  if (!script) throw new Error(`Gallery script missing: ${name}`);
+  const directory = resolve('design-assets/reviews/architectural-daylight', name);
+  const html = readFileSync(resolve(directory, 'index.html'), 'utf8');
+  // Execute the same fixed asset the page loads; this test does not parse or sanitize HTML.
+  if (!html.includes('<script src="gallery.js"></script>')) throw new Error(`Gallery script link missing: ${name}`);
+  const script = readFileSync(resolve(directory, 'gallery.js'), 'utf8');
   const nodes = new Map<string, Node>();
   const get = (id: string): Node => {
     if (!nodes.has(id)) nodes.set(id, {
