@@ -19,7 +19,7 @@ type Node = {
 
 function openGallery(name: (typeof GALLERIES)[number]) {
   const html = readFileSync(resolve('design-assets/reviews/architectural-daylight', name, 'index.html'), 'utf8');
-  const script = /<script>([\s\S]*?)<\/script>/.exec(html)?.[1];
+  const script = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/i.exec(html)?.[1];
   if (!script) throw new Error(`Gallery script missing: ${name}`);
   const nodes = new Map<string, Node>();
   const get = (id: string): Node => {
