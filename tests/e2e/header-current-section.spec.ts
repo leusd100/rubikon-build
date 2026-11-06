@@ -78,14 +78,16 @@ test.describe('PDO-57 · the current section', () => {
         return pixels;
       }, png.toString('base64'));
     };
-    const copper = [204, 132, 85];
+    // Light's header is warm paper since Architectural Daylight A (#302, accepted 06.11): its rule is the deep copper
+    const coppers: Record<'light' | 'dark', number[]> = { light: [147, 73, 35], dark: [204, 132, 85] };
     for (const theme of ['light', 'dark'] as const) {
+      const copper = coppers[theme];
       await page.emulateMedia({ colorScheme: theme });
       for (const path of ['/betonni-roboty', '/metalokonstruktsii', '/pokrivelni-roboty', '/angary', '/zernoskhovyshcha', '/napryamky', '/yak-pratsyuiemo', '/pro-nas']) {
         await open(page, path, 1180);
         await page.mouse.move(700, 600);
         await expect(page.locator('.desktop-nav a[aria-current]'), path).toHaveCount(1);
-        expect(await page.locator('.desktop-nav a[aria-current]').evaluate((link) => getComputedStyle(link, '::after').backgroundColor), path).toBe('rgb(204, 132, 85)');
+        expect(await page.locator('.desktop-nav a[aria-current]').evaluate((link) => getComputedStyle(link, '::after').backgroundColor), path).toBe(`rgb(${copper.join(', ')})`);
         const reads = [await under()];
         if (path === '/napryamky') {
           // the next slide: wait until another image of the sequence is the active one, then read again
@@ -106,15 +108,19 @@ test.describe('PDO-57 · the current section', () => {
   });
 
   test('the menu marks the same link in copper, and never «Контакти»', async ({ page }) => {
-    for (const [path, label] of [sections[1], sections[3]]) {
-      await open(page, path, 390, 844);
-      await page.locator('.site-header .mobile-menu summary').click();
-      const marked = page.locator('.mobile-menu nav a[aria-current]');
-      await expect(marked, path).toHaveCount(1);
-      await expect(marked, path).toContainText(label);
-      await expect(marked, path).toHaveCSS('color', 'rgb(204, 132, 85)');
-      await expect(page.locator('.mobile-menu nav a[href="#inquiry"]'), path).not.toHaveAttribute('aria-current');
-      await expect(page.locator('.mobile-menu nav a[href="#inquiry"]'), path).not.toHaveCSS('color', 'rgb(204, 132, 85)');
+    // the deep copper on Light's paper menu (Architectural Daylight A, #302, accepted 06.11), the light copper in Dark
+    for (const [theme, copper] of [['light', 'rgb(147, 73, 35)'], ['dark', 'rgb(204, 132, 85)']] as const) {
+      await page.emulateMedia({ colorScheme: theme });
+      for (const [path, label] of [sections[1], sections[3]]) {
+        await open(page, path, 390, 844);
+        await page.locator('.site-header .mobile-menu summary').click();
+        const marked = page.locator('.mobile-menu nav a[aria-current]');
+        await expect(marked, path).toHaveCount(1);
+        await expect(marked, path).toContainText(label);
+        await expect(marked, `${path} ${theme}`).toHaveCSS('color', copper);
+        await expect(page.locator('.mobile-menu nav a[href="#inquiry"]'), path).not.toHaveAttribute('aria-current');
+        await expect(page.locator('.mobile-menu nav a[href="#inquiry"]'), `${path} ${theme}`).not.toHaveCSS('color', copper);
+      }
     }
   });
 });

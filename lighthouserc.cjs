@@ -5,7 +5,9 @@ const baseUrl = `https://127.0.0.1:${port}`;
 
 const profiles = {
   home: {
-    maxLcp: 3_600,
+    // Raised from 3_600 on the owner's OK (06.11.2026): the approved hero photo of #301 (123.6 KB at 768w) moved the
+    // nightly median from 3.35 to 3.66 s (nightly-history: #299 +94 KB, #301 +54 KB); 3_900 keeps the same ~6 % margin
+    maxLcp: 3_900,
     maxTotalBytes: 6_000_000,
     minPerformance: 0.85,
     url: `${baseUrl}/`,
