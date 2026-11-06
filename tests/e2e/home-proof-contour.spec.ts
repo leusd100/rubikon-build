@@ -11,8 +11,8 @@ test.describe.configure({ timeout: 60_000 });
 // chosen in the title block — «Каркас» (the default: a SCHEME of a frame of this object's type in its silhouette,
 // labelled so), «Сніг» and «Вітер» (each load's way through that scheme, each in its own tint). The seam is a real range
 // input (keys, screen readers); a mouse drags anywhere in the frame, a finger only the handle, and on a phone «Фото» /
-// «Схема» show one side whole. Arriving with motion, the sheet plots in as a whole photo and the seam sweeps once from
-// the right edge across the gable and back to rest («шов-плотер»); without motion or JavaScript the sheet stands
+// «Схема» show one side whole. Arriving with motion, the sheet plots in as the X-ray of the whole building and the seam
+// sweeps once from the left edge to rest, the real photo behind it («Спершу рентген», owner 06.11); without motion or JavaScript the sheet stands
 // complete. On a laptop the sheet fits under the header where the window has the room, and its title block is never
 // under the picture.
 // The review of 04.10 added: the sweep still plays when the visitor arrives by the wheel or a swipe; the right side's

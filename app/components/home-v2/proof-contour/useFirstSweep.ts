@@ -30,8 +30,8 @@ type Carriers = Readonly<{
   handleRef: RefObject<HTMLSpanElement | null>;
 }>;
 
-// The first view (see SWEEP_AT): the seam waits at the left edge — the X-ray whole — as the sheet plots in, then sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
-// never move. It starts once the stage is a third in view, scrolling or not. The visitor's own move in the sheet
+// The first view (see SWEEP_AT): the seam waits at the left edge — the X-ray whole — as the sheet plots in, then sweeps
+// on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says never move. It starts once the stage is a third in view, scrolling or not. The visitor's own move in the sheet
 // first, or reduced motion: no sweep, the seam at rest.
 // `hint` is told when the node's hint is due (true: the seam has come to rest, or at once with reduced motion — the hint
 // stands still) and when it is over (false: the visitor's own first press or key in the sheet); a visitor who moved

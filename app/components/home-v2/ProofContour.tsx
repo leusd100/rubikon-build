@@ -42,10 +42,9 @@ import { Arrow } from '../Arrow';
 // Arriving with motion (owner review, 04.10 — «шов-плотер»; owner 06.11 — «Спершу рентген»), the sheet plots in as the
 // X-ray of the whole building, then the seam passes once, slowly, from the left edge to its rest (Phase 5: one move, no
 // turn and no rings), and what it has passed is the real photo, whole; the figures and names come in together when it
-// rests. A mouse or pen pressed in the sheet, a finger
-// on the handle or a button, or a key there stops that; scrolling the page over the sheet does not (review, 04.10: a
-// wheel or a swipe is how a visitor arrives). With reduced motion or without JavaScript the sheet stands complete at its
-// resting split, the controls disabled until the page is hydrated.
+// rests. A mouse or pen pressed in the sheet, a finger on the handle or a button, or a key there stops that; scrolling
+// the page over the sheet does not (review, 04.10: a wheel or a swipe is how a visitor arrives). With reduced motion or
+// without JavaScript the sheet stands complete at its resting split, the controls disabled until the page is hydrated.
 //
 // On a laptop the sheet fits under the header: the stage keeps the sheet's width and crops the photo's sky and gravel
 // (home-v2.css); the photo, its tracing and every layer share one canvas in the photo's own pixels, so nothing slides.
