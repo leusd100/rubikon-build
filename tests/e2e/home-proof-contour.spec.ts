@@ -3712,12 +3712,14 @@ test('the photographic drawing stays dark while the prototype shell follows the 
   const lightPaper = prototype ? 'rgb(243, 240, 233)' : 'rgb(29, 32, 30)';
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   expect(await backgrounds()).toEqual({ shell: lightPaper, panel: lightPaper, ...darkPlate });
+  // After a switch the backgrounds reach the theme a frame or more after the attribute does (Main Regression 42255483319:
+  // a read at once still saw Dark's shell, the retry passed), so wait for the colours, not for the attribute alone
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  expect(await backgrounds()).toEqual({ shell: 'rgb(29, 32, 30)', panel: 'rgb(29, 32, 30)', ...darkPlate });
+  await expect.poll(backgrounds).toEqual({ shell: 'rgb(29, 32, 30)', panel: 'rgb(29, 32, 30)', ...darkPlate });
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  expect(await backgrounds()).toEqual({ shell: lightPaper, panel: lightPaper, ...darkPlate });
+  await expect.poll(backgrounds).toEqual({ shell: lightPaper, panel: lightPaper, ...darkPlate });
 });
 
 // The test mode /?xray=sketch (the old generated sketch beside the scheme, owner's comparison of 04.10) is gone with the
