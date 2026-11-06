@@ -39,9 +39,10 @@ import { Arrow } from '../Arrow';
 // is gone). Passing a line of the outline — a gate's jamb, a corner of the gable — the seam lights it up over the photo
 // and names it at its top, but never holds there (owner, 04.10: a magnet at the gates «не дуже»); keys and screen
 // readers step as before.
-// Arriving with motion (owner review, 04.10 — «шов-плотер»), the sheet plots in as a whole photo, then the seam passes
-// once, slowly, from the right edge to its rest (Phase 5: one move, no turn and no rings), and what it has passed is the
-// drawing, whole; the figures and names come in together when it rests. A mouse or pen pressed in the sheet, a finger
+// Arriving with motion (owner review, 04.10 — «шов-плотер»; owner 06.11 — «Спершу рентген»), the sheet plots in as the
+// X-ray of the whole building, then the seam passes once, slowly, from the left edge to its rest (Phase 5: one move, no
+// turn and no rings), and what it has passed is the real photo, whole; the figures and names come in together when it
+// rests. A mouse or pen pressed in the sheet, a finger
 // on the handle or a button, or a key there stops that; scrolling the page over the sheet does not (review, 04.10: a
 // wheel or a swipe is how a visitor arrives). With reduced motion or without JavaScript the sheet stands complete at its
 // resting split, the controls disabled until the page is hydrated.

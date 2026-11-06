@@ -646,14 +646,34 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
 }
 @keyframes hv2-contour-pulse { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
 
-/* Arriving (owner review, 04.10 — «шов-плотер»; Phase 5: one move): the sheet plots its picture in, a whole photo
-   (DrawingSheet: 120 + 900 ms, the seam held at the right edge by data-sweep="wait"); then the seam passes once, slowly,
-   from the right edge to its rest, and everything it has passed is the drawing — the tracing, the measured lines, the
-   scheme, whole (useFirstSweep drives --split). The figures and the names come in together when it rests. Once. Without
-   JavaScript or with reduced motion the sheet stands complete at rest. */
-/* sonar-important-begin: useSeam.ts writes --split inline, and only this holds the seam shut while the sweep waits */
-main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: 100% !important; }
+/* Arriving (owner review, 04.10 — «шов-плотер»; Phase 5: one move; owner 06.11 — «Спершу рентген»): the sheet plots its
+   picture in as the X-ray of the whole building (DrawingSheet: 120 + 900 ms, the seam held at the LEFT edge by
+   data-sweep="wait" — a sliver of the photo left of it, so the photo is there to come); then the seam passes once, slowly,
+   from the left edge to its rest, and everything it has passed is the real photo (useFirstSweep drives --split). The
+   figures and the names come in together when it rests. Once. Without JavaScript or with reduced motion the sheet stands
+   complete at rest. */
+main[data-home="v2"] .hv2-contour-stage { --hv2-xray-from: 4%; }
+@media (max-width: 760px) { main[data-home="v2"] .hv2-contour-stage { --hv2-xray-from: 1%; } }
+/* sonar-important-begin: useSeam.ts writes --split inline, and only this holds the seam at the edge while the sweep waits */
+main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: var(--hv2-xray-from) !important; }
 /* sonar-important-end */
+/* …the X-ray lit, as on a lightbox, while it arrives: the tracing a step darker and the scheme's quiet lines — purlins,
+   walls, blockwork, footings, the ground — a step stronger, no glow (owner, 04.10: «weight, not a glow»). At rest they
+   ease back with the names, so the still sheet is the one the owner approved */
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-contour-trace img { filter: grayscale(1) brightness(.24) contrast(.8); }
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-proof-scheme [data-group="purlin"] { --o: .62; }
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-proof-scheme [data-group="wall"] { --o: .95; }
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-proof-frame .hv2-proof-blocks { stroke-opacity: .22; }
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-proof-footing { stroke-opacity: .9; }
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-contour-ground path { stroke-opacity: .7; }
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-contour-ground .hv2-contour-ground-hatch { stroke-opacity: .4; }
+/* «‹ Фото» would stand clipped at the left edge as the seam leaves it: it comes in with the names */
+main[data-home="v2"] .hv2-contour-stage[data-sweep] .hv2-contour-seamtags > span:first-child { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-contour-trace img { transition: filter var(--hv2-for-reveal) var(--ease-standard); }
+  main[data-home="v2"] .hv2-contour-ground path { transition: stroke-opacity var(--hv2-for-reveal) var(--ease-standard); }
+  main[data-home="v2"] .hv2-contour-seamtags > span:first-child { transition: opacity var(--hv2-for-reveal) ease; }
+}
 main[data-home="v2"] .hv2-contour-stage[data-sweep] :is(.hv2-proof-labels, .hv2-proof-marks) { opacity: 0; }
 @keyframes hv2-contour-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
@@ -1259,7 +1279,7 @@ main[data-home="v2"] #hv2-proof-ribs path { stroke: rgba(240, 180, 138, .55); st
 main[data-home="v2"] .hv2-contour-stage:is([data-focus="roof"], [data-focus="walls"]) .hv2-proof-part[data-part] { opacity: 0; }
 main[data-home="v2"] .hv2-contour-stage[data-focus="roof"] .hv2-proof-part[data-part="roof"],
 main[data-home="v2"] .hv2-contour-stage[data-focus="walls"] .hv2-proof-part[data-part="walls"] { opacity: 1; }
-main[data-home="v2"] .hv2-proof-scheme :is([data-group], .hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, .hv2-proof-nodes) { transition: opacity var(--hv2-for-proof-part) ease, stroke var(--hv2-for-proof-part) var(--ease-standard); }
+main[data-home="v2"] .hv2-proof-scheme :is([data-group], .hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, .hv2-proof-nodes) { transition: opacity var(--hv2-for-proof-part) ease, stroke var(--hv2-for-proof-part) var(--ease-standard), stroke-opacity var(--hv2-for-reveal) var(--ease-standard); }
 /* what steps back for each part */
 main[data-home="v2"] .hv2-contour-stage[data-focus="frame"] .hv2-proof-scheme :is(.hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, [data-group="wall"]),
 main[data-home="v2"] .hv2-contour-stage[data-focus="roof"] .hv2-proof-scheme :is(.hv2-proof-blocks, .hv2-proof-cut, .hv2-proof-footing, .hv2-proof-nodes, [data-group]:not([data-group="purlin"])),

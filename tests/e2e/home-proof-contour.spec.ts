@@ -43,11 +43,14 @@ test.describe.configure({ timeout: 60_000 });
 
 const DEFAULT_SPLIT = 62;
 // The first view's one move (useFirstSweep): SWEEP_AT after the sheet arrives — the page still scrolling or not — the seam
-// passes once from the right edge to its rest over SWEEP_MS, on a phone too. Phase 5 (R-UX-06 §07): one way, no turn (it
+// passes once from the left edge to its rest over SWEEP_MS, on a phone too. Phase 5 (R-UX-06 §07): one way, no turn (it
 // used to sweep out to 38 % and back over 1.8 s), and nothing else in the arrival — no rings from the handle or the
-// brief, no names one by one. Owner, 13.10 («починає рухатися запізно»): it no longer waits for the photo to have plotted
-// in (1.05 s) or for the page to be still (250 ms) — scrolling through, a visitor saw the photo only
-const SWEEP_AT = 350;
+// brief, no names one by one. Owner, 06.11 («Спершу рентген», variant H): the sheet plots in as the X-ray of the whole
+// building, the seam held at XRAY_FROM, and the seam leaves it once the X-ray has plotted in (it left at 350 ms after
+// 13.10, the other way, while the photo still plotted in); what it passes is the photo
+const SWEEP_AT = 950;
+/** Where the seam waits, per cent of the frame (home-v2.css --hv2-xray-from): a sliver of the photo left of it */
+const xrayFrom = (page: Page) => (page.viewportSize()!.width <= 760 ? 1 : 4);
 const SWEEP_MS = 1400;
 const SWEEP_MS_PHONE = 1400;
 // Passing a line of the outline, in per cent of the frame: it is lit within GRAB of the seam, until the seam is past
@@ -2119,17 +2122,18 @@ test('a sheet that comes into view while the browser still holds its report «ou
   await expect(stage, 'the frame counts as on the screen').not.toHaveAttribute('data-offscreen', /.*/);
 });
 
-test('arriving with motion, the photo plots in whole, then the seam passes once from the edge to its rest — one way, no turn — the drawing whole behind it, and nothing else plays', async ({ page }, testInfo) => {
+test('arriving with motion, the X-ray plots in whole, then the seam passes once from the left edge to its rest — one way, no turn — the photo whole behind it, and nothing else plays', async ({ page }, testInfo) => {
   test.setTimeout(45_000);
   const phone = testInfo.project.name !== 'desktop-chromium';
+  const from = xrayFrom(page);
   const { sheet, stage, range } = await arrive(page);
-  // Armed below the fold: the seam waits at the right edge — the photo whole — while the range keeps its resting value
+  // Armed below the fold: the seam waits at the left edge — the X-ray whole — while the range keeps its resting value
   await expect(sheet).toHaveAttribute('data-sheet-state', 'armed');
   await expect(stage).toHaveAttribute('data-sweep', 'wait');
   // (the four carriers glide there once on hydration, unseen: the armed sheet's picture is under its cover)
-  await expect.poll(() => splitOf(stage)).toBe('100%');
+  await expect.poll(() => splitOf(stage)).toBe(`${from}%`);
   await expect(range).toHaveValue(String(DEFAULT_SPLIT));
-  await expectWindow(stage, 100);
+  await expectWindow(stage, from);
   await recordArrival(page);
   await page.evaluate(() => Promise.all([...document.querySelectorAll<HTMLImageElement>('.hv2-contour img')].map((image) => { image.loading = 'eager'; return image.decode().catch(() => undefined); })));
   await approach(page);
@@ -2144,16 +2148,16 @@ test('arriving with motion, the photo plots in whole, then the seam passes once 
   const sweep = frames.filter((frame) => frame.t >= run! && frame.t < ended!);
   const after = frames.filter((frame) => frame.t >= ended!);
 
-  // While the seam waits, the photo stands whole: the seam at the right edge, nothing of the right side uncovered, nothing
-  // drawing in
+  // While the seam waits, the X-ray stands whole: the seam at the left edge, all but a sliver of the frame the drawing,
+  // nothing drawing in
   expect(plotting.length).toBeGreaterThan(3);
   for (const frame of plotting) {
-    expect(frame, `${frame.t}`).toMatchObject({ sweep: 'wait', gliding: false, split: 100, spread: 0, sweeps: 0, others: [] });
-    expect(frame.seam, `${frame.t}`).toBeCloseTo(100, 1);
-    expect(frame.window, `${frame.t}`).toBeCloseTo(100, 2);
+    expect(frame, `${frame.t}`).toMatchObject({ sweep: 'wait', gliding: false, split: from, spread: 0, sweeps: 0, others: [] });
+    expect(frame.seam, `${frame.t}`).toBeCloseTo(from, 1);
+    expect(frame.window, `${frame.t}`).toBeCloseTo(from, 2);
   }
-  // The sweep starts SWEEP_AT after the sheet arrived — not after the picture has plotted in (a few ms: two observers read
-  // the clock a moment apart) — and runs its time once
+  // The sweep starts SWEEP_AT after the sheet arrived — as the X-ray's plotting in ends (a few ms: two observers read the
+  // clock a moment apart) — and runs its time once
   expect(run! - on!).toBeGreaterThanOrEqual(SWEEP_AT - 5);
   expect(run! - on!).toBeLessThan(SWEEP_AT + 300);
   const duration = phone ? SWEEP_MS_PHONE : SWEEP_MS;
@@ -2168,11 +2172,11 @@ test('arriving with motion, the photo plots in whole, then the seam passes once 
   // From the edge to its rest, one way: never past the rest and never back (Phase 5, R-UX-06 §07: it used to sweep out to
   // 38 % and turn back — a second move that explained nothing more)
   const splits = sweep.map((frame) => frame.split);
-  expect(splits[0]).toBeGreaterThan(99);
-  expect(splits).toEqual(splits.toSorted((a, b) => b - a));
-  expect(Math.min(...splits)).toBeGreaterThanOrEqual(DEFAULT_SPLIT - 0.05);
+  expect(splits[0]).toBeLessThan(from + 1);
+  expect(splits).toEqual(splits.toSorted((a, b) => a - b));
+  expect(Math.max(...splits)).toBeLessThanOrEqual(DEFAULT_SPLIT + 0.05);
   // The seam is drawn where --split is, and the right side's window has its edge exactly there, its drawing standing on
-  // the photo's canvas: what it has passed is the drawing, whole — no line draws in, nothing slides, nothing else moves on
+  // the photo's canvas: what it has passed is the photo, whole — no line draws in, nothing slides, nothing else moves on
   // the stage
   for (const frame of sweep) {
     expect(frame.seam, `${frame.t}`).toBeCloseTo(frame.split, 1);
@@ -2332,7 +2336,7 @@ test('arriving the usual way — the wheel, or a finger swiping over the sheet �
   expect(scrolls.length).toBeGreaterThan(0);
   // …then runs its whole course, to its rest — the wheel and the swipe never stopped it
   expect(ended! - run!).toBeGreaterThanOrEqual((testInfo.project.name === 'desktop-chromium' ? SWEEP_MS : SWEEP_MS_PHONE) - 20);
-  expect(Math.min(...frames.filter((frame) => frame.t >= run! && frame.t < ended!).map((frame) => frame.split))).toBeGreaterThanOrEqual(DEFAULT_SPLIT - 0.05);
+  expect(Math.max(...frames.filter((frame) => frame.t >= run! && frame.t < ended!).map((frame) => frame.split))).toBeLessThanOrEqual(DEFAULT_SPLIT + 0.05);
   expect(frames.find((frame) => frame.t >= ended!)).toMatchObject({ sweep: null, gliding: false, pulse: false, split: DEFAULT_SPLIT });
   expect(new Set(frames.map((frame) => frame.range))).toEqual(new Set([String(DEFAULT_SPLIT)]));
   await settleArrival(page);
@@ -2356,10 +2360,10 @@ test('a key in the sheet before the sweep stops it: the seam goes from the edge 
   expect(ended! - on!).toBeLessThan(SWEEP_AT);
   expect(frames.filter((frame) => frame.sweep === 'run' || frame.gliding || frame.pulse)).toEqual([]);
   expect(frames.at(-1)!.t - on!).toBeGreaterThan(SWEEP_AT + 300);
-  // The key's own step: the seam rests at 63, never left of where the state put it
+  // The key's own step: the seam rests at 63 — gliding there from the left edge, never past where the state put it
   await expect(stage).not.toHaveAttribute('data-sweep', /.*/);
   await expectSplit(range, stage, DEFAULT_SPLIT + 1);
-  expect(Math.min(...frames.filter((frame) => frame.t >= ended!).map((frame) => frame.split))).toBeGreaterThanOrEqual(DEFAULT_SPLIT);
+  expect(Math.max(...frames.filter((frame) => frame.t >= ended!).map((frame) => frame.split))).toBeLessThanOrEqual(DEFAULT_SPLIT + 1);
   await expect(stage).not.toHaveAttribute('data-pulse', /.*/);
 });
 
@@ -2384,7 +2388,7 @@ test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the
   // (the visitor has moved first)
   expect(run).not.toBeNull();
   expect(ended! - run!).toBeLessThan((phone ? SWEEP_MS_PHONE : SWEEP_MS) - 20);
-  expect(frames.filter((at) => at.t < ended!).at(-1)!.split).toBeGreaterThan(DEFAULT_SPLIT + 0.5);
+  expect(frames.filter((at) => at.t < ended!).at(-1)!.split).toBeLessThan(DEFAULT_SPLIT - 0.5);
   for (const frame of frames.filter((at) => at.t >= ended!)) expect(frame, `${frame.t}`).toMatchObject({ sweep: null, gliding: false, pulse: false, split: DEFAULT_SPLIT });
   await expect(stage).not.toHaveAttribute('data-node-hint', /.*/);
   expect(new Set(frames.map((frame) => frame.range))).toEqual(new Set([String(DEFAULT_SPLIT)]));

@@ -1,18 +1,21 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { DEFAULT_SPLIT } from './useSeam';
 
-/** The first view's one move (R-UX-06 §07, Phase 5: «один повільний прохід шва»): once the photo has plotted in
- *  (DrawingSheet: 120 + 900 ms), the seam passes once, slowly, from the right edge to its rest — one way, no turn — and
- *  what it has passed is the drawing. Nothing else plays in the arrival: no rings from the handle or the brief, no names
- *  one by one (they come in with the rest of the drawing, at once, as the seam rests). It used to sweep out to 38 % and
- *  back over 1.8 s, then ring the handle and the brief, bring the names in one by one and call a letter: five events in
- *  a row, and only the first explained anything */
-/** …and it starts early (owner, 13.10: «починає рухатися запізно» — a visitor who scrolls on passes the block's magic):
- *  SWEEP_AT after the sheet is a third in view, while the photo's last two thirds still plot in — the seam's ease-in
- *  barely moves it in its first 400 ms, so the two hardly overlap — and with the page still scrolling. It used to wait
- *  for the plot's end (1.05 s), 60 % of the frame in view and 250 ms of a still page: a visitor scrolling through at
- *  ~1500 px/s never saw the drawing at all, only the photo, and one who stopped waited 1.3 s for the seam */
-const SWEEP_AT = 350;
+/** The first view's one move (R-UX-06 §07, Phase 5: «один повільний прохід шва»): the seam passes once, slowly, to its
+ *  rest — one way, no turn. Nothing else plays in the arrival: no rings from the handle or the brief, no names one by one
+ *  (they come in with the rest of the drawing, at once, as the seam rests). It used to sweep out to 38 % and back over
+ *  1.8 s, then ring the handle and the brief, bring the names in one by one and call a letter: five events in a row, and
+ *  only the first explained anything */
+/** «Спершу рентген» (owner, 06.11, variant H of the X-Ray review): the sheet plots in as the X-ray of the whole building —
+ *  the seam held at the LEFT edge (home-v2.css, data-sweep="wait"), the long wall, the purlins and the footings in view,
+ *  which at rest only a drag ever showed — and when the X-ray has plotted in, the seam passes from the left to its rest
+ *  and what it has passed is the real photo. It used to run the other way, the photo first and the drawing behind the
+ *  seam, and read as «the photo went dark» (06.11: at rest the scheme's half is 23 % of a 1440 × 900 window).
+ *  SWEEP_AT: the X-ray stands whole for a beat first (DrawingSheet's plot, 120 + 900 ms, ends ~70 ms into the move; the
+ *  seam's ease-in barely moves it then). The owner chose this beat on 06.11 over the earlier start (350 ms, 13.10:
+ *  «починає рухатися запізно»), which moved the seam while the X-ray was still plotting in, so it was never seen whole:
+ *  the plot itself is the motion the visitor sees first now */
+const SWEEP_AT = 950;
 const SWEEP_MS = 1400;
 /** …and once the drawing's names are in (their fade, 240 ms), the arrival's last word: node Г is lit and one line says
  *  what it does (DEC-42 (a), owner 13.10 — ProofContour's NODE_HINT). Nothing opens by itself: the node opened over the
@@ -27,8 +30,7 @@ type Carriers = Readonly<{
   handleRef: RefObject<HTMLSpanElement | null>;
 }>;
 
-// The first view (see SWEEP_AT): the seam waits at the right edge — the photo whole — as the sheet starts to plot in,
-// then sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
+// The first view (see SWEEP_AT): the seam waits at the left edge — the X-ray whole — as the sheet plots in, then sweeps on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says
 // never move. It starts once the stage is a third in view, scrolling or not. The visitor's own move in the sheet
 // first, or reduced motion: no sweep, the seam at rest.
 // `hint` is told when the node's hint is due (true: the seam has come to rest, or at once with reduced motion — the hint
@@ -77,15 +79,17 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     stage.dataset.sweep = 'wait';
     const run = () => {
       if (touchedRef.current || !due || !visible || sweep.length) return;
+      const carriers = [paneRef.current, innerRef.current, railRef.current, handleRef.current].filter((element) => element !== null);
+      // where the hold has the seam (home-v2.css: 4 %, a phone's 1 %), read before the hold is let go
+      const from = getComputedStyle(carriers[0]).getPropertyValue('--split');
       // In one task: the hold at the edge gives way to the sweep's first frame, at the same edge
       stage.dataset.gliding = '';
       stage.dataset.sweep = 'run';
       // one way, eased in and out: no turn to read as a second move
       const keyframes = [
-        { '--split': '100%', easing: 'cubic-bezier(.45, 0, .25, 1)' },
+        { '--split': from, easing: 'cubic-bezier(.45, 0, .25, 1)' },
         { '--split': `${DEFAULT_SPLIT}%` },
       ];
-      const carriers = [paneRef.current, innerRef.current, railRef.current, handleRef.current].filter((element) => element !== null);
       sweep = carriers.map((element) => element.animate(keyframes, { duration: SWEEP_MS }));
       sweep[0].onfinish = () => {
         // at rest: the drawing's names, figures and letters come in together (home-v2.css: their fade under data-sweep)
