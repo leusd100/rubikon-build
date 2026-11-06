@@ -36,20 +36,26 @@ test.describe('PDO-17 · the light copper action on charcoal', () => {
     return { fill: style.backgroundColor, label: style.color };
   });
   const graphite = { light: 'rgb(23, 25, 24)', dark: 'rgb(18, 20, 19)' } as const;
+  // Light's heroes are a paper veil since Architectural Daylight A (#302, accepted by the owner 06.11): the call is the
+  // deep copper with a paper label there. What still lies on charcoal in Light (the 404, the /angary title block) keeps
+  // the light copper with a graphite label, as Dark does everywhere
+  const onCharcoal = (theme: 'light' | 'dark') => ({ fill: 'rgb(204, 132, 85)', hover: 'rgb(221, 162, 122)', label: graphite[theme] });
+  const action = { light: { fill: 'rgb(160, 82, 42)', hover: 'rgb(127, 61, 29)', label: 'rgb(245, 242, 235)' }, dark: onCharcoal('dark') } as const;
 
   for (const theme of ['light', 'dark'] as const) {
-    test(`${theme}: every hero’s call (the 404’s «На головну») and the /angary title block’s button are #CC8455 with a graphite label`, async ({ page }) => {
+    test(`${theme}: every hero’s call (the 404’s «На головну») and the /angary title block’s button are the theme’s copper, at ≥ 4.5 : 1 with their label`, async ({ page }) => {
       test.setTimeout(90_000);
       await page.addInitScript((value) => localStorage.setItem('rubikon-theme', value), theme);
       for (const path of ['/', '/pro-nas', '/napryamky', '/metalokonstruktsii', '/yak-pratsyuiemo', '/angary', '/nemaie-takoi-storinky']) {
         await open(page, path, 1440);
         const call = page.locator('main a.hero-call-primary, main .not-found-hero a.button-primary').first();
+        const want = theme === 'light' && path === '/nemaie-takoi-storinky' ? onCharcoal(theme) : action[theme];
         const { fill, label } = await colours(call);
-        expect(fill, `${path}`).toBe('rgb(204, 132, 85)');
-        expect(label, `${path}`).toBe(graphite[theme]);
+        expect(fill, `${path}`).toBe(want.fill);
+        expect(label, `${path}`).toBe(want.label);
         expect(contrast(fill, label), `${path}`).toBeGreaterThanOrEqual(4.5);
         await call.hover();
-        await expect.poll(async () => (await colours(call)).fill, `${path} hover`).toBe('rgb(221, 162, 122)');
+        await expect.poll(async () => (await colours(call)).fill, `${path} hover`).toBe(want.hover);
         expect(contrast((await colours(call)).fill, label), `${path} hover`).toBeGreaterThanOrEqual(4.5);
       }
       const stamp = page.locator('.angary-process a.angary-stamp-cta');
@@ -65,7 +71,7 @@ test.describe('PDO-17 · the light copper action on charcoal', () => {
       await brief.scrollIntoViewIfNeeded();
       expect(contrast(...Object.values(await colours(brief)) as [string, string]), 'brief at rest').toBeGreaterThanOrEqual(4.5);
       await brief.hover();
-      await expect.poll(async () => (await colours(brief)).fill, 'brief hover').toBe('rgb(221, 162, 122)');
+      await expect.poll(async () => (await colours(brief)).fill, 'brief hover').toBe(action[theme].hover);
       expect(contrast(...Object.values(await colours(brief)) as [string, string]), 'brief hover').toBeGreaterThanOrEqual(4.5);
 
       await open(page, '/yak-pratsyuiemo', 1440);

@@ -99,10 +99,12 @@ test.describe('PDO-19 · header hierarchy', () => {
     await expect(page.locator('.site-header .header-phone')).toBeVisible();
   });
 
-  test('the messengers keep their own colours at rest — header, menu and footer — with no plate, filter or opacity', async ({ page }) => {
+  test('Dark: the messengers keep their own colours at rest — header, menu and footer — with no plate, filter or opacity', async ({ page }) => {
     test.setTimeout(90_000);
     // «Збалансована» with «Оригінальний колір» (owner 21.10): the brands' blue, green and purple without a hover, on the
-    // 92 % header itself (no plate of their own), and the same in the footer
+    // 92 % header itself (no plate of their own), and the same in the footer. Light's paper header has its own model since
+    // Architectural Daylight A (#302, accepted by the owner 06.11): the next test
+    await page.emulateMedia({ colorScheme: 'dark' });
     const untouched = (icon: Locator) => icon.evaluate((element) => {
       const chain: string[] = [];
       for (let node: Element | null = element; node && node !== document.body; node = node.parentElement) {
@@ -145,7 +147,38 @@ test.describe('PDO-19 · header hierarchy', () => {
     await expect(page.locator('.site-header .theme-switch-knob')).toHaveCSS('background-color', 'rgb(158, 152, 141)');
   });
 
-  test('in the menu the messengers keep their own colours and their short names', async ({ page }) => {
+  test('Light: on the paper header the messengers are graphite marks, the number a deep copper button; the footer keeps the brands’ colours', async ({ page }) => {
+    test.setTimeout(60_000);
+    // Architectural Daylight A (#302, accepted by the owner 06.11): the brands' single-colour marks turn graphite on the
+    // paper header and in its menu, the number becomes a filled call; the graphite footer is unchanged
+    await open(page, '/metalokonstruktsii', 1440);
+    await page.mouse.move(700, 600);
+    for (const kind of ['telegram', 'whatsapp', 'viber']) {
+      const icon = page.locator(`.site-header .header-messengers .messenger-${kind} .messenger-brand-icon`);
+      await expect(icon, kind).toHaveCSS('filter', 'brightness(0)');
+      await expect(icon, kind).toHaveCSS('opacity', '0.72');
+      const footer = page.locator(`footer .messenger-${kind} .messenger-brand-icon`);
+      await footer.scrollIntoViewIfNeeded();
+      await expect(footer, `footer ${kind}`).toHaveCSS('filter', 'none');
+      await expect.poll(() => saturatedShare(page, footer), `footer ${kind} at rest`).toBeGreaterThan(.1);
+      await page.evaluate(() => window.scrollTo(0, 0));
+    }
+    const phone = page.locator('.site-header .header-phone');
+    await expect(phone).toHaveCSS('background-color', 'rgb(160, 82, 42)');
+    await expect(phone.locator('strong')).toHaveCSS('color', 'rgb(245, 242, 235)');
+    await phone.hover();
+    await expect(phone).toHaveCSS('background-color', 'rgb(127, 61, 29)');
+    await page.mouse.move(700, 600);
+    await expect(page.locator('.site-header .header-email svg')).toHaveCSS('color', 'rgb(147, 73, 35)');
+    await page.setViewportSize({ width: 1179, height: 900 });
+    await page.locator('.site-header .mobile-menu summary').click();
+    for (const kind of ['telegram', 'whatsapp', 'viber']) {
+      await expect(page.locator(`.mobile-menu .mobile-messengers .messenger-${kind} .messenger-brand-icon`), `menu ${kind}`).toHaveCSS('filter', 'brightness(0)');
+    }
+  });
+
+  test('Dark: in the menu the messengers keep their own colours and their short names', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
     await open(page, '/metalokonstruktsii', 1179);
     await page.locator('.site-header .mobile-menu summary').click();
     for (const [kind, name] of [['telegram', 'TG'], ['whatsapp', 'WA'], ['viber', 'VB']] as const) {

@@ -278,9 +278,15 @@ test.describe('anchors and contrast', () => {
     });
   }
 
-  test('over a phone hero the crumbs are light words; from 761 px they keep their muted tone', async ({ page }, testInfo) => {
+  test('over a phone hero the crumbs are graphite on Light’s veil; in Dark light words that from 761 px keep their muted tone', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop-chromium', 'each test sets its own windows');
     await skipBanner(page);
+    // Light (Architectural Daylight A, #302, accepted 06.11): the hero is a light veil, its crumbs the page's ink
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/napryamky', { waitUntil: 'load' });
+    const ink = () => page.evaluate(() => [...document.querySelectorAll('nav.breadcrumb :is(a, b)')].map((element) => getComputedStyle(element).color));
+    expect(new Set(await ink())).toEqual(new Set(['rgb(32, 33, 31)']));
+    await page.emulateMedia({ colorScheme: 'dark' });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/napryamky', { waitUntil: 'load' });
     const colors = () => page.evaluate(() => [...document.querySelectorAll('nav.breadcrumb :is(a, b)')].map((element) => getComputedStyle(element).color));

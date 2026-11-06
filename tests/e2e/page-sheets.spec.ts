@@ -140,18 +140,21 @@ test.describe('the pages\' materials', () => {
 test.describe('the form on the band', () => {
   test.skip(({ isMobile }) => isMobile, 'explicit windows');
 
-  test('Light: the block is charcoal, the form stays paper; its text beside the form reads on the band', async ({ page }) => {
+  test('Light: the block is the page’s paper, the form a lighter sheet, the contours drawn behind; its heading is graphite', async ({ page }) => {
+    // Architectural Daylight A (#302, accepted by the owner 06.11): the charcoal band became the page's paper
     await open(page, '/', 1440);
     const colours = await page.locator('#inquiry').evaluate((block) => ({
       block: getComputedStyle(block).backgroundColor,
-      image: getComputedStyle(block).backgroundImage,
+      page: getComputedStyle(document.body).backgroundColor,
+      image: getComputedStyle(block.querySelector('.conversation-grid')!, '::before').backgroundImage,
       form: getComputedStyle(block.querySelector('.inquiry-form')!).backgroundColor,
       heading: getComputedStyle(block.querySelector('h2')!).color,
     }));
-    expect(colours.block).toBe('rgb(23, 25, 24)');
+    expect(colours.block).toBe(colours.page);
+    expect(colours.block).toBe('rgb(243, 240, 233)');
     expect(colours.image).toContain('contours-dark');
     expect(colours.form).toBe('rgb(250, 248, 243)');
-    expect(colours.heading).toBe('rgb(245, 242, 235)');
+    expect(colours.heading).toBe('rgb(32, 33, 31)');
   });
 
   test('contours belong to the form: no other block and not the footer draws them', async ({ page }) => {

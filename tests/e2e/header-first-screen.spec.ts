@@ -30,14 +30,14 @@ test.describe('PDO-18 · one header model on the first screen', () => {
       await open(page, path, 1440);
       const header = page.locator('.site-header');
       const media = page.locator('main .service-subhero-media, main .directions-hero-sequence-image, main .proc-hero-media').first();
-      const shade = page.locator('main :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade)').first();
       for (const width of [1100, 1280, 1440, 1920]) {
         await page.setViewportSize({ width, height: 900 });
         await expect(page.locator('html'), `${path} ${width}`).toHaveAttribute('data-hero-header', 'top');
         await expect.poll(() => alpha(page), `${path} ${width}`).toBeCloseTo(.92, 2);
         await expect(header, `${path} ${width}`).toHaveCSS('backdrop-filter', 'none');
-        expect((await media.boundingBox())!.y, `${path} ${width}: the picture starts behind the header`).toBe(0);
-        await expect(shade, `${path} ${width}: the shade clears behind the header`).not.toHaveCSS('mask-image', 'none');
+        // The catalogue's sequence starts under the header since #301 (owner, 04.11): its photos keep their whole frame
+        const top = path === '/napryamky' ? (await header.boundingBox())!.height : 0;
+        expect((await media.boundingBox())!.y, `${path} ${width}: where the picture starts`).toBe(top);
       }
       for (const width of [1100, 1440]) {
         await page.setViewportSize({ width, height: 900 });
@@ -48,6 +48,21 @@ test.describe('PDO-18 · one header model on the first screen', () => {
         await expect(header.locator('.header-messengers')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
         await page.evaluate(() => window.scrollTo(0, 0));
         await expect.poll(() => alpha(page), `${path} ${width} back at the top`).toBeCloseTo(.92, 2);
+      }
+    }
+  });
+
+  test('Dark: the heroes’ dark shade clears behind the header', async ({ page }) => {
+    test.setTimeout(60_000);
+    // Light's shade is a paper veil beside the words since Architectural Daylight A (#302, accepted 06.11): paper under the
+    // paper header, nothing to clear. Dark's charcoal shade still must not darken the header
+    await page.emulateMedia({ colorScheme: 'dark' });
+    for (const path of ['/napryamky', '/angary', '/metalokonstruktsii', '/betonni-roboty', '/pokrivelni-roboty', '/yak-pratsyuiemo']) {
+      await open(page, path, 1440);
+      const shade = page.locator('main :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade)').first();
+      for (const width of [1100, 1920]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect(shade, `${path} ${width}`).not.toHaveCSS('mask-image', 'none');
       }
     }
   });

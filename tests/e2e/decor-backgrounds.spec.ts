@@ -32,8 +32,9 @@ for (const [path, section] of [['/', '#inquiry'], ['/yak-pratsyuiemo', '#koshtor
         page: getComputedStyle(document.body).backgroundColor,
       }));
       expect(ground.backdrops, `${width}px`).toBe(0);
-      // the form lies on the charcoal band in both themes, the estimate on the page's own ground
-      expect(ground.section, `${width}px`).toBe(section === '#inquiry' ? 'rgb(23, 25, 24)' : ground.page);
+      // Light (Architectural Daylight A, #302, accepted by the owner 06.11): the form and the estimate both lie on the
+      // page's own paper; the charcoal band is Dark's (page-sheets.spec.ts)
+      expect(ground.section, `${width}px`).toBe(ground.page);
       expect(fetched, `${width}px`).toEqual([]);
     }
   });
