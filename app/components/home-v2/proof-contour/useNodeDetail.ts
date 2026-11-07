@@ -21,6 +21,8 @@ const CARD_OUT = 160;
 const NODE_CLEAR = 12;
 /** A swipe across a phone's sheet: this far, and mostly sideways */
 const SWIPE_MIN = 48;
+/** A node reached: by its own press (0), or the next (1) or the previous one (-1) by ‹ › or a swipe */
+type NodeStep = -1 | 0 | 1;
 /** The card's top under the stamp's first line, and the card's own edges, px */
 const STAMP_AIR = 10;
 const CARD_EDGE = 14;
@@ -144,7 +146,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
     };
   }, [detail, exploded, cardOn]);
   // Moving to the next or the previous node: the drawing slides in from that side instead of the panel growing again
-  const nodeSwitch = useRef<-1 | 0 | 1>(0);
+  const nodeSwitch = useRef<NodeStep>(0);
   const swipe = useRef<{ x: number; y: number } | null>(null);
   // the tour moves the focus nowhere (audit 08.10, F13: it took it to «Закрити вузол», then to a letter)
   const touringRef = useRef(false);
@@ -278,7 +280,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   // — its end would put away the node pressed now, the focus falling to <body> (review 07.11); cancelled, the fade's or
   // the shrink's forwards fill goes with it. True when the press was the same node again: it stays as it was, the camera
   // back on it
-  const callOffClose = (id: DetailId, step: -1 | 0 | 1) => {
+  const callOffClose = (id: DetailId, step: NodeStep) => {
     if (!closingRef.current) return false;
     closingRef.current = false;
     detailMotion.current?.cancel();
@@ -288,7 +290,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
     if (!touringRef.current) detailCloseRef.current?.focus({ preventScroll: true });
     return true;
   };
-  const showNode = (id: DetailId, step: -1 | 0 | 1 = 0) => {
+  const showNode = (id: DetailId, step: NodeStep = 0) => {
     if (callOffClose(id, step)) return;
     if (detail === id && !step) return closeDetail();
     if (!detail && !step) nodeSeam.current = null;
