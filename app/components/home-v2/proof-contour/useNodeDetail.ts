@@ -81,7 +81,8 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   // The detail open (А, Б, В)
   const [detail, setDetail] = useState<DetailId | null>(null);
   // Its card is in the page: opened from rest with the camera, a frame after the press — the camera's first frame is not
-  // held for the card's commit (a drawing, its dialog: the press's long frame, 50–100 ms on main, 06.11)
+  // held for the card's commit (a dialog and its drawing: on production the press's frame took 85–89 ms, 32 of them the
+  // card's layout and text shaping — Chrome, 1440 × 900, 07.11)
   const [cardOn, setCardOn] = useState(false);
   const cardTimer = useRef<{ frame: number; timer: number | undefined }>({ frame: 0, timer: undefined });
   const camera = useNodeCamera(stageRef, canvasRef, onCameraRest);
