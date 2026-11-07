@@ -124,20 +124,27 @@ const GROUND_HATCH = (() => {
 })();
 /** A data attribute that is there or is not: the CSS and the e2e read its presence, never a value */
 const dataFlag = (on: unknown) => (on ? '' : undefined);
-/** `run` once the visitor's press or key now under way has ended (its pointerup, click or keyup), or a moment after */
+/** `run` once the visitor's press or key now under way has ended (its pointerup, click or keyup), or a moment after.
+ *  Returns its cancel (the sheet unmounted meanwhile) */
 function afterInput(run: () => void) {
   const kinds = ['pointerup', 'pointercancel', 'click', 'keyup'] as const;
   let done = false;
-  const once = () => {
-    if (done) return;
+  let soon: number | undefined;
+  const cancel = () => {
     done = true;
     for (const kind of kinds) window.removeEventListener(kind, later, true);
     window.clearTimeout(timer);
+    window.clearTimeout(soon);
+  };
+  const once = () => {
+    if (done) return;
+    cancel();
     run();
   };
-  const later = () => window.setTimeout(once, 0);
+  const later = () => { soon = window.setTimeout(once, 0); };
   for (const kind of kinds) window.addEventListener(kind, later, true);
   const timer = window.setTimeout(once, 900);
+  return cancel;
 }
 /** The camera is on a node, or flying between two (useNodeCamera): not on its way back */
 const cameraIn = (stage: HTMLElement) => stage.dataset.camera === 'in' || stage.dataset.camera === 'fly';
@@ -269,13 +276,15 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const [nodeHint, setNodeHint] = useState(false);
   const [hintOver, setHintOver] = useState(false);
   const closingStrip = useRef(false);
+  const stripWait = useRef<(() => void) | null>(null);
+  useEffect(() => () => stripWait.current?.(), []);
   const toggleHint = (on: boolean) => {
     setNodeHint(on);
     if (on || closingStrip.current) return;
     closingStrip.current = true;
     // …once the press or the key that ended it is over: closed on its pointerdown, the strip moved the title block 44 px
     // under a finger still on a pill, and the tap's click landed on another one (07.11)
-    afterInput(() => setHintOver(true));
+    stripWait.current = afterInput(() => setHintOver(true));
   };
   const endHint = () => toggleHint(false);
   const hintRef = useRef<HTMLSpanElement>(null);
@@ -968,8 +977,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
               </svg>
             </div>
           )}
-          {/* The node opened (ProofDetails): over the photo's side, so its ring on the scheme stays in view, called out to
-              it by a leader */}
+          {/* The node opened (ProofDetails): beside its ring on the scheme's side, the camera on it, a short leader from the
+              ring to it (useNodeDetail); «На фото», over the photo's corner, its leader across to the ring */}
           {detail && cardShown && !detailSheet && (
             <svg className="hv2-detail-leader" key={detail} aria-hidden="true">
               <path ref={leaderRef} pathLength={1} />

@@ -16,8 +16,8 @@ const NODE_GROW = { duration: 480, easing: 'cubic-bezier(.2, .75, .25, 1)' } as 
 const NODE_SHRINK = { duration: 300, easing: 'cubic-bezier(.45, 0, .7, .4)', fill: 'forwards' } as const;
 /** …and with the camera (07.11), the card fades where it stands while the camera eases back, ms */
 const CARD_OUT = 160;
-/** A node's ring and the seam (owner, 05.10: on «А» the seam stood across it, the handle over it): the seam stops this
- *  far past the handle's half width from the ring, on the scheme's side of it or — «На фото» — past it */
+/** A node's ring and the seam «На фото» (owner, 05.10: on «А» the seam stood across it, the handle over it): the seam
+ *  stops this far past the handle's half width from the ring, on the photo's side of it */
 const NODE_CLEAR = 12;
 /** A swipe across a phone's sheet: this far, and mostly sideways */
 const SWIPE_MIN = 48;
@@ -75,16 +75,21 @@ function placeCard(stage: HTMLElement, panel: HTMLElement, shot: Shot) {
   return { top, bottom: top + tall };
 }
 
-/** The node open (А–Д, ProofDetails): its panel grown out of its ring and called out to it, the seam stood clear of the
- *  ring, the focus taken to it and given back, and on a phone the sheet over the page */
+/** The node open (А–Д, ProofDetails): the camera on it and its card beside the ring (useNodeCamera) — «На фото», its
+ *  panel grown out of its ring over the photo's corner, the seam past the ring — the focus taken to it and given back,
+ *  and on a phone or a narrow tablet the sheet over the page */
 export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeRef: RefObject<HTMLInputElement | null>, { liveRef, handleRef, setSplit, canvasRef, onCameraRest }: Seam) {
-  // The detail open (А, Б, В)
+  // The node open (А–Д)
   const [detail, setDetail] = useState<DetailId | null>(null);
   // Its card is in the page: opened from rest with the camera, a frame after the press — the camera's first frame is not
   // held for the card's commit (a dialog and its drawing: on production the press's frame took 85–89 ms, 32 of them the
   // card's layout and text shaping — Chrome, 1440 × 900, 07.11)
   const [cardOn, setCardOn] = useState(false);
   const cardTimer = useRef<{ frame: number; timer: number | undefined }>({ frame: 0, timer: undefined });
+  useEffect(() => () => {
+    cancelAnimationFrame(cardTimer.current.frame);
+    window.clearTimeout(cardTimer.current.timer);
+  }, []);
   const camera = useNodeCamera(stageRef, canvasRef, onCameraRest);
   // On a phone the frame is too low for a drawing: the node opens as a sheet from the screen's foot, over the page
   const [detailSheet, setDetailSheet] = useState(false);

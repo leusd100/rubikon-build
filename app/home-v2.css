@@ -1653,6 +1653,7 @@ main[data-home="v2"] .hv2-contour-stage:is([data-camera="in"], [data-camera="fly
 main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"]) :is(.hv2-proof-labels, .hv2-proof-marks, .hv2-proof-hover, .hv2-proof-blocks) { opacity: 0; }
 main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"]) :is(.hv2-proof-detail-pins, .hv2-proof-hover-tip, .hv2-contour-node-hint) { opacity: 0; visibility: hidden; }
 main[data-home="v2"] .hv2-contour-stage[data-camera] .hv2-proof-detail-rings circle { transition: none; }
+main[data-home="v2"] .hv2-contour-stage:is([data-camera="in"], [data-camera="fly"]) .hv2-proof-scheme .hv2-proof-blocks { transition: none; }
 main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"]) .hv2-proof-detail-rings circle { opacity: 0; }
 /* the node's own ring stays, its line as heavy on the screen as at rest (the canvas scales it) */
 main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"])[data-detail="bearing"] .hv2-proof-detail-rings [data-detail="bearing"],
