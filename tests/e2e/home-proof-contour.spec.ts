@@ -185,13 +185,16 @@ const TOUR = [
 ] as const;
 const BRIEF_HREF = '/angary#configurator';
 
-async function open(page: Page, path = '/') {
+/** `answered: false`: a first visit, the cookie banner still open over the page's foot */
+async function open(page: Page, path = '/', { answered = true } = {}) {
   await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
-  await page.addInitScript(() => {
-    try {
-      localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
-    } catch { /* storage unavailable */ }
-  });
+  if (answered) {
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
+      } catch { /* storage unavailable */ }
+    });
+  }
   await page.goto(path, { waitUntil: 'load' });
   const sheet = page.locator('#real-object .hv2-contour');
   const stage = sheet.locator('.hv2-contour-stage');
@@ -3781,4 +3784,102 @@ test('a scope cell lights its part on the scheme: the seam glides aside, and bac
   await expect(stage).not.toHaveAttribute('data-focus');
   await expect.poll(() => splitOf(stage)).toBe(`${DEFAULT_SPLIT}%`);
   await expect(slider).toHaveValue(String(DEFAULT_SPLIT));
+});
+
+// A first visit, the cookie banner not yet answered (live audit 06.11): it is fixed over the page's foot above everything
+// (globals.css), and the node's sheet and the sheet's title block lay under it — on a 390 × 844 phone the banner took the
+// taps on «Навантаження», «Розібрати» and «На фото» (F8); at 1440 × 900, the sheet framed under the header, the brief's
+// foot ran 13 px under it (F9). The banner keeps its place and its answers; the sheet clears it while it is open, by the
+// banner's measured --cookie-banner-clearance, and stands where it always stood once it is answered
+const bannerTop = (page: Page) => page.locator('.cookie-banner').evaluate((element) => element.getBoundingClientRect().top);
+const answerBanner = async (page: Page) => {
+  await page.locator('.cookie-banner').getByRole('button', { name: 'Лише необхідні', exact: true }).click();
+  await expect(page.locator('.cookie-banner')).toHaveCount(0);
+};
+/** Whether the window shows the element itself at its middle, rather than something over it */
+const onTop = (locator: Locator) => locator.evaluate((element) => {
+  const { left, top, width, height } = element.getBoundingClientRect();
+  const hit = document.elementFromPoint(left + width / 2, top + height / 2);
+  return Boolean(hit && element.contains(hit));
+});
+
+test('a first visit on a phone: the node’s sheet stands on the open cookie banner — its three actions take a finger — and back at the screen’s foot once the banner is answered', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chromium', 'a phone’s sheet, by touch');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, '/', { answered: false });
+  const banner = page.locator('.cookie-banner');
+  await expect(banner).toBeVisible();
+  await page.locator('#real-object figcaption .hv2-contour-nodes').getByRole('button', { name: nodeLabel(NODES[3]), exact: true }).tap();
+  const panel = page.locator('.hv2-detail[data-sheet]');
+  await expect(panel).toBeVisible();
+  // The sheet ends where the banner begins; the banner, whole and over the dimmed page, still takes its own answers
+  const top = await bannerTop(page);
+  expect(top).toBeLessThan(844);
+  const sheet = (await panel.boundingBox())!;
+  // (the clearance is rounded up to a whole px: at most one px of air between them, never an overlap)
+  expect(sheet.y + sheet.height).toBeLessThanOrEqual(top + 0.01);
+  expect(sheet.y + sheet.height).toBeGreaterThan(top - 1);
+  expect(sheet.y).toBeGreaterThanOrEqual(0);
+  const answers = banner.getByRole('button');
+  for (let index = 0; index < await answers.count(); index += 1) expect(await onTop(answers.nth(index)), await answers.nth(index).innerText()).toBe(true);
+  // …and the sheet's actions are its own, each one a finger's tap
+  const load = panel.getByRole('button', { name: 'Навантаження' });
+  const apart = panel.getByRole('button', { name: 'Розібрати' });
+  const onPhoto = panel.getByRole('button', { name: 'На фото' });
+  for (const button of [load, apart, onPhoto]) expect(await onTop(button), await button.innerText()).toBe(true);
+  await apart.tap();
+  await expect(panel).toHaveAttribute('data-exploded', '');
+  await expect(panel.getByRole('button', { name: 'Зібрати' })).toHaveAttribute('aria-pressed', 'true');
+  await load.tap();
+  await expect(load).toHaveAttribute('aria-pressed', 'true');
+  await onPhoto.tap();
+  await expect(onPhoto).toHaveAttribute('aria-pressed', 'true');
+  // Answered, the banner goes and the sheet is at the screen's foot, as it always was
+  await answerBanner(page);
+  await expect.poll(async () => { const box = (await panel.boundingBox())!; return Math.round(box.y + box.height); }).toBe(844);
+  expect(await page.evaluate(() => document.documentElement.style.getPropertyValue('--cookie-banner-clearance'))).toBe('');
+});
+
+test('answered, a phone’s node sheet stands at the screen’s foot, as before the banner was cleared', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chromium', 'a phone’s sheet, by touch');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page);
+  await expect(page.locator('.cookie-banner')).toHaveCount(0);
+  const panel = await openNode(page, NODES[3]);
+  const sheet = (await panel.boundingBox())!;
+  expect(Math.round(sheet.y + sheet.height)).toBe(844);
+  // (82vh at most, its foot padded for the home indicator: today's sheet, untouched)
+  expect(await panel.evaluate((element) => getComputedStyle(element).maxHeight)).toBe(`${Math.round(844 * 0.82 * 100) / 100}px`);
+});
+
+test('a first visit on a laptop: the sheet framed under the header ends above the open cookie banner, the brief whole over it — and fits the whole window again once the banner is answered', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'a laptop window');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const { sheet } = await open(page, '/', { answered: false });
+  await expect(page.locator('.cookie-banner')).toBeVisible();
+  const frame = () => sheet.evaluate((element) => window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - 117, behavior: 'instant' }));
+  const brief = sheet.locator('.hv2-contour-brief');
+  const picture = sheet.locator('.sheet-image');
+  const rest = await sheet.evaluate((element) => (element as HTMLElement).offsetHeight - element.querySelector<HTMLElement>('.sheet-image')!.offsetHeight);
+  await frame();
+  const top = await bannerTop(page);
+  const clearance = 900 - top;
+  expect(clearance).toBeGreaterThan(0);
+  const box = (await sheet.boundingBox())!;
+  expect(Math.round(box.y)).toBe(117);
+  // The picture gives the banner its room: the window less the header, the 12 px of air and the banner
+  expect((await picture.boundingBox())!.height).toBeCloseTo(900 - 117 - 12 - clearance - rest, 0);
+  expect(box.y + box.height).toBeLessThanOrEqual(top - 11.5);
+  const cta = (await brief.boundingBox())!;
+  expect(cta.y + cta.height).toBeLessThanOrEqual(top);
+  expect(await onTop(brief)).toBe(true);
+  // Answered: the variable gone, the picture takes the window's whole height again — today's sheet, to the pixel
+  await answerBanner(page);
+  await frame();
+  await expect.poll(async () => (await picture.boundingBox())!.height).toBeCloseTo(900 - 117 - 12 - rest, 0);
+  const after = (await sheet.boundingBox())!;
+  expect(Math.round(after.y + after.height)).toBe(888);
 });

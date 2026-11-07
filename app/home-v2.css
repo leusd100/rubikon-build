@@ -976,9 +976,12 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
      smaller drawing reads worse than a scroll). Never narrower than 1147 px: the sheet's content is then 1101 px, just
      past the 1100 px at which the title block takes two rows (the @container above), so the one row the owner asked for
      on 05.10 stays and the drawing stays large; a window narrower than that does not narrow the sheet at all. 46 px:
-     the sheet's own side margins round the picture */
+     the sheet's own side margins round the picture. The cookie banner is one more of those bars while it is open
+     (live audit 06.11, F9: at 1440 × 900, the sheet framed under the header, the brief's 816–864 px ran 13 px under the
+     banner from 851): its measured --cookie-banner-clearance (AnalyticsConsent.tsx) comes off the window too, and once it
+     is answered the variable is gone and the sheet is as it always was */
   main[data-home="v2"] .hv2-contour {
-    max-width: max(min(100%, 1147px), calc((100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))) * 1536 / 560 + 46px));
+    max-width: max(min(100%, 1147px), calc((100svh - 117px - 12px - var(--cookie-banner-clearance, 0px) - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))) * 1536 / 560 + 46px));
     margin-inline: auto;
     /* …the usual rest by width, so the server's picture is the hydrated one's (measured 05.10 on every layer: 169 from
        1400 px, 170 at 1280–1366, 220–240 at 1100–1200, 260 below; 166 since W3-06, the brief's button 52 → 48) */
@@ -986,7 +989,7 @@ main[data-home="v2"] .hv2-contour-stage[data-building] .hv2-contour-build-steps 
   }
   main[data-home="v2"] .hv2-contour .sheet-image {
     flex: none; aspect-ratio: auto;
-    height: clamp(calc(100cqw * 560 / 1536), calc(100svh - 117px - 12px - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))), calc(100cqw * 788 / 1536));
+    height: clamp(calc(100cqw * 560 / 1536), calc(100svh - 117px - 12px - var(--cookie-banner-clearance, 0px) - var(--hv2-sheet-rest, var(--hv2-sheet-rest-0))), calc(100cqw * 788 / 1536));
   }
 }
 /* (measured 09.10 on the one-line title block: 170 px from 1239 px, 240–241 px from 832, 266–267 px below; W3-06: 166 and
@@ -1412,6 +1415,13 @@ main[data-home="v2"] .hv2-detail[data-sheet] {
   touch-action: pan-y;
   position: fixed; z-index: 60; inset: auto 0 0 0; width: auto; max-height: 82vh; padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
   border-width: 1px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, .45);
+}
+/* A first visit (live audit 06.11, F8): the cookie banner (z-index 200, globals.css) lay over the sheet's foot — on a
+   390 × 844 phone at 711–844 px over the sheet's 392–844 — and took the taps meant for «Навантаження», «Розібрати» and
+   «На фото». While it is open the sheet stands on its top edge instead (--cookie-banner-clearance, AnalyticsConsent.tsx),
+   so the banner stays whole and answerable over the dimmed page; the banner already keeps the safe area under it */
+html:has(> body > .cookie-banner) main[data-home="v2"] .hv2-detail[data-sheet] {
+  bottom: var(--cookie-banner-clearance, 0px); max-height: calc(82vh - var(--cookie-banner-clearance, 0px)); padding-bottom: 14px;
 }
 main[data-home="v2"] .hv2-detail-backdrop { position: fixed; z-index: 59; inset: 0; background: rgba(8, 9, 9, .55); }
 @media (prefers-reduced-motion: no-preference) {
