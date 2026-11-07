@@ -274,21 +274,22 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
     handle.style.setProperty('--handle-y', `${Math.round(below + half <= height ? below : cy - radius - half - NODE_CLEAR)}px`);
   };
   // A node opened (owner, 05.10: «позначка вузла на фото»); pressed again, it closes. `step`: reached by ‹ › or a swipe
+  // Pressed while the node open is going out (its card's fade, a sheet's or «На фото»'s shrink): that close is called off
+  // — its end would put away the node pressed now, the focus falling to <body> (review 07.11); cancelled, the fade's or
+  // the shrink's forwards fill goes with it. True when the press was the same node again: it stays as it was, the camera
+  // back on it
+  const callOffClose = (id: DetailId, step: -1 | 0 | 1) => {
+    if (!closingRef.current) return false;
+    closingRef.current = false;
+    detailMotion.current?.cancel();
+    detailMotion.current = null;
+    if (detail !== id || step) return false;
+    if (cameraOn) camera.aim(id, detailSheet);
+    if (!touringRef.current) detailCloseRef.current?.focus({ preventScroll: true });
+    return true;
+  };
   const showNode = (id: DetailId, step: -1 | 0 | 1 = 0) => {
-    if (closingRef.current) {
-      // pressed while the node open is going out (its card's fade, a sheet's or «На фото»'s shrink): that close is called
-      // off — its end would put away the node pressed now, the focus falling to <body> (review 07.11); cancelled, the
-      // fade's or the shrink's forwards fill goes with it
-      closingRef.current = false;
-      detailMotion.current?.cancel();
-      detailMotion.current = null;
-      if (detail === id && !step) {
-        // the same node again: as it was, the camera back on it
-        if (cameraOn) camera.aim(id, detailSheet);
-        if (!touringRef.current) detailCloseRef.current?.focus({ preventScroll: true });
-        return;
-      }
-    }
+    if (callOffClose(id, step)) return;
     if (detail === id && !step) return closeDetail();
     if (!detail && !step) nodeSeam.current = null;
     nodeSwitch.current = detail ? step : 0;

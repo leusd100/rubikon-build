@@ -778,6 +778,14 @@ async function approach(page: Page) {
   await expect(page.locator('#real-object .hv2-contour')).toHaveAttribute('data-sheet-state', 'armed');
 }
 
+/** The sheet at rest: every finite animation in it done — a close's fade or shrink included, whose end is what would
+ *  put a node away — and a few frames for what that end sets going (no fixed wait: Sonar S2925) */
+async function sheetAtRest(page: Page) {
+  await page.waitForFunction(() => document.querySelector('#real-object .hv2-contour')!.getAnimations({ subtree: true })
+    .every((animation) => animation.playState !== 'running' || animation.effect?.getComputedTiming().iterations === Infinity));
+  await nextFrames(page, 3);
+}
+
 test('the sheet says in one line what the two halves are, the retouch and the provenance under it, and carries the outline — one solid line, no «виміряно» or «наближено»', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { sheet, stage, layers } = await open(page);
@@ -3007,8 +3015,8 @@ test('a node pressed while the one before is still going out opens and stays ope
     target!.click();
   }, [press, id] as const);
   const stays = async (node: ProofNode, at: string) => {
-    // past the fade's or the shrink's end, and its 200 ms fallback
-    await page.waitForTimeout(700);
+    // past the fade's or the shrink's end (its 200 ms fallback only stands in for an end that never comes)
+    await sheetAtRest(page);
     await expect(panel, at).toHaveCount(1);
     await expect(panel.locator('#hv2-detail-title'), at).toHaveText(`Вузол ${node.letter} · ${node.title}`);
     await expect(stage, at).toHaveAttribute('data-detail', node.id);
@@ -3049,7 +3057,7 @@ test('a press on the node’s card while it comes in — before it is in the pag
     return target.closest('.hv2-detail') ? 'the card' : target.getAttribute('class');
   }, [card.x + card.width * 0.7, card.y + card.height / 2] as const);
   expect(under, 'the card is not in the page yet').not.toBe('the card');
-  await page.waitForTimeout(900);
+  await sheetAtRest(page);
   await expect(stage, 'pressed where the card was coming').toHaveAttribute('data-detail', 'bearing');
   await expect(stage).toHaveAttribute('data-camera', 'in');
   // …and a real click on its › during the wipe-in (its clip-path keeps it from the pointer then): nothing, the node open
@@ -3063,7 +3071,7 @@ test('a press on the node’s card while it comes in — before it is in the pag
     element.querySelector<HTMLButtonElement>('.hv2-proof-detail-pin[data-detail="bearing"]')!.click();
   });
   await page.mouse.click(next.x + next.width / 2, next.y + next.height / 2);
-  await page.waitForTimeout(900);
+  await sheetAtRest(page);
   await expect(stage, `pressed on the card’s › as it came in (${await page.evaluate(() => (window as unknown as { pressedOn: string[] }).pressedOn.join(', '))})`).toHaveAttribute('data-detail', /^(bearing|purlin)$/);
   await expect(stage).toHaveAttribute('data-camera', 'in');
   // a press beside the card, on the photo, still puts the node away
@@ -3088,8 +3096,7 @@ test('on a touch laptop a finger that scrolls the page from the frame leaves the
     // only stop)
     const from = { x: frame.x + 80, y: frame.y + frame.height * 0.7 };
     await touchDrag(page, from, { x: from.x, y: from.y - 250 }, 10, 300);
-    await page.waitForTimeout(700);
-    expect(await page.evaluate(() => scrollY), 'the page scrolled').not.toBe(before);
+    await expect.poll(() => page.evaluate(() => scrollY), { message: 'the page scrolled' }).not.toBe(before);
     await expect.poll(async () => { const at = await page.evaluate(() => scrollY); await nextFrames(page, 3); return at === await page.evaluate(() => scrollY); }, { message: 'the page still' }).toBe(true);
     await expect(stage, 'a scroll is no press').toHaveAttribute('data-detail', 'purlin');
     await expect(stage).toHaveAttribute('data-camera', 'in');
