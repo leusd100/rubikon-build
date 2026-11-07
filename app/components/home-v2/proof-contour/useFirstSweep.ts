@@ -60,6 +60,9 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     // A mouse or a pen pressed anywhere in the sheet is the visitor's own move; a finger only on what it can move (the
     // handle, a button): elsewhere it scrolls the page. Keys reach the sheet only on its range and buttons
     const onPointer = (event: PointerEvent) => {
+      // (the hint's own button opens its node, and that ends the hint: ended here, on its pointerdown, it was gone by its
+      // click — 07.11)
+      if ((event.target as Element).closest('.hv2-contour-node-hint-button, .hv2-contour-node-strip-button')) return;
       if (event.pointerType === 'touch' && !(event.target as Element).closest('.hv2-contour-handle, button')) return;
       stop();
     };

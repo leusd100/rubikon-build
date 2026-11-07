@@ -397,23 +397,25 @@ export function onRoof([x, y]: Pt) {
 }
 
 /** The nodes drawn as details (ProofDetails, owner, 05.10 — «вузли-деталі»): a dashed ring round each on the scheme and
- *  its letter beside it. А the truss's bearing on the right wall, Б a purlin on a top-chord node, В the column's base */
-/** `badgeNarrow`: on a tablet's frame (761–1180 px), where the letter over the rake would meet the slope's figure */
-export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base' | 'ridge' | 'chord'; ring: Pt; radius: number; badge: Pt; badgePhone: Pt; badgeNarrow?: Pt }[] = [
+ *  its letter on it. А the truss's bearing on the right wall, Б a purlin on a top-chord node, В the column's base.
+ *  `letter`: where on its ring the letter sits, in degrees clockwise from the ring's right (07.11, owner's «Давай також
+ *  реалізуємо ідеї»: the letters stood 30–50 px off their rings — Г 57, Б 44, В 58, А 55, Д 49 photo px from the ring's
+ *  centre against radii of 26–32 — and read as a misregistration; each now sits on its ring's line — А, В and Д on the
+ *  side their old places were, so the words they were set clear of stay clear; Б and Г turned out of the way of Г's hint). The old per-width places (a phone's, a tablet's for the
+ *  slope's figure, gone 09.10) are gone with it: a letter on its ring is in the same place at every width */
+export const homeProofDetailSpots: readonly { id: 'bearing' | 'purlin' | 'base' | 'ridge' | 'chord'; ring: Pt; radius: number; letter: number }[] = [
   // (owner, 09.10: each ring centred on the node its close-up draws, and a size up: the truss's end on the wall's belt —
   // the bottom chord's end; the ridge's apex; the base plate under the column)
-  { id: 'bearing', ring: [1461.6, 331.8], radius: 32, badge: [1424, 292], badgePhone: [1424, 292] },
-  { id: 'purlin', ring: [1194.3, 214.3], radius: 26, badge: [1172, 176], badgePhone: [1172, 176], badgeNarrow: [1146, 250] },
-  // on a phone the seam's handle stands at the frame's foot next to the column: its letter goes up into the gate
-  // (its letter up and right of the ring, between the column and the right gate: under it the column's name now stands)
-  { id: 'base', ring: [1007.3, 563.5], radius: 32, badge: [1052, 526], badgePhone: [1084, 470] },
-  // the ridge over the central post, its letter left of the slope's figure; a bottom-chord panel point under a vertical
-  // (in the letters' order: the keyboard reaches them А, Б, В, Г, Д)
-  // (its letter right of the ridge, on the right rake's edge: left of it, it stood on the resting seam, half under the
-  // photo; higher, «Схема ›» at rest met it on a short laptop — the seam's name ends at photo x 1050, the slope's figure
-  // starts at 1084, so the letter stands under the one and left of the other)
-  { id: 'ridge', ring: [1005, 149.8], radius: 30, badge: [1062, 150], badgePhone: [1084, 150], badgeNarrow: [1046, 214] },
-  { id: 'chord', ring: [1253.8, 317.6], radius: 26, badge: [1288, 352], badgePhone: [1288, 352], badgeNarrow: [1300, 285] },
+  { id: 'bearing', ring: [1461.6, 331.8], radius: 32, letter: -135 },
+  // (its letter under the ring, toward the truss's bottom chord: over it, up and left, it stood where node Г's hint runs)
+  { id: 'purlin', ring: [1194.3, 214.3], radius: 26, letter: 60 },
+  // (its letter up and right of the ring, between the column and the right gate: under it the column's name stands)
+  { id: 'base', ring: [1007.3, 563.5], radius: 32, letter: -40 },
+  // the ridge over the central post (in the letters' order: the keyboard reaches them А, Б, В, Г, Д); its letter under the
+  // apex, on the post: right of it runs the hint's leader (useNodeHint), left of it the resting seam
+  { id: 'ridge', ring: [1005, 149.8], radius: 30, letter: 90 },
+  // a bottom-chord panel point under a vertical
+  { id: 'chord', ring: [1253.8, 317.6], radius: 26, letter: 45 },
 ];
 
 /** «Жива схема» (owner, 05.10): what a pointer on the scheme is over, by name — the nearest member of the gable's plane

@@ -108,7 +108,7 @@ export function useRoom(stageRef: RefObject<HTMLDivElement | null>, layer: Layer
 
 /** Where the words on the frame stand against the seam: which of the seam's names give way, how much of the stamp shows,
  *  where the held line's name goes — and which of the drawing's words and letters the seam cuts */
-export function useLabelFit(stageRef: RefObject<HTMLDivElement | null>, { room, split, layer, snap }: Readonly<{ room: Room | null; split: number; layer: Layer; snap: Snap | null }>) {
+export function useLabelFit(stageRef: RefObject<HTMLDivElement | null>, { room, split, layer, snap, cameraRests }: Readonly<{ room: Room | null; split: number; layer: Layer; snap: Snap | null; cameraRests: number }>) {
   const snapLabelRef = useRef<HTMLSpanElement>(null);
   const [snapPlace, setSnapPlace] = useState<SnapPlace>({ side: 'left', wrap: false, max: 0 });
   // The seam's right-hand name gives way to a figure or a name of the drawing it would cover (review, 05.10)
@@ -136,9 +136,12 @@ export function useLabelFit(stageRef: RefObject<HTMLDivElement | null>, { room, 
 
   // A figure or a name the seam cuts through is hidden whole, never shown in part (review, 04.10: «≈ 3,2 висоти» cut to
   // «2 висоти» changes what the figure says). Measured on the page whenever the seam, the layer or the frame changes
+  // Not while the camera is on a node (useNodeCamera, 07.11): the scheme's canvas is moved then, its letters' boxes with
+  // it, and a letter read there as cut stayed hidden at rest; read again once it is back (cameraRests)
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage || !room) return;
+    const canvas = stage?.querySelector('.hv2-contour-pane .hv2-contour-canvas');
+    if (!stage || !room || stage.dataset.camera || (canvas && getComputedStyle(canvas).transform !== 'none')) return;
     const box = stage.getBoundingClientRect();
     // (on the frame's own width to the fraction: a sheet narrowed to fit the window is no whole number of pixels wide, and
     // the rounded clientWidth put the seam half a pixel off — a word touching it was taken for cut, 06.10)
@@ -159,7 +162,7 @@ export function useLabelFit(stageRef: RefObject<HTMLDivElement | null>, { room, 
     const wordYields = cutWords(stage, seam, covers, yieldTo);
     const yieldTag = cutLetters(stage, seam, onFrame, yieldTo) || wordYields;
     setTagYield(yieldTag);
-  }, [stageRef, split, layer, room, snap, narrowRight]);
+  }, [stageRef, split, layer, room, snap, narrowRight, cameraRests]);
 
   return { stampShort, stampNone, narrowLeft, narrowRight, tagYield, snapPlace, snapLabelRef };
 }
