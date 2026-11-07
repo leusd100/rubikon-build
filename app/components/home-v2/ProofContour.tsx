@@ -141,6 +141,11 @@ function afterInput(run: () => void) {
 }
 /** The camera is on a node, or flying between two (useNodeCamera): not on its way back */
 const cameraIn = (stage: HTMLElement) => stage.dataset.camera === 'in' || stage.dataset.camera === 'fly';
+/** What in the frame answers a press itself — a node's letter, the node open, «Вузли крупно» over the picture, node Г's
+ *  hint — so no seam moves under it, and no camera puts its node away */
+const OWN_PRESS = '.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-nodes, .hv2-contour-node-hint-button';
+/** The keys that move a range's value */
+const RANGE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
 
 function stampFit(none: boolean, short: boolean) {
   if (none) return 'none';
@@ -280,9 +285,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   // reads none while the scheme's canvas is moved)
   const [cameraRests, setCameraRests] = useState(0);
   const {
-    detail, setDetail, detailSheet, cardShown, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
+    detail, dropDetail, detailSheet, cardShown, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
     detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef,
-    ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto,
+    ringOf, showNode, stepNode, closeDetail, closeKeepingFocus, onCard, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto,
   } = useNodeDetail(stageRef, rangeRef, { liveRef, handleRef, setSplit, canvasRef: paneCanvasRef, onCameraRest: () => setCameraRests((count) => count + 1) });
   // «Жива схема»: what the pointer is over on «Каркас» — the member lit, its name by the pointer (moved by hand, never by a
   // render); a finger's tap shows it a moment
@@ -309,7 +314,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     onFocus: () => {
       clearLit();
       setPoint(null);
-      setDetail(null);
+      dropDetail();
     },
   });
 
@@ -421,20 +426,26 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     pressNode(ring);
     return true;
   };
+  // With the camera on a node, the seam waits at the camera's place: a press anywhere else in the frame puts the node
+  // away instead, as a press beside a sheet does (07.11) — not one on its card or where the card is coming in (see
+  // onCard), and a finger's only as it lifts, unmoved (onPointerUp): a finger down on the frame may be the start of a
+  // scroll (review 07.11, a 1180 × 820 touch tablet: scrolling the page put the node away). True: the press is the camera's
+  const pressBesideNode = (event: PointerEvent<HTMLDivElement>) => {
+    if (!cameraIn(event.currentTarget)) return false;
+    if (event.pointerType !== 'touch' && !onCard(event.clientX, event.clientY)) {
+      event.preventDefault();
+      closeDetail();
+    }
+    return true;
+  };
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     tap.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
     if (event.pointerType === 'mouse') dropHit();
     if (event.button !== 0 || !ready) return;
     // The details' letters, the detail open and the «Вузли крупно» bar over the picture are their own: no seam moves
     // under them (owner, 05.10: pressed, the bar's letters started a drag that took the pointer, and never opened a node)
-    if ((event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-nodes, .hv2-contour-node-hint-button')) return;
-    // With the camera on a node, the seam waits at the camera's place: a press anywhere else in the frame puts the node
-    // away instead, as a press beside a sheet does (07.11)
-    if (cameraIn(event.currentTarget)) {
-      event.preventDefault();
-      closeDetail();
-      return;
-    }
+    if ((event.target as Element).closest(OWN_PRESS)) return;
+    if (pressBesideNode(event)) return;
     // A node's ring opens the node (a finger's tap does it on lifting, below)
     if (pressedRing(event)) return;
     // On «Сніг» the roof takes the weight: a finger puts it there, a mouse already has, and the seam stays
@@ -498,8 +509,14 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     endDrag();
     const from = tap.current;
     tap.current = null;
-    if (!from || event.pointerType !== 'touch' || layerRef.current !== 'frame') return;
-    if (Math.hypot(event.clientX - from.x, event.clientY - from.y) > 10 || cameraIn(event.currentTarget) || (event.target as Element).closest('.hv2-proof-detail-pin, .hv2-detail, .hv2-contour-handle, .hv2-contour-nodes, .hv2-contour-node-hint-button')) return;
+    if (!from || event.pointerType !== 'touch') return;
+    const still = Math.hypot(event.clientX - from.x, event.clientY - from.y) <= 10;
+    // the camera on a node: a finger's tap beside it puts it away (pressBesideNode)
+    if (cameraIn(event.currentTarget)) {
+      if (still && !(event.target as Element).closest(OWN_PRESS) && !onCard(event.clientX, event.clientY)) closeDetail();
+      return;
+    }
+    if (layerRef.current !== 'frame' || !still || (event.target as Element).closest(`${OWN_PRESS}, .hv2-contour-handle`)) return;
     const ring = ringAt(event.clientX, event.clientY);
     if (ring) {
       pressNode(ring);
@@ -518,10 +535,25 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     tapTimer.current = window.setTimeout(dropHit, 2600);
   };
 
+  // The range moved while the camera holds the seam at its place (a Shift+Tab from the node's card reaches it): the node is
+  // put away first, as a press in the frame does, and that key or input is swallowed — the seam the visitor sees (34 %)
+  // is not where the range stands (their own split), so a step from the range's value would jump it, unseen till the
+  // close (review 07.11: ArrowRight ×6 read 68 with the seam drawn at 34). The focus stays on the range; the next key
+  // moves the seam from where it is now seen. True: swallowed
+  const rangeBesideNode = () => {
+    const stage = stageRef.current;
+    if (!stage || !cameraIn(stage)) return false;
+    closeKeepingFocus();
+    return true;
+  };
   // Arrows step by one through the native range; the larger steps are the same in every browser
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     setPointerFocus(false);
     clearLit();
+    if (RANGE_KEYS.has(event.key) && rangeBesideNode()) {
+      event.preventDefault();
+      return;
+    }
     const to = { PageUp: Math.round(split) + PAGE_STEP, PageDown: Math.round(split) - PAGE_STEP, Home: 0, End: 100 }[event.key];
     if (to === undefined) return;
     event.preventDefault();
@@ -536,7 +568,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     dropHit();
     clearLit();
     dropPoint();
-    if (next !== 'frame') setDetail(null);
+    if (next !== 'frame') dropDetail();
     setChosen(next);
     if (next === 'load' || next === 'wind') {
       (next === 'load' ? setLoadRun : setWindRun)((run) => run + 1);
@@ -552,7 +584,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
   const build = () => {
     clearLit();
     dropPoint();
-    setDetail(null);
+    dropDetail();
     setChosen('frame');
     const to = phoneNow() ? FOCUS_SPLIT_PHONE : FOCUS_SPLIT;
     if (liveRef.current > to) setSplit(to);
@@ -1014,6 +1046,8 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             disabled={!ready}
             onChange={(event) => {
               clearLit();
+              // (the value React holds stays: the range shows the visitor's split again)
+              if (rangeBesideNode()) return;
               setSplit(Number(event.target.value));
             }}
             onKeyDown={onKeyDown}

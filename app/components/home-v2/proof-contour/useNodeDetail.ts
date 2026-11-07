@@ -150,6 +150,8 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   const leaderRef = useRef<SVGPathElement>(null);
   const leaderDotRef = useRef<SVGCircleElement>(null);
   const detailMotion = useRef<Animation | null>(null);
+  // A close under way: the card's fade, or the panel's shrink into its ring — its end puts the node away
+  const closingRef = useRef(false);
   const ringOf = (id: DetailId) => ringIn(stageRef.current, id);
   // The camera's node (07.11): every open but «На фото», where the node is looked for on the photo at the scheme's own
   // scale, the panel over the photo's corner and called out to the ring as before
@@ -193,17 +195,20 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   // The card's place and the leader. With the camera (a laptop's frame): the card in its column beside the ring's landing
   // place and a short leader from the ring's edge to it — never across the photo. «На фото»: from the panel's right edge
   // at its title, a short level run, then straight to the ring's edge, measured on the panel's own layout (not its
-  // growing transform). Again when the frame resizes; none on a phone's sheet
+  // growing transform). Again when the frame resizes. A phone's sheet has neither, but its camera aims again too (review
+  // 07.11: a phone turned to 844 × 390 kept the upright shot, Б's ring 674 px into a 735 px frame)
   useLayoutEffect(() => {
     const stage = stageRef.current;
     const panel = detailRef.current;
-    if (!detail || !cardShown || detailSheet || !stage || !panel) return;
+    if (!detail || !cardShown || !stage || !panel) return;
     const measure = () => {
       const path = leaderRef.current;
       if (cameraOn) {
-        // the frame resized: the camera re-aimed, straight (useNodeCamera)
+        // the frame resized: the camera re-aimed, straight (useNodeCamera), for the node as it was opened — beside its
+        // card, or over a sheet
         const old = camera.shotRef.current;
-        if (old && (old.size.width !== stage.clientWidth || old.size.height !== stage.clientHeight)) camera.aim(detail, false);
+        if (old && (old.size.width !== stage.clientWidth || old.size.height !== stage.clientHeight)) camera.aim(detail, detailSheet);
+        if (detailSheet) return;
         const shot = camera.shotRef.current;
         const card = shot && placeCard(stage, panel, shot);
         if (!shot || !card || !path) return;
@@ -215,6 +220,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
         leaderDotRef.current?.setAttribute('cy', y0.toFixed(1));
         return;
       }
+      if (detailSheet) return;
       for (const name of ['left', 'top', 'width', 'max-height']) panel.style.removeProperty(name);
       const canvas = canvasRef.current;
       if (!canvas || !path) return;
@@ -264,6 +270,20 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   };
   // A node opened (owner, 05.10: «позначка вузла на фото»); pressed again, it closes. `step`: reached by ‹ › or a swipe
   const showNode = (id: DetailId, step: -1 | 0 | 1 = 0) => {
+    if (closingRef.current) {
+      // pressed while the node open is going out (its card's fade, a sheet's or «На фото»'s shrink): that close is called
+      // off — its end would put away the node pressed now, the focus falling to <body> (review 07.11); cancelled, the
+      // fade's or the shrink's forwards fill goes with it
+      closingRef.current = false;
+      detailMotion.current?.cancel();
+      detailMotion.current = null;
+      if (detail === id && !step) {
+        // the same node again: as it was, the camera back on it
+        if (cameraOn) camera.aim(id, detailSheet);
+        if (!touringRef.current) detailCloseRef.current?.focus({ preventScroll: true });
+        return;
+      }
+    }
     if (detail === id && !step) return closeDetail();
     if (!detail && !step) nodeSeam.current = null;
     nodeSwitch.current = detail ? step : 0;
@@ -307,28 +327,46 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
     if (Math.abs(dx) >= SWIPE_MIN && Math.abs(dx) > Math.abs(dy) * 1.5) stepNode(dx < 0 ? 1 : -1);
   };
   const onSheetCancel = () => { swipe.current = null; };
+  // The node gone, nothing of it left behind: «На фото» is kept from node to node, not from one open to the next (the next
+  // open is the camera's again), and the seam it took goes back where it was, unless moved since
+  const reset = () => {
+    closingRef.current = false;
+    const timers = cardTimer.current;
+    cancelAnimationFrame(timers.frame);
+    window.clearTimeout(timers.timer);
+    const seam = nodeSeam.current;
+    nodeSeam.current = null;
+    handleRef.current?.style.removeProperty('--handle-y');
+    setExploded(false);
+    setNodeOnPhoto(false);
+    setCardOn(false);
+    if (seam && Math.abs(liveRef.current - seam.at) < 0.5) setSplit(seam.from);
+    setDetail(null);
+  };
+  // Put away at once, by whatever takes the block over — a layer, «Як це будується», a scope's cell: the same reset as a
+  // close's end (review 07.11: a bare setDetail(null) kept «На фото» on for the next open, with no camera, and the seam
+  // where the node had taken it), and a close under way called off
+  const dropDetail = () => {
+    assemblyRun.current += 1;
+    detailMotion.current?.cancel();
+    detailMotion.current = null;
+    if (detail) reset();
+  };
   // Closing: with the camera, the camera eases back at once and the card fades where it stands (shrunk into its ring, it
   // would cross the seam onto the photo); a phone's sheet and «На фото» back into the ring, as before. Then gone; the
-  // seam back where it was; the focus to its letter
-  const closeDetail = () => {
+  // seam back where it was; the focus to its letter — unless `keepFocus`: put away by a key on the range, the focus
+  // stays there
+  const close = (keepFocus: boolean) => {
     assemblyRun.current += 1;
     const was = detail;
     const timers = cardTimer.current;
     cancelAnimationFrame(timers.frame);
     window.clearTimeout(timers.timer);
     const done = () => {
-      const seam = nodeSeam.current;
-      nodeSeam.current = null;
-      handleRef.current?.style.removeProperty('--handle-y');
-      setExploded(false);
-      // «На фото» is kept from node to node, not from one open to the next: the next open is the camera's again
-      setNodeOnPhoto(false);
-      setCardOn(false);
-      if (seam && Math.abs(liveRef.current - seam.at) < 0.5) setSplit(seam.from);
-      setDetail(null);
+      reset();
       // the focus back on its letter — or, where the scheme's letter has given way (data-cut), on the bar's
       const pin = was ? detailPinsRef.current[was] : null;
-      if (touringRef.current) return;
+      if (touringRef.current || keepFocus) return;
       if (pin && pin.dataset.cut === undefined) {
         pin.focus({ preventScroll: true });
         // the letters come back from under the camera with their visibility's transition, which with reduced motion (its
@@ -361,6 +399,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
       detailMotion.current?.cancel();
       const fade = panel.animate([{ opacity: 1 }, { opacity: 0 }], { duration: CARD_OUT, easing: 'ease', fill: 'forwards' });
       detailMotion.current = fade;
+      closingRef.current = true;
       let gone = false;
       const finish = () => {
         if (gone || detailMotion.current !== fade) return;
@@ -378,6 +417,7 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
     if (!to) return done();
     const shrink = panel.animate([{ transform: 'none', opacity: 1, borderRadius: '0' }, { transform: to, opacity: 0, borderRadius: '50%' }], NODE_SHRINK);
     detailMotion.current = shrink;
+    closingRef.current = true;
     // once, on its end — or a moment after, should a hidden tab hold the animation — unless another node took its place
     let closed = false;
     const finish = () => {
@@ -387,6 +427,24 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
     };
     shrink.onfinish = finish;
     window.setTimeout(finish, NODE_SHRINK.duration + 200);
+  };
+  const closeDetail = () => close(false);
+  const closeKeepingFocus = () => close(true);
+  // A point (client px) on the node's card, or where it is coming to stand beside its ring: its box — its wipe-in's
+  // clip-path keeps the pointer from it, so a press there met the scheme's canvas for ~450 ms after opening and put the
+  // node away (review 07.11) — or, the frame before it is in the page, its column (useNodeCamera's shot)
+  const onCard = (clientX: number, clientY: number) => {
+    const panel = detailRef.current;
+    if (panel) {
+      const box = panel.getBoundingClientRect();
+      return clientX >= box.left && clientX <= box.right && clientY >= box.top && clientY <= box.bottom;
+    }
+    // (read off the camera, not the render: the press that opened the node may not have been committed yet)
+    const column = camera.shotRef.current?.card;
+    const stage = stageRef.current;
+    if (!column || !stage) return false;
+    const left = stage.getBoundingClientRect().left + column.x;
+    return clientX >= left && clientX <= left + column.width;
   };
   const closeDetailRef = useRef(closeDetail);
   useEffect(() => {
@@ -434,8 +492,8 @@ export function useNodeDetail(stageRef: RefObject<HTMLDivElement | null>, rangeR
   };
 
   return {
-    detail, setDetail, detailSheet, cardShown, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
+    detail, dropDetail, detailSheet, cardShown, flowOn, setFlowOn, exploded, nodeOnPhoto, assembled,
     detailRef, detailCloseRef, detailPinsRef, leaderRef, leaderDotRef, touringRef,
-    ringOf, showNode, stepNode, closeDetail, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto,
+    ringOf, showNode, stepNode, closeDetail, closeKeepingFocus, onCard, onSheetDown, onSheetUp, onSheetCancel, toggleExploded, toggleOnPhoto,
   };
 }
