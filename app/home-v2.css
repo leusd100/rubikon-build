@@ -347,6 +347,8 @@ main[data-home="v2"] .hv2-contour {
 }
 main[data-home="v2"] .hv2-contour .sheet-image { flex: none; aspect-ratio: 1536 / 788; background: #0f1110; }
 main[data-home="v2"] .hv2-contour-stage {
+  /* where the first view's seam waits (the arrival, below): a sliver of the photo left of it */
+  --hv2-xray-from: 4%;
   /* A finger scrolls the page and pinch-zooms the photo; only a sideways drag on the handle is the seam's */
   /* clip, not hidden: a hidden box still scrolls to a focused control in it — the node's panel slid 32 px up out of it */
   position: absolute; inset: 0; overflow: hidden; overflow: clip; cursor: ew-resize; touch-action: pan-y pinch-zoom;
@@ -652,7 +654,6 @@ main[data-home="v2"] .hv2-contour-stage:not([data-pointer-focus]) .hv2-contour-r
    from the left edge to its rest, and everything it has passed is the real photo (useFirstSweep drives --split). The
    figures and the names come in together when it rests. Once. Without JavaScript or with reduced motion the sheet stands
    complete at rest. */
-main[data-home="v2"] .hv2-contour-stage { --hv2-xray-from: 4%; }
 @media (max-width: 760px) { main[data-home="v2"] .hv2-contour-stage { --hv2-xray-from: 1%; } }
 /* sonar-important-begin: useSeam.ts writes --split inline, and only this holds the seam at the edge while the sweep waits */
 main[data-home="v2"] .hv2-contour-stage[data-sweep="wait"] :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: var(--hv2-xray-from) !important; }

@@ -2375,8 +2375,11 @@ test('a mouse pressed in the sheet, or a finger on one of its buttons, stops the
   await centre(stage);
   await page.waitForFunction(() => document.querySelector<HTMLElement>('#real-object .hv2-contour-stage')!.dataset.sweep === 'run');
   if (phone) {
-    // A finger on a button (here the layer already on: it changes nothing else)
-    await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button', { name: 'Каркас' }).tap();
+    // A finger on a button (here the layer already on: it changes nothing else), where the button is now, as a finger
+    // lands: the title block still fills in as the move starts, and `tap()` waiting for it to stand still took 430–460 ms
+    // of the 1.4 s move (07.11; under a busy machine past its end)
+    const button = (await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button', { name: 'Каркас' }).boundingBox())!;
+    await page.touchscreen.tap(button.x + button.width / 2, button.y + button.height / 2);
   } else {
     // A mouse on the title block, clear of every control (its line): the press moves nothing itself
     const cell = (await sheet.locator('figcaption .hv2-contour-line').boundingBox())!;
