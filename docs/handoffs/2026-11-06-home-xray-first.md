@@ -5,7 +5,7 @@
 | Дата | 2026-11-06 |
 | Виконавець | Claude Code |
 | Підстава | Рішення власника 06.11: «Спершу рентген», варіант H (пауза на рентгені) — після аналізу «вау» блоку X-Ray і трьох макетів поверх production |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#304](https://github.com/leusd100/rubikon-build/pull/304), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `design/home-xray-first` від `main` `aa9d2c20` |
 | Коміти | див. `git log origin/main..HEAD` |
 | Змінено | `useFirstSweep.ts` (напрям і момент проходу шва), `home-v2.css` (шов тримається зліва, «негатоскоп» на час появи), коментар у `ProofContour.tsx`, тести появи в `home-proof-contour.spec.ts` |
