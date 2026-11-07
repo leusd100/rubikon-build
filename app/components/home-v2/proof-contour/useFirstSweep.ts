@@ -34,7 +34,7 @@ type Carriers = Readonly<{
 // on the four's --split (a registered custom property, home-v2.css), so the range's value and what it says never move. It starts once the stage is a third in view, scrolling or not. The visitor's own move in the sheet
 // first, or reduced motion: no sweep, the seam at rest.
 // `hint` is told when the node's hint is due (true: the seam has come to rest, or at once with reduced motion — the hint
-// stands still) and when it is over (false: the visitor's own first press or key in the sheet); a visitor who moved
+// stands still) and when it is over (false: the visitor's own first press or key in the sheet — Tab aside); a visitor who moved
 // first never gets it
 export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { paneRef, innerRef, railRef, handleRef }: Carriers, hint: (on: boolean) => void) {
   const touchedRef = useRef(false);
@@ -62,14 +62,24 @@ export function useFirstSweep(stageRef: RefObject<HTMLDivElement | null>, { pane
     // A mouse or a pen pressed anywhere in the sheet is the visitor's own move; a finger only on what it can move (the
     // handle, a button): elsewhere it scrolls the page. Keys reach the sheet only on its range and buttons
     const onPointer = (event: PointerEvent) => {
+      // (the hint's own button opens its node, and that ends the hint: ended here, on its pointerdown, it was gone by its
+      // click — 07.11)
+      if ((event.target as Element).closest('.hv2-contour-node-hint-button, .hv2-contour-node-strip-button')) return;
       if (event.pointerType === 'touch' && !(event.target as Element).closest('.hv2-contour-handle, button')) return;
       stop();
     };
+    // …but Tab and Shift+Tab only move the focus through the sheet: no move of the visitor's own, so the hint stays and its
+    // button can be reached by the keyboard (review 07.11: the first Tab into the sheet ended the hint, and the button
+    // behind the five letters was never reached), and the sweep runs on
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' || event.key === 'Shift') return;
+      stop();
+    };
     sheet.addEventListener('pointerdown', onPointer, { passive: true });
-    sheet.addEventListener('keydown', stop);
+    sheet.addEventListener('keydown', onKey);
     const unlisten = () => {
       sheet.removeEventListener('pointerdown', onPointer);
-      sheet.removeEventListener('keydown', stop);
+      sheet.removeEventListener('keydown', onKey);
     };
     // Reduced motion: no move — the sheet stands complete at rest — and the hint is simply there
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

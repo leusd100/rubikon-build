@@ -88,6 +88,16 @@
   --hv2-for-leader-dot: 200ms;
   --hv2-at-leader-dot: 820ms;
   --hv2-for-detail-backdrop: 200ms;
+  /* the camera on a node (07.11, useNodeCamera): in, settled by ~640 ms; from node to node, pulled back on the way; back
+     out; the frame dimming round it; the card wiped in beside the ring as the camera lands, the leader to it after */
+  --hv2-for-cam-in: 640ms;
+  --hv2-for-cam-fly: 760ms;
+  --hv2-for-cam-out: 420ms;
+  --hv2-for-cam-dim: 320ms;
+  --hv2-for-cam-card: 300ms;
+  --hv2-at-cam-card: 320ms;
+  --hv2-for-cam-leader: 240ms;
+  --hv2-at-cam-leader: 460ms;
 }
 
 main[data-home="v2"] {
@@ -333,6 +343,8 @@ main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight:
 
 main[data-home="v2"] .hv2-proof { margin-top: 36px; }
 main[data-home="v2"] .hv2-contour {
+  /* The camera on a node (useNodeCamera, below): how far it scales the scheme in, and where the seam waits meanwhile */
+  --hv2-cam-scale: 2.4; --hv2-cam-split: 34%;
   --sheet-paper: var(--hv2-graphite-2); --sheet-ink: var(--hv2-line-strong); --sheet-mark: var(--hv2-copper);
   --color-text: var(--hv2-text); --color-text-secondary: var(--hv2-text-2); --color-text-muted: var(--hv2-text-3); --color-accent-strong: var(--hv2-copper-text);
   /* The scheme's ink: the sheet's paper white, never the measured copper (the loads' tints: on main, below) */
@@ -1351,7 +1363,10 @@ main[data-home="v2"] .hv2-contour-stage[data-peek-node="ridge"] .hv2-proof-detai
 main[data-home="v2"] .hv2-contour-stage[data-peek-node="chord"] .hv2-proof-detail-rings [data-detail="chord"] { stroke-width: calc(var(--u) * 3); fill: color-mix(in srgb, var(--hv2-node) 20%, transparent); }
 main[data-home="v2"] .hv2-proof-detail-pins { position: absolute; inset: 0; pointer-events: none; }
 main[data-home="v2"] .hv2-proof-detail-pin {
-  position: absolute; left: var(--x); top: var(--y); display: grid; place-items: center; width: 24px; height: 24px; margin: -12px 0 0 -12px; padding: 0;
+  /* on its ring's line (homeProofDetailSpots' letter), pushed out along the same radius by --pin-out where the ring is
+     drawn small: a phone's ring is 9 px across its radius, and a 20 px letter centred on its line covered the node */
+  position: absolute; left: var(--x); top: var(--y); translate: calc(var(--cos) * var(--pin-out, 0px)) calc(var(--sin) * var(--pin-out, 0px));
+  display: grid; place-items: center; width: 24px; height: 24px; margin: -12px 0 0 -12px; padding: 0;
   color: var(--hv2-text); background: rgba(20, 22, 21, .82); border: 1.5px solid rgba(237, 232, 222, .6); border-radius: 50%; cursor: pointer; pointer-events: auto;
   box-shadow: 0 0 0 2px rgba(20, 22, 21, .85); font: 700 12px/1 var(--font-condensed), sans-serif; transition: background-color var(--hv2-for-pin-tint) var(--ease-standard), color var(--hv2-for-pin-tint) var(--ease-standard), border-color var(--hv2-for-pin-tint) var(--ease-standard);
 }
@@ -1448,10 +1463,11 @@ main[data-home="v2"] .hv2-detail-backdrop { position: fixed; z-index: 59; inset:
 @media (prefers-reduced-motion: no-preference) {
   main[data-home="v2"] .hv2-detail-backdrop { animation: hv2-contour-fade var(--hv2-for-detail-backdrop) ease; }
 }
-/* A tablet's frame: «Г» and «Б» inside the truss — over the right rake they met the slope's figure (06.10) */
-@media (min-width: 761px) and (max-width: 1180px) { main[data-home="v2"] .hv2-proof-detail-pin { left: var(--nx, var(--x)); top: var(--ny, var(--y)); } }
+/* A tablet's and a phone's rings are drawn smaller (--u): their letters stand a little out along the radius, on the ring's
+   outer edge, the node inside it left clear */
+@media (max-width: 1180px) { main[data-home="v2"] .hv2-proof-detail-pin { --pin-out: 4px; } }
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-proof-detail-pin { left: var(--px); top: var(--py); width: 20px; height: 20px; margin: -10px 0 0 -10px; font-size: 11px; }
+  main[data-home="v2"] .hv2-proof-detail-pin { --pin-out: 8px; width: 20px; height: 20px; margin: -10px 0 0 -10px; font-size: 11px; }
 }
 
 /* ── The proof block after its audit (09.10, «Разом+», chosen by the owner from four concepts tried side by side) ──────
@@ -1553,29 +1569,60 @@ main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: none; }
   main[data-home="v2"] .hv2-contour-exit[data-place="action"] { display: inline-flex; flex: 0 1 auto; align-self: center; }
 }
 
-/* DEC-42 (a), the owner's choice of 13.10 (Phase 5): the arrival's last word — node Г lit and one line saying what a press does; nothing
-   opens by itself (ProofContour's NODE_HINT). Still: no ring ripples, it only fades in, and it is gone at the visitor's
-   first press or key in the sheet. Its letter and its ring as a pointed-at node's, its pill outlined in the nodes'
-   colour; the line over the photo's top corner, where the tour tells its step — clear of every word of the drawing */
+/* DEC-42 (a), the owner's choice of 13.10 (Phase 5): the arrival's last word — node Г lit and one line saying what a press
+   does; nothing opens by itself (ProofContour's NODE_HINT). Still: no ring ripples, it only fades in, and it is gone at the
+   visitor's first press or key in the sheet. Its letter and its ring as a pointed-at node's, its pill outlined in the
+   nodes' colour. The line beside the ring since 07.11 (owner: «Давай також реалізуємо ідеї»): a thin copper leader from a
+   small square on the ring — no glow — and the line at its end a button opening the node (useNodeHint places them); it
+   stood over the photo's corner, ~737 px from the ring at 1440 × 900 */
 main[data-home="v2"] .hv2-contour-stage[data-node-hint="ridge"] .hv2-proof-detail-pin[data-detail="ridge"] { color: var(--hv2-node-ink); background: var(--hv2-node); border-color: var(--hv2-node-edge); }
 main[data-home="v2"] .hv2-contour-stage[data-node-hint="ridge"] .hv2-proof-detail-rings [data-detail="ridge"] { stroke-opacity: 1; stroke-width: calc(var(--u) * 3); fill: color-mix(in srgb, var(--hv2-node) 20%, transparent); }
 main[data-home="v2"] .hv2-contour-nodes[data-place="block"] button[data-hint] { border-color: var(--hv2-node); }
 main[data-home="v2"] .hv2-contour-node-hint {
-  position: absolute; z-index: 5; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 4px 11px 4px 4px;
-  color: var(--hv2-text); background: rgba(19, 21, 20, .94); border: 1px solid color-mix(in srgb, var(--hv2-node) 60%, transparent);
-  font: 600 12.5px/1.25 var(--font-manrope), sans-serif; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity var(--hv2-for-reveal) ease, visibility var(--hv2-for-reveal);
+  position: absolute; z-index: 5; inset: 0; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity var(--hv2-for-reveal) ease, visibility var(--hv2-for-reveal);
 }
 main[data-home="v2"] .hv2-contour-node-hint[data-on] { opacity: 1; visibility: visible; }
-main[data-home="v2"] .hv2-contour-node-hint .hv2-contour-node-letter { flex: none; font: 700 12px/1 var(--font-condensed), sans-serif; }
-main[data-home="v2"] .hv2-contour-node-hint [data-input="touch"] { display: none; }
-@media (hover: none) {
-  main[data-home="v2"] .hv2-contour-node-hint [data-input="hover"] { display: none; }
-  main[data-home="v2"] .hv2-contour-node-hint [data-input="touch"] { display: inline; }
+main[data-home="v2"] .hv2-contour-node-hint-lead { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+main[data-home="v2"] .hv2-contour-node-hint-lead path { fill: none; stroke: var(--hv2-copper-text); stroke-width: 1.25; }
+main[data-home="v2"] .hv2-contour-node-hint-lead rect { fill: var(--hv2-copper-text); }
+main[data-home="v2"] :is(.hv2-contour-node-hint-button, .hv2-contour-node-strip-button) {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 4px 11px 4px 4px; color: var(--hv2-text); text-align: left; white-space: nowrap;
+  background: rgba(19, 21, 20, .94); border: 1px solid color-mix(in srgb, var(--hv2-node) 60%, transparent); border-radius: 0; cursor: pointer;
+  font: 600 12.5px/1.25 var(--font-manrope), sans-serif; transition: border-color var(--motion-micro) var(--ease-standard);
 }
-/* a phone's close-up has little sky over the gable: the line goes to the photo's foot instead — the retouched gravel — in
-   two lines, short of the seam's handle, which rests at the frame's foot at 62 % (44 px wide) */
+main[data-home="v2"] :is(.hv2-contour-node-hint-button, .hv2-contour-node-strip-button):hover { border-color: var(--hv2-node); }
+main[data-home="v2"] :is(.hv2-contour-node-hint-button, .hv2-contour-node-strip-button):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+/* (until useNodeHint has measured it, the photo's corner: it is placed before the first paint it is shown in) */
+main[data-home="v2"] .hv2-contour-node-hint-button { position: absolute; top: var(--hint-y, 12px); left: var(--hint-x, 12px); pointer-events: auto; }
+/* two lines where the room beside the ring is narrow */
+main[data-home="v2"] .hv2-contour-node-hint[data-lines="2"] [data-part="2"] { display: block; }
+main[data-home="v2"] :is(.hv2-contour-node-hint-button, .hv2-contour-node-strip-button) .hv2-contour-node-letter { flex: none; font: 700 12px/1 var(--font-condensed), sans-serif; }
+main[data-home="v2"] :is(.hv2-contour-node-hint-button, .hv2-contour-node-strip-button) [data-input="touch"] { display: none; }
+@media (hover: none) {
+  main[data-home="v2"] :is(.hv2-contour-node-hint-button, .hv2-contour-node-strip-button) [data-input="hover"] { display: none; }
+  main[data-home="v2"] :is(.hv2-contour-node-hint-button, .hv2-contour-node-strip-button) [data-input="touch"] { display: inline; }
+}
+/* while it shows the stamp keeps «Схема · без розмірів»: its second line, the title block's words too, took the room level
+   with the ring on a 1280 × 720 or a 1250 × 613 laptop (useNodeHint) */
+main[data-home="v2"] .hv2-contour-stage[data-node-hint] .hv2-contour-stamp-text { display: none; }
+/* (as wide as with its second line — its max-width, which those words fill — so it only grows shorter: narrowed, its left
+   edge moved, a layout shift the arrival's test counts, and the seam's names measured it narrow, useLabelFit) */
+@media (min-width: 1200px) { main[data-home="v2"] .hv2-contour-stage[data-node-hint]:not([data-stamp]) .hv2-contour-stamp { min-width: 196px; } }
+/* …and «Схема ›» gives way to it where the line's one room is the top band the name stands in (useNodeHint) */
+main[data-home="v2"] .hv2-contour-stage[data-hint-yield] .hv2-contour-seamtags > span:last-child { visibility: hidden; }
+/* A phone: node Г's ring rests on the photo's side of the seam, so the line is a strip under the frame, not a patch over
+   the photo (07.11). Its room is kept from hydration (ProofContour's data-reserve) to the visitor's first own move — a
+   press or a key, after which a moved page is theirs — so the line fades in without moving the page */
+main[data-home="v2"] .hv2-contour-node-strip { display: none; }
 @media (max-width: 760px) {
-  main[data-home="v2"] .hv2-contour-node-hint { top: auto; bottom: 6px; left: 6px; max-width: calc(62% - 40px); gap: 6px; padding: 3px 8px 3px 3px; font-size: 12px; }
+  main[data-home="v2"] .hv2-contour-node-hint { display: none; }
+  main[data-home="v2"] .hv2-contour .sheet-image:has(> .hv2-contour-node-strip[data-reserve]) { box-sizing: content-box; padding-bottom: 44px; }
+  main[data-home="v2"] .hv2-contour .sheet-image:has(> .hv2-contour-node-strip[data-reserve]) > .hv2-contour-stage { bottom: 44px; }
+  main[data-home="v2"] .hv2-contour-node-strip[data-reserve] { position: absolute; right: 0; bottom: 0; left: 0; display: flex; align-items: center; height: 44px; padding: 0 6px; }
+  main[data-home="v2"] .hv2-contour-node-strip-button {
+    width: 100%; min-height: 36px; white-space: normal; font-size: 12px; opacity: 0; visibility: hidden; transition: opacity var(--hv2-for-reveal) ease, visibility var(--hv2-for-reveal);
+  }
+  main[data-home="v2"] .hv2-contour-node-strip[data-on] .hv2-contour-node-strip-button { opacity: 1; visibility: visible; }
 }
 
 /* a phone: the sheet edge to edge, the photo's full height (rows 0–788: the gable whole), the five letters and no numbers
@@ -1609,3 +1656,58 @@ main[data-home="v2"] .hv2-signature-support p { margin: 0; }
 main[data-home="v2"] .hv2-proof-shortcut { min-height: 44px; margin-top: 8px; --link-ink: var(--hv2-copper); --link-hover-ink: var(--hv2-text); }
 main[data-home="v2"] .hv2-frame-label { display: none; margin: 0 0 12px; }
 main[data-home="v2"] .hv2-frame-room:has(.hv2-frame-slot[data-armed]) .hv2-frame-label { display: block; }
+
+/* ── The camera on a node (07.11, owner: «Давай також реалізуємо ідеї» — useNodeCamera; this lifts ui-system §6.9's
+   freeze on the node's opening for it) ──────────────────────────────────────────────────────────────────────────────
+   A node opened (not «На фото»): the seam glides to one place, the scheme's canvas right of it is moved and scaled about
+   the node's ring until the ring stands between the seam and the card, the rest of the frame dims, and the node's card
+   stands beside the ring on the scheme's side. Only the canvas's transform moves (the compositor's); what would scale
+   into clutter or a blur — the names, the letters, the other rings, the blockwork's thousand strokes — steps out at once,
+   and the tracing's photo softens. Closed, it all eases back and the stage is as it was. */
+/* Its scale and the seam's place (--hv2-cam-scale, --hv2-cam-split) are set on .hv2-contour's own rule, near the top. A
+   phone's or a narrow tablet's sheet covers the frame's foot: the whole frame the scheme, the node a little closer */
+@media (max-width: 900px) { main[data-home="v2"] .hv2-contour { --hv2-cam-scale: 2; --hv2-cam-split: 0%; } }
+/* sonar-important-begin: useSeam.ts writes the visitor's own split inline (kept for the way back); only this holds the seam at the camera's place */
+main[data-home="v2"] .hv2-contour-stage:is([data-camera="in"], [data-camera="fly"]) :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: var(--hv2-cam-split) !important; }
+/* sonar-important-end */
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-contour-stage[data-camera="in"] .hv2-contour-pane .hv2-contour-canvas { transition: transform var(--hv2-for-cam-in) var(--ease-premium); }
+  main[data-home="v2"] .hv2-contour-stage[data-camera="out"] .hv2-contour-pane .hv2-contour-canvas { transition: transform var(--hv2-for-cam-out) var(--ease-premium); }
+  main[data-home="v2"] .hv2-contour-stage[data-camera] :is(.hv2-camera-dim, .hv2-camera-veil, .hv2-contour-trace picture) { transition: opacity var(--hv2-for-cam-dim) ease; }
+}
+/* the right side's window keeps the tracing's paper behind the moved canvas: the photo never shows through it */
+main[data-home="v2"] .hv2-contour-stage[data-camera] .hv2-contour-pane-inner { background: #161817; }
+/* the rest of the frame dims: the photo's side flat, the scheme's round the ring (centred on where it lands, --at) */
+main[data-home="v2"] :is(.hv2-camera-dim, .hv2-camera-veil) { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+main[data-home="v2"] .hv2-camera-dim { background: rgba(12, 13, 13, .5); }
+main[data-home="v2"] .hv2-camera-veil { background: radial-gradient(circle at var(--at, 50% 50%), rgba(22, 24, 23, 0) 0 96px, rgba(22, 24, 23, .45) 230px, rgba(22, 24, 23, .7) 480px); }
+main[data-home="v2"] .hv2-contour-stage:is([data-camera="in"], [data-camera="fly"]) :is(.hv2-camera-dim, .hv2-camera-veil) { opacity: 1; }
+/* out at once (no fade: a fading part of the moving canvas would be redrawn on every frame of the move), back as it eases out */
+main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"]) :is(.hv2-proof-labels, .hv2-proof-marks, .hv2-proof-hover, .hv2-proof-blocks) { opacity: 0; }
+main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"]) :is(.hv2-proof-detail-pins, .hv2-proof-hover-tip, .hv2-contour-node-hint) { opacity: 0; visibility: hidden; }
+main[data-home="v2"] .hv2-contour-stage[data-camera] .hv2-proof-detail-rings circle { transition: none; }
+main[data-home="v2"] .hv2-contour-stage:is([data-camera="in"], [data-camera="fly"]) .hv2-proof-scheme .hv2-proof-blocks { transition: none; }
+main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"]) .hv2-proof-detail-rings circle { opacity: 0; }
+/* the node's own ring stays, its line as heavy on the screen as at rest (the canvas scales it) */
+main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"])[data-detail="bearing"] .hv2-proof-detail-rings [data-detail="bearing"],
+main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"])[data-detail="purlin"] .hv2-proof-detail-rings [data-detail="purlin"],
+main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"])[data-detail="base"] .hv2-proof-detail-rings [data-detail="base"],
+main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"])[data-detail="ridge"] .hv2-proof-detail-rings [data-detail="ridge"],
+main[data-home="v2"] .hv2-contour-stage[data-layer]:is([data-camera="in"], [data-camera="fly"])[data-detail="chord"] .hv2-proof-detail-rings [data-detail="chord"] {
+  opacity: 1; stroke-opacity: 1; stroke-width: calc(var(--u) * 3 / var(--hv2-cam-scale)); fill: color-mix(in srgb, var(--hv2-node) 6%, transparent);
+}
+/* the tracing's photo, softened: scaled up, its raster would show as a blur behind the vector */
+main[data-home="v2"] .hv2-contour-stage:is([data-camera="in"], [data-camera="fly"]) .hv2-contour-pane .hv2-contour-trace picture { opacity: .45; }
+/* the stamp keeps «Схема · без розмірів» (the card says «Вузол такого типу · схема без розмірів» under its drawing): its
+   second line gives the card its room on a short laptop */
+main[data-home="v2"] .hv2-contour-stage:is([data-camera="in"], [data-camera="fly"]) .hv2-contour-stamp-text { display: none; }
+/* The card beside the ring (useNodeDetail's placeCard sets its column and top): wiped in from the ring's side as the
+   camera lands; the leader to it drawn after */
+main[data-home="v2"] .hv2-detail[data-camera] { background: rgba(18, 20, 19, .97); }
+@media (prefers-reduced-motion: no-preference) {
+  main[data-home="v2"] .hv2-detail[data-camera] { animation: hv2-camera-card var(--hv2-for-cam-card) var(--ease-premium) var(--hv2-at-cam-card) backwards; }
+  main[data-home="v2"] .hv2-contour-stage[data-camera] .hv2-detail-leader path { animation-duration: var(--hv2-for-cam-leader); animation-delay: var(--hv2-at-cam-leader); }
+  main[data-home="v2"] .hv2-contour-stage[data-camera] .hv2-detail-leader circle { animation-delay: var(--hv2-at-cam-leader); }
+}
+@keyframes hv2-camera-card { from { clip-path: inset(0 100% 0 0); } }
+main[data-home="v2"] .hv2-contour-stage[data-camera="out"] .hv2-detail-leader { visibility: hidden; }
