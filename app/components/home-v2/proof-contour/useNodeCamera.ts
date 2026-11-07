@@ -46,6 +46,8 @@ const msOf = (element: Element, name: string) => {
   const value = getComputedStyle(element).getPropertyValue(name).trim();
   return value.endsWith('ms') ? Number.parseFloat(value) : Number.parseFloat(value) * 1000;
 };
+/** Commits the element's style now (a style read forces it): a transition set after starts from what it shows then */
+const commitStyle = (element: Element) => getComputedStyle(element).transform;
 const transformOf = ({ translate, scale }: Pick<Shot, 'translate' | 'scale'>) =>
   `translate(${translate.x.toFixed(2)}px, ${translate.y.toFixed(2)}px) scale(${scale})`;
 
@@ -145,14 +147,14 @@ export function useNodeCamera(stageRef: RefObject<HTMLDivElement | null>, canvas
     const was = stage.dataset.camera;
     const there = was === 'in' || was === 'fly';
     // the same node, the same frame: already there, or on its way (the press aimed it before React's layout effect does)
-    if (from && from.id === id && there && from.size.width === stage.clientWidth && from.size.height === stage.clientHeight) return;
+    if (from?.id === id && there && from.size.width === stage.clientWidth && from.size.height === stage.clientHeight) return;
     window.clearTimeout(settle.current);
     const to = shotOf(id, stage, canvas, sheet);
     shotRef.current = to;
     if (from && from.id !== id && there && !still()) return fly(stage, canvas, from, to);
     flight.current?.cancel();
     flight.current = null;
-    if (from && from.id === id && there) {
+    if (from?.id === id && there) {
       // the same node again — the frame resized: straight there, no glide
       stage.dataset.camera = 'fly';
       place(to);
@@ -179,7 +181,7 @@ export function useNodeCamera(stageRef: RefObject<HTMLDivElement | null>, canvas
       flight.current = null;
       stage.dataset.camera = 'fly';
       canvas.style.transform = transformOf(now);
-      void getComputedStyle(canvas).transform;
+      commitStyle(canvas);
     }
     shotRef.current = null;
     stage.dataset.camera = 'out';

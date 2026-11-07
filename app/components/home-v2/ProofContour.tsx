@@ -447,6 +447,26 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
     }
     return true;
   };
+  // The press takes the seam: by its handle, or anywhere else in the frame (a mouse's), the seam moved there
+  const grabSeam = (event: PointerEvent<HTMLDivElement>, handle: Element | null) => {
+    event.preventDefault();
+    if (handle) {
+      // Grabbing the handle keeps the seam where it is and the handle under the pointer. The offset is taken from where
+      // the handle is drawn, not from the seam: at either end of the frame it is held clear of the edge, off the seam
+      const grip = handle.getBoundingClientRect();
+      dragRef.current = { pointer: event.pointerId, offset: event.clientX - (grip.left + grip.width / 2) };
+    } else {
+      // A click elsewhere moves the seam there (below, once the press is marked a drag)
+      dragRef.current = { pointer: event.pointerId, offset: 0 };
+    }
+    event.currentTarget.setPointerCapture(event.pointerId);
+    // set here, not only by the render: the press's own move must not glide
+    event.currentTarget.dataset.dragging = '';
+    setDragging(true);
+    setPointerFocus(true);
+    rangeRef.current?.focus({ preventScroll: true });
+    if (!handle) splitAt(event.clientX, 0, event.pointerType === 'touch');
+  };
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     tap.current = event.pointerType === 'touch' ? { x: event.clientX, y: event.clientY } : null;
     if (event.pointerType === 'mouse') dropHit();
@@ -469,23 +489,7 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
       if (point) dropPoint();
       return;
     }
-    event.preventDefault();
-    if (handle) {
-      // Grabbing the handle keeps the seam where it is and the handle under the pointer. The offset is taken from where
-      // the handle is drawn, not from the seam: at either end of the frame it is held clear of the edge, off the seam
-      const grip = handle.getBoundingClientRect();
-      dragRef.current = { pointer: event.pointerId, offset: event.clientX - (grip.left + grip.width / 2) };
-    } else {
-      // A click elsewhere moves the seam there (below, once the press is marked a drag)
-      dragRef.current = { pointer: event.pointerId, offset: 0 };
-    }
-    event.currentTarget.setPointerCapture(event.pointerId);
-    // set here, not only by the render: the press's own move must not glide
-    event.currentTarget.dataset.dragging = '';
-    setDragging(true);
-    setPointerFocus(true);
-    rangeRef.current?.focus({ preventScroll: true });
-    if (!handle) splitAt(event.clientX, 0, event.pointerType === 'touch');
+    grabSeam(event, handle);
   };
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (dragRef.current?.pointer === event.pointerId) {

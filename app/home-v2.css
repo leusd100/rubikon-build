@@ -343,6 +343,8 @@ main[data-home="v2"] .hv2-boundary strong { color: var(--hv2-text); font-weight:
 
 main[data-home="v2"] .hv2-proof { margin-top: 36px; }
 main[data-home="v2"] .hv2-contour {
+  /* The camera on a node (useNodeCamera, below): how far it scales the scheme in, and where the seam waits meanwhile */
+  --hv2-cam-scale: 2.4; --hv2-cam-split: 34%;
   --sheet-paper: var(--hv2-graphite-2); --sheet-ink: var(--hv2-line-strong); --sheet-mark: var(--hv2-copper);
   --color-text: var(--hv2-text); --color-text-secondary: var(--hv2-text-2); --color-text-muted: var(--hv2-text-3); --color-accent-strong: var(--hv2-copper-text);
   /* The scheme's ink: the sheet's paper white, never the measured copper (the loads' tints: on main, below) */
@@ -1631,8 +1633,8 @@ main[data-home="v2"] .hv2-frame-room:has(.hv2-frame-slot[data-armed]) .hv2-frame
    stands beside the ring on the scheme's side. Only the canvas's transform moves (the compositor's); what would scale
    into clutter or a blur — the names, the letters, the other rings, the blockwork's thousand strokes — steps out at once,
    and the tracing's photo softens. Closed, it all eases back and the stage is as it was. */
-main[data-home="v2"] .hv2-contour { --hv2-cam-scale: 2.4; --hv2-cam-split: 34%; }
-/* a phone's or a narrow tablet's sheet covers the frame's foot: the whole frame the scheme, the node a little closer */
+/* Its scale and the seam's place (--hv2-cam-scale, --hv2-cam-split) are set on .hv2-contour's own rule, near the top. A
+   phone's or a narrow tablet's sheet covers the frame's foot: the whole frame the scheme, the node a little closer */
 @media (max-width: 900px) { main[data-home="v2"] .hv2-contour { --hv2-cam-scale: 2; --hv2-cam-split: 0%; } }
 /* sonar-important-begin: useSeam.ts writes the visitor's own split inline (kept for the way back); only this holds the seam at the camera's place */
 main[data-home="v2"] .hv2-contour-stage:is([data-camera="in"], [data-camera="fly"]) :is(.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle) { --split: var(--hv2-cam-split) !important; }

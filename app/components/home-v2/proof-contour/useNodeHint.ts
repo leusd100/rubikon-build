@@ -33,6 +33,49 @@ type Place = { box: Box; mark: [number, number]; end: [number, number]; lines: 1
 const overlap = (a: Box, b: Box) =>
   Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
 
+/** Every place the line can take beside the ring (cx, cy, radius), in one line and in two, in the order they are tried */
+function candidatesOf([cx, cy, radius]: readonly [number, number, number], sizes: readonly { lines: 1 | 2; width: number; height: number }[]) {
+  const candidates: Place[] = [];
+  for (const { lines, width, height } of sizes) {
+    for (const way of WAYS) {
+      for (const meet of MEETS) {
+        for (const lead of LEADS) {
+          const [cos, sin] = [Math.cos((way * Math.PI) / 180), Math.sin((way * Math.PI) / 180)];
+          const mark: [number, number] = [cx + radius * cos, cy + radius * sin];
+          const end: [number, number] = [cx + (radius + lead) * cos, cy + (radius + lead) * sin];
+          // the line's left edge at the leader's end, the end at its middle (or a third up or down) — lower down the
+          // line as the way rises
+          const top = Math.min(Math.max(end[1] - height * meet + (sin * height) / 2, end[1] - height + 8), end[1] - 8);
+          const left = end[0] + 6;
+          candidates.push({ box: { left, right: left + width, top, bottom: top + height }, mark, end, lines, covered: 0 });
+        }
+      }
+    }
+  }
+  return candidates;
+}
+
+/** What the line keeps clear of: `words` (and the stamp, the letters, the handle), the other nodes' `rings`, the seam's
+ *  «Схема ›» (`seamName`) */
+type Clear = Readonly<{ words: Box[]; rings: Box[]; seamName: Box[] }>;
+
+/** The first place clear of all; then one where «Схема ›» gives way; then one over another node's ring; else the one
+ *  that covers least (crowded) */
+function choose(candidates: Place[], inFrame: Place[], { words, rings, seamName }: Clear) {
+  const fixed = [...words, ...rings];
+  const cover = (place: Place, others: Box[]) => others.reduce((sum, other) => sum + overlap(place.box, { left: other.left - AIR, right: other.right + AIR, top: other.top - AIR, bottom: other.bottom + AIR }), 0);
+  const clear = inFrame.find((place) => cover(place, [...fixed, ...seamName]) === 0);
+  if (clear) return { chosen: clear, yieldName: false, overRing: false, crowded: false };
+  const yielding = inFrame.find((place) => cover(place, fixed) === 0);
+  if (yielding) return { chosen: yielding, yieldName: true, overRing: false, crowded: false };
+  const overRing = inFrame.find((place) => cover(place, [...words, ...seamName]) === 0) ?? inFrame.find((place) => cover(place, words) === 0);
+  if (overRing) return { chosen: overRing, yieldName: cover(overRing, seamName) > 0, overRing: true, crowded: false };
+  const pool = inFrame.length ? inFrame : candidates;
+  for (const place of pool) place.covered = cover(place, fixed);
+  const least = pool.reduce((best, place) => (place.covered < best.covered ? place : best), pool[0]);
+  return { chosen: least, yieldName: false, overRing: false, crowded: true };
+}
+
 /** The hint placed beside node `id`'s ring while `on` (and again when the frame resizes); `split`: where the seam rests */
 export function useNodeHint(stageRef: RefObject<HTMLDivElement | null>, hintRef: RefObject<HTMLSpanElement | null>, { on, id, split }: Readonly<{ on: boolean; id: DetailId; split: number }>) {
   useLayoutEffect(() => {
@@ -47,62 +90,24 @@ export function useNodeHint(stageRef: RefObject<HTMLDivElement | null>, hintRef:
       const frame = stage.getBoundingClientRect();
       const rel = (rect: DOMRect): Box => ({ left: rect.left - frame.left, right: rect.right - frame.left, top: rect.top - frame.top, bottom: rect.bottom - frame.top });
       const r = rel(ring.getBoundingClientRect());
-      const [cx, cy, radius] = [(r.left + r.right) / 2, (r.top + r.bottom) / 2, (r.right - r.left) / 2];
       const seam = (frame.width * split) / 100;
       const seen = (element: Element) => element.checkVisibility({ visibilityProperty: true });
       const boxes = (selector: string) => [...stage.querySelectorAll(selector)].filter(seen).map((element) => rel(element.getBoundingClientRect()));
       // every word that can show on the scheme's side (the names the hover shows are there, faded out), the stamp, the
       // other nodes' letters and rings, the handle
-      const words = [
-        ...boxes('.hv2-proof-labels > span, .hv2-contour-stamp, .hv2-proof-detail-pin, .hv2-contour-handle'),
-        ...boxes('.hv2-contour-seamtags > span:first-child'),
-      ];
-      const rings = boxes(`.hv2-proof-detail-rings circle:not([data-detail="${id}"])`);
-      const fixed = [...words, ...rings];
-      const seamName = boxes('.hv2-contour-seamtags > span:last-child');
+      const clear: Clear = {
+        words: [...boxes('.hv2-proof-labels > span, .hv2-contour-stamp, .hv2-proof-detail-pin, .hv2-contour-handle'), ...boxes('.hv2-contour-seamtags > span:first-child')],
+        rings: boxes(`.hv2-proof-detail-rings circle:not([data-detail="${id}"])`),
+        seamName: boxes('.hv2-contour-seamtags > span:last-child'),
+      };
       // the line's size in one line and in two
       const sizes = ([1, 2] as const).map((lines) => {
         hint.dataset.lines = String(lines);
         return { lines, width: button.offsetWidth, height: button.offsetHeight };
       });
-      const candidates: Place[] = [];
-      for (const { lines, width, height } of sizes) {
-        for (const way of WAYS) {
-          for (const meet of MEETS) {
-            for (const lead of LEADS) {
-              const [cos, sin] = [Math.cos((way * Math.PI) / 180), Math.sin((way * Math.PI) / 180)];
-              const mark: [number, number] = [cx + radius * cos, cy + radius * sin];
-              const end: [number, number] = [cx + (radius + lead) * cos, cy + (radius + lead) * sin];
-              // the line's left edge at the leader's end, the end at its middle (or a third up or down) — lower down the
-              // line as the way rises
-              const top = Math.min(Math.max(end[1] - height * meet + (sin * height) / 2, end[1] - height + 8), end[1] - 8);
-              const left = end[0] + 6;
-              candidates.push({ box: { left, right: left + width, top, bottom: top + height }, mark, end, lines, covered: 0 });
-            }
-          }
-        }
-      }
+      const candidates = candidatesOf([(r.left + r.right) / 2, (r.top + r.bottom) / 2, (r.right - r.left) / 2], sizes);
       const fits = ({ box }: Place) => box.left >= seam + AIR && box.right <= frame.width - AIR && box.top >= AIR && box.bottom <= frame.height - AIR;
-      const cover = (place: Place, others: Box[]) => others.reduce((sum, other) => sum + overlap(place.box, { left: other.left - AIR, right: other.right + AIR, top: other.top - AIR, bottom: other.bottom + AIR }), 0);
-      const inFrame = candidates.filter(fits);
-      let chosen = inFrame.find((place) => cover(place, [...fixed, ...seamName]) === 0);
-      let yieldName = false;
-      let overRing = false;
-      if (!chosen) {
-        chosen = inFrame.find((place) => cover(place, fixed) === 0);
-        yieldName = Boolean(chosen);
-      }
-      if (!chosen) {
-        chosen = inFrame.find((place) => cover(place, [...words, ...seamName]) === 0) ?? inFrame.find((place) => cover(place, words) === 0);
-        overRing = Boolean(chosen);
-        yieldName = Boolean(chosen) && cover(chosen!, seamName) > 0;
-      }
-      let crowded = false;
-      if (!chosen) {
-        crowded = true;
-        for (const place of inFrame.length ? inFrame : candidates) place.covered = cover(place, fixed);
-        chosen = (inFrame.length ? inFrame : candidates).reduce((best, place) => (place.covered < best.covered ? place : best));
-      }
+      const { chosen, yieldName, overRing, crowded } = choose(candidates, candidates.filter(fits), clear);
       hint.dataset.lines = String(chosen.lines);
       hint.toggleAttribute('data-crowded', crowded);
       hint.toggleAttribute('data-over-ring', overRing);
@@ -136,7 +141,7 @@ export function useNodeHint(stageRef: RefObject<HTMLDivElement | null>, hintRef:
       live = false;
       observer.disconnect();
       cancelAnimationFrame(frame);
-      stage.removeAttribute('data-hint-yield');
+      delete stage.dataset.hintYield;
     };
   }, [stageRef, hintRef, on, id, split]);
 }
