@@ -42,6 +42,10 @@ test.describe.configure({ timeout: 60_000 });
 // The tour shows the block in about twenty seconds and hands it back at the visitor's first press or key.
 
 const DEFAULT_SPLIT = 62;
+// The camera on a node (owner, 07.11 — useNodeCamera): the seam waits at one place while a node is open (none on a phone's
+// or a narrow tablet's sheet: the whole frame the scheme), and the scheme's canvas right of it is scaled about the node's
+// ring this much (home-v2.css, --hv2-cam-split / --hv2-cam-scale)
+const cameraOf = (page: Page) => (page.viewportSize()!.width <= 900 ? { split: 0, scale: 2 } : { split: 34, scale: 2.4 });
 // The first view's one move (useFirstSweep): SWEEP_AT after the sheet arrives — the page still scrolling or not — the seam
 // passes once from the right edge to its rest over SWEEP_MS, on a phone too. Phase 5 (R-UX-06 §07): one way, no turn (it
 // used to sweep out to 38 % and back over 1.8 s), and nothing else in the arrival — no rings from the handle or the
@@ -220,8 +224,14 @@ async function open(page: Page, path = '/') {
   // hint (DEC-42 (a)) — stands down, so no test meets it midway (the arrival's tests, which do, go through arrivalOf /
   // settleArrival)
   await sheet.dispatchEvent('keydown', { key: 'Shift' });
+  await sheet.dispatchEvent('keyup', { key: 'Shift' });
+  // (a phone's hint strip under the frame keeps its room until that key is over, then closes up: the frame as it rests)
+  await expect(sheet.locator('.hv2-contour-node-strip')).not.toHaveAttribute('data-reserve', /.*/);
   return { sheet, stage, slider, layers: sheet.getByRole('group', { name: 'Що показати праворуч' }) };
 }
+
+/** The sheet a stage stands in */
+const sheetOf = (stage: Locator) => stage.locator('xpath=ancestor::figure[1]');
 
 /** The stage in the middle of the window, at once (the page scrolls smoothly otherwise) */
 const centre = (stage: Locator) => stage.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
@@ -582,6 +592,25 @@ async function clashes(stage: Locator, atRest = false) {
     }
     return found;
   }, atRest);
+}
+
+/** Node Г's hint against what it must leave clear on the scheme's side: every word that can show there (the hover's names,
+ *  faded out, too), the stamp, the seam's names, the other letters — and, `rings`, the other nodes' rings — what it covers,
+ *  named (useNodeHint) */
+function hintClashes(stage: Locator, rings = true) {
+  return stage.evaluate((element, withRings) => {
+    const line = element.querySelector('.hv2-contour-node-hint-button')!.getBoundingClientRect();
+    const seen = (node: Element) => node.checkVisibility({ visibilityProperty: true });
+    const found: string[] = [];
+    const others = element.querySelectorAll(`.hv2-proof-labels > span, .hv2-contour-stamp, .hv2-contour-seamtags > span, .hv2-proof-detail-pin${withRings ? ', .hv2-proof-detail-rings circle:not([data-detail="ridge"])' : ''}`);
+    for (const other of others) {
+      if (!seen(other)) continue;
+      const box = other.getBoundingClientRect();
+      const [x, y] = [Math.min(line.right, box.right) - Math.max(line.left, box.left), Math.min(line.bottom, box.bottom) - Math.max(line.top, box.top)];
+      if (x > 0.5 && y > 0.5) found.push(`${(other.textContent ?? '').trim() || other.getAttribute('data-detail') || other.className} (${x.toFixed(0)} × ${y.toFixed(0)} px)`);
+    }
+    return found;
+  }, rings);
 }
 
 async function expectSplit(slider: Locator, stage: Locator, value: number) {
@@ -1737,7 +1766,9 @@ test('the live scheme names the node near the pointer also when the pointer move
   const ridge = await photoPoint(stage, [1028, 158]);
   await page.mouse.move(ridge.x, ridge.y, { steps: 2 });
   await expect(tip.locator('small')).toHaveText('Вузол Г — натисніть літеру');
-  const purlin = await photoPoint(stage, [1200, 216.3]);
+  // (on the top chord just before Б's ring: since 07.11 the letter sits on the ring, its 44 px target over the ring's
+  // lower right, so a point by the ring's centre is the letter's)
+  const purlin = await photoPoint(stage, [1185, 211.3]);
   await page.mouse.move(purlin.x, purlin.y, { steps: 8 });
   await expect(tip.locator('b')).toHaveText('Верхній пояс ферми');
   await expect(tip.locator('small')).toHaveText('Вузол Б — натисніть літеру');
@@ -2203,21 +2234,23 @@ test('arriving with motion, the photo plots in whole, then the seam passes once 
 // DEC-42 (a), the owner's choice of 13.10 (Phase 5; R-UX-06 §07, §18): until 13.10 a laptop or a tablet opened node Г by
 // itself two seconds after the arrival (owner, 09.10) — over 35–60 % of the photo's half — and a phone's letter В called
 // once. Now Г is lit and one line says what a press does; the panel opens only when the visitor presses, as before
-test('DEC-42 (a): after the arrival node Г is lit and one line says what a press does — nothing opens over the photo; pressed, it opens as before; a visitor who acted first gets no hint', async ({ page }) => {
+test('DEC-42 (a): after the arrival node Г is lit and one line says what a press does — beside its ring on the scheme, a button that opens it (a strip under the frame on a phone); nothing opens by itself; a visitor who acted first gets no hint', async ({ page }) => {
   test.setTimeout(60_000);
   const phone = phoneOf(page);
   const { sheet, stage } = await arrive(page);
   await centre(stage);
-  const hint = stage.locator('.hv2-contour-node-hint');
   const pin = stage.locator('.hv2-proof-detail-pin[data-detail="ridge"]');
   const pill = sheet.locator('figcaption .hv2-contour-nodes[data-place="block"]').getByRole('button', { name: nodeLabel(NODES[3]), exact: true });
   await expect(stage).toHaveAttribute('data-node-hint', 'ridge', { timeout: 12_000 });
   const since = await page.evaluate(() => performance.now());
-  // One line, in the visitor's own way to press, for the eye: the letters and the pills name their nodes to a screen reader
+  // One line, in the visitor's own way to press (owner, 07.11: on a laptop «Натисніть Г» read as a key that did nothing):
+  // now a button, named by its words, the same press as Г's pill
+  const words = `${phone ? 'Торкніться' : 'Натисніть'} Г — покажемо вузол зблизька`;
+  const hint = sheet.getByRole('button', { name: words, exact: true });
   await expect(hint).toBeVisible();
-  await expect(hint).toHaveAttribute('aria-hidden', 'true');
+  await expect(hint).toHaveCount(1);
+  await expect(hint).toHaveAccessibleName(words);
   await expect(hint.locator('.hv2-contour-node-letter')).toHaveText('Г');
-  await expect(hint.locator('[data-input]:visible')).toHaveText(`${phone ? 'Торкніться' : 'Натисніть'} Г — покажемо вузол зблизька`);
   // Г lit: its letter in the nodes' colour, its ring drawn as a pointed-at node's, its pill outlined in that colour — and
   // still: nothing ripples
   const colour = await tokenColour(page, '--hv2-node');
@@ -2227,29 +2260,49 @@ test('DEC-42 (a): after the arrival node Г is lit and one line says what a pres
   await expect(pill).toHaveAttribute('data-hint', '');
   expect(await pill.evaluate((element) => getComputedStyle(element).borderTopColor)).toBe(colour);
   expect(await sheet.evaluate((element) => element.getAnimations({ subtree: true }).filter((animation) => animation instanceof CSSAnimation && animation.playState === 'running').map((animation) => (animation as CSSAnimation).animationName))).toEqual([]);
-  // Nothing opens — not at the old two seconds, not later — the focus stays where it was, and the photo stays open: the
-  // line keeps to a corner of the photo's half — the sky on a laptop, the gravel at a phone's foot — clear of the seam,
-  // its handle and «‹ Фото», a few per cent of the frame
+  // Nothing opens — not at the old two seconds, not later — and the focus stays where it was
   await pageClockPast(page, since, 3_000);
   await expect(page.locator('.hv2-detail')).toHaveCount(0);
   await expect(stage).not.toHaveAttribute('data-detail', /.*/);
   expect(await sheet.evaluate((element) => element.contains(document.activeElement))).toBe(false);
   const box = (await hint.boundingBox())!;
-  const [frame, photoTag, handle, seam] = await Promise.all([stage, stage.locator('.hv2-contour-seamtags > span').first(), stage.locator('.hv2-contour-handle'), stage.locator('.hv2-contour-seam')].map(async (part) => (await part.boundingBox())!));
-  const apartFrom = (other: typeof box) => box.x + box.width <= other.x || other.x + other.width <= box.x || box.y + box.height <= other.y || other.y + other.height <= box.y;
-  expect(box.x).toBeGreaterThanOrEqual(frame.x);
-  expect(box.y).toBeGreaterThanOrEqual(frame.y);
-  expect(box.y + box.height).toBeLessThanOrEqual(frame.y + frame.height);
-  expect(box.x + box.width).toBeLessThanOrEqual(seam.x - 2);
-  expect(apartFrom(photoTag), '«‹ Фото»').toBe(true);
-  expect(apartFrom(handle), 'the handle').toBe(true);
-  if (phone) expect(box.y + box.height / 2).toBeGreaterThan(frame.y + frame.height / 2);
-  else expect(box.y + box.height / 2).toBeLessThan(frame.y + frame.height / 2);
-  // (the panel it replaces covered 21–36 % of the frame on a laptop)
-  expect((box.width * box.height) / (frame.width * frame.height)).toBeLessThan(phone ? 0.1 : 0.03);
-  // Pressed — on a laptop its letter on the scheme, on a phone its pill — it opens as it always did; the hint is over for
-  // good, the node closed again included
-  const panel = await openNode(page, NODES[3]);
+  const frame = (await stage.boundingBox())!;
+  if (phone) {
+    // a phone's ring rests on the photo's side: the line is a strip under the frame, over none of it
+    expect(box.y).toBeGreaterThanOrEqual(frame.y + frame.height - 0.5);
+    expect(box.x).toBeGreaterThanOrEqual(frame.x - 0.5);
+    expect(box.x + box.width).toBeLessThanOrEqual(frame.x + frame.width + 0.5);
+    await expect(stage.locator('.hv2-contour-node-hint')).toBeHidden();
+  } else {
+    // beside Г's ring, on the scheme's side, a leader from a small square on the ring to the line — over no word
+    const look = await stage.evaluate((element) => {
+      const frameBox = element.getBoundingClientRect();
+      const ring = element.querySelector('.hv2-proof-detail-rings [data-detail="ridge"]')!.getBoundingClientRect();
+      const mark = element.querySelector('.hv2-contour-node-hint-lead rect')!.getBoundingClientRect();
+      return {
+        seam: frameBox.left + (frameBox.width * parseFloat(getComputedStyle(element.querySelector('.hv2-contour-pane')!).getPropertyValue('--split'))) / 100,
+        ring: { x: ring.left + ring.width / 2, y: ring.top + ring.height / 2, r: ring.width / 2 },
+        mark: { x: mark.left + mark.width / 2, y: mark.top + mark.height / 2, size: mark.width },
+        lead: element.querySelector('.hv2-contour-node-hint-lead path')!.getAttribute('d') ?? '',
+        crowded: element.querySelector('.hv2-contour-node-hint')!.hasAttribute('data-crowded'),
+      };
+    });
+    expect(box.x).toBeGreaterThan(look.seam);
+    expect(box.x + box.width).toBeLessThanOrEqual(frame.x + frame.width);
+    expect(box.y).toBeGreaterThanOrEqual(frame.y);
+    expect(box.y + box.height).toBeLessThanOrEqual(frame.y + frame.height);
+    expect(Math.abs(Math.hypot(look.mark.x - look.ring.x, look.mark.y - look.ring.y) - look.ring.r), 'the square on the ring').toBeLessThan(2);
+    expect(look.mark.size).toBeLessThanOrEqual(6);
+    expect(look.lead).toMatch(/^M[\d.]+ [\d.]+L[\d.]+ [\d.]+H[\d.]+$/);
+    // the line's near edge within a short leader of the ring (it stood ~737 px away, over the photo's corner)
+    expect(Math.hypot(Math.max(box.x - look.ring.x, 0), Math.max(box.y - look.ring.y, look.ring.y - (box.y + box.height), 0)) - look.ring.r).toBeLessThan(80);
+    expect(look.crowded).toBe(false);
+    expect(await hintClashes(stage)).toEqual([]);
+  }
+  // Pressed — the line itself — it opens Г; the hint is over for good, the node closed again included
+  await hint.click();
+  const panel = page.locator('.hv2-detail');
+  await expect(panel).toBeVisible();
   await expect(panel.locator('#hv2-detail-title')).toHaveText(`Вузол Г · ${NODES[3].title}`);
   await expect(stage).not.toHaveAttribute('data-node-hint', /.*/);
   await expect(hint).toBeHidden();
@@ -2257,6 +2310,8 @@ test('DEC-42 (a): after the arrival node Г is lit and one line says what a pres
   await expect(page.locator('.hv2-detail')).toHaveCount(0);
   await expect(hint).toBeHidden();
   await expect(pill).not.toHaveAttribute('data-hint', /.*/);
+  // (a phone's strip closes up once the hint is over: the frame as it was)
+  await expect(sheet.locator('.hv2-contour-node-strip')).not.toHaveAttribute('data-reserve', /.*/);
 
   // Again, but the visitor presses a key on the sheet while the seam still moves: no hint, nothing opens
   const second = await arrive(page);
@@ -2286,14 +2341,77 @@ test('DEC-42 (a), with reduced motion: node Г is lit and its hint stands there 
   await expect(sheet.locator('.hv2-contour-range')).toBeEnabled();
   await centre(stage);
   await expect(stage).toHaveAttribute('data-node-hint', 'ridge');
-  await expect(stage.locator('.hv2-contour-node-hint')).toBeVisible();
+  const hint = sheet.getByRole('button', { name: /^(?:Натисніть|Торкніться) Г — покажемо вузол зблизька$/ });
+  await expect(hint).toBeVisible();
   for (const mark of ['data-sweep', 'data-gliding', 'data-pulse']) await expect(stage).not.toHaveAttribute(mark, /.*/);
   expect(await sheet.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
   // the visitor's own press — here a layer — and it is gone
   await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button', { name: 'Сніг' }).click();
   await sheet.getByRole('group', { name: 'Що показати праворуч' }).getByRole('button', { name: 'Каркас' }).click();
   await expect(stage).not.toHaveAttribute('data-node-hint', /.*/);
-  await expect(stage.locator('.hv2-contour-node-hint')).toBeHidden();
+  await expect(hint).toBeHidden();
+});
+
+test('node Г’s hint stands beside its ring on the scheme at 1440 × 900, 1280 × 720 and 1250 × 613 — over no word and no other letter (where the room is that tight, over the edge of another ring at most) — and its leader starts on the ring', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'laptop windows');
+  test.setTimeout(90_000);
+  // (with reduced motion the hint stands at once, at rest: the arrival's own test covers its timing)
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+  const found: string[] = [];
+  for (const [width, height] of [[1440, 900], [1280, 720], [1250, 613]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/', { waitUntil: 'load' });
+    const sheet = page.locator('#real-object .hv2-contour');
+    const stage = sheet.locator('.hv2-contour-stage');
+    await centre(stage);
+    await expect(stage).toHaveAttribute('data-node-hint', 'ridge');
+    const hint = stage.getByRole('button', { name: 'Натисніть Г — покажемо вузол зблизька', exact: true });
+    await expect(hint).toBeVisible();
+    await nextFrames(page, 2);
+    const at = `${width}×${height}`;
+    found.push(...(await hintClashes(stage, false)).map((clash) => `${at}: over ${clash}`));
+    const state = await stage.evaluate((element) => ({
+      crowded: element.querySelector('.hv2-contour-node-hint')!.hasAttribute('data-crowded'),
+      overRing: element.querySelector('.hv2-contour-node-hint')!.hasAttribute('data-over-ring'),
+      lines: element.querySelector<HTMLElement>('.hv2-contour-node-hint')!.dataset.lines,
+      yielded: element.hasAttribute('data-hint-yield'),
+    }));
+    if (state.crowded) found.push(`${at}: no clear room`);
+    test.info().annotations.push({ type: 'hint', description: `${at}: ${state.lines} line(s)${state.yielded ? ', «Схема ›» gives way' : ''}${state.overRing ? `, over ${(await hintClashes(stage)).join(', ')}` : ''}` });
+    // (the wide laptop has the room clear of every ring)
+    if (width === 1440) expect(state.overRing, at).toBe(false);
+    // its leader from a small square on Г's ring
+    const lead = await stage.evaluate((element) => {
+      const ring = element.querySelector('.hv2-proof-detail-rings [data-detail="ridge"]')!.getBoundingClientRect();
+      const mark = element.querySelector('.hv2-contour-node-hint-lead rect')!.getBoundingClientRect();
+      return Math.hypot(mark.left + mark.width / 2 - (ring.left + ring.width / 2), mark.top + mark.height / 2 - (ring.top + ring.height / 2)) - ring.width / 2;
+    });
+    expect(Math.abs(lead), `${at}: the square on the ring`).toBeLessThan(2);
+    // the frame's words still clear of one another with it there
+    found.push(...(await clashes(stage)).map((clash) => `${at}: ${clash}`));
+  }
+  expect(found).toEqual([]);
+});
+
+test('the nodes’ letters sit on their rings — each centred on its ring’s line, a phone’s pushed out to its outer edge', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { stage } = await open(page);
+  const off = await stage.evaluate((element) => [...element.querySelectorAll<HTMLElement>('.hv2-proof-detail-pin')].map((pin) => {
+    const ring = element.querySelector(`.hv2-proof-detail-rings [data-detail="${pin.dataset.detail}"]`)!.getBoundingClientRect();
+    const box = pin.getBoundingClientRect();
+    return {
+      letter: pin.textContent,
+      // how far the letter's centre stands from the ring's line, and its own radius
+      off: Math.hypot(box.left + box.width / 2 - (ring.left + ring.width / 2), box.top + box.height / 2 - (ring.top + ring.height / 2)) - ring.width / 2,
+      own: box.width / 2,
+    };
+  }));
+  for (const { letter, off: distance, own } of off) {
+    // (07.11: they stood 30–50 px off their rings) — on the line, or a phone's out to its edge, the letter still touching it
+    expect(distance, `${letter}`).toBeGreaterThanOrEqual(-1);
+    expect(distance, `${letter}`).toBeLessThan(phoneOf(page) ? own : 1.5);
+  }
 });
 
 test('arriving the usual way — the wheel, or a finger swiping over the sheet — the seam still sweeps once, when the page is quiet', async ({ page }, testInfo) => {
@@ -2571,7 +2689,10 @@ test('«Вузли крупно»: five letters, each with its word, in the titl
   // nodes' colour under the cursor (a touch screen: in the tour, or open)
   await page.mouse.move(2, 2);
   for (const [index, node] of NODES.entries()) {
-    await expect(pins.nth(index)).toHaveAccessibleName(nodeLabel(node));
+    // (each letter on its ring since 07.11: a phone's resting seam stands right of В's and Г's rings, which are under the
+    // photo there, and their letters with them — hidden whole, as a word the seam cuts; the pills name them)
+    await expect(pins.nth(index)).toHaveAttribute('aria-label', nodeLabel(node));
+    if (await pins.nth(index).isVisible()) await expect(pins.nth(index)).toHaveAccessibleName(nodeLabel(node));
     await expect(pins.nth(index)).toHaveAttribute('data-detail', node.id);
     await expect.poll(() => pins.nth(index).evaluate((element) => getComputedStyle(element).backgroundColor), node.letter).not.toBe(colour);
   }
@@ -2622,8 +2743,11 @@ test('a node’s ring on the scheme, clicked or tapped, opens its node — the s
       await expect(panel, `${motion} ${node.letter}`).toBeVisible();
       await expect(panel).toHaveAccessibleName(`Вузол ${node.letter} · ${node.title}`);
       await expect(stage).toHaveAttribute('data-detail', node.id);
-      // the seam where the node puts it — clear of its ring — never at the press (the bug: it went right there)
-      expect(Math.abs(Number(await slider.inputValue()) - clickedAt), `${motion} ${node.letter}: the seam at the press`).toBeGreaterThan(2);
+      // the seam where the camera puts it — never at the press (the bug: it went right there) — and the range still says
+      // the visitor's own split, which the node gives back
+      await expect.poll(() => seamAt(stage), { message: `${motion} ${node.letter}: the seam at the camera's place` }).toBeCloseTo(cameraOf(page).split, 0);
+      expect(Math.abs(cameraOf(page).split - clickedAt), `${motion} ${node.letter}: the seam at the press`).toBeGreaterThan(2);
+      await expect(slider).toHaveValue(String(DEFAULT_SPLIT));
       await page.keyboard.press('Escape');
       await expect(panel).toHaveCount(0);
       await expectSplit(slider, stage, DEFAULT_SPLIT);
@@ -2631,72 +2755,232 @@ test('a node’s ring on the scheme, clicked or tapped, opens its node — the s
   }
 });
 
-test('a node opened puts the seam clear of its ring — before it, or past it with «На фото» — its handle off the ring, and the seam back on closing', async ({ page }) => {
+test('the camera comes to a node: the seam at one place, the scheme’s canvas scaled about the node’s ring until the ring lands right of the seam, the card beside it on the scheme’s side — never over the photo, no leader across it — and Esc gives back the stage exactly as it was', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { stage, slider } = await open(page);
+  const camera = cameraOf(page);
+  const sheetMode = page.viewportSize()!.width <= 900;
+  // The stage at rest, every attribute and the inline styles of what the camera touches: given back byte for byte
+  const rest = () => stage.evaluate((element) => {
+    const canvas = element.querySelector<HTMLElement>('.hv2-contour-pane .hv2-contour-canvas')!;
+    // (what the pointer is over is the pointer's, not the camera's)
+    const pointer = new Set(['data-over-ring', 'data-hit-node', 'data-peek-node', 'data-pointer-focus']);
+    return {
+      attributes: [...element.attributes].filter((attribute) => !pointer.has(attribute.name)).map((attribute) => `${attribute.name}=${attribute.value}`).sort(),
+      canvas: canvas.getAttribute('style'),
+      transform: getComputedStyle(canvas).transform,
+      carriers: [...element.querySelectorAll<HTMLElement>('.hv2-contour-pane, .hv2-contour-pane-inner, .hv2-contour-rail, .hv2-contour-handle')].map((carrier) => `${carrier.getAttribute('style')} ${getComputedStyle(carrier).getPropertyValue('--split')}`),
+      veils: [...element.querySelectorAll('.hv2-camera-dim, .hv2-camera-veil')].map((veil) => `${veil.getAttribute('style')} ${getComputedStyle(veil).opacity}`),
+      pins: getComputedStyle(element.querySelector('.hv2-proof-detail-pins')!).visibility,
+      labels: getComputedStyle(element.querySelector('.hv2-proof-labels')!).opacity,
+    };
+  });
+  const before = await rest();
+  const misses: string[] = [];
+  for (const node of NODES) {
+    const panel = await openNode(page, node);
+    await nextFrames(page, 2);
+    const look = await stage.evaluate((element, id) => {
+      const frame = element.getBoundingClientRect();
+      const canvas = element.querySelector<HTMLElement>('.hv2-contour-pane .hv2-contour-canvas')!;
+      const ring = element.querySelector(`.hv2-proof-detail-rings [data-detail="${id}"]`)!.getBoundingClientRect();
+      const card = document.querySelector('.hv2-detail')!.getBoundingClientRect();
+      const matrix = new DOMMatrixReadOnly(getComputedStyle(canvas).transform);
+      const [ox, oy] = getComputedStyle(canvas).transformOrigin.split(' ').map(Number.parseFloat);
+      return {
+        frame: { left: frame.left, right: frame.right, top: frame.top, bottom: frame.bottom, width: frame.width },
+        seam: (() => {
+          const seam = element.querySelector('.hv2-contour-seam')!.getBoundingClientRect();
+          return seam.left + seam.width / 2;
+        })(),
+        camera: element.dataset.camera,
+        scale: matrix.a,
+        origin: { x: ox / canvas.offsetWidth, y: oy / canvas.offsetHeight },
+        ring: { left: ring.left, right: ring.right, top: ring.top, bottom: ring.bottom },
+        card: { left: card.left, right: card.right, top: card.top, bottom: card.bottom },
+        leader: element.querySelector('.hv2-detail-leader path')?.getAttribute('d') ?? null,
+        onPhoto: element.querySelectorAll('svg.hv2-detail-onphoto').length,
+        stamp: element.querySelector('.hv2-contour-stamp')!.getBoundingClientRect(),
+        stampWords: (element.querySelector('.hv2-contour-stamp small') as HTMLElement).innerText,
+        dim: getComputedStyle(element.querySelector('.hv2-camera-dim')!).opacity,
+      };
+    }, node.id);
+    const at = node.letter;
+    expect(look.camera, at).toBe('in');
+    // scaled about the ring: the transform's origin is the node's ring (homeProofDetailSpots), in the canvas's own share
+    const spot = homeProofDetailSpots.find((entry) => entry.id === node.id)!;
+    expect(look.scale, at).toBeCloseTo(camera.scale, 2);
+    expect(look.origin.x, at).toBeCloseTo(spot.ring[0] / homeProofContour.photo.width, 3);
+    expect(look.origin.y, at).toBeCloseTo(spot.ring[1] / homeProofContour.photo.height, 3);
+    // the seam at the camera's one place, whatever the node — the range keeps the visitor's split
+    expect(((look.seam - look.frame.left) / look.frame.width) * 100, at).toBeCloseTo(camera.split, 0);
+    await expect(slider).toHaveValue(String(DEFAULT_SPLIT));
+    // the ring whole right of the seam, inside the frame, as large as the scale makes it
+    if (look.ring.left < look.seam || look.ring.right > look.frame.right || look.ring.top < look.frame.top || look.ring.bottom > look.frame.bottom) misses.push(`${at}: the ring not whole on the scheme's side`);
+    expect(look.ring.right - look.ring.left, at).toBeCloseTo(2 * spot.radius * (look.frame.width / homeProofContour.photo.width) * (phoneOf(page) ? PHONE_ZOOM : 1) * camera.scale, -1);
+    expect(look.onPhoto, `${at}: no ring on the photo (that is «На фото»)`).toBe(0);
+    expect(Number(look.dim), `${at}: the photo dims`).toBeGreaterThan(0.9);
+    // the stamp still says what the right side is
+    expect(look.stampWords.replace(/\s+/g, ' ').trim().toLowerCase(), at).toBe(phoneOf(page) ? 'схема' : 'схема · без розмірів');
+    if (!sheetMode) {
+      // the card beside the ring on the scheme's side, inside the frame, under the stamp — not over the photo
+      if (look.card.left < look.seam + 1) misses.push(`${at}: the card over the photo by ${(look.seam - look.card.left).toFixed(0)} px`);
+      if (look.card.left < look.ring.right) misses.push(`${at}: the card over its ring`);
+      if (look.card.right > look.frame.right + 0.5 || look.card.bottom > look.frame.bottom + 0.5 || look.card.top < look.frame.top) misses.push(`${at}: the card off the frame`);
+      const overStamp = Math.min(look.card.right, look.stamp.right) - Math.max(look.card.left, look.stamp.left) > 0 && Math.min(look.card.bottom, look.stamp.bottom) - Math.max(look.card.top, look.stamp.top) > 0;
+      if (overStamp) misses.push(`${at}: the card over the stamp`);
+      // its leader from the ring's edge to the card, right of the seam all the way
+      const xs = (look.leader ?? '').match(/[\d.]+/g)?.map(Number).filter((_, index) => index % 2 === 0) ?? [];
+      if (!xs.length || Math.min(...xs) + look.frame.left < look.seam) misses.push(`${at}: the leader crosses onto the photo (${look.leader})`);
+      // the card is the size it was planned at: about 540 × 360 on a laptop, never narrower than 360
+      expect(look.card.right - look.card.left, at).toBeGreaterThanOrEqual(359);
+      expect(look.card.right - look.card.left, at).toBeLessThanOrEqual(541);
+    }
+    await expect(panel.locator('.hv2-detail-note')).toHaveText('Вузол такого типу · схема без розмірів');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.hv2-detail')).toHaveCount(0);
+    await expect(stage).not.toHaveAttribute('data-camera', /.*/);
+    await expectSplit(slider, stage, DEFAULT_SPLIT);
+    expect(await rest(), `${at}: the stage back as it was`).toEqual(before);
+  }
+  expect(misses).toEqual([]);
+});
+
+test('«На фото» puts the camera back and the seam past the ring, the ring whole on the photo and ringed there; again, the camera comes back to the node; closed, the seam is where it was', async ({ page }) => {
   test.setTimeout(90_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { stage, slider } = await open(page);
   const misses: string[] = [];
   const edges: string[] = [];
   for (const node of NODES) {
-    for (const onPhoto of [false, true]) {
-      const at = `${node.letter}${onPhoto ? ' «На фото»' : ''}`;
-      await expectSplit(slider, stage, DEFAULT_SPLIT);
-      const panel = await openNode(page, node);
-      // «На фото» is kept from node to node: set it as this case wants
-      const toggle = panel.getByRole('button', { name: 'На фото' });
-      if ((await toggle.getAttribute('aria-pressed')) !== String(onPhoto)) await toggle.click();
-      await expect(toggle, at).toHaveAttribute('aria-pressed', String(onPhoto));
-      await expect(stage, at).toHaveAttribute('data-detail', node.id);
-      // the open node's ring on the photo too, where the seam has stepped past it
-      await expect(stage.locator('svg.hv2-detail-onphoto'), at).toHaveCount(1);
-      // (the seam there: the site's reduced motion still glides it for a hundredth of a millisecond, a frame on the page)
-      await nextFrames(page, 2);
-      const look = await stage.evaluate((element, id) => {
-        const frame = element.getBoundingClientRect();
-        const ring = element.querySelector(`.hv2-proof-detail-rings [data-detail="${id}"]`)!.getBoundingClientRect();
-        const seam = element.querySelector('.hv2-contour-seam')!.getBoundingClientRect();
-        const handle = element.querySelector('.hv2-contour-handle')!;
-        const box = handle.getBoundingClientRect();
-        const disc = getComputedStyle(handle, '::before');
-        return {
-          frame: { left: frame.left, right: frame.right },
-          ring: { left: ring.left, right: ring.right, top: ring.top, bottom: ring.bottom },
-          seam: seam.left + seam.width / 2,
-          // the disc as drawn: the handle's box less the pseudo-element's insets
-          disc: { left: box.left + parseFloat(disc.left), right: box.right - parseFloat(disc.right), top: box.top + parseFloat(disc.top), bottom: box.bottom - parseFloat(disc.bottom) },
-          half: box.width / 2,
-          split: parseFloat(getComputedStyle(element.querySelector('.hv2-contour-pane')!).getPropertyValue('--split')),
-        };
-      }, node.id);
-      // The seam clear of the ring by the handle's half width at least (owner, 05.10: on «А» the seam stood across it, the
-      // handle over it) — before it, the ring whole on the scheme; past it, the ring whole on the photo…
-      const clear = onPhoto ? look.seam - look.ring.right : look.ring.left - look.seam;
-      const atEdge = onPhoto ? look.split >= 99.95 : look.split <= 0.05;
-      if (atEdge) {
-        // …except where the frame's own edge stops it (a phone's close-up puts А's ring a few pixels from the frame's right
-        // edge): there it stands at that edge, the ring whole on its side
-        edges.push(`${at}: the seam at the frame's edge, ${clear.toFixed(1)} px past the ring`);
-        if (clear < 0) misses.push(`${at}: the seam at the frame's edge across the ring`);
-      } else if (clear < look.half) {
-        misses.push(`${at}: the seam ${clear.toFixed(1)} px from the ring (the handle's half width ${look.half} px)`);
-      }
-      // …and the handle's disc on no part of the ring
-      const [overX, overY] = [
-        Math.min(look.disc.right, look.ring.right) - Math.max(look.disc.left, look.ring.left),
-        Math.min(look.disc.bottom, look.ring.bottom) - Math.max(look.disc.top, look.ring.top),
-      ];
-      if (overX > 0 && overY > 0) misses.push(`${at}: the handle's disc over the ring by ${overX.toFixed(1)} × ${overY.toFixed(1)} px`);
-      // Closed: the seam back where it was, and «На фото» off again for the next case
-      if (onPhoto) await toggle.click();
-      await page.keyboard.press('Escape');
-      await expect(page.locator('.hv2-detail')).toHaveCount(0);
-      await expectSplit(slider, stage, DEFAULT_SPLIT);
-      await expect(stage.locator('svg.hv2-detail-onphoto')).toHaveCount(0);
+    const at = node.letter;
+    const panel = await openNode(page, node);
+    const toggle = panel.getByRole('button', { name: 'На фото' });
+    await expect(toggle, at).toHaveAttribute('aria-pressed', 'false');
+    await toggle.click();
+    await expect(toggle, at).toHaveAttribute('aria-pressed', 'true');
+    await expect(stage, at).not.toHaveAttribute('data-camera', /.*/);
+    // the open node's ring on the photo too, where the seam has stepped past it
+    await expect(stage.locator('svg.hv2-detail-onphoto'), at).toHaveCount(1);
+    await nextFrames(page, 2);
+    const look = await stage.evaluate((element, id) => {
+      const ring = element.querySelector(`.hv2-proof-detail-rings [data-detail="${id}"]`)!.getBoundingClientRect();
+      const seam = element.querySelector('.hv2-contour-seam')!.getBoundingClientRect();
+      const handle = element.querySelector('.hv2-contour-handle')!;
+      const box = handle.getBoundingClientRect();
+      const disc = getComputedStyle(handle, '::before');
+      return {
+        ring: { left: ring.left, right: ring.right, top: ring.top, bottom: ring.bottom },
+        seam: seam.left + seam.width / 2,
+        disc: { left: box.left + parseFloat(disc.left), right: box.right - parseFloat(disc.right), top: box.top + parseFloat(disc.top), bottom: box.bottom - parseFloat(disc.bottom) },
+        half: box.width / 2,
+        split: parseFloat(getComputedStyle(element.querySelector('.hv2-contour-pane')!).getPropertyValue('--split')),
+        scale: new DOMMatrixReadOnly(getComputedStyle(element.querySelector('.hv2-contour-pane .hv2-contour-canvas')!).transform).a,
+      };
+    }, node.id);
+    expect(look.scale, `${at}: the scheme at its own scale`).toBe(1);
+    // the seam past the ring by the handle's half width at least, the ring whole on the photo — but where the frame's own
+    // edge stops it (a phone's close-up puts А's ring a few pixels from the frame's right edge)
+    const clear = look.seam - look.ring.right;
+    if (look.split >= 99.95) {
+      edges.push(`${at}: the seam at the frame's edge, ${clear.toFixed(1)} px past the ring`);
+      if (clear < 0) misses.push(`${at}: the seam at the frame's edge across the ring`);
+    } else if (clear < look.half) {
+      misses.push(`${at}: the seam ${clear.toFixed(1)} px past the ring (the handle's half width ${look.half} px)`);
     }
+    const [overX, overY] = [
+      Math.min(look.disc.right, look.ring.right) - Math.max(look.disc.left, look.ring.left),
+      Math.min(look.disc.bottom, look.ring.bottom) - Math.max(look.disc.top, look.ring.top),
+    ];
+    if (overX > 0 && overY > 0) misses.push(`${at}: the handle's disc over the ring by ${overX.toFixed(1)} × ${overY.toFixed(1)} px`);
+    // again: the camera back on the node, the seam at its place, the ring off the photo
+    await toggle.click();
+    await expect(toggle, at).toHaveAttribute('aria-pressed', 'false');
+    await expect(stage, at).toHaveAttribute('data-camera', 'in');
+    await expect(stage.locator('svg.hv2-detail-onphoto'), at).toHaveCount(0);
+    await expect.poll(() => seamAt(stage), { message: at }).toBeCloseTo(cameraOf(page).split, 0);
+    // «На фото» once more, and closed from there: the seam back where it was, the next open the camera's again
+    await toggle.click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.hv2-detail')).toHaveCount(0);
+    await expectSplit(slider, stage, DEFAULT_SPLIT);
+    await expect(stage.locator('svg.hv2-detail-onphoto')).toHaveCount(0);
   }
   expect(misses).toEqual([]);
-  // (where the frame's edge stopped the seam, said in the report)
   if (edges.length) test.info().annotations.push({ type: 'seam at the frame’s edge', description: edges.join('; ') });
+});
+
+test('‹ › fly the camera from node to node — pulled back on the way, the seam still — and land it scaled about the next ring', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { stage } = await open(page);
+  const camera = cameraOf(page);
+  const panel = await openNode(page, NODES[0]);
+  // the camera settled on А (its transition, then the card's own wipe)
+  await expect.poll(() => stage.evaluate((element) => element.querySelector('.hv2-contour-pane .hv2-contour-canvas')!.getAnimations().length)).toBe(0);
+  // Every frame of the flight: the canvas's scale and the seam's place, read in the page
+  await stage.evaluate((element) => {
+    const canvas = element.querySelector<HTMLElement>('.hv2-contour-pane .hv2-contour-canvas')!;
+    const seam = element.querySelector<HTMLElement>('.hv2-contour-seam')!;
+    const frames: { scale: number; seam: number; camera: string | undefined }[] = [];
+    Object.assign(window, { flight: frames });
+    const start = performance.now();
+    const tick = () => {
+      const box = element.getBoundingClientRect();
+      const at = seam.getBoundingClientRect();
+      frames.push({ scale: new DOMMatrixReadOnly(getComputedStyle(canvas).transform).a, seam: ((at.left + at.width / 2 - box.left) / box.width) * 100, camera: element.dataset.camera });
+      if (performance.now() - start < 1_400) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await panel.getByRole('button', { name: 'Наступний вузол' }).click();
+  await expect(stage).toHaveAttribute('data-detail', NODES[1].id);
+  await page.waitForFunction(() => (window as unknown as { flight: unknown[] }).flight.length > 0 && !document.querySelector('.hv2-contour-pane .hv2-contour-canvas')!.getAnimations().length, undefined, { timeout: 10_000 });
+  await nextFrames(page, 2);
+  const frames = await page.evaluate(() => (window as unknown as { flight: { scale: number; seam: number; camera: string | undefined }[] }).flight);
+  // the seam never moves while it flies
+  for (const frame of frames) expect(frame.seam).toBeCloseTo(camera.split, 0);
+  // it flew: the camera's own move, pulled back below the node's scale on the way (to ~0.7 of it), in again at the end
+  expect(frames.some((frame) => frame.camera === 'fly')).toBe(true);
+  const least = Math.min(...frames.map((frame) => frame.scale));
+  expect(least).toBeLessThan(camera.scale * 0.85);
+  expect(least).toBeGreaterThan(1.1);
+  expect(frames.at(-1)!.scale).toBeCloseTo(camera.scale, 2);
+  // landed about Б's ring
+  const origin = await stage.evaluate((element) => {
+    const canvas = element.querySelector<HTMLElement>('.hv2-contour-pane .hv2-contour-canvas')!;
+    const [x, y] = getComputedStyle(canvas).transformOrigin.split(' ').map(Number.parseFloat);
+    return { x: x / canvas.offsetWidth, y: y / canvas.offsetHeight, camera: element.dataset.camera };
+  });
+  const spot = homeProofDetailSpots.find((entry) => entry.id === NODES[1].id)!;
+  expect(origin.camera).toBe('in');
+  expect(origin.x).toBeCloseTo(spot.ring[0] / homeProofContour.photo.width, 3);
+  expect(origin.y).toBeCloseTo(spot.ring[1] / homeProofContour.photo.height, 3);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.hv2-detail')).toHaveCount(0);
+  await expect(stage).not.toHaveAttribute('data-camera', /.*/, { timeout: 5_000 });
+});
+
+test('with reduced motion the camera does not move: the node opens straight to its final look — no transition, no flight — and closes straight back', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { stage } = await open(page);
+  const camera = cameraOf(page);
+  const panel = await openNode(page, NODES[3]);
+  // nothing in the frame moves in time: whatever runs is the site's reduced-motion step (.01 ms)
+  const moving = () => stage.evaluate((element) => element.getAnimations({ subtree: true })
+    .filter((animation) => Number(animation.effect?.getComputedTiming().endTime) > 1 && animation.playState === 'running')
+    .map((animation) => (animation as CSSTransition).transitionProperty ?? (animation as CSSAnimation).animationName ?? 'script'));
+  expect(await moving()).toEqual([]);
+  const scaleOf = () => stage.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element.querySelector('.hv2-contour-pane .hv2-contour-canvas')!).transform).a);
+  await expect.poll(scaleOf).toBeCloseTo(camera.scale, 2);
+  await panel.getByRole('button', { name: 'Наступний вузол' }).click();
+  await expect(stage).toHaveAttribute('data-detail', NODES[4].id);
+  expect(await moving()).toEqual([]);
+  expect(await stage.evaluate((element) => element.dataset.camera)).toBe('in');
+  await page.keyboard.press('Escape');
+  await expect(stage).not.toHaveAttribute('data-camera', /.*/);
+  await expect.poll(scaleOf).toBe(1);
 });
 
 test('«Розібрати» names every part of every node — its step and its word — no name over another, all inside the drawing; «Зібрати» puts the node back', async ({ page }) => {
@@ -2915,18 +3199,21 @@ test('‹ › go round the five nodes — a finger swipes them too — and Esc c
     await touchDrag(page, { x: middle.x, y: middle.y + 40 }, { x: middle.x + 30, y: middle.y - 60 });
     await expect(title).toHaveText(`Вузол Г · ${NODES[3].title}`);
   }
-  // Esc: closed, the focus on the letter of the node it closed, which says so
+  // Esc: closed, the focus on the letter of the node it closed, which says so — on a phone its pill: the letters sit on
+  // their rings since 07.11, and Г's and В's rings rest under the photo there, their letters hidden with them
+  const letterOf = (node: ProofNode) => (phoneOf(page)
+    ? sheetOf(stage).locator('figcaption .hv2-contour-nodes[data-place="block"]').getByRole('button', { name: nodeLabel(node), exact: true })
+    : stage.locator(`.hv2-proof-detail-pin[data-detail="${node.id}"]`));
   await page.keyboard.press('Escape');
   await expect(page.locator('.hv2-detail')).toHaveCount(0);
   await expect(stage).not.toHaveAttribute('data-detail', /.*/);
-  const pin = stage.locator('.hv2-proof-detail-pin[data-detail="ridge"]');
-  await expect(pin).toBeFocused();
-  await expect(pin).toHaveAttribute('aria-expanded', 'false');
+  await expect(letterOf(NODES[3])).toBeFocused();
+  await expect(letterOf(NODES[3])).toHaveAttribute('aria-expanded', 'false');
   // …and the close does the same, for the node the visitor opened by its letter
   await openNode(page, NODES[2]);
   await page.locator('.hv2-detail').getByRole('button', { name: 'Закрити вузол' }).click();
   await expect(page.locator('.hv2-detail')).toHaveCount(0);
-  await expect(stage.locator('.hv2-proof-detail-pin[data-detail="base"]')).toBeFocused();
+  await expect(letterOf(NODES[2])).toBeFocused();
 });
 
 /** Every change of the tour's chip and of what it puts on the stage, recorded in the page: the step («1/6 Каркас
@@ -3015,7 +3302,8 @@ test('«Тур за 20 секунд» plays six steps in order — the frame put
   expect(new Set(during(3).map((entry) => `${entry.layer} ${entry.point}`))).toEqual(new Set(['wind false']));
   // 5: node Г open on «Каркас», its load's way shown once it is put together
   expect(new Set(during(4).map((entry) => `${entry.layer} ${entry.detail}`))).toEqual(new Set(['frame ridge']));
-  expect(during(4)[0].flow, '5: the way waits for the node').toBe(false);
+  // (the card comes a frame after the camera starts: until then there is no way to show, flow null)
+  expect(during(4).find((entry) => entry.flow !== null)!.flow, '5: the way waits for the node').toBe(false);
   expect(during(4).some((entry) => entry.flow), '5: the node’s load way').toBe(true);
   // 6: the node closed, the brief's button rung
   expect(during(5).some((entry) => entry.call), '6: the brief rings').toBe(true);
@@ -3102,9 +3390,9 @@ test('the tour’s chip covers no other word on the frame', async ({ page }) => 
   expect(await page.evaluate(() => [...(window as unknown as { met: Set<string> }).met])).toEqual([]);
 });
 
-// The nodes' letters cover no word on the frame, from tablet to wide screen: on a tablet's frame Г, Б and Д stand inside
-// the truss (homeProofDetailSpots' badgeNarrow); a letter that would still cover a word of the drawing gives way to it
-// (its ring and the bar's letter stay), and «Схема ›» gives way to a letter as to a word
+// The nodes' letters cover no word on the frame, from tablet to wide screen: each on its ring since 07.11 (homeProofDetailSpots'
+// letter), at every width; a letter that would still cover a word of the drawing gives way to it (its ring and the bar's
+// letter stay), and «Схема ›» gives way to a letter as to a word
 test('the nodes’ letters cover no word on the frame — no name, no figure, not the seam’s names or the stamp — from tablet to wide screen', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'desktop windows');
   test.setTimeout(150_000);
