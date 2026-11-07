@@ -89,6 +89,40 @@ export function useSeam(stageRef: RefObject<HTMLDivElement | null>) {
     if (Math.abs(split - liveRef.current) > 0.001 || !paneRef.current?.style.getPropertyValue('--split')) paint(split);
   }, [stageRef, split]);
   useEffect(() => () => window.clearTimeout(commitTimer.current), []);
+  // A finger that drags the handle sideways keeps it (owner's iPhone, 07.11: «через 3 секунди я не можу далі рухатися»).
+  // The handle lets a vertical swipe scroll the page (home-v2.css, touch-action: pan-y), and the browser then takes the
+  // touch over — pointercancel, the drag ends. Chrome settles that on the touch's first move; Safari on iOS kept it open
+  // for the whole touch, so a sideways drag's slow drift up or down handed it to the page after a few seconds. Once the
+  // first move is sideways, the page is held still for the rest of that touch. On the handle only (44 px): a non-passive
+  // listener makes the browser wait for script before it scrolls a touch that starts there, and nowhere else
+  useEffect(() => {
+    const handle = handleRef.current;
+    if (!handle) return;
+    let start: { x: number; y: number } | null = null;
+    let sideways: boolean | null = null;
+    const onStart = (event: TouchEvent) => {
+      const [touch] = event.touches;
+      start = event.touches.length === 1 ? { x: touch.clientX, y: touch.clientY } : null;
+      sideways = null;
+    };
+    const onMove = (event: TouchEvent) => {
+      if (!start || !dragRef.current || event.touches.length !== 1) return;
+      if (sideways === null) {
+        const dx = Math.abs(event.touches[0].clientX - start.x);
+        const dy = Math.abs(event.touches[0].clientY - start.y);
+        // the same few pixels a browser waits for before it picks a direction
+        if (dx > 4 && dx >= dy) sideways = true;
+        else if (dy > 4) sideways = false;
+      }
+      if (sideways && event.cancelable) event.preventDefault();
+    };
+    handle.addEventListener('touchstart', onStart, { passive: true });
+    handle.addEventListener('touchmove', onMove, { passive: false });
+    return () => {
+      handle.removeEventListener('touchstart', onStart);
+      handle.removeEventListener('touchmove', onMove);
+    };
+  }, []);
 
   const splitAt = (clientX: number, offset = 0, touch = false) => {
     const box = stageRef.current?.getBoundingClientRect();
