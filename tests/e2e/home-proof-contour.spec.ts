@@ -220,11 +220,11 @@ async function open(page: Page, path = '/') {
   const slider = sheet.getByRole('slider', { name: SLIDER });
   // The controls come alive with hydration
   await expect(slider).toBeEnabled();
-  // A key on the sheet (Shift: it does nothing) counts as the visitor's own: the arrival's last word — node Г lit with its
-  // hint (DEC-42 (a)) — stands down, so no test meets it midway (the arrival's tests, which do, go through arrivalOf /
-  // settleArrival)
-  await sheet.dispatchEvent('keydown', { key: 'Shift' });
-  await sheet.dispatchEvent('keyup', { key: 'Shift' });
+  // A key on the sheet (Control: it does nothing) counts as the visitor's own: the arrival's last word — node Г lit with
+  // its hint (DEC-42 (a)) — stands down, so no test meets it midway (the arrival's tests, which do, go through arrivalOf /
+  // settleArrival). Not Shift: with Tab it only moves the focus, and is no move of the visitor's own (useFirstSweep)
+  await sheet.dispatchEvent('keydown', { key: 'Control' });
+  await sheet.dispatchEvent('keyup', { key: 'Control' });
   // (a phone's hint strip under the frame keeps its room until that key is over, then closes up: the frame as it rests)
   await expect(sheet.locator('.hv2-contour-node-strip')).not.toHaveAttribute('data-reserve', /.*/);
   return { sheet, stage, slider, layers: sheet.getByRole('group', { name: 'Що показати праворуч' }) };
@@ -2317,7 +2317,7 @@ test('DEC-42 (a): after the arrival node Г is lit and one line says what a pres
   const second = await arrive(page);
   await centre(second.stage);
   await expect(second.stage).toHaveAttribute('data-sweep', 'run', { timeout: 12_000 });
-  await second.sheet.dispatchEvent('keydown', { key: 'Shift' });
+  await second.sheet.dispatchEvent('keydown', { key: 'Control' });
   await expect(second.stage).not.toHaveAttribute('data-sweep', /.*/);
   // Watched in the page: a hint or a node ends the watch at once (and fails); else it ends well past the hint's time
   const shown = await second.stage.evaluate((element, ms) => new Promise<string | null>((resolve) => {
@@ -2981,6 +2981,223 @@ test('with reduced motion the camera does not move: the node opens straight to i
   await page.keyboard.press('Escape');
   await expect(stage).not.toHaveAttribute('data-camera', /.*/);
   await expect.poll(scaleOf).toBe(1);
+});
+
+// The independent review of 07.11 (PR #306): what the camera's close, its card's wipe-in, a touch, the range, a rotation, a
+// layer and the keyboard did to an open node
+/** The camera settled on the node open (its transition done, the card's wipe-in and the leader drawn) */
+const cameraSettled = (stage: Locator) => stage.evaluate((element) => Promise.all(
+  [element.querySelector('.hv2-contour-pane .hv2-contour-canvas')!, document.querySelector('.hv2-detail')]
+    .flatMap((target) => target?.getAnimations({ subtree: true }) ?? [])
+    .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+    .map((animation) => animation.finished.catch(() => undefined)),
+));
+
+test('a node pressed while the one before is still going out opens and stays open, the focus in it — a pill during the card’s fade, › during it, › during a sheet’s shrink', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { stage } = await open(page);
+  const panel = page.locator('.hv2-detail');
+  // (the press lands in the same task as the close, so it is inside the close's 160 ms fade — or a sheet's 300 ms shrink —
+  // whatever the machine's load)
+  const closeThen = (press: 'pill' | 'next', id: string) => page.evaluate(([what, node]) => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const target = what === 'pill'
+      ? document.querySelector<HTMLButtonElement>(`#real-object figcaption .hv2-contour-nodes button[aria-label^="Вузол ${node}:"]`)
+      : document.querySelector<HTMLButtonElement>('.hv2-detail button[aria-label="Наступний вузол"]');
+    target!.click();
+  }, [press, id] as const);
+  const stays = async (node: ProofNode, at: string) => {
+    // past the fade's or the shrink's end, and its 200 ms fallback
+    await page.waitForTimeout(700);
+    await expect(panel, at).toHaveCount(1);
+    await expect(panel.locator('#hv2-detail-title'), at).toHaveText(`Вузол ${node.letter} · ${node.title}`);
+    await expect(stage, at).toHaveAttribute('data-detail', node.id);
+    expect(Number(await panel.evaluate((element) => getComputedStyle(element).opacity)), at).toBe(1);
+    expect(await panel.evaluate((element) => element.contains(document.activeElement)), `${at}: the focus in the node`).toBe(true);
+  };
+  await openNode(page, NODES[0]);
+  await cameraSettled(stage);
+  await closeThen('pill', NODES[1].letter);
+  await stays(NODES[1], 'Б pressed during А’s close');
+  if (!(page.viewportSize()!.width <= 900)) await expect(stage).toHaveAttribute('data-camera', 'in');
+  await cameraSettled(stage);
+  await closeThen('next', '');
+  await stays(NODES[2], '› pressed during Б’s close');
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+});
+
+test('a press on the node’s card while it comes in — before it is in the page, during its wipe-in — never closes the node', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'the card beside the ring is a laptop’s (a phone’s node is a sheet)');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { stage } = await open(page);
+  const panel = await openNode(page, NODES[0]);
+  await cameraSettled(stage);
+  const card = (await panel.boundingBox())!;
+  const next = (await panel.getByRole('button', { name: 'Наступний вузол' }).boundingBox())!;
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.hv2-detail')).toHaveCount(0);
+  await expect(stage).not.toHaveAttribute('data-camera', /.*/, { timeout: 5_000 });
+  // In the press's own task, before the card is in the page: a press where it is going to stand (what the pointer meets
+  // there is the scheme's canvas)
+  const under = await stage.evaluate((element, [x, y]) => {
+    element.querySelector<HTMLButtonElement>('.hv2-proof-detail-pin[data-detail="bearing"]')!.click();
+    const target = document.elementFromPoint(x, y)!;
+    const init = { bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y, pointerType: 'mouse', pointerId: 1, button: 0, buttons: 1, isPrimary: true };
+    target.dispatchEvent(new PointerEvent('pointerdown', init));
+    target.dispatchEvent(new PointerEvent('pointerup', { ...init, buttons: 0 }));
+    return target.closest('.hv2-detail') ? 'the card' : target.getAttribute('class');
+  }, [card.x + card.width * 0.7, card.y + card.height / 2] as const);
+  expect(under, 'the card is not in the page yet').not.toBe('the card');
+  await page.waitForTimeout(900);
+  await expect(stage, 'pressed where the card was coming').toHaveAttribute('data-detail', 'bearing');
+  await expect(stage).toHaveAttribute('data-camera', 'in');
+  // …and a real click on its › during the wipe-in (its clip-path keeps it from the pointer then): nothing, the node open
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.hv2-detail')).toHaveCount(0);
+  await expect(stage).not.toHaveAttribute('data-camera', /.*/, { timeout: 5_000 });
+  await stage.evaluate((element) => {
+    const seen: string[] = [];
+    Object.assign(window, { pressedOn: seen });
+    element.addEventListener('pointerdown', (event) => seen.push((event.target as Element).closest('.hv2-detail') ? 'the card' : 'the frame'), { capture: true });
+    element.querySelector<HTMLButtonElement>('.hv2-proof-detail-pin[data-detail="bearing"]')!.click();
+  });
+  await page.mouse.click(next.x + next.width / 2, next.y + next.height / 2);
+  await page.waitForTimeout(900);
+  await expect(stage, `pressed on the card’s › as it came in (${await page.evaluate(() => (window as unknown as { pressedOn: string[] }).pressedOn.join(', '))})`).toHaveAttribute('data-detail', /^(bearing|purlin)$/);
+  await expect(stage).toHaveAttribute('data-camera', 'in');
+  // a press beside the card, on the photo, still puts the node away
+  const frame = (await stage.boundingBox())!;
+  await page.mouse.click(frame.x + 60, frame.y + frame.height / 2);
+  await expect(page.locator('.hv2-detail')).toHaveCount(0);
+});
+
+test('on a touch laptop a finger that scrolls the page from the frame leaves the node open; a tap there puts it away', async ({ browser, baseURL }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'a touch screen as wide as a laptop (iPad landscape)');
+  const context = await browser.newContext({ baseURL, viewport: { width: 1180, height: 820 }, hasTouch: true, reducedMotion: 'no-preference' });
+  const page = await context.newPage();
+  try {
+    const { stage } = await open(page);
+    await stage.locator('.hv2-proof-detail-pin[data-detail="purlin"]').tap();
+    await expect(page.locator('.hv2-detail')).toBeVisible();
+    await expect(stage).toHaveAttribute('data-camera', 'in');
+    await cameraSettled(stage);
+    const frame = (await stage.boundingBox())!;
+    const before = await page.evaluate(() => scrollY);
+    // a finger down on the photo, then up the page: a scroll (held still before it lifts: no fling, which a tap would
+    // only stop)
+    const from = { x: frame.x + 80, y: frame.y + frame.height * 0.7 };
+    await touchDrag(page, from, { x: from.x, y: from.y - 250 }, 10, 300);
+    await page.waitForTimeout(700);
+    expect(await page.evaluate(() => scrollY), 'the page scrolled').not.toBe(before);
+    await expect.poll(async () => { const at = await page.evaluate(() => scrollY); await nextFrames(page, 3); return at === await page.evaluate(() => scrollY); }, { message: 'the page still' }).toBe(true);
+    await expect(stage, 'a scroll is no press').toHaveAttribute('data-detail', 'purlin');
+    await expect(stage).toHaveAttribute('data-camera', 'in');
+    // a tap on the photo: the node away, as a mouse's press there
+    const again = (await stage.boundingBox())!;
+    await page.touchscreen.tap(again.x + 60, again.y + again.height / 2);
+    await expect(page.locator('.hv2-detail')).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
+test('a key on the range while the camera holds the seam puts the node away first: the seam back at the visitor’s split, the focus kept on the range, the next key moving it from there', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { stage, slider } = await open(page);
+  await openNode(page, NODES[1]);
+  await cameraSettled(stage);
+  await slider.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.hv2-detail')).toHaveCount(0);
+  await expect(slider).toBeFocused();
+  // the key itself is swallowed: the seam the visitor sees comes back to where the range says it is
+  await expectSplit(slider, stage, DEFAULT_SPLIT);
+  await expect(stage).not.toHaveAttribute('data-camera', /.*/, { timeout: 5_000 });
+  await page.keyboard.press('ArrowRight');
+  await expectSplit(slider, stage, DEFAULT_SPLIT + 1);
+  await expect(slider).toBeFocused();
+});
+
+test('turned while a node is open on a phone’s sheet, the camera aims again: the ring in the middle of the new frame', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chromium', 'a phone turned');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { stage } = await open(page);
+  await openNode(page, NODES[1]);
+  await cameraSettled(stage);
+  const ringOff = () => stage.evaluate((element) => {
+    const frame = element.getBoundingClientRect();
+    const ring = element.querySelector('.hv2-proof-detail-rings [data-detail="purlin"]')!.getBoundingClientRect();
+    // useNodeCamera's sheet shot: the ring in the middle across, a little over the middle down
+    return { x: Math.round(ring.left + ring.width / 2 - (frame.left + frame.width / 2)), y: Math.round(ring.top + ring.height / 2 - (frame.top + frame.height * 0.42)) };
+  });
+  expect(Math.abs((await ringOff()).x)).toBeLessThan(4);
+  const { width, height } = page.viewportSize()!;
+  await page.setViewportSize({ width: height, height: width });
+  await expect.poll(async () => { const off = await ringOff(); return Math.max(Math.abs(off.x), Math.abs(off.y)); }, { message: 'the ring where the shot puts it in the turned frame' }).toBeLessThan(4);
+  await expect(stage).toHaveAttribute('data-camera', 'in');
+  await page.setViewportSize({ width, height });
+  await expect.poll(async () => { const off = await ringOff(); return Math.max(Math.abs(off.x), Math.abs(off.y)); }, { message: 'and turned back' }).toBeLessThan(4);
+});
+
+test('a node put away by a layer leaves nothing of it behind: «На фото» off, the seam back where the visitor had it, the next node the camera’s again', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'a phone’s node is a modal sheet: no layer is pressed under it');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { stage, slider, layers } = await open(page);
+  // Б «На фото»: the seam past its ring, short of the edge (82 % on a laptop)
+  const panel = await openNode(page, NODES[1]);
+  await panel.getByRole('button', { name: 'На фото' }).click();
+  await expect(stage.locator('svg.hv2-detail-onphoto')).toHaveCount(1);
+  await layers.getByRole('button', { name: 'Сніг', exact: true }).click();
+  await expect(page.locator('.hv2-detail')).toHaveCount(0);
+  // the seam the node took is given back
+  await expectSplit(slider, stage, DEFAULT_SPLIT);
+  await layers.getByRole('button', { name: 'Каркас', exact: true }).click();
+  const next = await openNode(page, NODES[0]);
+  await expect(next.getByRole('button', { name: 'На фото' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(stage).toHaveAttribute('data-camera', 'in');
+  await expect(stage.locator('svg.hv2-detail-onphoto')).toHaveCount(0);
+  await expect.poll(() => seamAt(stage)).toBeCloseTo(cameraOf(page).split, 0);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.hv2-detail')).toHaveCount(0);
+  await expectSplit(slider, stage, DEFAULT_SPLIT);
+});
+
+test('DEC-42 (a) and the keyboard: Tab and Shift+Tab are no move of the visitor’s own — the hint stays, Tab reaches its button, Enter opens Г', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
+    } catch { /* storage unavailable */ }
+  });
+  await page.goto('/', { waitUntil: 'load' });
+  const stage = page.locator('#real-object .hv2-contour-stage');
+  await centre(stage);
+  await expect(stage).toHaveAttribute('data-node-hint', 'ridge', { timeout: 12_000 });
+  const button = phoneOf(page) ? '.hv2-contour-node-strip-button' : '.hv2-contour-node-hint-button';
+  // the focus on the last thing before the sheet, then Tab on into it
+  await page.evaluate(() => {
+    const sheet = document.querySelector('#real-object .hv2-contour')!;
+    const all = [...document.querySelectorAll<HTMLElement>('a[href], button, input, [tabindex]')].filter((element) => element.tabIndex >= 0 && !sheet.contains(element) && element.checkVisibility({ visibilityProperty: true }));
+    all.filter((element) => element.compareDocumentPosition(sheet) & Node.DOCUMENT_POSITION_FOLLOWING).at(-1)!.focus();
+  });
+  const onHint = () => page.evaluate((selector) => document.activeElement?.matches(selector) ?? false, button);
+  const passed: string[] = [];
+  for (let step = 0; step < 40 && !(await onHint()); step += 1) {
+    await page.keyboard.press('Tab');
+    passed.push(await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.className ?? ''));
+  }
+  expect(await onHint(), `reached by Tab (passed ${passed.join(' → ')})`).toBe(true);
+  await expect(stage).toHaveAttribute('data-node-hint', 'ridge');
+  // back and forth: still there
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  expect(await onHint()).toBe(true);
+  await expect(stage).toHaveAttribute('data-node-hint', 'ridge');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.hv2-detail #hv2-detail-title')).toHaveText(`Вузол Г · ${NODES[3].title}`);
+  await expect(stage).not.toHaveAttribute('data-node-hint', /.*/);
 });
 
 test('«Розібрати» names every part of every node — its step and its word — no name over another, all inside the drawing; «Зібрати» puts the node back', async ({ page }) => {
