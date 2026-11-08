@@ -65,9 +65,11 @@
 .arm-leader { stroke-width: 1; }
 .arm-pulse { stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
 .arm-label { fill: var(--color-text); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .04em; }
+/* A halo in the plate's ground: a ray to a town east of the city passes under «Дніпро» and must not cross its letters */
+.arm-label { paint-order: stroke; stroke: var(--color-surface); stroke-width: 8px; stroke-linejoin: round; }
 
 /* «Де ваш об’єкт?» on the plate: the towns it can name, the ray, its end and the tag (RegionMap sizes the tag) */
-.arm { cursor: crosshair; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.arm { cursor: crosshair; touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
 .arm-town { fill: var(--color-accent-strong); opacity: .45; }
 .arm-ray { stroke: var(--color-accent-strong); stroke-width: 2.5; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0; }
 .arm-target { fill: var(--color-surface); stroke: var(--color-accent-strong); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
@@ -80,6 +82,7 @@
    its room but shows nothing, as none of it would work (RegionReach sets data-ready). */
 .region-reach { display: grid; gap: 8px; max-width: 520px; margin-top: 28px; padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent); }
 .region-reach:not([data-ready]) { visibility: hidden; }
+.region-reach-said { display: grid; gap: 8px; }
 .region-reach-ask { margin: 0; color: var(--color-accent-strong); font: 700 13px/1.35 var(--font-condensed), sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .region-reach-answer { margin: 0; color: var(--color-text); font: 400 clamp(24px, 2.4vw, 32px)/1.15 var(--font-display), var(--font-manrope), sans-serif; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .region-reach-note { min-height: 3em; margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.5; }
@@ -90,7 +93,7 @@
 /* The place carried into «Місто або область»: the field shows it took it, and lands with its caption in view */
 #inquiry-location { scroll-margin-top: 150px; }
 @keyframes region-carried { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 55%, transparent); } to { box-shadow: 0 0 0 14px color-mix(in srgb, var(--color-accent) 0%, transparent); } }
-#inquiry-location[data-prefilled] { animation: region-carried var(--region-for-carried) var(--ease-premium) var(--region-at-carried) 2; }
+#inquiry-location[data-carried] { animation: region-carried var(--region-for-carried) var(--ease-premium) var(--region-at-carried) 2; }
 
 /* Arriving (UX pass 2026-10): what the block says — the region, the city, the words — is there from the first frame.
    Only the decorative line extends and the distance rings step out from the city, then the city pulses twice. */
@@ -117,5 +120,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #inquiry-location[data-prefilled] { animation: none; }
+  #inquiry-location[data-carried] { animation: none; }
 }

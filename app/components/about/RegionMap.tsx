@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { regionMap } from '../../data/regionMap';
 import { placedTowns, reachTag, type Point, type Reach } from '../../lib/regionReach';
 
@@ -78,11 +78,15 @@ export function RegionMap({ label, shown, glide, onHover, onPick }: Props) {
     };
     const move = (event: PointerEvent) => {
       if (event.pointerType !== 'mouse' || !finePointer.matches) return;
+      // A move of no distance is the browser re-sending the pointer after the scroll shield (SmoothScroll) dropped, not
+      // the visitor: it would preview again mid-scroll, and the ray would flicker past
+      if (pointer && pointer.x === event.clientX && pointer.y === event.clientY) return;
       pointer = { x: event.clientX, y: event.clientY };
       if (light) svg.dataset.light = 'on';
       if (!frame) frame = requestAnimationFrame(apply);
     };
     const leave = () => {
+      pointer = null;
       delete svg.dataset.light;
       if (frame) cancelAnimationFrame(frame);
       frame = 0;
@@ -103,8 +107,10 @@ export function RegionMap({ label, shown, glide, onHover, onPick }: Props) {
     };
   }, [onHover, onPick]);
 
-  // The ray, its end and the tag: written straight to the drawing, a frame at a time while it glides
-  useEffect(() => {
+  // The ray, its end and the tag: written straight to the drawing, a frame at a time while it glides. Before paint, so a
+  // new point never shows a frame of the old tag
+  const placeRef = useRef<((point: Point, arrived: boolean) => void) | null>(null);
+  useLayoutEffect(() => {
     const ray = rayRef.current, target = targetRef.current, tag = tagRef.current, svg = ref.current;
     if (!ray || !target || !tag || !svg) return;
     const text = tag.querySelector('text'), box = tag.querySelector('rect');
@@ -127,6 +133,7 @@ export function RegionMap({ label, shown, glide, onHover, onPick }: Props) {
       if (arrived) delete svg.dataset.gliding;
       else svg.dataset.gliding = '';
     };
+    placeRef.current = place;
     const from = end.current;
     const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const duration = glide && !calm && (from.x !== shown.x || from.y !== shown.y) ? GLIDE_MS : 0;
@@ -140,22 +147,25 @@ export function RegionMap({ label, shown, glide, onHover, onPick }: Props) {
       if (k < 1) frame = requestAnimationFrame(step);
     };
     step(start);
-    // The tag's size follows the font, which follows the screen: measure it again when the drawing is resized
-    const resized = new ResizeObserver(() => place(end.current, !svg.hasAttribute('data-gliding')));
-    resized.observe(svg);
-    return () => {
-      cancelAnimationFrame(frame);
-      resized.disconnect();
-    };
+    return () => cancelAnimationFrame(frame);
   }, [shown, glide]);
+
+  // The tag's size follows the font, which follows the screen: measure it again when the drawing is resized
+  useEffect(() => {
+    const svg = ref.current;
+    if (!svg) return;
+    const resized = new ResizeObserver(() => placeRef.current?.(end.current, !svg.hasAttribute('data-gliding')));
+    resized.observe(svg);
+    return () => resized.disconnect();
+  }, []);
 
   // Each ring starts drawing at twelve o'clock
   const rings = RINGS.map((radius, index) => (
     <circle key={radius} className="arm-ring-line" cx={x} cy={y} r={radius} pathLength={1} transform={`rotate(-90 ${x} ${y})`} style={{ '--k': index } as CSSProperties} />
   ));
-  const tag = reachTag(shown);
-  // Before the tag is measured on the client: about a condensed glyph's width a letter
-  const guessWidth = tag.length * 11 + TAG_PAD * 2;
+  // The server's tag, before it is measured on the client: about a condensed glyph's width a letter. From the first point
+  // only, so React never writes the tag's box again after the effect has placed it
+  const guessWidth = reachTag(first).length * 11 + TAG_PAD * 2;
 
   return (
     <svg ref={ref} className="arm" viewBox={regionMap.viewBox} role="img" aria-label={label} data-reach={shown.inside ? 'in' : 'out'} style={{ '--mx': `${x}px`, '--my': `${y}px` } as CSSProperties}>
@@ -197,7 +207,7 @@ export function RegionMap({ label, shown, glide, onHover, onPick }: Props) {
       <circle ref={targetRef} className="arm-target" cx={first.x.toFixed(1)} cy={first.y.toFixed(1)} r="9" />
       <g ref={tagRef} className="arm-tag" transform={tagAt(first, guessWidth, TAG_HEIGHT)}>
         <rect height={TAG_HEIGHT} width={guessWidth} />
-        <text x={TAG_PAD} y="25">{tag}</text>
+        <text x={TAG_PAD} y="25">{reachTag(shown)}</text>
       </g>
     </svg>
   );

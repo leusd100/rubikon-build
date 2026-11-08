@@ -24,14 +24,19 @@ const subscribeToHydration = () => () => undefined;
 function fillLocation(text: string) {
   const field = document.getElementById('inquiry-location');
   if (!(field instanceof HTMLInputElement)) return;
-  const current = field.value.trim();
-  if (current && current !== field.dataset.prefilled) return;
+  // Unfolded first, whatever the field holds: the link lands on it, and a folded field is a box of no size (review 08.11)
   const details = field.closest('details');
   if (details) details.open = true;
+  const current = field.value.trim();
+  if (current && current !== field.dataset.prefilled) return;
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
   setter?.call(field, text);
   field.dataset.prefilled = text;
   field.dispatchEvent(new Event('input', { bubbles: true }));
+  // The field's pulse, again for every place carried (region.css): off, a layout, on
+  delete field.dataset.carried;
+  void field.offsetWidth;
+  field.dataset.carried = '';
 }
 
 function answerOf(reach: Reach, example: boolean) {
@@ -51,17 +56,22 @@ export function RegionReach({ copy, label, attribution }: Readonly<{ copy: React
   const [previewed, setPreviewed] = useState<Reach | null>(null);
   const ready = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
-  const onHover = useCallback((point: Point | null) => setPreviewed(point ? reachAt(point) : null), []);
+  // A preview moves only the map: the words beside it (and what a screen reader hears) follow choices, not the mouse.
+  // The same place again (a town the pointer is still near) keeps its object, so the map is not redrawn for nothing.
+  const onHover = useCallback((point: Point | null) => setPreviewed((before) => {
+    const next = point ? reachAt(point) : null;
+    return before && next && before.x === next.x && before.y === next.y ? before : next;
+  }), []);
   const onPick = useCallback((point: Point) => {
     setPreviewed(null);
     setChosen(reachAt(point));
   }, []);
 
-  const shown = previewed ?? chosen ?? example;
-  const isExample = !previewed && !chosen;
+  const said = chosen ?? example;
+  const isExample = !chosen;
   const sorted = useMemo(() => [...placedTowns].sort((a, b) => a.name.localeCompare(b.name, 'uk')), []);
-  // The button carries only a choice, and only one inside the oblast
-  const carry = !previewed && chosen?.inside ? chosen : null;
+  // The button carries only a choice, and only one inside the oblast — a hover after the click does not take it away
+  const carry = chosen?.inside ? chosen : null;
 
   return (
     <div className="region-layout">
@@ -69,8 +79,10 @@ export function RegionReach({ copy, label, attribution }: Readonly<{ copy: React
         {copy}
         <div className="region-reach" data-ready={ready || undefined}>
           <p className="region-reach-ask">Де ваш об’єкт?</p>
-          <p className="region-reach-answer" aria-live="polite">{answerOf(shown, isExample)}</p>
-          <p className="region-reach-note">{noteOf(shown, isExample)}</p>
+          <div className="region-reach-said" aria-live="polite">
+            <p className="region-reach-answer">{answerOf(said, isExample)}</p>
+            <p className="region-reach-note">{noteOf(said, isExample)}</p>
+          </div>
           <div className="region-reach-actions">
             <select
               className="region-reach-pick"
@@ -93,7 +105,7 @@ export function RegionReach({ copy, label, attribution }: Readonly<{ copy: React
         </div>
       </div>
       <figure className="region-figure">
-        <RegionMap label={label} shown={shown} glide={!previewed} onHover={onHover} onPick={onPick} />
+        <RegionMap label={label} shown={previewed ?? said} glide={!previewed} onHover={onHover} onPick={onPick} />
         <figcaption>{attribution}</figcaption>
       </figure>
     </div>
