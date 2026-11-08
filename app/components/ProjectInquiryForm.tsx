@@ -533,7 +533,8 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                 <div className="inquiry-fields inquiry-fields-two">
                   <label className={dimensions.input ? undefined : 'inquiry-field-full'}>
                     <span>Місто або область</span>
-                    <input name={enabledFieldName(jsReady, 'location')} type="text" maxLength={100} autoComplete="address-level1" />
+                    {/* the id is where the region map's «Вказати в заявці» writes and lands (RegionReach) */}
+                    <input id="inquiry-location" name={enabledFieldName(jsReady, 'location')} type="text" maxLength={100} autoComplete="address-level1" />
                   </label>
                   {dimensions.fixedValue !== null && (
                     <input name={enabledFieldName(jsReady, 'dimensions')} type="hidden" value={dimensions.fixedValue} />
