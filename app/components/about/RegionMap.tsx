@@ -80,7 +80,7 @@ export function RegionMap({ label, shown, glide, onHover, onPick }: Props) {
       if (event.pointerType !== 'mouse' || !finePointer.matches) return;
       // A move of no distance is the browser re-sending the pointer after the scroll shield (SmoothScroll) dropped, not
       // the visitor: it would preview again mid-scroll, and the ray would flicker past
-      if (pointer && pointer.x === event.clientX && pointer.y === event.clientY) return;
+      if (pointer?.x === event.clientX && pointer?.y === event.clientY) return;
       pointer = { x: event.clientX, y: event.clientY };
       if (light) svg.dataset.light = 'on';
       if (!frame) frame = requestAnimationFrame(apply);
@@ -154,7 +154,7 @@ export function RegionMap({ label, shown, glide, onHover, onPick }: Props) {
   useEffect(() => {
     const svg = ref.current;
     if (!svg) return;
-    const resized = new ResizeObserver(() => placeRef.current?.(end.current, !svg.hasAttribute('data-gliding')));
+    const resized = new ResizeObserver(() => placeRef.current?.(end.current, svg.dataset.gliding === undefined));
     resized.observe(svg);
     return () => resized.disconnect();
   }, []);

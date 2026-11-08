@@ -33,25 +33,25 @@ function fillLocation(text: string) {
   setter?.call(field, text);
   field.dataset.prefilled = text;
   field.dispatchEvent(new Event('input', { bubbles: true }));
-  // The field's pulse, again for every place carried (region.css): off, a layout, on
+  // The field's pulse, again for every place carried (region.css): off now, on in the next frame, so it restarts
   delete field.dataset.carried;
-  void field.offsetWidth;
-  field.dataset.carried = '';
+  requestAnimationFrame(() => {
+    field.dataset.carried = '';
+  });
 }
 
-function answerOf(reach: Reach, example: boolean) {
-  return example ? `Наприклад, ${reachAnswer(reach)}` : reachAnswer(reach);
-}
+/** The block's example until the visitor chooses: said as one, and it carries nothing into the form */
+const example = reachOfTown(EXAMPLE)!;
+const exampleAnswer = `Наприклад, ${reachAnswer(example)}`;
+const exampleNote = 'від Дніпра по прямій. Торкніться карти там, де ваш об’єкт, або оберіть місто.';
 
-function noteOf(reach: Reach, example: boolean) {
-  if (example) return 'від Дніпра по прямій. Торкніться карти там, де ваш об’єкт, або оберіть місто.';
+function noteOf(reach: Reach) {
   if (!reach.inside) return 'Проєкти в інших регіонах розглядаємо окремо.';
   if (isDnipro(reach)) return 'Тут ми базуємося.';
   return 'від Дніпра по прямій; дорогою буде більше.';
 }
 
 export function RegionReach({ copy, label, attribution }: Readonly<{ copy: ReactNode; label: string; attribution: string }>) {
-  const example = useMemo(() => reachOfTown(EXAMPLE)!, []);
   const [chosen, setChosen] = useState<Reach | null>(null);
   const [previewed, setPreviewed] = useState<Reach | null>(null);
   const ready = useSyncExternalStore(subscribeToHydration, () => true, () => false);
@@ -60,7 +60,7 @@ export function RegionReach({ copy, label, attribution }: Readonly<{ copy: React
   // The same place again (a town the pointer is still near) keeps its object, so the map is not redrawn for nothing.
   const onHover = useCallback((point: Point | null) => setPreviewed((before) => {
     const next = point ? reachAt(point) : null;
-    return before && next && before.x === next.x && before.y === next.y ? before : next;
+    return next && before?.x === next.x && before?.y === next.y ? before : next;
   }), []);
   const onPick = useCallback((point: Point) => {
     setPreviewed(null);
@@ -68,7 +68,6 @@ export function RegionReach({ copy, label, attribution }: Readonly<{ copy: React
   }, []);
 
   const said = chosen ?? example;
-  const isExample = !chosen;
   const sorted = useMemo(() => [...placedTowns].sort((a, b) => a.name.localeCompare(b.name, 'uk')), []);
   // The button carries only a choice, and only one inside the oblast — a hover after the click does not take it away
   const carry = chosen?.inside ? chosen : null;
@@ -80,8 +79,8 @@ export function RegionReach({ copy, label, attribution }: Readonly<{ copy: React
         <div className="region-reach" data-ready={ready || undefined}>
           <p className="region-reach-ask">Де ваш об’єкт?</p>
           <div className="region-reach-said" aria-live="polite">
-            <p className="region-reach-answer">{answerOf(said, isExample)}</p>
-            <p className="region-reach-note">{noteOf(said, isExample)}</p>
+            <p className="region-reach-answer">{chosen ? reachAnswer(chosen) : exampleAnswer}</p>
+            <p className="region-reach-note">{chosen ? noteOf(chosen) : exampleNote}</p>
           </div>
           <div className="region-reach-actions">
             <select

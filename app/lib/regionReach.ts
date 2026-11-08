@@ -49,8 +49,16 @@ export function directionFromDnipro(point: Point) {
 
 export const placedTowns: readonly PlacedTown[] = regionTowns.map((town) => ({ ...town, ...toDrawing(town) }));
 
-/** The outline as points, once: regionMap.outline is one closed ring of «M x y L x y … Z» */
-const ring: readonly Point[] = Array.from(regionMap.outline.matchAll(/(-?[\d.]+) (-?[\d.]+)/g), ([, x, y]) => ({ x: Number(x), y: Number(y) }));
+/** The outline as points, once: regionMap.outline is one closed ring of «M x y L x y … Z». Split on its commands,
+    not matched by a pattern of repeated groups (Sonar S8786: backtracking) */
+const ring: readonly Point[] = regionMap.outline
+  .split(/[MLZ]/)
+  .map((pair) => pair.trim())
+  .filter(Boolean)
+  .map((pair) => {
+    const [x, y] = pair.split(' ').map(Number);
+    return { x, y };
+  });
 
 /** Inside the oblast's outline (even–odd ray cast) */
 export function insideRegion({ x, y }: Point) {

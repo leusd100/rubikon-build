@@ -64,9 +64,8 @@
 .arm-ring { stroke-width: 1.5; }
 .arm-leader { stroke-width: 1; }
 .arm-pulse { stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
-.arm-label { fill: var(--color-text); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .04em; }
-/* A halo in the plate's ground: a ray to a town east of the city passes under «Дніпро» and must not cross its letters */
-.arm-label { paint-order: stroke; stroke: var(--color-surface); stroke-width: 8px; stroke-linejoin: round; }
+/* The halo in the plate's ground: a ray to a town east of the city passes under «Дніпро» and must not cross its letters */
+.arm-label { fill: var(--color-text); font: 700 26px var(--font-condensed), sans-serif; letter-spacing: .04em; paint-order: stroke; stroke: var(--color-surface); stroke-width: 8px; stroke-linejoin: round; }
 
 /* «Де ваш об’єкт?» on the plate: the towns it can name, the ray, its end and the tag (RegionMap sizes the tag) */
 .arm { cursor: crosshair; touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
