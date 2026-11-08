@@ -1057,7 +1057,16 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-about { max-width: 36ch; margin: 0; color: var(--color-dark-text-secondary); font-size: 14px; line-height: 1.6; }
 /* The signature (FooterSignature.tsx): the word stands between the columns and the legal line, so that line needs no rule
    of its own. Its relief is drawn by the SVG's own filter and may lie a little past its box. */
-.footer-signature { grid-column: 1 / -1; flex: 1 1 100%; display: block; width: 100%; height: auto; overflow: visible; pointer-events: none; }
+/* Its stage takes the word's place in the grid: the lamp and, on three pages, the scene's canvases (FooterSignatureLife.tsx)
+   reach --footer-scene-head above the word for the rain and the sparks, fading in from nothing at their top edge */
+.footer-signature-stage { --footer-scene-head: 120px; position: relative; isolation: isolate; grid-column: 1 / -1; flex: 1 1 100%; min-width: 0; }
+.footer-signature { position: relative; z-index: 1; display: block; width: 100%; height: auto; overflow: visible; pointer-events: none; }
+.footer-scene { position: absolute; top: calc(-1 * var(--footer-scene-head)); left: 0; width: 100%; height: calc(100% + var(--footer-scene-head)); pointer-events: none; -webkit-mask-image: linear-gradient(transparent, #000 48px); mask-image: linear-gradient(transparent, #000 48px); }
+.footer-scene-back { z-index: 0; }
+.footer-scene-front { z-index: 2; }
+/* The lamp's pass (FooterSignature.tsx) is lit only while a pointer or the arc moves it */
+.footer-signature-lamp { opacity: 0; transition: opacity var(--motion-ui) var(--ease-standard); }
+.footer-signature[data-lamp] .footer-signature-lamp { opacity: 1; }
 /* The legal level on a line of its own under the rest: © on the left, the policy and the cookie settings on the right */
 .footer-bottom { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px; color: var(--color-dark-text-muted); font-size: 13px; letter-spacing: .02em; }
 .footer-legal { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; color: var(--color-dark-text-muted); font-size: 13px; letter-spacing: .02em; }
