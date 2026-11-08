@@ -77,6 +77,8 @@ export function FooterSignatureLife() {
       const leave = () => {
         lamp.hover = false;
         setLamp();
+        // the trace stops glinting where the light was (review 08.11)
+        onLampMove();
       };
       footer.addEventListener('pointermove', move);
       footer.addEventListener('pointerleave', leave);
@@ -109,42 +111,50 @@ export function FooterSignatureLife() {
       host.insertBefore(back, host.firstChild);
       host.appendChild(front);
       const contexts = canvases.map((canvas) => canvas.getContext('2d'));
-      const probe = document.createElement('canvas').getContext('2d');
+      const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
       const [bc, fc] = contexts;
       if (!bc || !fc || !probe) return () => canvases.forEach((canvas) => canvas.remove());
 
       let geometry: WordGeometry | null = null;
       let scene: FooterScene | null = null;
-      let time = 0, frame = 0, last = 0;
+      let time = 0, frame = 0, last = 0, laidWidth = 0;
 
       const layout = () => {
-        const box = signature.getBoundingClientRect();
+        // the stage, not the svg: on narrower layouts the svg has a margin inside it, and the canvas spans the stage
+        const box = host.getBoundingClientRect(), word = signature.getBoundingClientRect();
         const width = box.width, height = box.height + HEAD, ratio = Math.min(2, window.devicePixelRatio || 1);
+        const wordTop = HEAD + word.top - box.top;
         for (const [index, canvas] of canvases.entries()) {
           canvas.width = Math.round(width * ratio);
           canvas.height = Math.round(height * ratio);
           contexts[index]!.setTransform(ratio, 0, 0, ratio, 0, 0);
           contexts[index]!.lineCap = 'round';
         }
-        const scale = width / VIEW.width;
-        const word = new Path2D();
-        word.addPath(new Path2D(signature.querySelector('path')!.getAttribute('d')!), new DOMMatrix([scale, 0, 0, scale, -VIEW.x * scale, HEAD - VIEW.y * scale]));
-        // the letters' top edge per column, read once per size
-        const tops = new Float32Array(Math.ceil(width) + 1).fill(height);
-        for (let x = 0; x < tops.length; x++) {
-          for (let y = Math.floor(HEAD); y < height; y++) {
-            if (probe.isPointInPath(word, x, y)) {
+        const scale = word.width / VIEW.width;
+        const letters = new Path2D();
+        letters.addPath(new Path2D(signature.querySelector('path')!.getAttribute('d')!), new DOMMatrix([scale, 0, 0, scale, -VIEW.x * scale, wordTop - VIEW.y * scale]));
+        // the letters' top edge per column: the word filled once, read back once (a point test per pixel was ~30 000 calls)
+        const columns = Math.ceil(width), rows = Math.ceil(height);
+        probe.canvas.width = columns;
+        probe.canvas.height = rows;
+        probe.fill(letters, 'evenodd');
+        const alpha = probe.getImageData(0, 0, columns, rows).data;
+        const tops = new Float32Array(columns + 1).fill(height);
+        for (let x = 0; x < columns; x++) {
+          for (let y = Math.floor(wordTop); y < rows; y++) {
+            if (alpha[(y * columns + x) * 4 + 3] > 127) {
               tops[x] = y;
               break;
             }
           }
         }
-        geometry = { width, height, scale, wordTop: HEAD, word, surface: (x) => tops[Math.max(0, Math.min(tops.length - 1, Math.round(x)))] };
+        laidWidth = width;
+        geometry = { width, height, scale, wordTop, word: letters, surface: (x) => tops[Math.max(0, Math.min(tops.length - 1, Math.round(x)))] };
       };
 
       const draw = (dt: number) => {
         if (!scene || !geometry) return;
-        scene.lamp = lamp.hover ? [(lamp.x - VIEW.x) * geometry.scale, HEAD + (lamp.y - VIEW.y) * geometry.scale] : null;
+        scene.lamp = lamp.hover ? [(lamp.x - VIEW.x) * geometry.scale, geometry.wordTop + (lamp.y - VIEW.y) * geometry.scale] : null;
         bc.clearRect(0, 0, geometry.width, geometry.height);
         fc.clearRect(0, 0, geometry.width, geometry.height);
         scene.back?.(bc, dt, time);
@@ -159,10 +169,15 @@ export function FooterSignatureLife() {
           lamp.y = arc[1];
         }
         setLamp();
+        // the arc out under a resting mouse: the light goes back to the pointer
+        if (!arc && lamp.hover) wake();
       };
       const stop = () => {
         cancelAnimationFrame(frame);
         frame = 0;
+        // a weld cut short leaves no lamp burning at the arc
+        if (scene) scene.arc = null;
+        followArc();
       };
       const tick = (now: number) => {
         const dt = Math.min(LONGEST_STEP, (now - last) / 1000 || 0);
@@ -202,22 +217,32 @@ export function FooterSignatureLife() {
       };
       // the trace at rest answers the lamp (the rain's beads glint): redrawn as it moves, nothing simulated
       onLampMove = () => {
-        if (!frame && host.dataset.scene === 'rest') draw(0);
+        if (!frame && host.dataset.scene === 'rest' && scene?.answersLamp) draw(0);
       };
 
       if (calm) settle();
+      // Plays when half the word is in view, once, until the word has left the screen altogether: a small scroll at the
+      // edge neither restarts it nor wipes its trace (review 08.11: on `isIntersecting` alone it started at the first
+      // pixel and again at half)
+      let armed = true;
       const seen = new IntersectionObserver(([entry]) => {
         if (calm) return;
-        if (entry.isIntersecting) play();
-        else stop();
-      }, { threshold: .5 });
+        if (!entry.isIntersecting) {
+          stop();
+          armed = true;
+        } else if (armed && entry.intersectionRatio >= .5) {
+          armed = false;
+          play();
+        }
+      }, { threshold: [0, .5] });
       seen.observe(signature);
       let resized = 0;
       const sized = new ResizeObserver(() => {
         window.clearTimeout(resized);
-        // a new width redraws the trace at once rather than replaying the scene under the visitor
-        // (the first call, as the observer starts, finds nothing played yet: the size is read when the scene first plays)
+        // a new width redraws the trace at once rather than replaying the scene under the visitor. Only a real change:
+        // the observer's first call, as it starts, cut a play that had just begun to 150 ms (review 08.11)
         resized = window.setTimeout(() => {
+          if (!geometry || Math.abs(host.getBoundingClientRect().width - laidWidth) < 1) return;
           if (host.dataset.scene) settle();
           else geometry = null;
         }, 150);

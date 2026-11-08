@@ -27,6 +27,8 @@ export type FooterScene = {
   arc?: [number, number] | null;
   /** The light's place in canvas px, given each frame: what the trace catches (rain beads) */
   lamp?: [number, number] | null;
+  /** The trace changes with the light, so a still footer is redrawn as the lamp moves (only the rain's beads do) */
+  answersLamp?: boolean;
 };
 
 const INK = '#BDB7AC';
@@ -75,6 +77,7 @@ export function rain(g: WordGeometry): FooterScene {
   const drops: (Bit & { length: number })[] = [], spray: Bit[] = [], runs: (Bit & { falling: boolean })[] = [];
   const beads: { x: number; y: number; r: number }[] = [];
   const scene: FooterScene = {
+    answersLamp: true,
     front(c, dt, time) {
       // up in .4 s, steady, then easing off over the last 1.2 s
       const rate = time < .4 ? time / .4 : Math.max(0, Math.min(1, (RAIN_FOR - time) / 1.2));
@@ -194,7 +197,8 @@ export function pour(g: WordGeometry): FooterScene {
       const fill = Math.min(1, time / POUR_FOR), level = g.height - fill * (g.height - g.wordTop);
       if (!g.word) return;
       c.save();
-      c.clip(g.word);
+      // even–odd, as the signature's own fill-rule: the counters of R, B and O stay open
+      c.clip(g.word, 'evenodd');
       const tone = c.createLinearGradient(0, g.wordTop, 0, g.height);
       tone.addColorStop(0, '#6E6B65');
       tone.addColorStop(1, '#4E4C47');

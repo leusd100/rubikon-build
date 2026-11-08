@@ -1064,6 +1064,8 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-scene { position: absolute; top: calc(-1 * var(--footer-scene-head)); left: 0; width: 100%; height: calc(100% + var(--footer-scene-head)); pointer-events: none; -webkit-mask-image: linear-gradient(transparent, #000 48px); mask-image: linear-gradient(transparent, #000 48px); }
 .footer-scene-back { z-index: 0; }
 .footer-scene-front { z-index: 2; }
+/* The scenes are for 1181 px and wider (FooterSignatureLife.tsx): a window narrowed after they started does not keep them */
+@media (max-width: 1180px) { .footer-scene { display: none; } }
 /* The lamp's pass (FooterSignature.tsx) is lit only while a pointer or the arc moves it */
 .footer-signature-lamp { opacity: 0; transition: opacity var(--motion-ui) var(--ease-standard); }
 .footer-signature[data-lamp] .footer-signature-lamp { opacity: 1; }

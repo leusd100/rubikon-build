@@ -28,15 +28,18 @@ async function toFooter(page: Page, path: string) {
   }, { timeout: 20_000 }).toBe(true);
 }
 
-/** Every value the stage's data-scene took, in order (recordStates, before the page loads) */
-const states = (page: Page) => page.evaluate(() => (window as unknown as { sceneStates: string[] }).sceneStates);
+type Change = { state: string; at: number };
+/** Every value the stage's data-scene took, with when (recordStates, before the page loads) */
+const changes = (page: Page) => page.evaluate(() => (window as unknown as { sceneStates: Change[] }).sceneStates);
+const states = async (page: Page) => (await changes(page)).map((change) => change.state);
 const recordStates = () => {
-  const seen: string[] = [];
-  (window as unknown as { sceneStates: string[] }).sceneStates = seen;
-  new MutationObserver((changes) => {
-    for (const change of changes) {
-      const value = (change.target as HTMLElement).dataset.scene;
-      if (value && value !== seen.at(-1)) seen.push(value);
+  const seen: Change[] = [];
+  (window as unknown as { sceneStates: Change[] }).sceneStates = seen;
+  new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      const state = (mutation.target as HTMLElement).dataset.scene;
+      // every write, repeats included: a play restarted over itself must show
+      if (state) seen.push({ state, at: performance.now() });
     }
   }).observe(document, { subtree: true, attributes: true, attributeFilter: ['data-scene'] });
 };
@@ -60,6 +63,17 @@ test.describe('desktop', () => {
       // about five seconds of play, then the still. The states are recorded as they change (states(), below), so a busy
       // machine that is slow to look still sees the play happen and end — never a «rest» drawn at once
       await expect.poll(() => states(page), { timeout: 30_000 }).toEqual(['playing', 'rest']);
+      // a real play, not one cut short: the rest comes seconds after the start (review 08.11: a resize observer cut it to
+      // 150 ms, and a ratio-blind observer restarted it)
+      const [start, end] = await changes(page);
+      expect(end.at - start.at).toBeGreaterThan(3500);
+      expect(await painted(page, layer)).toBe(true);
+      // a small scroll with the word still on the screen neither replays it nor wipes the trace
+      await page.mouse.wheel(0, -120);
+      await page.waitForTimeout(400);
+      await page.mouse.wheel(0, 120);
+      await page.waitForTimeout(400);
+      expect(await states(page)).toEqual(['playing', 'rest']);
       expect(await painted(page, layer)).toBe(true);
     });
   }
@@ -70,13 +84,16 @@ test.describe('desktop', () => {
     const word = page.locator('svg.footer-signature');
     await expect(word).not.toHaveAttribute('data-lamp');
     const box = (await word.boundingBox())!;
+    // into the footer from a point above it on the screen, then onto the word
+    const footer = (await page.locator('footer').boundingBox())!;
+    await page.mouse.move(box.x + box.width * .4, Math.max(2, footer.y - 40));
     await page.mouse.move(box.x + box.width * .4, box.y + box.height * .3, { steps: 4 });
     await expect(word).toHaveAttribute('data-lamp', 'on');
-    // the lamp's point moved to the pointer (viewBox units: x 521–1323)
-    const x = Number(await page.locator('#footer-signature-lamp').getAttribute('x'));
-    expect(x).toBeGreaterThan(521 + 802 * .3);
-    expect(x).toBeLessThan(521 + 802 * .5);
-    await page.mouse.move(box.x + box.width * .4, box.y - 2000);
+    // the lamp's point glides to the pointer (viewBox units: x 521–1323)
+    await expect.poll(async () => Number(await page.locator('#footer-signature-lamp').getAttribute('x'))).toBeGreaterThan(521 + 802 * .35);
+    expect(Number(await page.locator('#footer-signature-lamp').getAttribute('x'))).toBeLessThan(521 + 802 * .45);
+    // out of the footer to a point on the screen above it
+    await page.mouse.move(box.x + box.width * .4, Math.max(2, footer.y - 40), { steps: 4 });
     await expect(word).not.toHaveAttribute('data-lamp');
   });
 
