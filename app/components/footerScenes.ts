@@ -46,7 +46,8 @@ const gauss = () => (random() + random() + random() + random() - 2) / 2;
 
 type Bit = { x: number; y: number; vx: number; vy: number; age: number; life: number };
 
-const stroke = (c: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, width: number, colour: string, alpha: number) => {
+/** One stroke from [x0, y0] to [x1, y1] (the segment as one tuple, as liveScenes.ts: Sonar S107) */
+const stroke = (c: CanvasRenderingContext2D, [x0, y0, x1, y1]: readonly number[], width: number, colour: string, alpha: number) => {
   c.globalAlpha = Math.max(0, Math.min(1, alpha));
   c.strokeStyle = colour;
   c.lineWidth = width;
@@ -83,7 +84,7 @@ export function rain(g: WordGeometry): FooterScene {
       const rate = time < .4 ? time / .4 : Math.max(0, Math.min(1, (RAIN_FOR - time) / 1.2));
       for (let i = 0; i < 3; i++) if (random() < rate) drops.push({ x: random() * (g.width + 120), y: -20, vx: -90, vy: 620 + random() * 160, age: 0, life: 3, length: 10 + random() * 18 });
       update(drops, dt, 0, (drop) => {
-        stroke(c, drop.x, drop.y, drop.x + drop.length * .15, drop.y - drop.length, .9, INK, .3);
+        stroke(c, [drop.x, drop.y, drop.x + drop.length * .15, drop.y - drop.length], .9, INK, .3);
         const top = g.surface(drop.x);
         if (drop.y < top) return drop.y < g.height;
         if (top >= g.height) return false;
@@ -93,7 +94,7 @@ export function rain(g: WordGeometry): FooterScene {
         return false;
       });
       update(spray, dt, 520, (bit, px, py) => {
-        stroke(c, px, py, bit.x, bit.y, .8, SPRAY, .7);
+        stroke(c, [px, py, bit.x, bit.y], .8, SPRAY, .7);
         return true;
       });
       // a run follows the top of its letter to the edge, then drips
@@ -107,7 +108,7 @@ export function rain(g: WordGeometry): FooterScene {
             run.vy = 40;
           }
         }
-        stroke(c, px, py, run.x, run.y + (run.falling ? 4 : 0), 1.6, run.falling ? INK : SPRAY, .85);
+        stroke(c, [px, py, run.x, run.y + (run.falling ? 4 : 0)], 1.6, run.falling ? INK : SPRAY, .85);
         return run.y < g.height;
       });
       const [lx, ly] = scene.lamp ?? [-1e4, -1e4], reach = 150 * g.scale;
@@ -125,64 +126,82 @@ export function rain(g: WordGeometry): FooterScene {
   return scene;
 }
 
+/** A spark's colour as it cools: white, then the ink, then copper */
+const sparkColour = (age: number) => {
+  if (age < .22) return HOT;
+  return age < .4 ? INK : COPPER;
+};
+
+/** The seam behind the arc: white, red, copper, then a quiet copper bead */
+function drawSeam(c: CanvasRenderingContext2D, seam: readonly { x: number; y: number; at: number }[], time: number) {
+  for (let i = 1; i < seam.length; i++) {
+    const a = seam[i - 1], b = seam[i];
+    if (b.x - a.x > 5 || Math.abs(b.y - a.y) > 3) continue;
+    const age = time - b.at;
+    let colour = COPPER;
+    if (age < .35) colour = HOT;
+    else if (age < 1.2) colour = '#E0703A';
+    stroke(c, [a.x, a.y, b.x, b.y], age < 1.2 ? 2.2 : 1.6, colour, age < 1.2 ? 1 : Math.max(.55, 1 - (age - 1.2) * .25));
+  }
+}
+
 /** Metal: one weld along the top of the word; the arc carries the light, and the seam cools to a copper line */
 export function weld(g: WordGeometry): FooterScene {
   const sparks: (Bit & { landed: boolean })[] = [], seam: { x: number; y: number; at: number }[] = [];
   let x = 0, burst = 1, lastX = -9, burning = true;
+
+  /** The arc moves on along the letters' tops, over the gaps between them, and goes out past the last one */
+  const advance = (dt: number) => {
+    x += (dt * g.width) / WELD_FOR;
+    while (g.surface(x) >= g.height && x < g.width) x += 2;
+    if (x >= g.width) burning = false;
+  };
+
+  /** One frame of the arc: its sparks, the seam it lays and its glow */
+  const burn = (c: CanvasRenderingContext2D, time: number) => {
+    const y = g.surface(x) - 1;
+    scene.arc = [521 + x / g.scale, 140 + (y - 6 - g.wordTop) / g.scale];
+    if (random() < .06) burst = .3 + random() * 1.1;
+    for (let i = Math.round((6 + random() * 10) * burst); i > 0; i--) {
+      const angle = -1.57 + gauss() * 1.6, speed = 60 + random() * random() * 300;
+      sparks.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, age: 0, life: .4 + random() * .9, landed: false });
+    }
+    if (x - lastX >= 2) {
+      seam.push({ x, y: g.surface(x) - .6, at: time });
+      lastX = x;
+    }
+    const radius = 10 + random() * 10 * burst, glow = c.createRadialGradient(x, y, 0, x, y, radius);
+    glow.addColorStop(0, HOT);
+    glow.addColorStop(.3, COPPER);
+    glow.addColorStop(1, 'rgba(183,100,50,0)');
+    c.globalAlpha = .8;
+    c.fillStyle = glow;
+    c.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+  };
+
+  /** Sparks fall, land once on a letter's top, bounce a little and die */
+  const fall = (c: CanvasRenderingContext2D, dt: number) => update(sparks, dt, 620, (spark, px, py) => {
+    const top = g.surface(spark.x);
+    if (spark.vy > 0 && spark.y > top && !spark.landed) {
+      spark.y = top;
+      spark.vy *= -.3;
+      spark.vx *= .6;
+      spark.landed = true;
+      spark.life = Math.min(spark.life, spark.age + .25);
+    }
+    const age = spark.age / spark.life;
+    stroke(c, [px, py, spark.x, spark.y], 1.5 - age * .8, sparkColour(age), (1 - age * age) * .95);
+    return spark.y < g.height + 4;
+  });
+
   const scene: FooterScene = {
     arc: null,
     front(c, dt, time) {
-      if (burning) {
-        x += (dt * g.width) / WELD_FOR;
-        while (g.surface(x) >= g.height && x < g.width) x += 2;
-        if (x >= g.width) burning = false;
-      }
-      if (burning) {
-        const y = g.surface(x) - 1;
-        scene.arc = [521 + x / g.scale, 140 + (y - 6 - g.wordTop) / g.scale];
-        if (random() < .06) burst = .3 + random() * 1.1;
-        for (let i = Math.round((6 + random() * 10) * burst); i > 0; i--) {
-          const angle = -1.57 + gauss() * 1.6, speed = 60 + random() * random() * 300;
-          sparks.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, age: 0, life: .4 + random() * .9, landed: false });
-        }
-        if (x - lastX >= 2) {
-          seam.push({ x, y: g.surface(x) - .6, at: time });
-          lastX = x;
-        }
-        const radius = 10 + random() * 10 * burst, glow = c.createRadialGradient(x, y, 0, x, y, radius);
-        glow.addColorStop(0, HOT);
-        glow.addColorStop(.3, COPPER);
-        glow.addColorStop(1, 'rgba(183,100,50,0)');
-        c.globalAlpha = .8;
-        c.fillStyle = glow;
-        c.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-      } else scene.arc = null;
-      update(sparks, dt, 620, (spark, px, py) => {
-        const top = g.surface(spark.x);
-        if (spark.vy > 0 && spark.y > top && !spark.landed) {
-          spark.y = top;
-          spark.vy *= -.3;
-          spark.vx *= .6;
-          spark.landed = true;
-          spark.life = Math.min(spark.life, spark.age + .25);
-        }
-        const age = spark.age / spark.life;
-        let colour = COPPER;
-        if (age < .22) colour = HOT;
-        else if (age < .4) colour = INK;
-        stroke(c, px, py, spark.x, spark.y, 1.5 - age * .8, colour, (1 - age * age) * .95);
-        return spark.y < g.height + 4;
-      });
-      // white, red, copper, then a quiet copper bead
-      for (let i = 1; i < seam.length; i++) {
-        const a = seam[i - 1], b = seam[i];
-        if (b.x - a.x > 5 || Math.abs(b.y - a.y) > 3) continue;
-        const age = time - b.at;
-        let colour = COPPER;
-        if (age < .35) colour = HOT;
-        else if (age < 1.2) colour = '#E0703A';
-        stroke(c, a.x, a.y, b.x, b.y, age < 1.2 ? 2.2 : 1.6, colour, age < 1.2 ? 1 : Math.max(.55, 1 - (age - 1.2) * .25));
-      }
+      if (burning) advance(dt);
+      if (burning) burn(c, time);
+      else scene.arc = null;
+      fall(c, dt);
+      drawSeam(c, seam, time);
     },
     // the seam goes on cooling for 1.6 s after the arc is out
     done: (time) => !burning && !sparks.length && seam.every((point) => time - point.at > 2.8),
@@ -219,7 +238,7 @@ export function pour(g: WordGeometry): FooterScene {
         const x = g.width * .655;
         for (let i = 0; i < 12; i++) {
           const y = random() * level;
-          stroke(c, x + gauss() * 2, y, x + gauss() * 2, y + 14, 3, '#77736C', .85);
+          stroke(c, [x + gauss() * 2, y, x + gauss() * 2, y + 14], 3, '#77736C', .85);
         }
       }
     },

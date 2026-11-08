@@ -68,11 +68,14 @@ test.describe('desktop', () => {
       const [start, end] = await changes(page);
       expect(end.at - start.at).toBeGreaterThan(3500);
       expect(await painted(page, layer)).toBe(true);
-      // a small scroll with the word still on the screen neither replays it nor wipes the trace
-      await page.mouse.wheel(0, -120);
-      await page.waitForTimeout(400);
-      await page.mouse.wheel(0, 120);
-      await page.waitForTimeout(400);
+      // a small scroll with the word still on the screen neither replays it nor wipes the trace: each scroll is waited
+      // for by the page's own position, then two frames, in which a replay would have set «playing» (Sonar S2925)
+      for (const delta of [-120, 120]) {
+        const before = await page.evaluate(() => window.scrollY);
+        await page.mouse.wheel(0, delta);
+        await expect.poll(() => page.evaluate(() => window.scrollY)).not.toBe(before);
+        await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+      }
       expect(await states(page)).toEqual(['playing', 'rest']);
       expect(await painted(page, layer)).toBe(true);
     });
