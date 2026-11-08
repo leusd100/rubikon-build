@@ -12,6 +12,7 @@ test.beforeEach(async ({ context }) => {
 });
 
 async function toFooter(page: Page, path: string) {
+  await page.addInitScript(recordStates);
   await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
   await page.goto(path, { waitUntil: 'load' });
   // the page may still grow after the first scroll (late images, islands), carrying the footer off the screen before the
@@ -23,8 +24,22 @@ async function toFooter(page: Page, path: string) {
       const box = svg.getBoundingClientRect();
       return box.top >= 0 && box.bottom <= window.innerHeight;
     });
-  }).toBe(true);
+  // a cold server builds the page's islands on the first visit: the page settles later than on a warm one
+  }, { timeout: 20_000 }).toBe(true);
 }
+
+/** Every value the stage's data-scene took, in order (recordStates, before the page loads) */
+const states = (page: Page) => page.evaluate(() => (window as unknown as { sceneStates: string[] }).sceneStates);
+const recordStates = () => {
+  const seen: string[] = [];
+  (window as unknown as { sceneStates: string[] }).sceneStates = seen;
+  new MutationObserver((changes) => {
+    for (const change of changes) {
+      const value = (change.target as HTMLElement).dataset.scene;
+      if (value && value !== seen.at(-1)) seen.push(value);
+    }
+  }).observe(document, { subtree: true, attributes: true, attributeFilter: ['data-scene'] });
+};
 
 /** Whether a scene canvas has anything drawn on it */
 const painted = (page: Page, layer: 'back' | 'front') => page.locator(`.footer-scene-${layer}`).evaluate((canvas: HTMLCanvasElement) => {
@@ -42,9 +57,9 @@ test.describe('desktop', () => {
       const stage = page.locator('.footer-signature-stage');
       await expect(stage.locator('canvas.footer-scene')).toHaveCount(2);
       await page.locator('svg.footer-signature').scrollIntoViewIfNeeded();
-      await expect(stage).toHaveAttribute('data-scene', 'playing');
-      // about five seconds of play, then the still: rest, and the trace stays drawn
-      await expect(stage).toHaveAttribute('data-scene', 'rest', { timeout: 12_000 });
+      // about five seconds of play, then the still. The states are recorded as they change (states(), below), so a busy
+      // machine that is slow to look still sees the play happen and end — never a «rest» drawn at once
+      await expect.poll(() => states(page), { timeout: 30_000 }).toEqual(['playing', 'rest']);
       expect(await painted(page, layer)).toBe(true);
     });
   }
@@ -70,6 +85,7 @@ test.describe('desktop', () => {
     await toFooter(page, '/metalokonstruktsii');
     const stage = page.locator('.footer-signature-stage');
     await expect(stage).toHaveAttribute('data-scene', 'rest');
+    expect(await states(page)).toEqual(['rest']);
     expect(await painted(page, 'front')).toBe(true);
     const box = (await page.locator('svg.footer-signature').boundingBox())!;
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
