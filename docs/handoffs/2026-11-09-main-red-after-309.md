@@ -72,8 +72,10 @@ Main Regression червоний з `d16cd4e3` (#305). Падіння й ком�
 |---|---|
 | `pnpm lint`, `pnpm typecheck`, `pnpm test:unit` | чисто · чисто · 1826 passed, 1 skipped |
 | `home-proof-contour:2370` і `pro-nas-capability:148`, linux/amd64, гілка | 3 / 3 passed |
-| e2e critical і спеки consent-pending-hero, pro-nas-capability, region-reach, home-proof-contour (desktop + mobile), macOS | див. коментар у PR |
-| PR Gate і Main Regression на гілці | див. PR |
+| e2e critical, macOS | 58 passed |
+| Спеки consent-pending-hero, pro-nas-capability, region-reach, home-proof-contour, desktop + mobile, macOS, одним прогоном | 173 passed, 26 skipped, 1 failed: `pro-nas-capability:112` (наведення на схему; цей PR його не стосується). Окремо ×10 на main і ×10 на гілці — 10 / 10 і 10 / 10, у CI ніколи не був червоним: разовий збій на перевантаженій машині |
+| PR Gate [42652271138](https://github.com/leusd100/rubikon-build/actions/runs/42652271138) на `aeeb0d72` | Fast Gate, Hero playback — success; visual — **лише 5 знімків із §4** |
+| Main Regression на гілці [42652337415](https://github.com/leusd100/rubikon-build/actions/runs/42652337415) на `aeeb0d72` | **Main E2E 8 / 8 — success** (без retries, `failOnFlakyTests`); visual 1/2 success, 2/2 — лише ті самі 5 знімків (28 passed, 5 failed) |
 
 ## 4. Візуальні еталони — чекають OK власника
 
@@ -89,7 +91,7 @@ Main Regression червоний з `d16cd4e3` (#305). Падіння й ком�
 
 Аркуші «еталон | CI actual»: `media/main-red-after-309/baseline-*-expected-vs-ci-actual.png` (з Main Regression 42626918764 на `main`).
 
-Після OK власника PNG беруться **з артефакту CI цієї гілки** (того самого коміту, DEC-18), не з локальної машини, і йдуть окремим комітом.
+Після OK власника PNG беруться **з артефакту CI цієї гілки** (того самого коміту, DEC-18), не з локальної машини, і йдуть окремим комітом. Джерело: `changed-area-visual-diff` з PR Gate 42652271138 (`aeeb0d72`). Його 5 actual PNG байт у байт ті самі, що й у Main Regression 42626918764 на `main` (SHA-256: `13a0b2d2eb80…` homepage-real-object-mobile-375, `914960f6ef7a…` process-scope-mobile-375, `8951134f60bb…` process-scope-tablet-768, `756face52fec…` process-scope-desktop-1440, `748efced4806…` process-responsibility-mobile-375). Тобто зміни цього PR знімків не торкаються.
 
 ## 5. Поза цим PR
 
