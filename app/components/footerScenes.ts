@@ -35,6 +35,12 @@ export type FooterScene = {
 
 const INK = '#BDB7AC';
 const COPPER = '#B76432';
+/**
+ * Copper is the site's action colour (the call buttons, the footer's phone and email icons): a scene's large copper shapes —
+ * the beam, the frame, the masonry's lower course, the slings — stay at this much of it, so the brightest copper in the
+ * footer is the contact, not the decoration (independent review 09.11; owner: «приглуш»)
+ */
+export const QUIET = .45;
 const HOT = '#FFECCD';
 const SPRAY = '#E2DCD0';
 const GRAIN = '#D9C7A3';
@@ -352,7 +358,8 @@ export function beam(g: WordGeometry): FooterScene {
       fillShape(c, [
         [x, y], [x + width, y], [x + width, y + flange], [middle + web / 2, y + flange], [middle + web / 2, y + height - flange], [x + width, y + height - flange],
         [x + width, y + height], [x, y + height], [x, y + height - flange], [middle - web / 2, y + height - flange], [middle - web / 2, y + flange], [x, y + flange],
-      ], COPPER, 1);
+      ], COPPER, QUIET);
+      c.globalAlpha = QUIET;
       c.strokeStyle = COPPER;
       c.lineWidth = 1.4;
       c.beginPath();
@@ -377,7 +384,7 @@ export function frames(g: WordGeometry): FooterScene {
       fillShape(c, [
         [x, y], [x, eave], [centre, ridge], [x + w, eave], [x + w, y], [x + w - t, y],
         [x + w - t, eave + t * .5], [centre, ridge + t * 1.25], [x + t, eave + t * .5], [x + t, y],
-      ], COPPER, Math.sin(p * Math.PI) * .7);
+      ], COPPER, Math.sin(p * Math.PI) * QUIET * .8);
     },
   };
 }
@@ -436,7 +443,7 @@ export function masonry(g: WordGeometry): FooterScene {
         if (since < 0) continue;
         // each block drops the last few pixels into its place
         const k = Math.min(1, since / .35), y = block.y - (1 - k * k) * 36, alpha = Math.min(1, k * 2) * fade;
-        c.globalAlpha = alpha;
+        c.globalAlpha = alpha * (block.course ? .8 : QUIET * 1.6);
         c.fillStyle = block.course ? '#CFC6B4' : '#9C5A34';
         c.fillRect(block.x, y, block.w, h);
         c.globalAlpha = .6 * alpha;
@@ -524,7 +531,7 @@ export function missing(g: WordGeometry): FooterScene {
   let landed = false;
   /** The slings over the letter, from its two shoulders to the hook, and the hook's line up out of the canvas */
   const slings = (c: CanvasRenderingContext2D, top: number, sway: number, alpha: number) => {
-    c.globalAlpha = alpha;
+    c.globalAlpha = alpha * QUIET;
     c.strokeStyle = COPPER;
     c.lineWidth = 1.4;
     c.beginPath();

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FOOTER_SCENE_PAGES } from '../../app/components/FooterSignatureLife';
-import { FOOTER_SCENES, IN_TURN, MISSING_FOR, TURN, five, flats, grain, inTurn, masonry, missing, rain, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
+import { FOOTER_SCENES, IN_TURN, MISSING_FOR, QUIET, TURN, beam, five, flats, frames, grain, inTurn, masonry, missing, rain, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
 
 const SCENE_BY_NAME = { rain, weld, grain, five };
 
@@ -117,6 +117,37 @@ describe('footer scenes: continuous', () => {
     expect(Math.max(...perSecond)).toBeGreaterThan(0);
     expect(FOOTER_SCENES['.about-page']).toBe(masonry);
     expect(IN_TURN).toContain(masonry);
+  });
+
+  // independent review 09.11, owner «приглуш»: copper is the call colour, so the large decorative copper stays quiet
+  it('fills its large copper shapes at no more than the quiet share, the masonry\'s lower course a little above it', () => {
+    const fills: { style: string; alpha: number }[] = [];
+    const state = { fillStyle: '', globalAlpha: 1 };
+    const gradient = { addColorStop: () => undefined };
+    const context = new Proxy(state, {
+      get: (target, key) => {
+        if (key === 'createLinearGradient' || key === 'createRadialGradient') return () => gradient;
+        if (key === 'fill' || key === 'fillRect') return () => fills.push({ style: String(target.fillStyle), alpha: target.globalAlpha });
+        return () => undefined;
+      },
+      set: (target, key, value) => {
+        if (key === 'fillStyle' || key === 'globalAlpha') Object.assign(target, { [key]: value });
+        return true;
+      },
+    }) as unknown as CanvasRenderingContext2D;
+    for (const make of [beam, frames, masonry]) {
+      const scene = make(geometry);
+      let time = 0;
+      for (let frame = 0; frame < 60 * 30; frame++) {
+        time += 1 / 60;
+        scene.back?.(context, 1 / 60, time);
+        scene.front?.(context, 1 / 60, time);
+      }
+    }
+    const loudest = (colour: string) => Math.max(0, ...fills.filter((fill) => fill.style.toUpperCase() === colour).map((fill) => fill.alpha));
+    expect(loudest('#B76432')).toBeLessThanOrEqual(QUIET);
+    expect(loudest('#9C5A34')).toBeLessThanOrEqual(.75);
+    expect(loudest('#B76432')).toBeGreaterThan(0);
   });
 
   it('the home page plays every direction in turn, fading between them', () => {
