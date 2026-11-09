@@ -15,12 +15,19 @@ import type { DetailId } from '../ProofDetails';
 // one room level with the ring. Where none is clear: the seam's «Схема ›» gives way to it, as it gives way to a word of
 // the drawing (useLabelFit's tagYield); then the line may cross another node's ring — never its letter or a word
 // (data-over-ring: on a 1250 × 613 laptop the room right of Г is between Б's ring, «Ферма» and the stamp, ~24 px high).
-// Where even that fails it keeps the place that covers least (data-crowded), so a test can say where.
+// Where even that fails, the same again with a shorter leader (LEADS_TIGHT); and where that fails too it keeps the place
+// that covers least (data-crowded), so a test can say where.
 
 /** Air round the line, px */
 const AIR = 6;
 /** The leader's run from the ring's edge out to the line, px */
 const LEADS = [16, 24, 42] as const;
+/** A shorter run, tried only where no place at LEADS is free of words: Linux Chromium sets the hint's two lines 205 px
+ *  wide where macOS sets 203, and at 1280 × 720 and 1250 × 613 the one free place (two lines, 28° down, at 16 px) then
+ *  stood 4.6 px from «Ферма», not AIR, so the hint fell to data-crowded there (Main Regression from 42399915818 on,
+ *  home-proof-contour.spec.ts «node Г’s hint stands beside its ring»). 12 px moves that place 3.5 px left: 2.1 px to
+ *  spare on Linux. Where a place at LEADS is found, as on macOS, nothing changes. */
+const LEADS_TIGHT = [12] as const;
 /** Where on the line's height the leader meets it, from its top */
 const MEETS = [0.5, 0.25, 0.75] as const;
 /** Its ways out of the ring, degrees clockwise from the ring's right: straight out first (the letter Г stands under the
@@ -34,12 +41,12 @@ const overlap = (a: Box, b: Box) =>
   Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
 
 /** Every place the line can take beside the ring (cx, cy, radius), in one line and in two, in the order they are tried */
-function candidatesOf([cx, cy, radius]: readonly [number, number, number], sizes: readonly { lines: 1 | 2; width: number; height: number }[]) {
+function candidatesOf([cx, cy, radius]: readonly [number, number, number], sizes: readonly { lines: 1 | 2; width: number; height: number }[], leads: readonly number[] = LEADS) {
   const candidates: Place[] = [];
   for (const { lines, width, height } of sizes) {
     for (const way of WAYS) {
       for (const meet of MEETS) {
-        for (const lead of LEADS) {
+        for (const lead of leads) {
           const [cos, sin] = [Math.cos((way * Math.PI) / 180), Math.sin((way * Math.PI) / 180)];
           const mark: [number, number] = [cx + radius * cos, cy + radius * sin];
           const end: [number, number] = [cx + (radius + lead) * cos, cy + (radius + lead) * sin];
@@ -105,9 +112,19 @@ export function useNodeHint(stageRef: RefObject<HTMLDivElement | null>, hintRef:
         hint.dataset.lines = String(lines);
         return { lines, width: button.offsetWidth, height: button.offsetHeight };
       });
-      const candidates = candidatesOf([(r.left + r.right) / 2, (r.top + r.bottom) / 2, (r.right - r.left) / 2], sizes);
+      const ringAt = [(r.left + r.right) / 2, (r.top + r.bottom) / 2, (r.right - r.left) / 2] as const;
       const fits = ({ box }: Place) => box.left >= seam + AIR && box.right <= frame.width - AIR && box.top >= AIR && box.bottom <= frame.height - AIR;
-      const { chosen, yieldName, overRing, crowded } = choose(candidates, candidates.filter(fits), clear);
+      const placed = (leads?: readonly number[]) => {
+        const candidates = candidatesOf(ringAt, sizes, leads);
+        return choose(candidates, candidates.filter(fits), clear);
+      };
+      let best = placed();
+      // (the shorter run only once every place at the usual runs is crowded: LEADS_TIGHT)
+      if (best.crowded) {
+        const tight = placed(LEADS_TIGHT);
+        if (!tight.crowded) best = tight;
+      }
+      const { chosen, yieldName, overRing, crowded } = best;
       hint.dataset.lines = String(chosen.lines);
       hint.toggleAttribute('data-crowded', crowded);
       hint.toggleAttribute('data-over-ring', overRing);
