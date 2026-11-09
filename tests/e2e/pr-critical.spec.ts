@@ -348,7 +348,7 @@ test('/pro-nas shows who answers for what, what we build and where, principles w
   // sentences, and no tail that repeats the group's title); a work with its own page links to it, and the directions
   // are one link away. Then the region.
   const ledger = capabilityLedger();
-  await expect(page.locator('.about-ledger-col h3')).toHaveText(ledger.map((column, index) => `${String(index + 1).padStart(2, '0')}${column.title}`));
+  await expect(page.locator('.about-ledger-col h3')).toHaveText(ledger.map((column, index) => `${String(index + 1).padStart(2, '0')} ${column.title}`));
   await expect(page.locator('.about-ledger-col li b')).toHaveText(ledger.flatMap((column) => column.items.map((item) => item.short)));
   await expect(page.locator('.about-ledger-col li b a > [data-arrow="up-right"] svg')).toHaveCount(ledger.flatMap((column) => column.items.filter((item) => item.href)).length);
   expect(await page.locator('.about-ledger a').evaluateAll((links) => links.map((link) => link.getAttribute('href'))))
@@ -729,7 +729,7 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
   expect(text.h1).toEqual(['Від задачі — до зрозумілого плану робіт']);
   expect(text.starts).toEqual(['Є ідея об’єкта', 'Є креслення або проєкт', 'Потрібен окремий етап робіт']);
   // «Ви · Ми» (owner 06.10): each step's number and title; its full result is read to screen readers under the caption
-  expect(text.steps).toEqual(processSteps().map((step) => `${step.number}${step.title}`));
+  expect(text.steps).toEqual(processSteps().map((step) => `${step.number} ${step.title}`));
   expect(text.results).toEqual(processSteps().map((step) => `Результат: ${step.result}`));
   expect(text.formats).toEqual(FORMAT_LABELS);
   const choices = participationChoices();

@@ -200,7 +200,7 @@ export default function DeliveryModelPage() {
           <ol className="process-split proc-split" data-motion>
             {steps.map((step, index) => (
               <li key={step.number} style={{ '--i': index } as CSSProperties}>
-                <h3><b>{step.number}</b>{keepHeadingWords(step.title)}</h3>
+                <h3><b>{step.number}</b>{' '}{keepHeadingWords(step.title)}</h3>
                 <p className="ps-you"><small>Ви</small>{ROUTE_SIDES[index].you}</p>
                 <div className="ps-node">
                   <ProcessDrawing kind={ROUTE_SIDES[index].drawing} />

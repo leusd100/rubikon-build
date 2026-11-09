@@ -107,7 +107,8 @@ export default function AboutPage() {
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Про компанію', href: siteRoutes.about }]} />
             <p className="eyebrow light"><span /> Родинна справа</p>
             <h1>
-              <span className="subhero-title-line">{keepHeadingWords('Будуємо й відповідаємо')}</span>
+              {/* The space keeps «відповідаємо своїми» two words in the heading's text (see /napryamky). */}
+              <span className="subhero-title-line">{keepHeadingWords('Будуємо й відповідаємо')}</span>{' '}
               <span className="subhero-title-line"><em>своїми іменами</em></span>
             </h1>
           </div>

@@ -120,6 +120,13 @@ const organizationData = {
   telephone: company.phone.international,
   email: company.email,
   description: company.description,
+  // A LocalBusiness without an address is incomplete for Google; the city alone is what the site already says publicly.
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: company.address.locality,
+    addressRegion: company.address.region,
+    addressCountry: company.address.country,
+  },
   areaServed: company.serviceAreas.map((name) => ({
     '@type': 'AdministrativeArea',
     name,

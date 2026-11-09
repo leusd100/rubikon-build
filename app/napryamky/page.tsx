@@ -69,7 +69,9 @@ export default function DirectionsPage() {
             <Breadcrumbs items={[{ label: 'Головна', href: siteRoutes.home }, { label: 'Напрямки', href: siteRoutes.directions }]} />
             <p className="eyebrow light"><span /> Напрями робіт</p>
             <h1>
-              <span className="subhero-title-line">{keepHeadingWords('Від фундаменту')}</span>
+              {/* The space between the two block lines is invisible on screen, but without it the heading's text reads
+                  «фундаментудо» to search engines and to anything that takes textContent. */}
+              <span className="subhero-title-line">{keepHeadingWords('Від фундаменту')}</span>{' '}
               <span className="subhero-title-line">до <em>покрівлі</em></span>
             </h1>
           </div>
