@@ -7,8 +7,8 @@
 | Підстава | Завдання: знайти причину кожного падіння Main Regression [42626918764](https://github.com/leusd100/rubikon-build/actions/runs/42626918764) і одним Draft PR повернути `main` зеленим |
 | PR | Draft. **Merge і deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `fix/main-red-after-309` від `main` `7b8dfc65` |
-| Змінено | `HomeV2Hero.tsx` (render-блок до кінця героя), `sonar-project.properties` (виняток S6747 для `blocking` у цьому файлі — той самий, що #198 має для `DirectionDetail.tsx`), `useNodeHint.ts` (запасний коротший відвід), 2 e2e-спеки, цей handoff і аркуші в `docs/handoffs/media/main-red-after-309/` |
-| Не змінено | Тексти, дизайн блоків #306–#309, CSS, Lighthouse-бюджети, правила Sonar, CSP, consent. **Візуальні еталони — не змінено, чекають OK власника** (§4) |
+| Змінено | `HomeV2Hero.tsx` (render-блок до кінця героя), `useNodeHint.ts` (запасний коротший відвід), 2 e2e-спеки, цей handoff і аркуші в `docs/handoffs/media/main-red-after-309/` |
+| Не змінено | Тексти, дизайн блоків #306–#309, CSS, Lighthouse-бюджети, Sonar, CSP, consent. **Візуальні еталони — не змінено, чекають OK власника** (§4) |
 
 ## 1. Що було
 
@@ -95,10 +95,12 @@ Main Regression червоний з `d16cd4e3` (#305). Падіння й ком�
 
 ## 5. Поза цим PR
 
+- Sonar на цьому PR: Quality Gate passed, 1 нове зауваження — `typescript:S6747` «Unknown property 'blocking'» у `HomeV2Hero.tsx:23`. Атрибут справжній (як у `DirectionDetail.tsx`, #198, де для нього є виняток `linkBlocking` у `sonar-project.properties`). Той самий виняток для `HomeV2Hero.tsx` — зміна конфігурації Sonar, тож лише з OK власника; у цей PR не внесено.
+
 - Інші герої з текстом унизу (`/pro-nas`, `/yak-pratsyuiemo`, `/napryamky`) на часткове малювання не перевірено.
 - Мікрозсув шрифту ≤ 0,0003 при заміні fallback (#198 §8.1) може й далі зрідка ламати строгий `:78`.
 - `design/*` PR далі зливаються з відкладеними еталонами й тестами, які в PR Gate не запускаються (#306 `:2370`, #307 `:148`). Пропозиція для `rubikon-control`: перед merge `design/*` — прогін Main Regression на гілці.
 
 ## 6. Відкат
 
-Кожен коміт окремо: `ac2d1217` (rel=expect; разом із ним — виняток Sonar `linkBlockingHome`), `8b26bc3b` (відвід 12 px), `0043b668` (межа /pro-nas), `ba18d805` (тест зупинки).
+Кожен коміт окремо: `ac2d1217` (rel=expect), `8b26bc3b` (відвід 12 px), `0043b668` (межа /pro-nas), `ba18d805` (тест зупинки).
