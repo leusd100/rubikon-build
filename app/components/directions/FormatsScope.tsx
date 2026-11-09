@@ -1,35 +1,32 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { useFirstViewWalk } from '../../hooks/useFirstViewWalk';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FormatPrefillLink } from '../process/FormatPrefillLink';
 import type { FormatCard } from '../../lib/deliveryModelPresentation';
 import type { DeliveryFormatId } from '../../types/deliveryModel';
 
-// «Формати участі» (/yak-pratsyuiemo; /napryamky until Phase 3) — one flat section of a building that is redrawn for
-// the format in focus (owner, 05.10: the oblique wireframe was not clear enough — «більш зрозумілішим, з вау ефектом, ближче до мінімалізму»; the
-// idea is the three-section scheme first mocked for HOME, which the owner liked but did not want there).
-// What the drawing says, in the site's three lines:
-//   copper          — RUBIKON's scope: every part in «Комплексна реалізація»; one package at a time in the other two
-//                     (the foundation, the frame, the roof — the packages the model's own summary names — taking turns);
-//   thin graphite   — the works of the other participants;
-//   a dashed frame  — who the object belongs to: copper and moving when RUBIKON coordinates it, graphite when it is
-//                     the customer's, and a second, outer frame when the object sits inside a general contractor's project.
-// Under the drawing the two facts that tell the formats apart — the other party of the contract and who coordinates
-// the object — in the Delivery Model's words, and the three packages as tags that light with the drawing.
+// «Формати участі» (/yak-pratsyuiemo, «Наш обсяг») — the three formats side by side, compared row by row («Спільне й
+// різне», owner 09.11, variant 02 · B of the mockups). Until then one drawing was redrawn for the format in focus, and
+// the two formats that differ only in the contract (separate package and subcontract) looked almost the same on it
+// (a second thin frame); every answer to «and in the other format?» was behind a press.
 //
-// Each format is a button (title + the model's summary); pointing at, focusing or pressing one selects it. On a wide
-// screen, the first time the block comes into view it walks through the three formats once and returns to the first;
-// any pointing ends the walk. At ≤ 1050 px the buttons are one segmented row above the drawing (formats-scope.css) and
-// there is no walk: the row is the control, the drawing under it the answer, and nothing changes but by a tap (PDO-06,
-// owner 20.10). Nothing moves with reduced motion or out of sight. The drawing is decorative (aria-hidden): the buttons
-// and the two facts carry every word.
+// What the block says, in the Delivery Model's words (deliveryModel.ts, verbatim):
+//   a drawing per format   — the same flat section of a building: RUBIKON's parts in copper, the others' in thin
+//                            graphite, a dashed frame for whose object it is (as before, one drawing per column now);
+//   the summary            — each format's own;
+//   RUBIKON's scope        — the whole agreed complex, or one package at a time (the foundation, the frame, the roof take
+//                            one turn each when the block comes into view and rest on the first: rule 7);
+//   the contract           — the other party: the customer or the general contractor;
+//   who coordinates        — RUBIKON in the agreed scope, the customer or their general contractor, the general contractor.
+// A value that several formats share is said once, across their columns (the contract with the customer is the same
+// in the first two); a value that sets a format apart carries a copper mark. That is the block's one rule: what is the
+// same is written once.
 //
-// On /yak-pratsyuiemo the block stands in place of the three scope cards (owner, 05.10: «перегружений, втрачається
-// фокус уваги»). There `mirror` names the responsibility map's radio group: a format chosen here checks it there and
-// one chosen there is shown here, so the page keeps one choice of format; and `prefill` adds «Обговорити цей
-// формат», which carries the shown format into the form. With a mirror only a press chooses: pointing at a button or
-// tabbing past it would otherwise rewrite the map below on the way to it. The walk is not a choice and is not mirrored.
+// Markup: a table in ARIA roles on divs, as the responsibility map below it (the page has no <table>: tests/e2e/pr-critical
+// «speaks to the client»), so the shared cells keep aria-colspan and every cell its column's format at any width. The
+// drawings are decorative (aria-hidden): the rows carry every word. At ≤ 1050 px the rows stack: the three titles and
+// drawings stay side by side, each row below lists its values with their formats' numbers (formats-scope.css).
+// No format is chosen here: the responsibility map below keeps its own switcher (until 09.11 the two held one choice).
 
 export type FormatTerms = { contractWith: string; coordinator: string; rubikonCoordinates: boolean };
 
@@ -44,100 +41,66 @@ const LAYERS: readonly (readonly [Layer, string])[] = [
 /** The packages that take turns as «one package»: the model's summary names the foundation, the frame, the roof */
 const PACKAGES: readonly (readonly [Layer, string])[] = [['foundation', 'Фундамент'], ['frame', 'Каркас'], ['roof', 'Покрівля']];
 const STEP_MS = 1150;
-/** A format's turn in the walk: its words are read as well, so it runs longer than the site's 2.2 s */
-const TOUR_MS = 3600;
 
-/** Every variant of a changing line laid in one place, only the one on show visible: the line is as tall as its longest
- *  variant at any width, so the block keeps its height while the formats change (on a phone one fact wrapped to a third
- *  line for one format, and the buttons under the drawing jumped 22 px at each step of the walk, 07.10) */
-function Shown<K extends string>({ keys, on, children }: Readonly<{ keys: readonly K[]; on: K; children: (key: K) => ReactNode }>) {
+/** What the dashed frame is, under each drawing where the drawings are a third of a phone wide and their own names
+ *  would be too small (PDO-20: the frames' names must be readable on a phone) */
+const FRAME_NAME: Readonly<Record<DeliveryFormatId, string>> = {
+  comprehensive: 'Обсяг RUBIKON',
+  'work-package': 'Об’єкт замовника',
+  subcontract: 'Об’єкт у проєкті генпідрядника',
+};
+
+/** Neighbouring formats with the same value, as one cell across their columns */
+type Run = { formats: FormatCard[]; key: string };
+function runs(formats: readonly FormatCard[], keyOf: (format: FormatCard) => string): Run[] {
+  const out: Run[] = [];
+  for (const format of formats) {
+    const key = keyOf(format);
+    const last = out.at(-1);
+    if (last?.key === key) last.formats.push(format);
+    else out.push({ formats: [format], key });
+  }
+  return out;
+}
+
+/** One flat section of the building for a format; `scoped` names the parts that are RUBIKON's */
+function Section({ format, scoped }: Readonly<{ format: DeliveryFormatId; scoped: (layer: Layer) => boolean }>) {
   return (
-    <span className="dfmt-shown">
-      {/* (a space between the variants: whitespace takes no room in the grid, and the words do not run together) */}
-      {keys.map((key) => <Fragment key={key}><span data-on={key === on || undefined}>{children(key)}</span>{' '}</Fragment>)}
-    </span>
+    <svg className="fs" viewBox="28 8 404 272" data-format={format} aria-hidden="true" focusable="false">
+      {/* whose object it is: the outer frame only for a general contractor's project */}
+      {format === 'subcontract' && (
+        <>
+          <rect className="fs-frame fs-outer" x="34" y="30" width="392" height="246" />
+          <text className="fs-label" x="34" y="21">Проєкт генпідрядника</text>
+        </>
+      )}
+      <rect className="fs-frame fs-inner" x="88" y="66" width="284" height="196" />
+      <text className={format === 'comprehensive' ? 'fs-label fs-label-scope' : 'fs-label'} x="88" y="57">
+        {{ comprehensive: 'Обсяг RUBIKON', 'work-package': 'Об’єкт замовника', subcontract: 'Об’єкт у складі проєкту' }[format]}
+      </text>
+      {/* the ground outside, the floor inside, the axis */}
+      <path className="fs-ground" d="M98 222H136M324 222H362M152 222H308" />
+      <path className="fs-axis" d="M230 74V256" />
+      {LAYERS.map(([layer, d], index) => (
+        <path className="fs-layer" data-layer={layer} data-scope={scoped(layer) ? '' : undefined} style={{ '--i': index } as CSSProperties} d={d} key={layer} />
+      ))}
+    </svg>
   );
 }
 
-export function FormatsScope({ formats, terms, mirror, prefill = false }: Readonly<{
+export function FormatsScope({ formats, terms, prefill = false }: Readonly<{
   formats: readonly FormatCard[];
   terms: Readonly<Record<DeliveryFormatId, FormatTerms>>;
-  /** The name of another radio group on the page that holds the same choice (/yak-pratsyuiemo: resp-format) */
-  mirror?: string;
-  /** Add the link that carries the shown format into the inquiry form */
+  /** Add, under each format, the link that carries it into the inquiry form */
   prefill?: boolean;
 }>) {
-  const [active, setActive] = useState<DeliveryFormatId>(formats[0].id);
   const [turn, setTurn] = useState(0);
   const [inView, setInView] = useState(false);
-  const figureRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const current = formats.find((format) => format.id === active) ?? formats[0];
-  const whole = active === 'comprehensive';
 
-  const select = (id: DeliveryFormatId) => {
-    setTurn(0);
-    setActive(id);
-  };
-  // On a wide screen only (read once, on mount): at ≤ 1050 px the formats are a row above the drawing and change only when
-  // tapped. The order ends where it began, on the first format.
-  const [walks, setWalks] = useState(false);
+  // On screen or not: the packages below walk only in view, and the copper frame runs round only in view
   useEffect(() => {
-    const wide = requestAnimationFrame(() => setWalks(!window.matchMedia('(max-width: 1050px)').matches));
-    return () => cancelAnimationFrame(wide);
-  }, []);
-  const order = useMemo(() => [...formats.slice(1), formats[0]].map((format) => format.id), [formats]);
-  const { stop: stopWalk } = useFirstViewWalk(figureRef, {
-    steps: order,
-    onStep: select,
-    // Stopped between formats: back to the page's one choice, not the format the walk happened to show («The walk is not a
-    // choice»). A press, the mirrored group and a restored format each set theirs right after.
-    onStop: () => {
-      const chosen = mirror && document.querySelector<HTMLInputElement>(`input[name="${mirror}"]:checked`)?.value;
-      select(formats.find((format) => format.id === chosen)?.id ?? formats[0].id);
-    },
-    startDelayMs: 1600,
-    stepMs: TOUR_MS,
-    enabled: walks,
-    actionsRef: gridRef,
-  });
-
-  const choose = (id: DeliveryFormatId) => {
-    stopWalk();
-    select(id);
-    if (!mirror) return;
-    const twin = document.querySelector<HTMLInputElement>(`input[name="${mirror}"][value="${id}"]`);
-    if (twin && !twin.checked) {
-      twin.checked = true;
-      twin.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-  };
-
-  // …and the other way: a format picked in the mirrored group is the one shown here — from the start, too: a browser
-  // may restore the radio's last state on a reload
-  useEffect(() => {
-    if (!mirror) return undefined;
-    // (in the next frame: the restored state is read after the browser has put it back)
-    const restore = requestAnimationFrame(() => {
-      const restored = document.querySelector<HTMLInputElement>(`input[name="${mirror}"]:checked`)?.value;
-      if (!restored || restored === formats[0].id || !formats.some((format) => format.id === restored)) return;
-      stopWalk();
-      select(restored as DeliveryFormatId);
-    });
-    const follow = (event: Event) => {
-      const input = event.target;
-      if (!(input instanceof HTMLInputElement) || input.name !== mirror || !input.checked) return;
-      if (!formats.some((format) => format.id === input.value)) return;
-      stopWalk();
-      select(input.value as DeliveryFormatId);
-    };
-    document.addEventListener('change', follow);
-    return () => { cancelAnimationFrame(restore); document.removeEventListener('change', follow); };
-  }, [mirror, formats, stopWalk]);
-
-  // On screen or not, for the packages below and the drawing's own life
-  useEffect(() => {
-    const root = figureRef.current;
+    const root = gridRef.current;
     if (!root) return undefined;
     // The newest entry: one call can hold several, and the first of them may be a stale «out of view» (DrawingSheet)
     const observer = new IntersectionObserver((entries) => setInView(Boolean(entries.at(-1)?.isIntersecting)));
@@ -146,9 +109,9 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
   }, []);
 
   // «One package»: the packages take one turn each and rest on the first (rule 7: nothing loops while the block is on
-  // screen). A new format, or the block coming back into view, walks them again.
+  // screen). The block coming back into view walks them again.
   useEffect(() => {
-    if (whole || !inView || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    if (!inView || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     let left = PACKAGES.length;
     let timer = 0;
     const next = () => {
@@ -158,93 +121,96 @@ export function FormatsScope({ formats, terms, mirror, prefill = false }: Readon
     };
     timer = window.setTimeout(next, STEP_MS);
     return () => window.clearTimeout(timer);
-  }, [whole, inView, active]);
+  }, [inView]);
 
-  const scoped = (layer: Layer) => whole || PACKAGES[turn][0] === layer;
+  const whole = (format: FormatCard) => format.id === 'comprehensive';
+  const scopedIn = (format: FormatCard) => (layer: Layer) => whole(format) || PACKAGES[turn][0] === layer;
+
+  const packages = (format: FormatCard) => (
+    <>
+      <ul className="dfmt-packages">
+        {PACKAGES.map(([layer, name]) => <li key={layer} data-scope={scopedIn(format)(layer) ? '' : undefined}>{name}</li>)}
+      </ul>
+      <span className="dfmt-note">{whole(format) ? 'увесь погоджений комплекс' : 'або інший погоджений обсяг'}</span>
+    </>
+  );
+
+  /** The rows under the drawings: label, how to tell the formats' values apart, the value; `facts` rows mark the values
+   *  that set a format apart (the summaries are prose, each its own) */
+  const rows: readonly { id: string; label: string; facts: boolean; key: (format: FormatCard) => string; value: (format: FormatCard) => ReactNode }[] = [
+    { id: 'text', label: 'Суть', facts: false, key: (format) => format.text, value: (format) => format.text },
+    { id: 'scope', label: 'Обсяг RUBIKON', facts: true, key: (format) => (whole(format) ? 'whole' : 'package'), value: packages },
+    { id: 'contract', label: 'Договір', facts: true, key: (format) => terms[format.id].contractWith, value: (format) => <>{terms[format.id].contractWith} — <b>RUBIKON</b></> },
+    {
+      id: 'coordinator',
+      label: 'Координує об’єкт',
+      facts: true,
+      key: (format) => terms[format.id].coordinator,
+      value: (format) => (terms[format.id].rubikonCoordinates ? <b className="dfmt-ours">{terms[format.id].coordinator}</b> : terms[format.id].coordinator),
+    },
+  ];
 
   return (
-    <div className="dfmt-grid" data-motion ref={gridRef}>
-      <ol className="dfmt-list" aria-label="Формат участі">
-        {formats.map((format) => (
-          <li key={format.id}>
-            <button
-              type="button"
-              className="step-option dfmt-option"
-              aria-pressed={format.id === active}
-              onClick={() => choose(format.id)}
-              onFocus={mirror ? undefined : () => choose(format.id)}
-              onMouseEnter={mirror ? undefined : () => choose(format.id)}
-            >
-              <span className="dfmt-num">{format.number}</span>
-              <b className="dfmt-title">{format.title}</b>
-              <span className="dfmt-text">{format.text}</span>
-              {/* The two facts of every format, for a screen reader and before hydration: under the drawing they are
-                  shown for one format at a time, and that copy is out of the accessibility tree */}
-              <span className="dfmt-sr"> Договір: {terms[format.id].contractWith} і RUBIKON. Координує об’єкт: {terms[format.id].coordinator}.</span>
-            </button>
-          </li>
-        ))}
-      </ol>
-      <figure className="dfmt-figure" data-live={inView || undefined} ref={figureRef}>
-        <svg className="fs" viewBox="0 0 460 284" data-format={active} aria-hidden="true" focusable="false">
-          {/* whose object it is: the outer frame only for a general contractor's project */}
-          <rect className="fs-frame fs-outer" x="34" y="30" width="392" height="246" />
-          <rect className="fs-frame fs-inner" x="88" y="66" width="284" height="196" />
-          <text className="fs-label fs-label-outer" x="34" y="21">Проєкт генпідрядника</text>
-          <text className="fs-label fs-label-scope" x="88" y="57">Обсяг RUBIKON</text>
-          <text className="fs-label fs-label-client" x="88" y="57">Об’єкт замовника</text>
-          <text className="fs-label fs-label-part" x="88" y="57">Об’єкт у складі проєкту</text>
-          {/* the ground outside, the floor inside, the axis */}
-          <path className="fs-ground" d="M98 222H136M324 222H362M152 222H308" />
-          <path className="fs-axis" d="M230 74V256" />
-          {LAYERS.map(([layer, d], index) => (
-            <path className="fs-layer" data-layer={layer} data-scope={scoped(layer) ? '' : undefined} style={{ '--i': index } as CSSProperties} d={d} key={layer} />
+    <div className="dfmt-grid" data-motion data-live={inView || undefined} ref={gridRef}>
+      <p className="dfmt-key" aria-hidden="true">
+        <span className="dfmt-key-shared"><i>01 · 02</i>Однаково для кількох форматів</span>
+        <span className="dfmt-key-differs"><i>03</i>Відрізняє формат</span>
+      </p>
+      <div className="dfmt-table" role="table" aria-label="Формати участі">
+        <div className="dfmt-row dfmt-row-head" role="row" style={{ '--i': 0 } as CSSProperties}>
+          <span className="dfmt-corner" role="columnheader"><span className="dfmt-sr">Що порівнюємо</span></span>
+          {formats.map((format) => (
+            <span className="dfmt-head" role="columnheader" key={format.id}>
+              <span className="dfmt-num">{format.number}</span> <span className="dfmt-title">{format.title}</span>
+            </span>
           ))}
-        </svg>
-        <figcaption className="dfmt-caption">
-          <span>Схема</span>
-          <b>Переріз</b>
-          <Shown keys={formats.map((format) => format.id)} on={active}>
-            {(id) => { const format = formats.find((item) => item.id === id)!; return <><i>{format.number}</i> {format.title}</>; }}
-          </Shown>
-        </figcaption>
-        {/* The chosen format's summary, shown only where the formats are a row and their buttons show the titles alone
-            (≤ 1050 px); every button keeps its summary in its name, so this copy is out of the accessibility tree */}
-        <p className="dfmt-chosen" aria-hidden="true">
-          <Shown keys={formats.map((format) => format.id)} on={active}>{(id) => formats.find((item) => item.id === id)!.text}</Shown>
-        </p>
-        {/* The words under the drawing repeat what the pressed button says (each button carries its format's two facts
-            as hidden text); they change with the format, so this copy is kept out of the accessibility tree */}
-        <div className="dfmt-facts" aria-hidden="true">
-          <ul className="dfmt-packages">
-            {PACKAGES.map(([layer, name]) => <li key={layer} data-scope={scoped(layer) ? '' : undefined}>{name}</li>)}
-            <li className="dfmt-packages-note">
-              <Shown keys={['whole', 'part']} on={whole ? 'whole' : 'part'}>
-                {(id) => (id === 'whole' ? 'увесь погоджений комплекс' : 'або інший погоджений обсяг')}
-              </Shown>
-            </li>
-          </ul>
-          <dl className="dfmt-terms">
-            <div>
-              <dt>Договір</dt>
-              <dd>
-                <Shown keys={formats.map((format) => format.id)} on={active}>
-                  {(id) => <>{terms[id].contractWith} — <b>RUBIKON</b></>}
-                </Shown>
-              </dd>
-            </div>
-            <div>
-              <dt>Координує об’єкт</dt>
-              <dd>
-                <Shown keys={formats.map((format) => format.id)} on={active}>
-                  {(id) => (terms[id].rubikonCoordinates ? <b>{terms[id].coordinator}</b> : terms[id].coordinator)}
-                </Shown>
-              </dd>
-            </div>
-          </dl>
         </div>
-        {prefill && <FormatPrefillLink label={current.title} />}
-      </figure>
+        <div className="dfmt-row dfmt-row-draw" aria-hidden="true" style={{ '--i': 1 } as CSSProperties}>
+          <span className="dfmt-corner" />
+          {formats.map((format) => (
+            <figure className="dfmt-fig" key={format.id}>
+              <Section format={format.id} scoped={scopedIn(format)} />
+              <figcaption className="dfmt-frame-name" data-ours={whole(format) || undefined}>{FRAME_NAME[format.id]}</figcaption>
+            </figure>
+          ))}
+        </div>
+        {rows.map((row, index) => {
+          const cells = runs(formats, row.key);
+          return (
+            <div className="dfmt-row" role="row" data-row={row.id} key={row.id} style={{ '--i': index + 2 } as CSSProperties}>
+              <span className="dfmt-label" role="rowheader">{row.label}</span>
+              {cells.map((cell) => {
+                const span = cell.formats.length;
+                return (
+                  <div
+                    className="dfmt-cell"
+                    role="cell"
+                    aria-colspan={span > 1 ? span : undefined}
+                    data-shared={span > 1 || undefined}
+                    data-differs={(row.facts && span === 1 && cells.length > 1) || undefined}
+                    style={{ '--span': span } as CSSProperties}
+                    key={cell.formats[0].id}
+                  >
+                    <span className="dfmt-tag" aria-hidden="true">{cell.formats.map((format) => format.number).join(' · ')}</span>
+                    <div className="dfmt-value">{row.value(cell.formats[0])}</div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+      {prefill && (
+        <div className="dfmt-row dfmt-ctas" style={{ '--i': rows.length + 2 } as CSSProperties}>
+          <span className="dfmt-corner" aria-hidden="true" />
+          {formats.map((format) => (
+            <div className="dfmt-cta" key={format.id}>
+              <span className="dfmt-tag" aria-hidden="true">{format.number}</span>
+              <FormatPrefillLink label={format.title} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

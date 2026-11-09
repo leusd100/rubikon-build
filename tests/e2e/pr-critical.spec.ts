@@ -713,9 +713,10 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
     starts: '.proc-start-list h3',
     steps: '.proc-split h3',
     results: '.proc-split .ps-result .sr-only',
-    formats: '#obsiah .dfmt-option .dfmt-title',
-    formatTexts: '#obsiah .dfmt-option .dfmt-text',
-    formatTerms: '#obsiah .dfmt-option .dfmt-sr',
+    formats: '#obsiah .dfmt-head .dfmt-title',
+    formatTexts: '#obsiah [data-row="text"] .dfmt-value',
+    formatContracts: '#obsiah [data-row="contract"] .dfmt-value',
+    formatCoordinators: '#obsiah [data-row="coordinator"] .dfmt-value',
     when: '.rm-when .proc-principle',
     principle: '.rm-when-how',
     areas: '.rm-col > b',
@@ -733,9 +734,10 @@ test('/yak-pratsyuiemo answers the five client questions in the model’s words,
   expect(text.formats).toEqual(FORMAT_LABELS);
   const choices = participationChoices();
   for (const format of deliveryModel.formats) expect(text.formatTexts).toEqual(expect.arrayContaining([format.summary]));
-  // Since 05.10 the three scope cards are one drawing with three format buttons; every button still names the other
-  // party of the contract and who coordinates the object (hidden text: the drawing shows them for one format at a time)
-  expect(text.formatTerms).toEqual(choices.map((choice) => `Договір: ${choice.contractWith} і RUBIKON. Координує об’єкт: ${choice.coordinator}.`));
+  // Since 09.11 the formats stand side by side (owner: «Спільне й різне»): the other party of the contract, said once
+  // where neighbouring formats share it, and who coordinates the object, in visible text before hydration
+  expect(text.formatContracts).toEqual([...new Set(choices.map((choice) => `${choice.contractWith} — RUBIKON`))]);
+  expect(text.formatCoordinators).toEqual(choices.map((choice) => choice.coordinator));
   const resp = responsibilityByFormat();
   // The responsibility table (owner 06.10): each format opens with when it is yours, then the model's interfaces line;
   // a column per party, the client being «Ви»; a row per work — all of them, in three groups, plainer names where set
@@ -834,7 +836,7 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
     await expect(page.locator('.process-page')).not.toHaveAttribute('data-motion-ready', /.*/);
     await expect(page.locator('.rm-row').first()).toHaveCSS('opacity', '1');
-    await expect(page.locator('#obsiah .dfmt-figure')).toHaveCSS('opacity', '1');
+    await expect(page.locator('#obsiah .dfmt-row').first()).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-start-merge')).toHaveCSS('opacity', '1');
     await expect(page.locator('.proc-contract-band')).toHaveCSS('opacity', '1');
     await expect(page.locator('.cs')).toHaveAttribute('data-reached', '1 2 3 4');
@@ -863,22 +865,6 @@ test.describe('/yak-pratsyuiemo motion', () => {
     await expect(route).toHaveAttribute('data-motion-state', 'on');
     // The steps are readable once played: every step's text back at full strength.
     await expect(route.locator('li').last().locator('h3')).toHaveCSS('opacity', '1', { timeout: 5000 });
-  });
-
-  test('pressing a format from the keyboard selects it: the drawing shows that format’s scope', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'keyboard');
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const option = page.locator('#obsiah .dfmt-option').nth(1);
-    // Focus alone chooses nothing here: this block and the map below hold one choice, and tabbing past must not rewrite it
-    await option.focus();
-    await expect(option).toHaveAttribute('aria-pressed', 'false');
-    await expect(page.locator('.proc-resp-switch input[value="comprehensive"]')).toBeChecked();
-    await page.keyboard.press('Enter');
-    await expect(option).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'work-package');
-    // one package is RUBIKON's, the rest are the other participants'
-    await expect(page.locator('#obsiah svg.fs .fs-layer[data-scope]')).toHaveCount(1);
   });
 
 });
@@ -986,30 +972,15 @@ test.describe('/yak-pratsyuiemo interactions', () => {
     expect(Math.abs(headTop - band.bottom)).toBeLessThan(1);
   });
 
-  test('the scope drawing and the responsibility table hold one choice of format', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.emulateMedia({ reducedMotion: 'reduce' });
+  test('the scope block shows the three formats side by side and chooses nothing', async ({ page }) => {
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    const drawing = page.locator('#obsiah svg.fs');
-    const options = page.locator('#obsiah .dfmt-option');
-    await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
-    await options.filter({ hasText: 'Субпідряд' }).click();
-    await expect(drawing).toHaveAttribute('data-format', 'subcontract');
-    await expect(page.locator('.proc-resp-switch input[value="subcontract"]')).toBeChecked();
-    await expect(page.locator('.rm-col-client .rm-who:visible')).toHaveText('генпідрядник');
-    // and back from the table
-    await page.locator('.proc-resp-switch').getByRole('radio', { name: 'Окремий підряд', exact: true }).check();
-    await expect(options.nth(1)).toHaveAttribute('aria-pressed', 'true');
-    await expect(drawing).toHaveAttribute('data-format', 'work-package');
-  });
-
-  test('the scope block is one drawing with three format buttons, and no second switcher', async ({ page }) => {
-    await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    // Until 05.10 three cards stood here, each with its own drawing (owner: overloaded, the focus was lost)
-    await expect(page.locator('.proc-scope-switch, .proc-scope-grid')).toHaveCount(0);
-    await expect(page.locator('#obsiah .dfmt-option')).toHaveCount(3);
-    await expect(page.locator('#obsiah svg.fs')).toHaveCount(1);
+    // Until 05.10 three cards stood here, each with its own drawing; until 09.11 one drawing behind three buttons
+    await expect(page.locator('.proc-scope-switch, .proc-scope-grid, #obsiah .dfmt-option')).toHaveCount(0);
+    await expect(page.locator('#obsiah svg.fs')).toHaveCount(3);
+    await expect(page.locator('#obsiah button, #obsiah input')).toHaveCount(0);
     await expect(page.locator('#obsiah .proc-scope-legend li')).toHaveCount(3);
+    // the responsibility map keeps its own switcher, untouched by this block
+    await expect(page.locator('.proc-resp-switch input[value="comprehensive"]')).toBeChecked();
   });
 
   test('after a switch the rows whose parties changed are lit for a moment', async ({ page }) => {
@@ -1041,9 +1012,11 @@ test.describe('/yak-pratsyuiemo interactions', () => {
   test('«Обговорити цей формат» takes the visitor to the form with that format chosen', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(DELIVERY_PAGE, { waitUntil: 'load' });
-    // The link carries the format the drawing shows: choose the third first
-    await page.locator('#obsiah .dfmt-option').nth(2).click();
-    await page.locator('#obsiah .proc-scope-cta').click();
+    // Each format has its own link, under its column: the third carries «Субпідряд»
+    const links = page.locator('#obsiah .proc-scope-cta');
+    await expect(links).toHaveCount(3);
+    await expect(links.nth(2)).toHaveAccessibleName('Обговорити цей формат: Субпідряд');
+    await links.nth(2).click();
     await expect(page).toHaveURL(/#inquiry$/);
     await expect(page.locator('#inquiry select[name="cooperation"]')).toHaveValue('Субпідряд');
     await expect(page.locator('#inquiry details.inquiry-details')).toHaveAttribute('open', '');

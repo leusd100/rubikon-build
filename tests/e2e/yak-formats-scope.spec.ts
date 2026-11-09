@@ -1,300 +1,177 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { participationChoices } from '../../app/lib/deliveryModelPresentation';
 
-// /yak-pratsyuiemo «Який обсяг робіт можемо взяти на себе» — one flat section of a building, redrawn for the format in
-// focus (owner, 05.10: the oblique wireframe did not explain enough). Until Phase 3 the same block stood on /napryamky
-// too, and these checks ran there; that page now links here (DEC-45, PROPOSED). They pin what the drawing promises:
-// the whole building is RUBIKON's in the first format and exactly one package at a time in the other two; a general
-// contractor's project gets its outer frame; the two facts under the drawing are the Delivery Model's; and the block
-// walks through the formats once on first view, which a press ends (here pointing does not choose: it would rewrite
-// the responsibility map below on the way to it).
-// On a phone or a tablet (≤ 1050 px; owner 20.10, PDO-06 / OD-PX-22 a) the three formats are one segmented row above
-// the drawing, so a tap redraws what is right under the finger, and the block does not walk through them by itself.
+// /yak-pratsyuiemo «Який обсяг робіт можемо взяти на себе» — the three formats side by side, compared row by row; a
+// value several formats share is one cell across their columns, a value that sets a format apart carries a copper
+// mark (owner 09.11, mockup 02 · B «Спільне й різне»; until then one drawing redrawn for the format in focus, behind
+// three buttons). These checks pin what the block promises: every format's words are the Delivery Model's; the
+// whole building is RUBIKON's in the first format and one package at a time in the other two; a general contractor's
+// project gets its outer frame; the contract with the customer, shared by the first two formats, is said once; the
+// cells keep their columns for assistive technology (ARIA table roles and spans, as the responsibility map — the page
+// has no <table>); nothing here is a choice. At ≤ 1050 px the rows stack under three titles and drawings side by side.
 
 const GRID = '#obsiah .dfmt-grid';
+const choices = participationChoices();
+/** Neighbouring formats with the same value, as the block groups them */
+const grouped = (values: readonly string[]) => values.reduce<{ value: string; span: number }[]>((runs, value) => {
+  const last = runs.at(-1);
+  if (last?.value === value) last.span += 1;
+  else runs.push({ value, span: 1 });
+  return runs;
+}, []);
+const overflow = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
-test('each format redraws the section: the whole complex, one package, one package inside a general contractor’s project', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  const grid = page.locator(GRID);
-  const drawing = grid.locator('svg.fs');
-  const options = grid.locator('.dfmt-option');
-  const choices = participationChoices();
-  await expect(options).toHaveCount(choices.length);
-  await expect(grid.locator('.dfmt-figure img')).toHaveCount(0);
-  await expect(grid.locator('.dfmt-caption')).toContainText('Схема');
-  // Every button carries its format's two facts for a screen reader (the copy under the drawing is aria-hidden) —
-  // as hidden text: it takes no room on the page
-  await expect(options.locator('.dfmt-sr')).toHaveText(choices.map((choice) => `Договір: ${choice.contractWith} і RUBIKON. Координує об’єкт: ${choice.coordinator}.`));
-  expect(await options.locator('.dfmt-sr').evaluateAll((notes) => Math.max(...notes.map((note) => note.getBoundingClientRect().height)))).toBeLessThanOrEqual(1);
+for (const width of [1440, 390]) {
+  test(`the three formats stand side by side in the model’s words; what they share is said once: ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+    const grid = page.locator(GRID);
+    const table = page.getByRole('table', { name: 'Формати участі' });
+    await expect(table).toBeVisible();
+    // a column per format, under a column of row names
+    await expect(table.getByRole('columnheader')).toHaveCount(choices.length + 1);
+    await expect(grid.locator('.dfmt-head .dfmt-title')).toHaveText(choices.map((choice) => choice.title));
+    await expect(grid.locator('[data-row="text"] .dfmt-value')).toHaveText(choices.map((choice) => choice.text));
+    // the other party of the contract: the customer twice in a row — one cell across two columns
+    const contract = grouped(choices.map((choice) => `${choice.contractWith} — RUBIKON`));
+    expect(contract.map((run) => run.span)).toEqual([2, 1]);
+    const contractCells = grid.locator('[data-row="contract"] [role="cell"]');
+    await expect(contractCells.locator('.dfmt-value')).toHaveText(contract.map((run) => run.value));
+    await expect(contractCells.first()).toHaveAttribute('aria-colspan', '2');
+    await expect(contractCells.last()).toHaveAttribute('data-differs', 'true');
+    // who coordinates: three different answers, each marked as what sets its format apart
+    const coordinator = grid.locator('[data-row="coordinator"] [role="cell"]');
+    await expect(coordinator.locator('.dfmt-value')).toHaveText(choices.map((choice) => choice.coordinator));
+    for (const cell of await coordinator.all()) await expect(cell).toHaveAttribute('data-differs', 'true');
+    // RUBIKON's scope: the whole complex, then one package for the other two, said once
+    const scope = grid.locator('[data-row="scope"] [role="cell"]');
+    await expect(scope).toHaveCount(2);
+    await expect(scope.last()).toHaveAttribute('aria-colspan', '2');
+    await expect(scope.first().locator('.dfmt-packages li[data-scope]')).toHaveCount(3);
+    await expect(scope.last().locator('.dfmt-packages li[data-scope]')).toHaveCount(1);
+    // a drawing per format: the whole building copper in the first; one package at rest (the foundation) in the others;
+    // the outer frame is a general contractor's project and nothing else
+    const drawings = grid.locator('svg.fs');
+    await expect(drawings).toHaveCount(choices.length);
+    for (const [index, choice] of choices.entries()) {
+      const drawing = drawings.nth(index);
+      await expect(drawing).toHaveAttribute('data-format', choice.id);
+      await expect(drawing.locator('.fs-layer[data-scope]')).toHaveCount(choice.id === 'comprehensive' ? 4 : 1);
+      await expect(drawing.locator('.fs-outer')).toHaveCount(choice.id === 'subcontract' ? 1 : 0);
+    }
+    // nothing here is a choice: the responsibility map below keeps its own switcher
+    await expect(grid.locator('button, input')).toHaveCount(0);
+    expect(await overflow(page)).toBe(0);
+  });
+}
 
-  for (const [index, choice] of choices.entries()) {
-    await options.nth(index).click();
-    await expect(options.nth(index)).toHaveAttribute('aria-pressed', 'true');
-    await expect(drawing).toHaveAttribute('data-format', choice.id);
-    // RUBIKON's scope on the drawing and in the tags under it
-    const whole = choice.id === 'comprehensive';
-    await expect(drawing.locator('.fs-layer[data-scope]')).toHaveCount(whole ? 4 : 1);
-    await expect(grid.locator('.dfmt-packages li[data-scope]')).toHaveCount(whole ? 3 : 1);
-    // The two facts, in the model's words (each line keeps every format's words in one place, the shown one visible)
-    await expect(grid.locator('.dfmt-terms dd').first().locator('[data-on]')).toHaveText(`${choice.contractWith} — RUBIKON`);
-    await expect(grid.locator('.dfmt-terms dd').nth(1).locator('[data-on]')).toHaveText(choice.coordinator);
-    await expect(grid.locator('.dfmt-terms dd [data-on]')).toHaveCount(2);
-    // The outer frame is a general contractor's project and nothing else
-    await expect(drawing.locator('.fs-outer')).toHaveCSS('opacity', choice.id === 'subcontract' ? '1' : '0');
-  }
-  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-});
-
-test('the block walks through the formats once on first view and comes back to the first', async ({ page }) => {
-  // The walk is a wide screen's: at ≤ 1050 px it is off (PDO-06), so every project checks it at 1440
+test('in «one package» the packages take one turn each and rest on the first, in both formats together', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.clock.install();
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const grid = page.locator(GRID);
-  const drawing = grid.locator('svg.fs');
   await grid.scrollIntoViewIfNeeded();
-  await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
-  // (the observer that arms the walk is not on the clock, so its first step is polled for)
-  await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
-  await page.clock.runFor(20_000);
-  await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
-});
-
-test('in «one package» the packages take one turn each and rest on the first', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.clock.install();
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  const grid = page.locator(GRID);
-  await grid.scrollIntoViewIfNeeded();
-  await grid.locator('.dfmt-option').nth(1).click();
-  const scoped = () => grid.locator('svg.fs .fs-layer[data-scope]').getAttribute('data-layer');
-  await expect.poll(scoped).toBe('foundation');
+  await expect(grid).toHaveAttribute('data-live', 'true');
+  const scoped = () => grid.locator('svg.fs').evaluateAll((drawings) => drawings.slice(1)
+    .map((drawing) => drawing.querySelector('.fs-layer[data-scope]')?.getAttribute('data-layer')).join(' '));
+  await expect.poll(scoped).toBe('foundation foundation');
   const seen = [];
   for (let turn = 0; turn < 3; turn += 1) {
     await page.clock.runFor(1150);
     seen.push(await scoped());
   }
-  expect(seen).toEqual(['frame', 'roof', 'foundation']);
+  expect(seen).toEqual(['frame frame', 'roof roof', 'foundation foundation']);
+  // the tags follow the drawings
+  await expect(grid.locator('[data-row="scope"] [role="cell"]').last().locator('li[data-scope]')).toHaveText('Фундамент');
   await page.clock.runFor(5000);
-  expect(await scoped()).toBe('foundation');
+  expect(await scoped()).toBe('foundation foundation');
 });
 
-test('a press ends the walk', async ({ page }) => {
+test('/yak-pratsyuiemo nothing in the formats block loops while it is on screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  const grid = page.locator(GRID);
+  await grid.scrollIntoViewIfNeeded();
+  await expect(grid).toHaveAttribute('data-live', 'true');
+  const endless = () => page.evaluate(() => document.getAnimations()
+    .filter((animation) => animation.effect?.getTiming().iterations === Infinity)
+    .map((animation) => (animation as CSSAnimation).animationName));
+  expect(await endless()).toEqual([]);
+});
+
+// ---- ≤ 1050 px: the titles and the drawings three across, every row below stacked with its formats' numbers ----
+
+for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 768, height: 1024 }]) {
+  test(`on ≤ 1050 px the rows stack under three titles and drawings side by side: ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+    const grid = page.locator(GRID);
+    const where = `${viewport.width}px`;
+    // three across: the titles on one line of columns, the drawings on the next
+    for (const selector of ['.dfmt-head', '.dfmt-fig']) {
+      const tops = await grid.locator(selector).evaluateAll((items) => items.map((item) => Math.round(item.getBoundingClientRect().top)));
+      expect(new Set(tops).size, `${where}: ${selector}`).toBe(1);
+    }
+    // the frames are named under the drawings, readable (PDO-20), each inside its column; not inside the drawings
+    const names = grid.locator('.dfmt-frame-name');
+    await expect(names).toHaveText(['Обсяг RUBIKON', 'Об’єкт замовника', 'Об’єкт у проєкті генпідрядника']);
+    const boxes = await grid.locator('.dfmt-fig').evaluateAll((figures) => figures.map((figure) => {
+      const name = figure.querySelector('.dfmt-frame-name')!;
+      const [box, own] = [figure.getBoundingClientRect(), name.getBoundingClientRect()];
+      return { size: parseFloat(getComputedStyle(name).fontSize), inside: own.left >= box.left - 1 && own.right <= box.right + 1 };
+    }));
+    for (const box of boxes) expect(box, where).toEqual({ size: expect.any(Number), inside: true });
+    for (const box of boxes) expect(box.size, where).toBeGreaterThanOrEqual(11);
+    await expect(grid.locator('svg.fs .fs-label').first()).toBeHidden();
+    // every value carries its formats' numbers; the shared one all of them
+    await expect(grid.locator('[data-row="contract"] .dfmt-tag')).toHaveText(['01 · 02', '03']);
+    await expect(grid.locator('[data-row="coordinator"] .dfmt-tag')).toHaveText(['01', '02', '03']);
+    await expect(grid.locator('[data-row="contract"] .dfmt-tag').first()).toBeVisible();
+    expect(await overflow(page), where).toBe(0);
+  });
+}
+
+test('the block keeps every word in place at 1440 px: the frames are named inside the drawings, the numbers are the columns', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  const grid = page.locator(GRID);
+  await expect(grid.locator('svg.fs .fs-label').first()).toHaveCSS('font-size', '15px');
+  await expect(grid.locator('.dfmt-frame-name').first()).toBeHidden();
+  await expect(grid.locator('.dfmt-tag').first()).toBeHidden();
+  // a shared value runs across its columns: the contract with the customer is as wide as two formats
+  const widths = await grid.locator('[data-row="contract"] [role="cell"]').evaluateAll((cells) => cells.map((cell) => cell.getBoundingClientRect().width));
+  const column = await grid.locator('.dfmt-head').first().evaluate((head) => head.getBoundingClientRect().width);
+  expect(Math.abs(widths[0] - 2 * column)).toBeLessThan(2);
+  expect(Math.abs(widths[1] - column)).toBeLessThan(2);
+});
+
+test('with reduced motion nothing in the scope block animates', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.clock.install();
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const grid = page.locator(GRID);
   await grid.scrollIntoViewIfNeeded();
-  await grid.locator('.dfmt-option').nth(2).click();
-  await page.clock.runFor(20_000);
-  await expect(grid.locator('svg.fs')).toHaveAttribute('data-format', 'subcontract');
-});
-
-// ---- PDO-06: at ≤ 1050 px the formats are a segmented row above the drawing ----
-
-const NARROW = [
-  { width: 320, height: 568 },
-  { width: 375, height: 667 },
-  { width: 390, height: 844 },
-  { width: 430, height: 932 },
-  { width: 768, height: 1024 },
-] as const;
-
-/** The top of what the fixed header leaves of the window */
-const headerEdge = (page: Page) => page.evaluate(() => Math.max(0, document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0));
-
-/** Scrolls so that the element is where a visitor reads it: its centre at the window's centre, or its top just under
- *  the header. Twice, as the header may change height once the page has scrolled. */
-async function place(page: Page, element: Locator, where: 'centre' | 'top') {
-  for (let pass = 0; pass < 2; pass += 1) {
-    const edge = await headerEdge(page);
-    await element.evaluate((node, { where, edge }) => {
-      const box = node.getBoundingClientRect();
-      const top = where === 'centre' ? box.top + window.scrollY + box.height / 2 - window.innerHeight / 2 : box.top + window.scrollY - edge - 12;
-      window.scrollTo({ top, behavior: 'instant' });
-    }, { where, edge });
-    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
-  }
-}
-
-/** A tap where a finger taps: at the button's centre, with no scrolling first (Playwright's own tap and click scroll a
- *  button that is inside its scroll margin — 116 px under the top — into view, which a finger does not) */
-async function tapAt(page: Page, element: Locator, isMobile: boolean) {
-  const box = await element.boundingBox();
-  if (!box) throw new Error('the button is not on the page');
-  const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
-  await (isMobile ? page.touchscreen.tap(x, y) : page.mouse.click(x, y));
-}
-
-/** The share of the element between the header's bottom edge and the window's bottom edge */
-const onScreen = (page: Page, element: Locator) => headerEdge(page).then((edge) => element.evaluate((node, edge) => {
-  const box = node.getBoundingClientRect();
-  return Math.max(0, Math.min(box.bottom, window.innerHeight) - Math.max(box.top, edge)) / box.height;
-}, edge));
-
-for (const viewport of NARROW) {
-  test(`on ≤ 1050 px the formats are one row above the drawing, and every tap leaves the drawing on screen: ${viewport.width}×${viewport.height}`, async ({ page, isMobile }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.setViewportSize(viewport);
-    await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-    await page.evaluate(() => document.fonts.ready);
-    const grid = page.locator(GRID);
-    const drawing = grid.locator('svg.fs');
-    const options = grid.locator('.dfmt-option');
-    const choices = participationChoices();
-
-    // From a reading position — the tapped button centred, or the row just under the header — in the order 2 → 3 → 1,
-    // so every tap redraws: the drawing is on screen (≥ 90 %) and the page has not jumped
-    const misses: string[] = [];
-    for (const where of ['centre', 'top'] as const) {
-      for (const index of [1, 2, 0]) {
-        const option = options.nth(index);
-        await place(page, option, where);
-        const before = await page.evaluate(() => window.scrollY);
-        await tapAt(page, option, isMobile);
-        await expect(drawing).toHaveAttribute('data-format', choices[index].id);
-        await expect(option).toHaveAttribute('aria-pressed', 'true');
-        const share = await onScreen(page, drawing);
-        const moved = Math.abs((await page.evaluate(() => window.scrollY)) - before);
-        if (share < 0.9 || moved > 8) misses.push(`${where}, format ${index + 1}: drawing ${Math.round(share * 100)} % on screen, page moved ${Math.round(moved)} px`);
-      }
-    }
-    expect(misses).toEqual([]);
-
-    // The row: three segments side by side above the drawing, each at least a finger tall, none overflowing
-    const boxes = await options.evaluateAll((buttons) => buttons.map((button) => {
-      const box = button.getBoundingClientRect();
-      return { top: Math.round(box.top), height: box.height, overflow: button.scrollWidth - button.clientWidth };
-    }));
-    expect(new Set(boxes.map((box) => box.top)).size).toBe(1);
-    for (const box of boxes) {
-      expect(box.height).toBeGreaterThanOrEqual(44);
-      expect(box.overflow).toBe(0);
-    }
-    const listBottom = await grid.locator('.dfmt-list').evaluate((list) => list.getBoundingClientRect().bottom);
-    const drawingBox = await drawing.evaluate((svg) => { const box = svg.getBoundingClientRect(); return { top: box.top, bottom: box.bottom }; });
-    expect(drawingBox.top).toBeGreaterThan(listBottom);
-    // …and the row and the whole drawing fit one screen under the header
-    const listTop = await grid.locator('.dfmt-list').evaluate((list) => list.getBoundingClientRect().top);
-    expect(drawingBox.bottom - listTop).toBeLessThanOrEqual(viewport.height - (await headerEdge(page)));
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-  });
-}
-
-for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }] as const) {
-  test(`on ≤ 1050 px the block does not walk through the formats: ${viewport.width}×${viewport.height}`, async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.setViewportSize(viewport);
-    await page.clock.install();
-    await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-    const grid = page.locator(GRID);
-    const drawing = grid.locator('svg.fs');
-    await place(page, grid.locator('.dfmt-figure'), 'top');
-    // The observer that would arm the walk is not on the clock: wait until it has seen the drawing
-    await expect(grid.locator('.dfmt-figure')).toHaveAttribute('data-live');
-    for (let step = 0; step < 40; step += 1) {
-      await page.clock.runFor(500);
-      expect(await drawing.getAttribute('data-format'), `after ${(step + 1) * 0.5} s`).toBe('comprehensive');
-    }
-    await expect(grid.locator('.dfmt-option[aria-pressed="true"]')).toHaveCount(1);
-    await expect(grid.locator('.dfmt-option').first()).toHaveAttribute('aria-pressed', 'true');
-  });
-}
-
-test('on ≤ 1050 px the keyboard chooses: focus alone changes nothing, Enter and Space choose, the ring stands outside the segment', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'keyboard');
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.clock.install();
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  const grid = page.locator(GRID);
-  const drawing = grid.locator('svg.fs');
-  const options = grid.locator('.dfmt-option');
-  await place(page, grid.locator('.dfmt-list'), 'top');
-  await expect(grid.locator('.dfmt-figure')).toHaveAttribute('data-live');
-  await options.first().focus();
-  await page.keyboard.press('Tab');
-  await expect(options.nth(1)).toBeFocused();
-  // Ten seconds on the second format: neither the focus nor anything else has chosen it
-  await page.clock.runFor(10_000);
-  await expect(options.nth(1)).toHaveAttribute('aria-pressed', 'false');
-  await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
-  await expect(page.locator('.proc-resp-switch input[value="comprehensive"]')).toBeChecked();
-  // The site's own ring, outside the segment and over its neighbours (not the map switcher's inset one)
-  const ring = await options.nth(1).evaluate((button) => { const style = getComputedStyle(button); return { style: style.outlineStyle, offset: parseFloat(style.outlineOffset) }; });
-  expect(ring.style).toBe('solid');
-  expect(ring.offset).toBeGreaterThanOrEqual(0);
-  await page.keyboard.press('Enter');
-  await expect(options.nth(1)).toHaveAttribute('aria-pressed', 'true');
-  await expect(drawing).toHaveAttribute('data-format', 'work-package');
-  await expect(page.locator('.proc-resp-switch input[value="work-package"]')).toBeChecked();
-  await page.keyboard.press('Tab');
-  await expect(options.nth(2)).toBeFocused();
-  await expect(drawing).toHaveAttribute('data-format', 'work-package');
-  await page.keyboard.press('Space');
-  await expect(options.nth(2)).toHaveAttribute('aria-pressed', 'true');
-  await expect(drawing).toHaveAttribute('data-format', 'subcontract');
-});
-
-test('with reduced motion nothing in the scope block animates after a tap', async ({ page, isMobile }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  const grid = page.locator(GRID);
-  const options = grid.locator('.dfmt-option');
-  const motion = () => page.evaluate(() => document.getAnimations()
+  await page.clock.runFor(5000);
+  const motion = await page.evaluate(() => document.getAnimations()
     .filter((animation) => { const target = (animation.effect as KeyframeEffect | null)?.target; return Boolean(target?.closest('#obsiah')); })
-    .map((animation) => {
-      const timing = animation.effect!.getComputedTiming();
-      return { duration: Number(timing.duration), iterations: Number(timing.iterations), state: animation.playState };
-    }));
-  await place(page, grid.locator('.dfmt-list'), 'top');
-  for (const index of [1, 2, 0]) {
-    await (isMobile ? options.nth(index).tap() : options.nth(index).click());
-    // whatever starts is a step (≤ 1 ms), and nothing loops
-    for (const animation of await motion()) {
-      expect(animation.duration).toBeLessThanOrEqual(1);
-      expect(Number.isFinite(animation.iterations)).toBe(true);
-    }
-    // and nothing is left running: polled on the page's own animation list, not a fixed wait
-    await expect.poll(async () => (await motion()).filter((animation) => animation.state === 'running'), { timeout: 2_000 }).toEqual([]);
-  }
-});
-
-test('the chosen format’s summary stands under the drawing, out of the accessibility tree; the button keeps it in its name', async ({ page, isMobile }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  const grid = page.locator(GRID);
-  const options = grid.locator('.dfmt-option');
-  const chosen = grid.locator('.dfmt-figure .dfmt-chosen');
-  const choices = participationChoices();
-  await expect(grid.locator('.dfmt-list')).toHaveAttribute('aria-label', 'Формат участі');
-  await expect(chosen).toHaveAttribute('aria-hidden', 'true');
-  // under the caption, before the facts
-  expect(await chosen.evaluate((line) => line.previousElementSibling?.matches('figcaption') && line.nextElementSibling?.matches('.dfmt-facts'))).toBe(true);
-  // the summary is the button's own text — no new words — and hidden there only to the eye
-  expect(await options.locator('.dfmt-text').evaluateAll((texts) => Math.max(...texts.map((text) => text.getBoundingClientRect().height)))).toBeLessThanOrEqual(1);
-  const escape = (text: string) => new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  for (const [index, choice] of choices.entries()) {
-    await (isMobile ? options.nth(index).tap() : options.nth(index).click());
-    await expect(chosen.locator('[data-on]')).toHaveText(choice.text);
-    await expect(chosen.locator('[data-on]')).toBeVisible();
-    for (const words of [choice.title, choice.text, `Договір: ${choice.contractWith} і RUBIKON.`, `Координує об’єкт: ${choice.coordinator}.`]) {
-      await expect(options.nth(index)).toHaveAccessibleName(escape(words));
-    }
-  }
+    .map((animation) => Number(animation.effect!.getComputedTiming().duration)));
+  for (const duration of motion) expect(duration).toBeLessThanOrEqual(1);
+  // the packages stand still on the first
+  await expect(grid.locator('svg.fs').nth(1).locator('.fs-layer[data-scope]')).toHaveAttribute('data-layer', 'foundation');
 });
 
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
-  test('the formats keep their words on a phone', async ({ page }) => {
+  test('the formats keep their words and their numbers on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
     const grid = page.locator(GRID);
-    for (const text of await grid.locator('.dfmt-option .dfmt-text').all()) await expect(text).toBeVisible();
-    expect(await grid.locator('.dfmt-option .dfmt-text').evaluateAll((texts) => Math.min(...texts.map((text) => text.getBoundingClientRect().height)))).toBeGreaterThan(20);
-    await expect(grid.locator('.dfmt-chosen')).toBeHidden();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    for (const text of await grid.locator('[data-row="text"] .dfmt-value').all()) await expect(text).toBeVisible();
+    await expect(grid.locator('[data-row="contract"] .dfmt-tag')).toHaveText(['01 · 02', '03']);
+    expect(await overflow(page)).toBe(0);
   });
 });
