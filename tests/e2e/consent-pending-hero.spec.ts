@@ -1,4 +1,7 @@
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { expect, test, type Page } from '@playwright/test';
+import { getFromServer } from './server.helpers';
 
 // PDO-09 (Premium Experience Review 18.10, step W1-08; owner OK 20.10, OD-PX-11 a). On a first visit the cookie banner —
 // fixed to the bottom and mounted only after hydration — lay on the phone hero's actions: the second action on 375–430 px,
@@ -115,6 +118,111 @@ for (const path of ['/', '/metalokonstruktsii']) {
     });
   }
 }
+
+// The first-visit test above failed once on main (Main Regression 42626918764, 09.11, 390 × 844, /): «0.0761 at 335 ms:
+// h1 336 → 212; div.hero-copy 530 → 406». The trace's first frame was a half-parsed HOME hero — the call's icon without its
+// words, no second action — painted while the HTML stream stalled on a busy runner; the copy sits low in the full-height
+// hero, so it jumped up as the rest arrived. The same mechanism as the direction heroes (#198, direction-static-hero.spec.ts).
+// HOME's hero now holds the first paint until it is parsed whole (HomeV2Hero.tsx). Here a local server streams HOME's own
+// HTML cut inside the hero and sends the rest only once the first part's stylesheets and fonts are in (+300 ms), so a
+// browser that paints half a page has everything it needs to do so; the page's other requests go to the app's server.
+test('first visit, HOME: a hero whose HTML arrives in two parts is painted whole — nothing moves', async ({ page, baseURL }) => {
+  test.setTimeout(120_000);
+  let cut: { first: string; rest: string; headers: Record<string, string>; needs: string[] } | undefined;
+  const delivered = new Set<string>();
+  let onDelivered = () => {};
+  const server = createServer((_request, response) => {
+    const html = cut;
+    if (!html) {
+      response.writeHead(404).end();
+      return;
+    }
+    response.writeHead(200, html.headers);
+    response.write(html.first);
+    const sendRest = () => {
+      clearTimeout(fallback);
+      onDelivered = () => {};
+      setTimeout(() => response.end(html.rest), 300);
+    };
+    const fallback = setTimeout(sendRest, 5_000);
+    onDelivered = () => {
+      if (html.needs.every((path) => delivered.has(path))) sendRest();
+    };
+    onDelivered();
+  });
+  await new Promise<void>((listening) => server.listen(0, '127.0.0.1', listening));
+  const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    await page.route(`${origin}/**`, async (route) => {
+      const request = route.request();
+      if (request.isNavigationRequest()) return route.continue();
+      const { pathname, search } = new URL(request.url());
+      try {
+        // `connection: close`, as getFromServer: never a pooled socket the app's server is closing
+        const response = await route.fetch({ url: new URL(pathname + search, baseURL).href, headers: { ...request.headers(), connection: 'close' } });
+        await route.fulfill({ response });
+        delivered.add(pathname);
+        onDelivered();
+      } catch {
+        // the page moved on while this was in flight; never leave a request hanging
+        await route.abort().catch(() => {});
+      }
+    });
+    await page.addInitScript(() => {
+      const record = window as unknown as { __homeShifts: string[] };
+      record.__homeShifts = [];
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const shift = entry as PerformanceEntry & { value: number; sources?: { node: Node | null; previousRect: DOMRectReadOnly; currentRect: DOMRectReadOnly }[] };
+          if (!shift.value) continue;
+          // What a half-parsed hero does is move: a part painted in one place and then in another. A part that stays put
+          // and only changes its width as a web font swaps in (0.0001–0.0003, «small 366 → 366») is the font micro-shift
+          // left open in #198 §8.1; the strict first-visit test above still counts it
+          const sources = (shift.sources ?? []).filter((source) => Math.abs(source.previousRect.x - source.currentRect.x) >= 0.5 || Math.abs(source.previousRect.y - source.currentRect.y) >= 0.5);
+          if (!sources.length) continue;
+          const moved = sources.map((source) => {
+            const element = source.node instanceof Element ? source.node : source.node?.parentElement;
+            return `${element ? element.tagName.toLowerCase() + [...element.classList].map((token) => `.${token}`).join('') : '?'} ${Math.round(source.previousRect.y)} → ${Math.round(source.currentRect.y)}`;
+          });
+          record.__homeShifts.push(`${shift.value.toFixed(4)}: ${moved.join('; ')}`);
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    const served = await getFromServer(page.request, '/');
+    const html = await served.text();
+    const csp = served.headers()['content-security-policy'];
+    const found: string[] = [];
+    for (const viewport of [{ width: 390, height: 844 }, { width: 375, height: 667 }]) {
+      await page.setViewportSize(viewport);
+      for (const { before, where } of [
+        { before: '<p class="hero-lead">', where: 'before the lead' },
+        // as in run 42626918764: the call's icon in, its words not yet
+        { before: '<span><small>Зателефонувати', where: 'inside the call' },
+        { before: '<span class="hv2-inquiry-phone">', where: 'inside the second action' },
+        { before: 'Ілюстрація</span>', where: 'inside the stamp' },
+      ]) {
+        const at = html.indexOf(before);
+        // a renamed class would let the whole page through at once and test nothing
+        expect(at, `HOME's HTML has ${before}`).toBeGreaterThan(0);
+        const first = html.slice(0, at);
+        const needs = [...first.matchAll(/<link rel="(stylesheet|preload)" href="([^"]+)"([^>]*)>/g)]
+          .filter(([, rel, , rest]) => rel === 'stylesheet' || rest.includes('as="font"'))
+          .map(([, , href]) => new URL(href, origin).pathname);
+        cut = { first, rest: html.slice(at), needs, headers: { 'content-type': 'text/html; charset=utf-8', ...(csp ? { 'content-security-policy': csp } : {}) } };
+        delivered.clear();
+        await page.goto(`${origin}/`, { waitUntil: 'networkidle' });
+        await firstVisitBanner(page);
+        await expect.poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--cookie-banner-clearance')), { timeout: 5_000 }).not.toBe('');
+        await page.evaluate(() => new Promise<void>((resolve) => { requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0))); }));
+        const shifts = await page.evaluate(() => (window as unknown as { __homeShifts: string[] }).__homeShifts);
+        found.push(...shifts.map((shift) => `${viewport.width}×${viewport.height}, stalled ${where}: ${shift}`));
+      }
+    }
+    expect(found, 'layout shifts on a first visit whose HTML stalled inside the hero').toEqual([]);
+  } finally {
+    await new Promise((closed) => server.close(closed));
+  }
+});
 
 for (const path of ['/', '/metalokonstruktsii', '/napryamky', '/pro-nas']) {
   test(`375×667, ${path}: «Лише необхідні» removes the flag and the hero returns to the composition a stored choice has`, async ({ page }) => {

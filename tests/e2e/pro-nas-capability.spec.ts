@@ -155,8 +155,17 @@ for (const width of [360, 390]) {
     expect(order.own).toBeLessThan(order.figure);
     expect(order.figure).toBeLessThan(order.organised);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-    // 2658 px before at 390, almost all of it sentences; 2116 px as name tags (a 360 px phone was never measured, so it has no bar here)
-    if (width === 390) expect(await page.locator('section.about-build').evaluate((section) => section.getBoundingClientRect().height)).toBeLessThan(2200);
+    // 2658 px before at 390, almost all of it sentences; 2116 px as name tags (a 360 px phone was never measured, so it has no bar here).
+    // The bar is for those; «Де ваш об’єкт?» (#307, owner 08.11) later put a card of its own under the region's words in this
+    // section, +202 px at 390 (2266.6 px in Main Regression 42464494493), and region-reach.spec.ts covers it. So it stands
+    // outside the bar: the section without that card, the same content the bar was set on
+    if (width === 390) {
+      const withoutReach = await page.locator('section.about-build').evaluate((section) => {
+        const reach = section.querySelector('.region-reach')!;
+        return section.getBoundingClientRect().height - reach.getBoundingClientRect().height - Number.parseFloat(getComputedStyle(reach).marginTop);
+      });
+      expect(withoutReach).toBeLessThan(2200);
+    }
     // A finger's target
     const smallest = await page.locator('.about-cap li[data-cap]').evaluateAll((tags) => Math.min(...tags.map((tag) => tag.getBoundingClientRect().height)));
     expect(smallest).toBeGreaterThanOrEqual(38);

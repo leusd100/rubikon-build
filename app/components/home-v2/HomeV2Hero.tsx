@@ -5,6 +5,8 @@ import { company, companyContactLinks } from '../../data/company';
 import { Arrow } from '../Arrow';
 
 const NBSP = '\u00A0';
+/** An empty mark after the last of the hero that paints: the first paint waits for it (see the link below) */
+const HERO_END_ID = 'home-hero-end';
 
 // HOME v2 hero: one image, one headline, one line of what we build, two actions (call first). The written
 // channels, the «RUBIKON / BUILD» signature and the coordination sentence left the first screen — the channels
@@ -12,6 +14,13 @@ const NBSP = '\u00A0';
 export function HomeV2Hero() {
   return (
     <section className="hero hv2-hero" id="top">
+      {/* The first paint waits until the hero is parsed whole, as the direction heroes do (DirectionDetail.tsx, #198). When
+          the stream stalls (a cold or busy server, a slow network) the browser paints the half it has; the copy sits low
+          in the full-height hero, so a hero cut inside the call (its icon without its words, no second action) jumped
+          up as the rest arrived: 0.0761 at 390 × 844 (Main Regression 42626918764). React hoists the link into <head>;
+          Chromium lifts the block at the start tag of the element named by href, so that is a mark after the stamp.
+          WebKit honours it too; Firefox ignores it. consent-pending-hero.spec.ts stalls HOME's HTML on purpose. */}
+      <link rel="expect" href={`#${HERO_END_ID}`} blocking="render" />
       <div className="hero-media">
         <HomeV2HeroMedia />
       </div>
@@ -48,6 +57,7 @@ export function HomeV2Hero() {
       </div>
       {/* Only the ≤760 still is a concept image; the desktop footage is process footage, not an object. */}
       <span className="hv2-hero-provenance">Ілюстрація</span>
+      <span id={HERO_END_ID} hidden />
     </section>
   );
 }
