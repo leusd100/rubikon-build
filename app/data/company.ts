@@ -7,6 +7,11 @@ export const company = {
   description:
     'Будівництво для промислового, аграрного й комерційного бізнесу в Дніпропетровській області: комплексна реалізація в погодженому обсязі або окремі роботи.',
   serviceAreas: ['Дніпропетровська область'],
+  /**
+   * Where the company is, to the city — the same place `geographyShort` names on every page. No street: the business
+   * serves the region and has no public office address (SEO memo 08.10, Google Business Profile as a service area).
+   */
+  address: { locality: 'Дніпро', region: 'Дніпропетровська область', country: 'UA' },
   geography: `Працюємо переважно в Дніпропетровській області. ${geographyBeyond}`,
   /** The second half of `geography`, for a page that names the main region on its own line (/pro-nas). */
   geographyBeyond,

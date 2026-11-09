@@ -107,7 +107,7 @@ export function HangarEditorialArchitecture({
           <p className="process-key" aria-hidden="true"><span>Ви</span><span>RUBIKON</span></p>
           <ol className="process-split angary-route" data-motion data-brief={briefState} style={{ '--steps': content.route.steps.length + 1 } as CSSProperties}>
             <li className="angary-route-brief" style={{ '--i': 0 } as CSSProperties}>
-              <h3><b>01</b>Ваш бриф</h3>
+              <h3><b>01</b> Ваш бриф</h3>
               <div className="ps-you">
                 <small>Ви</small>
                 {/* Each state its own keyed element (08.10, audit): a browser's page translation wraps text in its own nodes,
@@ -139,7 +139,7 @@ export function HangarEditorialArchitecture({
             </li>
             {content.route.steps.map((step, index) => (
               <li key={step.title} style={{ '--i': index + 1 } as CSSProperties}>
-                <h3><b>{pad(index + 2)}</b>{keepHeadingWords(step.title)}</h3>
+                <h3><b>{pad(index + 2)}</b>{' '}{keepHeadingWords(step.title)}</h3>
                 <p className="ps-you"><small>Ви</small>{content.route.sides[index]?.you}</p>
                 <div className="ps-node">{content.route.sides[index] && <ProcessDrawing kind={content.route.sides[index].drawing} />}</div>
                 <p className="ps-result"><span className="sr-only">Результат: </span>{content.route.sides[index]?.result}</p>

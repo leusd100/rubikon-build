@@ -66,6 +66,8 @@ type DirectionHeroProps = {
   number: string;
   breadcrumbLabel: string;
   title: string;
+  /** The service's own name («Ангари та склади»), for the Service data; `title` is the hero's sentence («Будуємо…») */
+  serviceTitle: string;
   accent: string;
   intro: string;
   introPhone?: string;
@@ -80,6 +82,7 @@ function DirectionHero({
   number,
   breadcrumbLabel,
   title,
+  serviceTitle,
   accent,
   intro,
   introPhone,
@@ -91,8 +94,8 @@ function DirectionHero({
   const serviceData = {
     '@context': 'https://schema.org',
     '@type': 'Service',
-    name: title,
-    serviceType: title,
+    name: serviceTitle,
+    serviceType: serviceTitle,
     description: intro,
     url: absoluteUrl(path),
     image: absoluteUrl(heroImage.fallbackSrc),
@@ -193,7 +196,7 @@ export function DirectionProcess({
             <ol className="process-split" data-motion>
               {steps.map(([stepNumber, stepTitle, stepText], index) => (
                 <li key={stepNumber} style={{ '--i': index } as CSSProperties}>
-                  <h3><b>{stepNumber}</b>{keepHeadingWords(stepTitle)}</h3>
+                  <h3><b>{stepNumber}</b>{' '}{keepHeadingWords(stepTitle)}</h3>
                   <p className="ps-you"><small>Ви</small>{sides[index].you}</p>
                   <div className="ps-node">
                     <ProcessDrawing kind={sides[index].drawing} />
@@ -476,6 +479,7 @@ export function DirectionPage({
         number={direction.number}
         breadcrumbLabel={config.hero.breadcrumbLabel}
         title={config.hero.title}
+        serviceTitle={direction.serviceTitle}
         accent={config.hero.accent}
         intro={config.hero.intro}
         introPhone={config.hero.introPhone}

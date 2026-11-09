@@ -88,7 +88,7 @@ export function CapabilityFigure({ columns }: Readonly<{ columns: readonly Capab
       onPointerLeave={mouse(null)}
     >
       <h3 id={`about-ledger-${column.id}`}>
-        <span aria-hidden="true">{number(index)}</span>
+        <span aria-hidden="true">{number(index)}</span>{' '}
         {keepHeadingWords(column.title)}
       </h3>
       <ul>

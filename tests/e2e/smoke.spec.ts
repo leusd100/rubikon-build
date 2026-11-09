@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { directions } from '../../app/data/directions';
 
 type PublicRoute = {
   path: string;
@@ -597,6 +598,72 @@ test.describe('public route smoke tests', () => {
 
       expect(canonical, `${route.path} canonical`).toBeTruthy();
       expect(new URL(ogUrl ?? '', page.url()).href, `${route.path} og:url`).toBe(new URL(canonical ?? '', page.url()).href);
+    }
+  });
+
+  // The 404 is not a page to share, but a broken link still gets pasted: inherited, its card said the home page's
+  // title and og:url.
+  test('the 404 describes itself, not the home page, to search and to a shared link', async ({ page }) => {
+    await page.goto('/tse-ne-isnuie', { waitUntil: 'load' });
+    const meta = (selector: string) => page.locator(selector).getAttribute('content');
+
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+    await expect(page.locator('meta[property="og:url"]')).toHaveCount(0);
+    expect(await meta('meta[property="og:title"]')).toBe(await page.title());
+    expect(await meta('meta[name="twitter:title"]')).toBe(await page.title());
+    expect(await meta('meta[name="description"]')).toBe(await page.locator('.not-found-lead').textContent());
+  });
+
+  // Heading parts set as display:block spans with nothing between them are apart only on screen: a reader that does
+  // not apply CSS — a crawler reading the HTML, a link preview — joins them into one word (/napryamky «фундаментудо»,
+  // /pro-nas «відповідаємосвоїми»). It does break at <br> and at block tags, so read the heading that way and compare it
+  // with innerText, which follows the layout.
+  test('every heading reads the same words without CSS as on screen', async ({ page }) => {
+    const glued: string[] = [];
+    for (const route of publicRoutes) {
+      await page.goto(route.path, { waitUntil: 'load' });
+      const found = await page.locator('main h1, main h2, main h3').evaluateAll((headings) => {
+        const inline = new Set(['A', 'ABBR', 'B', 'CODE', 'EM', 'I', 'MARK', 'S', 'SMALL', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TIME', 'U']);
+        const words = (text: string) => text.replace(/\s+/g, ' ').trim().toLowerCase();
+        const withoutCss = (node: Node): string => {
+          if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? '';
+          if (!(node instanceof Element)) return '';
+          if (node.tagName === 'BR') return ' ';
+          const inner = Array.from(node.childNodes, withoutCss).join('');
+          return inline.has(node.tagName) ? inner : ` ${inner} `;
+        };
+        return headings.flatMap((heading) => {
+          const shown = words((heading as HTMLElement).innerText);
+          const read = words(withoutCss(heading));
+          return shown === read ? [] : [`«${read}» vs on screen «${shown}»`];
+        });
+      });
+      glued.push(...found.map((line) => `${route.path}: ${line}`));
+    }
+    expect(glued).toEqual([]);
+  });
+
+  // The business node is the one LocalBusiness on the site: Google expects an address on it. The city only, as
+  // geographyShort says on every page; no street (company.ts). A service is named by its name, not the hero sentence.
+  test('structured data: the business has its city, each service its own name', async ({ page }) => {
+    const nodes = async (path: string) => {
+      await page.goto(path, { waitUntil: 'load' });
+      const scripts = await page.locator('script[type="application/ld+json"]').allTextContents();
+      return scripts.map((json) => JSON.parse(json) as Record<string, unknown>);
+    };
+
+    const business = (await nodes('/')).find((node) => node['@type'] === 'HomeAndConstructionBusiness');
+    expect(business?.address).toEqual({
+      '@type': 'PostalAddress',
+      addressLocality: 'Дніпро',
+      addressRegion: 'Дніпропетровська область',
+      addressCountry: 'UA',
+    });
+
+    for (const direction of directions) {
+      const service = (await nodes(direction.href)).find((node) => node['@type'] === 'Service');
+      expect(service?.name, direction.href).toBe(direction.serviceTitle);
+      expect(service?.serviceType, direction.href).toBe(direction.serviceTitle);
     }
   });
 
