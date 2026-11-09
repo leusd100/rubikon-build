@@ -189,7 +189,7 @@ test('on a wide screen the frames are named inside the drawings, readable from 1
         return { px: parseFloat(getComputedStyle(label).fontSize) * scale, inside: own.left >= box.left - 1 && own.right <= box.right + 1 };
       });
     }));
-    expect(labels.length).toBe(4);
+    expect(labels).toHaveLength(4);
     for (const label of labels) {
       expect(label.px, `${width}px`).toBeGreaterThanOrEqual(11);
       expect(label.inside, `${width}px`).toBe(true);

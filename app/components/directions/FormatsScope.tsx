@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useFirstViewWalk } from '../../hooks/useFirstViewWalk';
 import { FormatPrefillLink } from '../process/FormatPrefillLink';
 import type { FormatCard } from '../../lib/deliveryModelPresentation';
@@ -91,6 +91,29 @@ function Section({ format, scoped }: Readonly<{ format: DeliveryFormatId; scoped
   );
 }
 
+type RowId = 'text' | 'scope' | 'contract' | 'coordinator';
+
+/** A row's value for a format (or for the formats that share it: the first of them stands for all) */
+function RowValue({ row, format, terms, scoped }: Readonly<{ row: RowId; format: FormatCard; terms: FormatTerms; scoped: (layer: Layer) => boolean }>) {
+  switch (row) {
+    case 'text':
+      return format.text;
+    case 'scope':
+      return (
+        <>
+          <ul className="dfmt-packages">
+            {PACKAGES.map(([layer, name]) => <li key={layer} data-scope={scoped(layer) ? '' : undefined}>{name}</li>)}
+          </ul>
+          <span className="dfmt-note">{format.id === 'comprehensive' ? 'увесь погоджений комплекс' : 'або інший погоджений обсяг'}</span>
+        </>
+      );
+    case 'contract':
+      return <>{terms.contractWith} — <b>RUBIKON</b></>;
+    case 'coordinator':
+      return terms.rubikonCoordinates ? <b className="dfmt-ours">{terms.coordinator}</b> : terms.coordinator;
+  }
+}
+
 export function FormatsScope({ formats, terms, prefill = false }: Readonly<{
   formats: readonly FormatCard[];
   terms: Readonly<Record<DeliveryFormatId, FormatTerms>>;
@@ -125,28 +148,13 @@ export function FormatsScope({ formats, terms, prefill = false }: Readonly<{
   const whole = (format: FormatCard) => format.id === 'comprehensive';
   const scopedIn = (format: FormatCard) => (layer: Layer) => whole(format) || PACKAGES[turn][0] === layer;
 
-  const packages = (format: FormatCard) => (
-    <>
-      <ul className="dfmt-packages">
-        {PACKAGES.map(([layer, name]) => <li key={layer} data-scope={scopedIn(format)(layer) ? '' : undefined}>{name}</li>)}
-      </ul>
-      <span className="dfmt-note">{whole(format) ? 'увесь погоджений комплекс' : 'або інший погоджений обсяг'}</span>
-    </>
-  );
-
-  /** The rows under the drawings: label, how to tell the formats' values apart, the value; `facts` rows mark the values
+  /** The rows under the drawings: the label, and what tells the formats' values apart; `facts` rows mark the values
    *  that set a format apart (the summaries are prose, each its own) */
-  const rows: readonly { id: string; label: string; facts: boolean; key: (format: FormatCard) => string; value: (format: FormatCard) => ReactNode }[] = [
-    { id: 'text', label: 'Суть', facts: false, key: (format) => format.text, value: (format) => format.text },
-    { id: 'scope', label: 'Обсяг RUBIKON', facts: true, key: (format) => (whole(format) ? 'whole' : 'package'), value: packages },
-    { id: 'contract', label: 'Договір', facts: true, key: (format) => terms[format.id].contractWith, value: (format) => <>{terms[format.id].contractWith} — <b>RUBIKON</b></> },
-    {
-      id: 'coordinator',
-      label: 'Координує об’єкт',
-      facts: true,
-      key: (format) => terms[format.id].coordinator,
-      value: (format) => (terms[format.id].rubikonCoordinates ? <b className="dfmt-ours">{terms[format.id].coordinator}</b> : terms[format.id].coordinator),
-    },
+  const rows: readonly { id: RowId; label: string; facts: boolean; key: (format: FormatCard) => string }[] = [
+    { id: 'text', label: 'Суть', facts: false, key: (format) => format.text },
+    { id: 'scope', label: 'Обсяг RUBIKON', facts: true, key: (format) => (whole(format) ? 'whole' : 'package') },
+    { id: 'contract', label: 'Договір', facts: true, key: (format) => terms[format.id].contractWith },
+    { id: 'coordinator', label: 'Координує об’єкт', facts: true, key: (format) => terms[format.id].coordinator },
   ];
 
   return (
@@ -191,7 +199,7 @@ export function FormatsScope({ formats, terms, prefill = false }: Readonly<{
                     key={cell.formats[0].id}
                   >
                     <span className="dfmt-tag" aria-hidden="true">{cell.formats.map((format) => format.number).join(' · ')}</span>
-                    <div className="dfmt-value">{row.value(cell.formats[0])}</div>
+                    <div className="dfmt-value"><RowValue row={row.id} format={cell.formats[0]} terms={terms[cell.formats[0].id]} scoped={scopedIn(cell.formats[0])} /></div>
                   </div>
                 );
               })}
