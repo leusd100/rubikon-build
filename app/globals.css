@@ -1075,8 +1075,12 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
      goes down 32 px and its scene reaches 68 px above it — the streams start lower, the links stay clear */
   body:has(main.grain-page) .footer-signature-stage { --footer-scene-head: 68px; margin-top: 32px; }
 }
-/* The 404 page's word has no O: its footer scene lowers one into place (footerScenes.ts, missing) */
-body:has(main.not-found-page) .footer-signature-o { display: none; }
+/* The 404 page's word has no O while its footer scene lowers one into place (footerScenes.ts, missing): only where the scene
+   runs (from 1181 px, once FooterSignatureLife has mounted it and set data-scene). A phone, a tablet, a page without script
+   and a window narrowed below 1181 px keep the whole word (review 09.11: they showed «RUBIK N») */
+@media (min-width: 1181px) {
+  body:has(main.not-found-page) .footer-signature-stage[data-scene] .footer-signature-o { display: none; }
+}
 /* The lamp's pass (FooterSignature.tsx) is lit only while a pointer or the arc moves it */
 .footer-signature-lamp { opacity: 0; transition: opacity var(--motion-ui) var(--ease-standard); }
 .footer-signature[data-lamp] .footer-signature-lamp { opacity: 1; }

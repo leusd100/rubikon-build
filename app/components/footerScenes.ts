@@ -71,6 +71,20 @@ function update<T extends Bit>(bits: T[], dt: number, gravity: number, each: (bi
   }
 }
 
+/**
+ * How many to add this frame for `perSecond` a second, the remainder carried to the next frame: the same rain, sparks and
+ * grain at 60, 120 or 240 frames a second (review 09.11: added per frame, a 120 Hz screen had twice of each)
+ */
+export function counter() {
+  let carry = 0;
+  return (perSecond: number, dt: number) => {
+    carry += perSecond * dt;
+    const count = Math.floor(carry);
+    carry -= count;
+    return count;
+  };
+}
+
 /** Polygon through points, filled */
 function fillShape(c: CanvasRenderingContext2D, points: readonly (readonly [number, number])[], colour: string, alpha: number) {
   c.globalAlpha = alpha;
@@ -96,9 +110,10 @@ export function rain(g: WordGeometry): FooterScene {
       if (beads.length > MOST_BEADS) beads.shift();
     }
   };
+  const drip = counter();
   const scene: FooterScene = {
     front(c, dt) {
-      for (let i = 0; i < 3; i++) drops.push({ x: random() * (g.width + 120), y: -20, vx: -90, vy: 620 + random() * 160, age: 0, life: 3, length: 10 + random() * 18 });
+      for (let i = drip(180, dt); i > 0; i--) drops.push({ x: random() * (g.width + 120), y: -20, vx: -90, vy: 620 + random() * 160, age: 0, life: 3, length: 10 + random() * 18 });
       update(drops, dt, 0, (drop) => {
         stroke(c, [drop.x, drop.y, drop.x + drop.length * .15, drop.y - drop.length], .9, INK, .3);
         const top = g.surface(drop.x);
@@ -169,6 +184,7 @@ export function weld(g: WordGeometry): FooterScene {
   const sparks: (Bit & { landed: boolean })[] = [];
   let seam: { x: number; y: number; at: number }[] = [];
   let x = 0, burst = 1, lastX = -9;
+  const spit = counter();
 
   /** On along the letters' tops, over the gaps between them, and from the start again past the last one */
   const advance = (dt: number) => {
@@ -182,11 +198,13 @@ export function weld(g: WordGeometry): FooterScene {
   };
 
   /** One frame of the arc: its sparks, the seam it lays and its glow */
-  const burn = (c: CanvasRenderingContext2D, time: number) => {
+  const burn = (c: CanvasRenderingContext2D, dt: number, time: number) => {
     const y = g.surface(x) - 1;
-    scene.arc = [521 + x / g.scale, 140 + (y - 6 - g.wordTop) / g.scale];
-    if (random() < .06) burst = .3 + random() * 1.1;
-    for (let i = Math.round((6 + random() * 10) * burst); i > 0; i--) {
+    // the light follows the arc in steps of 2 units, not every frame: each step re-runs the signature's lighting filter
+    const arcX = 521 + x / g.scale, arcY = 140 + (y - 6 - g.wordTop) / g.scale;
+    if (!scene.arc || Math.abs(scene.arc[0] - arcX) >= 2 || Math.abs(scene.arc[1] - arcY) >= 2) scene.arc = [arcX, arcY];
+    if (random() < 3.6 * dt) burst = .3 + random() * 1.1;
+    for (let i = spit((6 + random() * 10) * burst * 60, dt); i > 0; i--) {
       const angle = -1.57 + gauss() * 1.6, speed = 60 + random() * random() * 300;
       sparks.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, age: 0, life: .4 + random() * .9, landed: false });
     }
@@ -222,7 +240,7 @@ export function weld(g: WordGeometry): FooterScene {
     arc: null,
     front(c, dt, time) {
       advance(dt);
-      burn(c, time);
+      burn(c, dt, time);
       fall(c, dt);
       seam = seam.filter((point) => time - point.at < SEAM_FOR);
       drawSeam(c, seam, time);
@@ -278,7 +296,7 @@ const GRAIN_FULL = 9;
 
 /** Grain: three streams heap the grain on the letters' tops; it rolls off the edges, and when the heaps are full they fade */
 export function grain(g: WordGeometry): FooterScene {
-  const falling: Bit[] = [], heap = new Float32Array(Math.ceil(g.width) + 2);
+  const falling: Bit[] = [], heap = new Float32Array(Math.ceil(g.width) + 2), trickle = GRAIN_STREAMS.map(() => counter());
   let fade = 1, total = 0;
   const ground = (i: number) => g.surface(i) - heap[Math.max(0, Math.min(heap.length - 1, i))];
   /** The column a grain settles in: it rolls down while a neighbour is lower by more than the slope holds */
@@ -294,7 +312,7 @@ export function grain(g: WordGeometry): FooterScene {
   };
   return {
     front(c, dt) {
-      for (const at of GRAIN_STREAMS) for (let i = 0; i < 2; i++) falling.push({ x: at * g.width + gauss() * 5, y: -6 - random() * 20, vx: gauss() * 3, vy: 140 + random() * 50, age: 0, life: 6 });
+      for (const [stream, at] of GRAIN_STREAMS.entries()) for (let i = trickle[stream](120, dt); i > 0; i--) falling.push({ x: at * g.width + gauss() * 5, y: -6 - random() * 20, vx: gauss() * 3, vy: 140 + random() * 50, age: 0, life: 6 });
       update(falling, dt, 520, (bit, px, py) => {
         stroke(c, [px, py, bit.x, bit.y], 1.6, random() < .05 ? COPPER : GRAIN, .85 * fade);
         if (bit.y < ground(Math.round(bit.x))) return true;
@@ -385,7 +403,7 @@ export function streams(g: WordGeometry): FooterScene {
 /** Directions hub: the five directions fall on five letters, each its own way */
 export function five(g: WordGeometry): FooterScene {
   const at = [.08, .3, .5, .7, .92], chance = [.9, .7, .7, .7, .5], spread = [10, 8, 11, 26, 9], speed = [150, 240, 170, 60, 560];
-  const bits: (Bit & { kind: number })[] = [];
+  const bits: (Bit & { kind: number })[] = [], falls = at.map(() => counter());
   const look = (kind: number) => {
     if (kind === 1) return { colour: COPPER, tail: 6, width: 1.4 };
     if (kind === 2) return { colour: GRAIN, tail: 1.6, width: 2.4 };
@@ -394,7 +412,7 @@ export function five(g: WordGeometry): FooterScene {
   return {
     front(c, dt) {
       for (let kind = 0; kind < 5; kind++) {
-        if (random() < chance[kind]) bits.push({ kind, x: at[kind] * g.width + gauss() * spread[kind], y: -8, vx: 0, vy: speed[kind] * (.8 + random() * .4), age: 0, life: 10 });
+        for (let i = falls[kind](chance[kind] * 60, dt); i > 0; i--) bits.push({ kind, x: at[kind] * g.width + gauss() * spread[kind], y: -8, vx: 0, vy: speed[kind] * (.8 + random() * .4), age: 0, life: 10 });
       }
       update(bits, dt, 0, (bit, px, py) => {
         const { colour, tail, width } = look(bit.kind);
@@ -499,7 +517,10 @@ export function missing(g: WordGeometry): FooterScene {
       c.lineWidth = 1;
       c.stroke(place);
       c.restore();
-      draw(c, letter(dy), sway, alpha);
+      c.save();
+      c.translate(0, dy);
+      draw(c, place, sway, alpha);
+      c.restore();
       const lift = p < LOWERED_IN ? 0 : Math.min(1, (p - LOWERED_IN) / .8);
       if (lift < 1) slings(c, g.wordTop + dy - lift * 160, sway, 1 - lift);
       if (p >= LOWERED_IN && !landed) {

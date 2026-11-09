@@ -113,6 +113,8 @@ export function FooterSignatureLife() {
       // appendChild, not prepend/append: the Workers types give Element those two as HTMLRewriter's (string | Response)
       host.insertBefore(back, host.firstChild);
       host.appendChild(front);
+      // the scene is here: on 404 the word's O goes (globals.css) before the letters are first measured
+      host.dataset.scene = 'ready';
       const contexts = canvases.map((canvas) => canvas.getContext('2d'));
       const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
       const [bc, fc] = contexts;
@@ -223,13 +225,15 @@ export function FooterSignatureLife() {
       };
 
       if (calm) still();
-      // Runs while any of the word is on the screen, and stops off it
+      // Runs while the scene's canvas is on the screen, and stops off it — the canvas, not the word: below 1181 px (a narrowed
+      // window, a zoom past 125 %) CSS hides the canvas while the word stays, and the loop must not draw for nobody
+      // (review 09.11; LiveScene.tsx observes its canvas for the same reason)
       const seen = new IntersectionObserver(([entry]) => {
         if (calm) return;
         if (entry.isIntersecting) resume();
         else pause();
       });
-      seen.observe(signature);
+      seen.observe(front);
       let resized = 0;
       const sized = new ResizeObserver(() => {
         window.clearTimeout(resized);

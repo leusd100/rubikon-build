@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FOOTER_SCENE_PAGES } from '../../app/components/FooterSignatureLife';
-import { FOOTER_SCENES, IN_TURN, MISSING_FOR, TURN, inTurn, missing, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
+import { FOOTER_SCENES, IN_TURN, MISSING_FOR, TURN, five, grain, inTurn, missing, rain, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
+
+const SCENE_BY_NAME = { rain, weld, grain, five };
 
 // The footer scenes run continuously while the footer is on the screen (owner 09.11): each must go on for minutes without
 // failing or slowing down, and the welding arc must carry the light along the word and start again. Canvas calls go to a
@@ -80,6 +82,28 @@ describe('footer scenes: continuous', () => {
     const restarts = xs.filter((x, i) => i > 0 && x < xs[i - 1] - 400).length;
     expect(restarts).toBeGreaterThanOrEqual(1);
   });
+
+  // review 09.11: particles were added per frame, so a 120 Hz screen had twice the rain and sparks of a 60 Hz one
+  for (const name of ['rain', 'weld', 'grain', 'five'] as const) {
+    it(`${name}: as much on the screen at 120 frames a second as at 60`, () => {
+      const perFrame = (fps: number) => {
+        const scene = SCENE_BY_NAME[name](geometry), { context, counter } = stubContext();
+        let time = 0, calls = 0;
+        // a long window: the weld's bursts are random, and a short one compares two different spells of them
+        for (let frame = 0; frame < fps * 60; frame++) {
+          time += 1 / fps;
+          const before = counter.calls;
+          scene.back?.(context, 1 / fps, time);
+          scene.front?.(context, 1 / fps, time);
+          if (frame >= fps * 20) calls += counter.calls - before;
+        }
+        return calls / (fps * 40);
+      };
+      const at60 = perFrame(60), at120 = perFrame(120);
+      expect(at120 / at60).toBeGreaterThan(.75);
+      expect(at120 / at60).toBeLessThan(1.33);
+    });
+  }
 
   it('the home page plays every direction in turn, fading between them', () => {
     const scene = inTurn(geometry), { context } = stubContext();

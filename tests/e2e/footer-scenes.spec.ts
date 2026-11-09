@@ -75,9 +75,11 @@ test.describe('desktop', () => {
       const first = await frame();
       await expect.poll(frame, { timeout: 10_000 }).not.toBe(first);
       expect(await states(page)).not.toContain('rest');
-      // off the screen it pauses, and plays again on the way back
+      // off the screen it pauses, and plays again on the way back. A page too short to take the canvas off the screen (404)
+      // keeps it playing, rightly: the observer watches the canvas, which reaches above the word
       await page.evaluate(() => window.scrollTo(0, 0));
-      await expect(stage).toHaveAttribute('data-scene', 'paused');
+      const offScreen = await page.locator(`.footer-scene-${layer}`).evaluate((canvas) => canvas.getBoundingClientRect().top >= window.innerHeight);
+      await expect(stage).toHaveAttribute('data-scene', offScreen ? 'paused' : 'playing');
       await page.locator('svg.footer-signature').scrollIntoViewIfNeeded();
       await expect(stage).toHaveAttribute('data-scene', 'playing');
     });
@@ -117,7 +119,11 @@ test.describe('desktop', () => {
     await toFooter(page, '/metalokonstruktsii');
     const stage = page.locator('.footer-signature-stage');
     await expect(stage).toHaveAttribute('data-scene', 'still');
-    expect(await states(page)).toEqual(['still']);
+    // «ready» as the scene mounts (it lets the 404 page drop the word's O) and «still» come in one task, so the recorder may
+    // read both as «still»: what matters is the end, and that it never played
+    const seen = await states(page);
+    expect(seen.at(-1)).toBe('still');
+    expect(seen).not.toContain('playing');
     expect(await painted(page, 'front')).toBe(true);
     const box = (await page.locator('svg.footer-signature').boundingBox())!;
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
@@ -125,9 +131,13 @@ test.describe('desktop', () => {
   });
 });
 
-test('a phone has no footer scene', async ({ page, isMobile }) => {
+test('a phone has no footer scene, and its 404 keeps the whole word', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'the phone project');
   await toFooter(page, '/pokrivelni-roboty');
   await expect(page.locator('svg.footer-signature')).toBeVisible();
   await expect(page.locator('canvas.footer-scene')).toHaveCount(0);
+  // review 09.11: the O was hidden on every width, and phones, without the scene, read «RUBIK N»
+  await toFooter(page, '/takoi-storinky-nemaie');
+  await expect(page.locator('canvas.footer-scene')).toHaveCount(0);
+  expect(await page.locator('svg.footer-signature path.footer-signature-letters.footer-signature-o').evaluate((path) => getComputedStyle(path).display)).not.toBe('none');
 });
