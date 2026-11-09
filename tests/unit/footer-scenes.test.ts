@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FOOTER_SCENE_PAGES } from '../../app/components/FooterSignatureLife';
-import { FOOTER_SCENES, IN_TURN, MISSING_FOR, TURN, five, grain, inTurn, missing, rain, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
+import { FOOTER_SCENES, IN_TURN, MISSING_FOR, TURN, five, flats, grain, inTurn, masonry, missing, rain, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
 
 const SCENE_BY_NAME = { rain, weld, grain, five };
 
@@ -104,6 +104,20 @@ describe('footer scenes: continuous', () => {
       expect(at120 / at60).toBeLessThan(1.33);
     });
   }
+
+  it('about: the masonry is laid on the flat stretches of the letters\' tops, and only there', () => {
+    // the stub word: flat tops at 120 px, broken by a 20 px gap every 250 px
+    const spans = flats(geometry, 22 * geometry.scale);
+    expect(spans.length).toBeGreaterThanOrEqual(4);
+    for (const [from, to, top] of spans) {
+      expect(top).toBe(120);
+      expect(to - from).toBeGreaterThanOrEqual(22 * geometry.scale);
+    }
+    const { perSecond } = run(masonry(geometry), 20);
+    expect(Math.max(...perSecond)).toBeGreaterThan(0);
+    expect(FOOTER_SCENES['.about-page']).toBe(masonry);
+    expect(IN_TURN).toContain(masonry);
+  });
 
   it('the home page plays every direction in turn, fading between them', () => {
     const scene = inTurn(geometry), { context } = stubContext();

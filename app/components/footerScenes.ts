@@ -3,7 +3,7 @@ import { LETTER_O } from './footerSignatureLetters';
 // The page's own scene on the footer's embossed RUBIKON (owner 08–09.11): on every page that has a live scene of its own,
 // the same subject plays on the word, continuously while the footer is on the screen — rain beating on the letters' tops,
 // a weld run along them, concrete poured into them, grain heaped on them, a beam lowered onto them, a portal frame coming
-// through them, two streams joining in them, the five directions falling on them. «If it gets tiresome, or clients say so,
+// through them, two courses of masonry laid on them, the five directions falling on them. «If it gets tiresome, or clients say so,
 // we change it» (owner 09.11). The home page shows all eight in turn, and the 404 page lowers the word's missing O into
 // place (owner 09.11, after the mock). The scenes draw into two canvases, behind the word (concrete and the frame, so the relief and
 // the light stay on top) and in front of it (FooterSignatureLife.tsx runs them).
@@ -382,19 +382,69 @@ export function frames(g: WordGeometry): FooterScene {
   };
 }
 
-/** About: two streams, copper and light, curve in from both sides and become one in the word — two generations, one company */
-export function streams(g: WordGeometry): FooterScene {
-  const bits = Array.from({ length: 700 }, (_, i) => ({ side: i % 2, t: random(), jitter: gauss(), speed: .25 + random() * .12 }));
+/** Flat stretches of the letters' tops at least `wide` px across: [from, to, top], in canvas px */
+export function flats(g: WordGeometry, wide: number): [number, number, number][] {
+  const spans: [number, number, number][] = [];
+  let start = -1, level = 0;
+  for (let x = 0; x <= g.width; x++) {
+    const top = g.surface(x);
+    if (top < g.height && start >= 0 && Math.abs(top - level) < 1.5) continue;
+    if (start >= 0 && x - start >= wide) spans.push([start, x - 1, level]);
+    start = top < g.height ? x : -1;
+    level = top;
+  }
+  return spans;
+}
+
+type Block = { x: number; y: number; w: number; course: 0 | 1; at: number };
+/** A block's height, its gap, and how far apart in time two blocks are laid, s */
+const COURSE = 11;
+const JOINT = 1.5;
+const LAY = .06;
+
+/** One stretch of a letter's top in two courses: blocks sized to fill it, and the second bonded over the joints of the first */
+function courses(g: WordGeometry, [from, to, top]: [number, number, number]): Block[] {
+  const h = COURSE * g.scale, span = to - from, count = Math.max(1, Math.round(span / (26 * g.scale)));
+  const w = (span - JOINT * (count - 1)) / count, blocks: Block[] = [];
+  for (let i = 0; i < count; i++) blocks.push({ x: from + i * (w + JOINT), y: top - h, w, course: 0, at: 0 });
+  const upper = top - 2 * h - JOINT;
+  // half a block at each end, whole ones over the joints between
+  blocks.push({ x: from, y: upper, w: w / 2, course: 1, at: 0 });
+  for (let i = 1; i < count; i++) blocks.push({ x: from + i * (w + JOINT) - w / 2 - JOINT / 2, y: upper, w, course: 1, at: 0 });
+  blocks.push({ x: from + (count - 1) * (w + JOINT) + w / 2 + JOINT / 2, y: upper, w: w / 2 - JOINT / 2, course: 1, at: 0 });
+  return blocks;
+}
+
+/**
+ * About: two courses laid along the letters' tops — the first in copper, the second in light, bonded over it: «Два покоління —
+ * одна відповідальність» (the page's own line), the older course carrying the younger (owner 09.11, from three mocked ideas).
+ * Laid left to right, the first course before the second, held, faded, and laid again.
+ */
+export function masonry(g: WordGeometry): FooterScene {
+  const blocks = flats(g, 22 * g.scale).flatMap((span) => courses(g, span)).filter((block) => block.w >= 2);
+  const first = blocks.filter((block) => !block.course).sort((p, q) => p.x - q.x);
+  const second = blocks.filter((block) => block.course).sort((p, q) => p.x - q.x);
+  first.forEach((block, i) => { block.at = i * LAY; });
+  second.forEach((block, i) => { block.at = first.length * LAY + .4 + i * LAY; });
+  const laid = Math.max(0, ...blocks.map((block) => block.at)) + .5, cycle = laid + 3.5;
+  const h = COURSE * g.scale;
   return {
-    front(c, dt) {
-      const end = [g.width * .5, g.surface(g.width * .5) - 2];
-      const ways = [[[g.width * .08, -10], [g.width * .3, g.wordTop * .9]], [[g.width * .92, -10], [g.width * .7, g.wordTop * .9]]];
-      for (const bit of bits) {
-        bit.t = (bit.t + bit.speed * dt) % 1;
-        const [[ax, ay], [bx, by]] = ways[bit.side], t = bit.t;
-        const x = (1 - t) ** 2 * ax + 2 * t * (1 - t) * bx + t * t * end[0], y = (1 - t) ** 2 * ay + 2 * t * (1 - t) * by + t * t * end[1];
-        const spread = 16 - t * 12, sx = x + bit.jitter * spread, sy = y + bit.jitter * spread * .3;
-        stroke(c, [sx, sy, sx + 1.4, sy + 2], 1.6, bit.side ? COPPER : INK, .8 * (1 - t * .4));
+    front(c, _dt, time) {
+      const p = time % cycle, fade = p < laid + 2.5 ? 1 : Math.max(0, 1 - (p - laid - 2.5));
+      for (const block of blocks) {
+        const since = p - block.at;
+        if (since < 0) continue;
+        // each block drops the last few pixels into its place
+        const k = Math.min(1, since / .35), y = block.y - (1 - k * k) * 36, alpha = Math.min(1, k * 2) * fade;
+        c.globalAlpha = alpha;
+        c.fillStyle = block.course ? '#CFC6B4' : '#9C5A34';
+        c.fillRect(block.x, y, block.w, h);
+        c.globalAlpha = .6 * alpha;
+        c.fillStyle = block.course ? '#F5F0E6' : '#C98A5E';
+        c.fillRect(block.x, y, block.w, 1.5);
+        c.globalAlpha = .35 * fade;
+        c.fillStyle = '#000';
+        c.fillRect(block.x, y + h - 1.5, block.w, 1.5);
       }
     },
   };
@@ -426,7 +476,7 @@ export function five(g: WordGeometry): FooterScene {
 /** Home: every direction in turn, TURN seconds each, faded out and in over FADE */
 export const TURN = 8;
 const FADE = .6;
-export const IN_TURN = [rain, weld, grain, pour, beam, frames, streams, five] as const;
+export const IN_TURN = [rain, weld, grain, pour, beam, frames, masonry, five] as const;
 
 export function inTurn(g: WordGeometry): FooterScene {
   let index = -1, inner: FooterScene = {}, start = 0;
@@ -544,7 +594,7 @@ export const FOOTER_SCENES: Record<string, (g: WordGeometry) => FooterScene> = {
   '.grain-page': grain,
   '.process-page': beam,
   '.angary-page': frames,
-  '.about-page': streams,
+  '.about-page': masonry,
   '.directions-page': five,
   '[data-home]': inTurn,
   '.not-found-page': missing,
