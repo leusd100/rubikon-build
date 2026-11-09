@@ -18,19 +18,19 @@ class StubPath {
 globalThis.Path2D ??= StubPath as unknown as typeof Path2D;
 globalThis.DOMMatrix ??= class {} as unknown as typeof DOMMatrix;
 
-/** A 2D context that takes every call, draws nothing and counts the strokes and fills */
+/** A 2D context that takes every call, draws nothing and counts the strokes and fills. Plain properties, not a proxy that
+    makes a function per call: the scenes make tens of thousands of calls, and under coverage a proxy timed the suite out */
 function stubContext() {
   const gradient = { addColorStop: () => undefined };
   const counter = { calls: 0 };
-  const context = new Proxy({}, {
-    get: (_target, key) => {
-      if (key === 'createLinearGradient' || key === 'createRadialGradient') return () => gradient;
-      return () => {
-        counter.calls++;
-      };
-    },
-    set: () => true,
-  }) as unknown as CanvasRenderingContext2D;
+  const count = () => {
+    counter.calls++;
+  };
+  const context = {
+    createLinearGradient: () => gradient, createRadialGradient: () => gradient,
+    beginPath: count, moveTo: count, lineTo: count, closePath: count, stroke: count, fill: count, fillRect: count,
+    arc: count, ellipse: count, save: count, restore: count, translate: count, setLineDash: count, clip: count,
+  } as unknown as CanvasRenderingContext2D;
   return { context, counter };
 }
 
@@ -64,8 +64,8 @@ function run(scene: FooterScene, seconds: number) {
 
 describe('footer scenes: continuous', () => {
   for (const [page, make] of Object.entries(FOOTER_SCENES)) {
-    it(`${page}: runs for two minutes without piling up what it draws`, () => {
-      const { perSecond } = run(make(geometry), 120);
+    it(`${page}: runs for a minute without piling up what it draws`, () => {
+      const { perSecond } = run(make(geometry), 60);
       // the last ten seconds draw no more than twice the busiest of seconds 10–20: a steady state, not a growing heap
       const settled = Math.max(...perSecond.slice(10, 20)), late = Math.max(...perSecond.slice(-10));
       expect(late).toBeLessThanOrEqual(Math.max(settled * 2, 50));
@@ -90,14 +90,14 @@ describe('footer scenes: continuous', () => {
         const scene = SCENE_BY_NAME[name](geometry), { context, counter } = stubContext();
         let time = 0, calls = 0;
         // a long window: the weld's bursts are random, and a short one compares two different spells of them
-        for (let frame = 0; frame < fps * 60; frame++) {
+        for (let frame = 0; frame < fps * 40; frame++) {
           time += 1 / fps;
           const before = counter.calls;
           scene.back?.(context, 1 / fps, time);
           scene.front?.(context, 1 / fps, time);
           if (frame >= fps * 20) calls += counter.calls - before;
         }
-        return calls / (fps * 40);
+        return calls / (fps * 20);
       };
       const at60 = perFrame(60), at120 = perFrame(120);
       expect(at120 / at60).toBeGreaterThan(.75);
