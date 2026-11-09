@@ -2,7 +2,7 @@
 
 import { Arrow } from '../Arrow';
 
-// /yak-pratsyuiemo scope block (under FormatsScope's drawing, for the format it shows) — «Обговорити цей формат»: goes to the form (a plain #inquiry link without JavaScript)
+// /yak-pratsyuiemo scope block (under each format's column in FormatsScope) — «Обговорити цей формат»: goes to the form (a plain #inquiry link without JavaScript)
 // and picks this format in «Який обсяг робіт вас цікавить?», opening «Додати параметри об’єкта» so the choice is seen.
 // Focus stays with the visitor; a polite live region says what was selected.
 export function FormatPrefillLink({ label }: Readonly<{ label: string }>) {
@@ -20,7 +20,8 @@ export function FormatPrefillLink({ label }: Readonly<{ label: string }>) {
   };
 
   return (
-    <a className="link-arrow proc-scope-cta" href="#inquiry" onClick={prefill} data-open-inquiry="">
+    // Three such links stand side by side: the name says which format (and keeps the visible words first, WCAG 2.5.3)
+    <a className="link-arrow proc-scope-cta" href="#inquiry" onClick={prefill} data-open-inquiry="" aria-label={`Обговорити цей формат: ${label}`}>
       Обговорити цей формат <Arrow to="up-right" />
     </a>
   );

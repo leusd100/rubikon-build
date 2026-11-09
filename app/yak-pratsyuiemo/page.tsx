@@ -225,9 +225,10 @@ export default function DeliveryModelPage() {
             titleId="proc-scope-title"
             supporting="До старту визначаємо наші роботи, хто координує інших виконавців і за який результат відповідаємо."
           />
-          {/* One drawing, redrawn for the format in focus, in place of three cards (owner, 05.10: the block was
-              overloaded). Its buttons and the map's switcher below are one choice of format. */}
-          <FormatsScope formats={formatCards()} terms={formatTerms} mirror="resp-format" prefill />
+          {/* The three formats side by side, compared row by row; what they share is said once (owner 09.11, «Спільне й
+              різне»; before it one drawing redrawn for the format in focus, and three cards before that). It chooses
+              nothing: the map's switcher below keeps its own choice. */}
+          <FormatsScope formats={formatCards()} terms={formatTerms} prefill />
           <p id="format-prefill-status" className="visually-hidden" aria-live="polite" />
           <ul className="proc-scope-legend" aria-label="Позначення на схемі">
             <li className="is-scope"><i aria-hidden="true" /> Обсяг RUBIKON</li>

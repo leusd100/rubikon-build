@@ -121,37 +121,27 @@ test.describe('PDO-20 · drawings on a phone', () => {
     await expect(page.locator('.dn-badge').first()).toHaveCSS('scale', 'none');
   });
 
-  test('/yak: the frames’ names are 16 units on a phone, and in every format they clear each other and the drawing’s edge', async ({ page }) => {
+  test('/yak: the frames’ names are readable on a phone, under the three drawings, and clear each other', async ({ page }) => {
+    // PDO-20 (owner 22.10): the only words that say what the dashed frames are. Since 09.11 (the formats side by side)
+    // a phone shows the three drawings three across, a third of the width each: the names stand under them, not inside
     for (const width of [320, 390]) {
       await open(page, '/yak-pratsyuiemo', width, 844);
-      const options = page.locator('#obsiah .dfmt-option');
-      const count = await options.count();
-      expect(count).toBe(3);
-      for (let index = 0; index < count; index += 1) {
-        await options.nth(index).click();
-        const where = `${width}px, format ${index + 1}`;
-        const labels = await page.locator('#obsiah .fs').evaluate((drawing) => {
-          const edge = drawing.getBoundingClientRect();
-          const shown = [...drawing.querySelectorAll('.fs-label')].filter((label) => getComputedStyle(label).opacity !== '0');
-          return {
-            size: shown.map((label) => getComputedStyle(label).fontSize),
-            boxes: shown.map((label) => label.getBoundingClientRect()).map((box) => ({ left: box.left, right: box.right, top: box.top, bottom: box.bottom })),
-            edge: { left: edge.left, right: edge.right },
-          };
-        });
-        expect(labels.size.length, where).toBeGreaterThanOrEqual(1);
-        for (const size of labels.size) expect(size, where).toBe('16px');
-        for (const box of labels.boxes) {
-          expect(box.left, where).toBeGreaterThanOrEqual(labels.edge.left - 1);
-          expect(box.right, where).toBeLessThanOrEqual(labels.edge.right + 1);
-        }
-        for (let a = 0; a < labels.boxes.length; a += 1) for (let b = a + 1; b < labels.boxes.length; b += 1) {
-          const [one, two] = [labels.boxes[a], labels.boxes[b]];
-          expect(one.right <= two.left || two.right <= one.left || one.bottom <= two.top || two.bottom <= one.top, `${where}: names overlap`).toBe(true);
-        }
+      const where = `${width}px`;
+      const names = await page.locator('#obsiah .dfmt-frame-name').evaluateAll((all) => all.map((name) => {
+        const box = name.getBoundingClientRect();
+        const column = name.closest('.dfmt-fig')!.getBoundingClientRect();
+        return { size: parseFloat(getComputedStyle(name).fontSize), left: box.left, right: box.right, inside: box.left >= column.left - 1 && box.right <= column.right + 1 };
+      }));
+      expect(names, where).toHaveLength(3);
+      for (const name of names) {
+        expect(name.size, where).toBeGreaterThanOrEqual(11);
+        expect(name.inside, where).toBe(true);
       }
+      for (let a = 1; a < names.length; a += 1) expect(names[a - 1].right, `${where}: names overlap`).toBeLessThanOrEqual(names[a].left + 1);
+      await expect(page.locator('#obsiah .fs-label').first()).toBeHidden();
     }
     await open(page, '/yak-pratsyuiemo', 1440);
-    await expect(page.locator('#obsiah .fs-label').first()).toHaveCSS('font-size', '11px');
+    await expect(page.locator('#obsiah .fs-label').first()).toBeVisible();
+    await expect(page.locator('#obsiah .dfmt-frame-name').first()).toBeHidden();
   });
 });

@@ -114,11 +114,11 @@ const SITES: Site[] = [
   {
     site: 'FormatsScope',
     path: '/yak-pratsyuiemo',
-    target: '#obsiah .dfmt-figure',
+    target: '#obsiah .dfmt-row-draw',
     wide: true,
     arrived: async (page) => {
-      await expect(page.locator('#obsiah .dfmt-figure')).toHaveAttribute('data-live', 'true');
-      await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'work-package');
+      // (on screen is all: the packages' walk is three short steps that end where they began, so a later look proves nothing)
+      await expect(page.locator('#obsiah .dfmt-grid')).toHaveAttribute('data-live', 'true');
     },
   },
   {
@@ -191,15 +191,16 @@ test('GrainComplexBuilder: a drawing passed in one call has arrived and does not
 
 test('FormatsScope: a block passed in one call is not on screen, waits out of view, and walks when it comes back', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await holdReports(page, '#obsiah .dfmt-figure');
+  await holdReports(page, '#obsiah .dfmt-row-draw');
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  await reachInOneCall(page, '#obsiah .dfmt-figure');
+  await reachInOneCall(page, '#obsiah .dfmt-row-draw');
   await scrollTop(page);
   await expect.poll(async () => (await held(page)).at(-1)).toBe(false);
   await letGo(page);
-  await expect(page.locator('#obsiah .dfmt-figure')).not.toHaveAttribute('data-live');
+  await expect(page.locator('#obsiah .dfmt-grid')).not.toHaveAttribute('data-live');
   // Rule 7 (ui-system §6.4): a walk stands out of view. It is not lost: it starts when the block is back
-  await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'comprehensive');
-  await centre(page, '#obsiah .dfmt-figure');
-  await expect(page.locator('#obsiah svg.fs')).toHaveAttribute('data-format', 'work-package', { timeout: 10_000 });
+  const scoped = page.locator('#obsiah svg.fs[data-format="work-package"] .fs-layer[data-scope]');
+  await expect(scoped).toHaveAttribute('data-layer', 'foundation');
+  await centre(page, '#obsiah .dfmt-row-draw');
+  await expect(scoped).toHaveAttribute('data-layer', 'frame', { timeout: 10_000 });
 });

@@ -230,34 +230,6 @@ test('/yak-pratsyuiemo plays one walk at a time', async ({ page }) => {
   expect(await reached()).toBe('1 2 3 4');
 });
 
-test('/yak-pratsyuiemo nothing loops while the formats are on screen', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  const figure = page.locator('#obsiah .dfmt-figure');
-  await figure.scrollIntoViewIfNeeded();
-  await expect(figure).toHaveAttribute('data-live', 'true');
-  await expect(figure.locator('svg.fs')).toHaveAttribute('data-format', 'comprehensive');
-  const endless = () => page.evaluate(() => document.getAnimations()
-    .filter((animation) => animation.effect?.getTiming().iterations === Infinity)
-    .map((animation) => (animation as CSSAnimation).animationName));
-  expect(await endless()).toEqual([]);
-});
-
-test('/yak-pratsyuiemo a format the browser restored stops the walk', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  // A real press: the browser restores only what a person changed
-  await page.locator('label').filter({ has: page.locator('input[name="resp-format"][value="subcontract"]') }).click();
-  // Back, not a reload: automated Chromium restores a radio only on a history navigation
-  await page.goto('/pro-nas', { waitUntil: 'load' });
-  await page.goBack({ waitUntil: 'load' });
-  const drawing = page.locator('#obsiah svg.fs');
-  await drawing.scrollIntoViewIfNeeded();
-  await expect(drawing).toHaveAttribute('data-format', 'subcontract');
-  await page.clock.runFor(20_000);
-  await expect(drawing).toHaveAttribute('data-format', 'subcontract');
-});
-
 test('/pro-nas a walk pauses out of view and goes on from the next step', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/pro-nas', { waitUntil: 'load' });
@@ -286,42 +258,6 @@ test('/yak-pratsyuiemo keyboard focus on a step ends the change sheets\' walk', 
   await page.locator('.cs-steps button').first().focus();
   await page.clock.runFor(STEP_MS * 4);
   expect(await reached()).toBe('1');
-});
-
-for (const action of ['pointing at', 'keyboard focus on'] as const) {
-  test(`/yak-pratsyuiemo ${action} the format list ends the walk and keeps one format`, async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-    await closeBanner(page);
-    const grid = page.locator('.dfmt-grid');
-    const drawing = grid.locator('svg.fs');
-    await grid.scrollIntoViewIfNeeded();
-    await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
-    const option = grid.locator('.dfmt-option').last();
-    if (action === 'pointing at') {
-      await pointAt(page, option);
-    } else await option.focus();
-    // Mid-walk, on purpose: left alone, the walk comes back to the first format by itself and proves nothing
-    await page.clock.runFor(1800);
-    await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
-    await expect(grid.locator('.dfmt-option').first()).toHaveAttribute('aria-pressed', 'true');
-    await page.clock.runFor(3600);
-    await expect(drawing).toHaveAttribute('data-format', 'comprehensive');
-  });
-}
-
-test('/yak-pratsyuiemo a mouse crossing the drawing mid-walk leaves one format on the page', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  await closeBanner(page);
-  const grid = page.locator('.dfmt-grid');
-  const drawing = grid.locator('svg.fs');
-  await grid.scrollIntoViewIfNeeded();
-  await expect.poll(async () => { await page.clock.runFor(400); return drawing.getAttribute('data-format'); }, { timeout: 15_000 }).toBe('work-package');
-  await pointAt(page, drawing);
-  await page.clock.runFor(1800);
-  const checked = await page.locator('input[name="resp-format"]:checked').getAttribute('value');
-  await expect(drawing).toHaveAttribute('data-format', checked!);
 });
 
 for (const [width, height] of [[844, 390], [932, 430]]) {
@@ -379,15 +315,15 @@ test('/pro-nas a block reported «out of view, in view» in one call still walks
 
 test('/yak-pratsyuiemo a formats block reported «out of view, in view» in one call counts as on screen', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await holdReports(page, '.dfmt-figure');
+  await holdReports(page, '.dfmt-row-draw');
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const held = () => page.evaluate(() => (window as unknown as { heldReports: boolean[] }).heldReports);
   await expect.poll(held).toContainEqual(false);
-  const figure = page.locator('.dfmt-figure');
+  const figure = page.locator('.dfmt-row-draw');
   await expect.poll(async () => {
     await figure.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
     return held();
   }).toContainEqual(true);
   await page.evaluate(() => (window as unknown as { letReportsGo: () => void }).letReportsGo());
-  await expect(figure).toHaveAttribute('data-live', 'true');
+  await expect(page.locator('.dfmt-grid')).toHaveAttribute('data-live', 'true');
 });

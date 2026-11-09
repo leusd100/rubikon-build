@@ -2,11 +2,10 @@
 
 import { useEffect } from 'react';
 
-// /yak-pratsyuiemo: one choice of format through the page. The scope drawing over «Наш обсяг» (FormatsScope, which
-// mirrors the table's radio group by itself) and the responsibility table's switcher (resp-format) show the same format,
-// and after a switch the table's rows whose parties changed are lit for a moment (data-fresh, resp-matrix.css); on a
-// phone, a folded group holding such rows gets a dot on its title until the next switch (Phase 3, PROPOSED). The
-// switcher works without this (CSS :has); this only adds the light.
+// /yak-pratsyuiemo: the responsibility table's switcher (resp-format). After a switch the table's rows whose parties
+// changed are lit for a moment (data-fresh, resp-matrix.css); on a phone, a folded group holding such rows gets a dot
+// on its title until the next switch (Phase 3, PROPOSED). The switcher works without this (CSS :has); this only adds
+// the light.
 const GROUP = 'resp-format';
 const FRESH_MS = 2400;
 

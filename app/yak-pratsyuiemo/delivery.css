@@ -130,7 +130,6 @@
 .proc-scope-legend .is-scope i { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
 .proc-scope-legend .is-context i { border-style: dashed; border-color: var(--color-border-strong); background: none; }
 /* «Обговорити цей формат» (an arrow link: .link-arrow) */
-.proc-scope-cta { justify-self: start; align-self: end; margin-top: 18px; }
 /* The form field it fills: a short copper halo so the visitor sees what was chosen */
 .process-page #inquiry select.is-prefilled { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent); }
 
@@ -147,7 +146,7 @@
 }
 /* The responsibility table itself: components/process/resp-matrix.css (ResponsibilityMatrix). */
 /* The format switcher of the responsibility map: three radios as one segmented control, centred under the heading.
-   (The scope block above it has its own format buttons — FormatsScope — and the two hold one choice.)
+   (The scope block above it shows all three formats at once — FormatsScope — and chooses nothing.)
    The map runs taller than a screen at every width: the switcher stays under the fixed header (101 px) while it
    scrolls by. The section's supporting text already asks to choose a format, so its legend is for assistive technology
    only. On a wide screen only the control floats (the strip beside it lets the pointer through to the cards). */
