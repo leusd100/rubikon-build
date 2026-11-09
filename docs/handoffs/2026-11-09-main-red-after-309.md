@@ -8,7 +8,7 @@
 | PR | Draft. **Merge і deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `fix/main-red-after-309` від `main` `7b8dfc65` |
 | Змінено | `HomeV2Hero.tsx` (render-блок до кінця героя), `useNodeHint.ts` (запасний коротший відвід), 2 e2e-спеки, цей handoff і аркуші в `docs/handoffs/media/main-red-after-309/` |
-| Не змінено | Тексти, дизайн блоків #306–#309, CSS, Lighthouse-бюджети, Sonar, CSP, consent. **Візуальні еталони — не змінено, чекають OK власника** (§4) |
+| Не змінено | Тексти, дизайн блоків #306–#309, CSS, Lighthouse-бюджети, Sonar, CSP, consent. Візуальні еталони — лише 5 Linux-знімків із §4, з OK власника 09.11 |
 
 ## 1. Що було
 
@@ -77,7 +77,7 @@ Main Regression червоний з `d16cd4e3` (#305). Падіння й ком�
 | PR Gate [42652271138](https://github.com/leusd100/rubikon-build/actions/runs/42652271138) на `aeeb0d72` | Fast Gate, Hero playback — success; visual — **лише 5 знімків із §4** |
 | Main Regression на гілці [42652337415](https://github.com/leusd100/rubikon-build/actions/runs/42652337415) на `aeeb0d72` | **Main E2E 8 / 8 — success** (без retries, `failOnFlakyTests`); visual 1/2 success, 2/2 — лише ті самі 5 знімків (28 passed, 5 failed) |
 
-## 4. Візуальні еталони — чекають OK власника
+## 4. Візуальні еталони — оновлено з OK власника
 
 Усі 5 знімків детерміновані (у трьох спробах CI actual однаковий, SHA-256 збігається) і показують задуманий дизайн:
 
@@ -91,7 +91,7 @@ Main Regression червоний з `d16cd4e3` (#305). Падіння й ком�
 
 Аркуші «еталон | CI actual»: `media/main-red-after-309/baseline-*-expected-vs-ci-actual.png` (з Main Regression 42626918764 на `main`).
 
-Після OK власника PNG беруться **з артефакту CI цієї гілки** (того самого коміту, DEC-18), не з локальної машини, і йдуть окремим комітом. Джерело: `changed-area-visual-diff` з PR Gate 42652271138 (`aeeb0d72`). Його 5 actual PNG байт у байт ті самі, що й у Main Regression 42626918764 на `main` (SHA-256: `13a0b2d2eb80…` homepage-real-object-mobile-375, `914960f6ef7a…` process-scope-mobile-375, `8951134f60bb…` process-scope-tablet-768, `756face52fec…` process-scope-desktop-1440, `748efced4806…` process-responsibility-mobile-375). Тобто зміни цього PR знімків не торкаються.
+**OK власника 09.11** («Так, оновити» на «Оновити 5 бейзлайнів у #311?»). PNG взято **з артефакту CI цієї гілки** (DEC-18), не з локальної машини, окремим комітом; змінено лише 5 файлів `*-linux.png`, darwin-еталони не чіпались. Джерело: `changed-area-visual-diff` з PR Gate [42668447186](https://github.com/leusd100/rubikon-build/actions/runs/42668447186) на `7c1e728b` (останній коміт перед еталонами). Ті самі 5 actual були й у PR Gate 42652271138 (`aeeb0d72`); вони байт у байт ті самі, що й у Main Regression 42626918764 на `main` (SHA-256: `13a0b2d2eb80…` homepage-real-object-mobile-375, `914960f6ef7a…` process-scope-mobile-375, `8951134f60bb…` process-scope-tablet-768, `756face52fec…` process-scope-desktop-1440, `748efced4806…` process-responsibility-mobile-375). Тобто зміни цього PR знімків не торкаються.
 
 ## 5. Поза цим PR
 
