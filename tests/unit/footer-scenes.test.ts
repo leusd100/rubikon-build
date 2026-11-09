@@ -1,11 +1,20 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FOOTER_SCENE_PAGES } from '../../app/components/FooterSignatureLife';
-import { FOOTER_SCENES, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
+import { FOOTER_SCENES, IN_TURN, MISSING_FOR, TURN, inTurn, missing, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
 
 // The footer scenes run continuously while the footer is on the screen (owner 09.11): each must go on for minutes without
 // failing or slowing down, and the welding arc must carry the light along the word and start again. Canvas calls go to a
 // stub that counts them, so a scene that piles up what it draws shows as a growing count.
+
+// Node has no Path2D or DOMMatrix: the 404 letter builds paths, which the stub context then takes like any other call
+class StubPath {
+  addPath() {
+    return undefined;
+  }
+}
+globalThis.Path2D ??= StubPath as unknown as typeof Path2D;
+globalThis.DOMMatrix ??= class {} as unknown as typeof DOMMatrix;
 
 /** A 2D context that takes every call, draws nothing and counts the strokes and fills */
 function stubContext() {
@@ -72,11 +81,34 @@ describe('footer scenes: continuous', () => {
     expect(restarts).toBeGreaterThanOrEqual(1);
   });
 
+  it('the home page plays every direction in turn, fading between them', () => {
+    const scene = inTurn(geometry), { context } = stubContext();
+    const seen: number[] = [];
+    let time = 0;
+    for (let frame = 0; frame < TURN * IN_TURN.length * 60; frame++) {
+      time += 1 / 60;
+      scene.back?.(context, 1 / 60, time);
+      scene.front?.(context, 1 / 60, time);
+      seen.push(scene.opacity!);
+    }
+    // faded out at each turn's edges, fully there in its middle
+    for (let turn = 0; turn < IN_TURN.length; turn++) {
+      expect(seen[turn * TURN * 60 + 1], `turn ${turn} begins faded`).toBeLessThan(.1);
+      expect(seen[turn * TURN * 60 + TURN * 30], `turn ${turn} middle`).toBe(1);
+    }
+    expect(IN_TURN).toHaveLength(8);
+  });
+
+  it('404: the letter comes down, stands, and the go starts again', () => {
+    const { arcs } = run(missing({ ...geometry, word: null }), MISSING_FOR * 2);
+    expect(arcs.every((arc) => arc === null)).toBe(true);
+  });
+
   it('knows the same pages as the footer that asks for them, and the stylesheet makes room on each', () => {
     expect(Object.keys(FOOTER_SCENES).sort()).toEqual([...FOOTER_SCENE_PAGES].sort());
     const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8');
-    const room = /body:has\(main:is\(([^)]*)\)\) \.footer-signature-stage \{ margin-top/.exec(css);
+    const room = /body:has\(main:is\((.*?)\)\) \.footer-signature-stage \{ margin-top/.exec(css);
     expect(room, 'the rule that lowers the word on a page with a scene').not.toBeNull();
-    expect(room![1].split(',').map((name) => name.trim().replace(/^\./, '')).sort()).toEqual([...FOOTER_SCENE_PAGES].sort());
+    expect(room![1].split(',').map((key) => key.trim()).sort()).toEqual([...FOOTER_SCENE_PAGES].sort());
   });
 });

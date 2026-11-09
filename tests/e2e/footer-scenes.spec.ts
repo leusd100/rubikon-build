@@ -1,7 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // The footer's embossed RUBIKON (owner 08–09.11): on the eight pages with a live scene of their own, that scene plays on
-// the word continuously while the footer is on the screen and pauses off it; the home page and phones have no scene;
+// the word continuously while the footer is on the screen and pauses off it; the home page plays all eight in turn and the
+// 404 page lowers the word's missing O into place; the privacy page and phones have no scene;
 // reduced motion gets one still frame; a mouse over the footer lights the letters (the lamp).
 
 test.beforeEach(async ({ context }) => {
@@ -58,6 +59,8 @@ test.describe('desktop', () => {
   const pages = [
     ['/pokrivelni-roboty', 'front'], ['/metalokonstruktsii', 'front'], ['/betonni-roboty', 'back'], ['/zernoskhovyshcha', 'front'],
     ['/yak-pratsyuiemo', 'front'], ['/angary', 'back'], ['/pro-nas', 'front'], ['/napryamky', 'front'],
+    // home: every direction in turn, starting with the rain; 404: the missing O lowered into place
+    ['/', 'front'], ['/takoi-storinky-nemaie', 'front'],
   ] as const;
   for (const [path, layer] of pages) {
     test(`${path}: the scene plays on while the footer is on the screen, and pauses off it`, async ({ page }) => {
@@ -80,8 +83,18 @@ test.describe('desktop', () => {
     });
   }
 
+  test('the 404 page leaves the O out of the word and lowers it in; every other page has the whole word', async ({ page }) => {
+    await toFooter(page, '/takoi-storinky-nemaie');
+    await expect(page.locator('main.not-found-page')).toBeVisible();
+    await expect(page.locator('svg.footer-signature path.footer-signature-letters.footer-signature-o')).toBeHidden();
+    await expect(page.locator('.footer-signature-stage')).toHaveAttribute('data-scene', 'playing');
+    await toFooter(page, '/pokrivelni-roboty');
+    await expect(page.locator('svg.footer-signature path.footer-signature-letters.footer-signature-o')).toBeAttached();
+    expect(await page.locator('svg.footer-signature path.footer-signature-letters.footer-signature-o').evaluate((path) => getComputedStyle(path).display)).not.toBe('none');
+  });
+
   test('a page without a scene has no canvas, and the lamp follows the mouse there too', async ({ page }) => {
-    await toFooter(page, '/');
+    await toFooter(page, '/polityka-konfidentsiinosti');
     await expect(page.locator('canvas.footer-scene')).toHaveCount(0);
     const word = page.locator('svg.footer-signature');
     await expect(word).not.toHaveAttribute('data-lamp');

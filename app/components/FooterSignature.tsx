@@ -1,7 +1,7 @@
 import { FooterSignatureLife } from './FooterSignatureLife';
+import { LETTER_O, LETTERS_WITHOUT_O } from './footerSignatureLetters';
 
-// The word RUBIKON from the logo's own geometry (BrandLogo.tsx), without BUILD under it
-const LETTERS = 'M521 142L523 140L606 140L614 145L620 154L620 182L611 192L605 194L605 198L622 215L622 219L597 219L575 196L546 196L544 217L542 219L524 219L521 216ZM544 161L544 175L546 177L592 177L597 174L598 170L597 161L593 158L546 158ZM652 142L654 140L675 141L676 197L680 200L703 200L724 199L728 194L728 141L750 140L752 142L752 201L747 211L729 219L672 219L660 214L654 207L652 200ZM780 179L781 141L783 140L867 140L874 144L880 152L881 166L876 180L882 188L883 200L879 211L866 218L784 219L780 214ZM804 159L806 171L854 170L858 165L857 160L852 157L806 157ZM804 189L805 200L856 200L859 197L859 191L856 188L815 187ZM915 142L917 140L935 140L937 142L937 216L934 219L917 218L915 216ZM970 142L972 140L992 141L992 169L997 171L1037 140L1067 140L1066 144L1026 172L1020 177L1020 180L1065 212L1069 219L1039 219L996 187L992 189L992 217L990 219L971 218ZM1089 159L1095 146L1105 140L1176 140L1183 144L1191 155L1191 203L1187 211L1171 219L1110 219L1101 216L1092 209L1090 204ZM1112 162L1112 196L1116 200L1163 200L1168 196L1167 160L1161 158L1116 159ZM1221 141L1247 140L1297 191L1300 189L1300 141L1322 141L1323 216L1319 219L1296 219L1292 217L1251 176L1248 170L1244 169L1243 217L1240 219L1223 218L1221 216Z';
+
 
 /**
  * The footer's signature (owner 01.11, «Підпис»): RUBIKON pressed into the charcoal band, tone on tone, the width of the
@@ -35,7 +35,8 @@ export function FooterSignature() {
             </feMerge>
           </filter>
           <clipPath id="footer-signature-letters">
-            <path d={LETTERS} clipRule="evenodd" />
+            <path d={LETTERS_WITHOUT_O} clipRule="evenodd" />
+            <path className="footer-signature-o" d={LETTER_O} clipRule="evenodd" />
           </clipPath>
           {/* The lamp: the softened letters as a height field, lit from a point the pointer (or the welding arc) moves */}
           <filter id="footer-signature-lamp-light" x="-2%" y="-40%" width="104%" height="180%" colorInterpolationFilters="sRGB">
@@ -52,8 +53,13 @@ export function FooterSignature() {
             <stop offset="1" stopColor="#F5F2EB" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <path d={LETTERS} filter="url(#footer-signature-relief)" />
-        <path className="footer-signature-lamp" d={LETTERS} filter="url(#footer-signature-lamp-light)" />
+        {/* The relief and the lamp, each in two parts: the 404 page leaves the O out (globals.css) and lowers it into place */}
+        <path className="footer-signature-letters" d={LETTERS_WITHOUT_O} filter="url(#footer-signature-relief)" />
+        <path className="footer-signature-letters footer-signature-o" d={LETTER_O} filter="url(#footer-signature-relief)" />
+        <g className="footer-signature-lamp">
+          <path d={LETTERS_WITHOUT_O} filter="url(#footer-signature-lamp-light)" />
+          <path className="footer-signature-o" d={LETTER_O} filter="url(#footer-signature-lamp-light)" />
+        </g>
         {/* A band of light crosses the letters once as the footer comes up (motion.css). It waits left of the word, clipped to nothing */}
         <g clipPath="url(#footer-signature-letters)">
           <rect className="footer-signature-sheen" x="281" y="140" width="240" height="79" fill="url(#footer-signature-sheen-fill)" />

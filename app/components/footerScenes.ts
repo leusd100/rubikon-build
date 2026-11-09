@@ -1,8 +1,11 @@
+import { LETTER_O } from './footerSignatureLetters';
+
 // The page's own scene on the footer's embossed RUBIKON (owner 08–09.11): on every page that has a live scene of its own,
 // the same subject plays on the word, continuously while the footer is on the screen — rain beating on the letters' tops,
 // a weld run along them, concrete poured into them, grain heaped on them, a beam lowered onto them, a portal frame coming
 // through them, two streams joining in them, the five directions falling on them. «If it gets tiresome, or clients say so,
-// we change it» (owner 09.11). The scenes draw into two canvases, behind the word (concrete and the frame, so the relief and
+// we change it» (owner 09.11). The home page shows all eight in turn, and the 404 page lowers the word's missing O into
+// place (owner 09.11, after the mock). The scenes draw into two canvases, behind the word (concrete and the frame, so the relief and
 // the light stay on top) and in front of it (FooterSignatureLife.tsx runs them).
 
 /** The word on the canvas, in CSS px: its scale against the signature's viewBox and where the letters stand */
@@ -26,6 +29,8 @@ export type FooterScene = {
   arc?: [number, number] | null;
   /** The light's place in canvas px, given each frame: what the rain's beads catch */
   lamp?: [number, number] | null;
+  /** How visible the canvases are this frame (the home page fades from one scene to the next); 1 if left out */
+  opacity?: number;
 };
 
 const INK = '#BDB7AC';
@@ -400,14 +405,126 @@ export function five(g: WordGeometry): FooterScene {
   };
 }
 
-/** The page a scene belongs to: its <main> class (DirectionPageConfig.pageClassName and the pages' own) */
+/** Home: every direction in turn, TURN seconds each, faded out and in over FADE */
+export const TURN = 8;
+const FADE = .6;
+export const IN_TURN = [rain, weld, grain, pour, beam, frames, streams, five] as const;
+
+export function inTurn(g: WordGeometry): FooterScene {
+  let index = -1, inner: FooterScene = {}, start = 0;
+  const follow = (time: number) => {
+    const turn = Math.floor(time / TURN), now = turn % IN_TURN.length;
+    if (now !== index) {
+      index = now;
+      inner = IN_TURN[now](g);
+      start = turn * TURN;
+    }
+    const into = time - start;
+    scene.opacity = Math.max(0, Math.min(1, into / FADE, (TURN - into) / FADE));
+  };
+  const scene: FooterScene = {
+    opacity: 1,
+    back(c, dt, time) {
+      follow(time);
+      inner.back?.(c, dt, time - start);
+    },
+    front(c, dt, time) {
+      follow(time);
+      inner.lamp = scene.lamp;
+      inner.front?.(c, dt, time - start);
+      scene.arc = inner.arc ?? null;
+    },
+  };
+  return scene;
+}
+
+/** One go of the 404 scene, s: down 3.2, the slings away 0.8, standing, then the letter fades for the next go */
+export const MISSING_FOR = 10;
+const LOWERED_IN = 3.2;
+
+/** 404: the O is missing from the word; it comes down on slings into its place, lands in a little dust, the slings go up,
+    it stands, and fades for the next go. Where it belongs, a faint copper outline while it is not there. */
+export function missing(g: WordGeometry): FooterScene {
+  const dust: Bit[] = [];
+  const left = (1089 - 521) * g.scale, right = (1191 - 521) * g.scale, middle = (left + right) / 2, height = 79 * g.scale;
+  const letter = (dy: number) => {
+    const path = new Path2D();
+    path.addPath(new Path2D(LETTER_O), new DOMMatrix([g.scale, 0, 0, g.scale, -521 * g.scale, g.wordTop - 140 * g.scale + dy]));
+    return path;
+  };
+  const place = letter(0);
+  let landed = false;
+  /** The slings over the letter, from its two shoulders to the hook, and the hook's line up out of the canvas */
+  const slings = (c: CanvasRenderingContext2D, top: number, sway: number, alpha: number) => {
+    c.globalAlpha = alpha;
+    c.strokeStyle = COPPER;
+    c.lineWidth = 1.4;
+    c.beginPath();
+    c.moveTo(left + sway + 8, top);
+    c.lineTo(middle + sway, top - 50 * g.scale);
+    c.lineTo(right + sway - 8, top);
+    c.moveTo(middle + sway, top - 50 * g.scale);
+    c.lineTo(middle, -10);
+    c.stroke();
+  };
+  /** The letter as pressed into the band: dark face, light upper-left edge, shadowed lower-right */
+  const draw = (c: CanvasRenderingContext2D, path: Path2D, sway: number, alpha: number) => {
+    c.save();
+    c.translate(sway, 0);
+    c.globalAlpha = alpha;
+    c.fillStyle = '#1B1D1C';
+    c.fill(path, 'evenodd');
+    c.lineWidth = 1.2;
+    c.translate(-.8, -.8);
+    c.globalAlpha = .38 * alpha;
+    c.strokeStyle = '#F5F2EB';
+    c.stroke(path);
+    c.translate(1.6, 1.6);
+    c.globalAlpha = .7 * alpha;
+    c.strokeStyle = '#000';
+    c.stroke(path);
+    c.restore();
+  };
+  return {
+    front(c, dt, time) {
+      const p = time % MISSING_FOR, drop = g.wordTop + height + 40;
+      const down = p < LOWERED_IN ? 1 - (1 - p / LOWERED_IN) ** 3 : 1;
+      const sway = p < LOWERED_IN ? Math.sin(p * 2.4) * 6 * (1 - p / LOWERED_IN) : 0;
+      const dy = -(1 - down) * drop, alpha = p < 8.6 ? 1 : Math.max(0, 1 - (p - 8.6) / .9);
+      if (p < LOWERED_IN) landed = false;
+      c.save();
+      c.setLineDash([4, 4]);
+      c.globalAlpha = .45 * (1 - down);
+      c.strokeStyle = COPPER;
+      c.lineWidth = 1;
+      c.stroke(place);
+      c.restore();
+      draw(c, letter(dy), sway, alpha);
+      const lift = p < LOWERED_IN ? 0 : Math.min(1, (p - LOWERED_IN) / .8);
+      if (lift < 1) slings(c, g.wordTop + dy - lift * 160, sway, 1 - lift);
+      if (p >= LOWERED_IN && !landed) {
+        landed = true;
+        for (let i = 0; i < 40; i++) dust.push({ x: left + random() * (right - left), y: g.height - 2, vx: gauss() * 40, vy: -20 - random() * 50, age: 0, life: .6 + random() * .5 });
+      }
+      update(dust, dt, 60, (bit, px, py) => {
+        stroke(c, [px, py, bit.x, bit.y], 1.4, INK, .5 * (1 - bit.age / bit.life));
+        return true;
+      });
+    },
+  };
+}
+
+/** The page a scene belongs to: a selector on its <main> (DirectionPageConfig.pageClassName, the pages' own classes, HOME's
+    data-home); FooterSignatureLife looks for `main` + the key, and globals.css lifts the word on the same list */
 export const FOOTER_SCENES: Record<string, (g: WordGeometry) => FooterScene> = {
-  'roofing-page': rain,
-  'metal-page': weld,
-  'concrete-page': pour,
-  'grain-page': grain,
-  'process-page': beam,
-  'angary-page': frames,
-  'about-page': streams,
-  'directions-page': five,
+  '.roofing-page': rain,
+  '.metal-page': weld,
+  '.concrete-page': pour,
+  '.grain-page': grain,
+  '.process-page': beam,
+  '.angary-page': frames,
+  '.about-page': streams,
+  '.directions-page': five,
+  '[data-home]': inTurn,
+  '.not-found-page': missing,
 };

@@ -1070,11 +1070,13 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
    the word: the beam, the streams and the grain must not pass over the links and the messenger buttons (seen 09.11 at
    1440: the columns end 37 px above the word). The pages are FOOTER_SCENE_PAGES (tests/unit/footer-scenes.test.ts). */
 @media (min-width: 1181px) {
-  body:has(main:is(.roofing-page, .metal-page, .concrete-page, .grain-page, .process-page, .angary-page, .about-page, .directions-page)) .footer-signature-stage { margin-top: 88px; }
+  body:has(main:is(.roofing-page, .metal-page, .concrete-page, .grain-page, .process-page, .angary-page, .about-page, .directions-page, [data-home], .not-found-page)) .footer-signature-stage { margin-top: 88px; }
   /* The grain page has a height budget (grain-page.spec.ts, 9.15 screens at 1440×900; 9.08 without the lift): its word
      goes down 32 px and its scene reaches 68 px above it — the streams start lower, the links stay clear */
   body:has(main.grain-page) .footer-signature-stage { --footer-scene-head: 68px; margin-top: 32px; }
 }
+/* The 404 page's word has no O: its footer scene lowers one into place (footerScenes.ts, missing) */
+body:has(main.not-found-page) .footer-signature-o { display: none; }
 /* The lamp's pass (FooterSignature.tsx) is lit only while a pointer or the arc moves it */
 .footer-signature-lamp { opacity: 0; transition: opacity var(--motion-ui) var(--ease-standard); }
 .footer-signature[data-lamp] .footer-signature-lamp { opacity: 1; }

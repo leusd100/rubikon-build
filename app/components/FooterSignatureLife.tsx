@@ -8,10 +8,15 @@ import type { FooterScene, WordGeometry } from './footerScenes';
 //   fine pointer and motion allowed, as MaterialLight; a phone keeps the band of light that crosses the word once (motion.css).
 // - on the eight pages with a live scene of their own, that scene plays on the word (footerScenes.ts), continuously while
 //   the word is on the screen and paused off it, from 1181 px as the page scenes (LiveScene.tsx) — owner 09.11: «безперервно,
-//   як і було». With reduced motion one still frame of it, without the play. Nothing is fetched on the other pages.
+//   як і було». The home page shows all eight in turn; the 404 page lowers the word's missing O into place. With reduced
+//   motion one still frame, without the play. Nothing is fetched on the other pages.
 
-/** The pages with a footer scene: the <main> classes FOOTER_SCENES knows (tests/unit/footer-scenes.test.ts holds them equal) */
-export const FOOTER_SCENE_PAGES = ['roofing-page', 'metal-page', 'concrete-page', 'grain-page', 'process-page', 'angary-page', 'about-page', 'directions-page'] as const;
+/** The pages with a footer scene, as selectors on their <main>: the keys of FOOTER_SCENES and the list globals.css lifts the
+    word on (tests/unit/footer-scenes.test.ts holds the three equal) */
+export const FOOTER_SCENE_PAGES = [
+  '.roofing-page', '.metal-page', '.concrete-page', '.grain-page', '.process-page', '.angary-page', '.about-page', '.directions-page',
+  '[data-home]', '.not-found-page',
+] as const;
 const DESKTOP = '(min-width: 1181px)';
 /** How far the scene canvas reaches above the word: --footer-scene-head in globals.css (less on the grain page), else this */
 const HEAD = 120;
@@ -88,7 +93,7 @@ export function FooterSignatureLife() {
     }
 
     // ——— the scene ———
-    const page = FOOTER_SCENE_PAGES.find((name) => document.querySelector(`main.${name}`));
+    const page = FOOTER_SCENE_PAGES.find((key) => document.querySelector(`main${key}`));
     let cancelled = false;
     if (page && window.matchMedia(DESKTOP).matches) {
       void import('./footerScenes').then(({ FOOTER_SCENES }) => {
@@ -130,7 +135,10 @@ export function FooterSignatureLife() {
         }
         const scale = word.width / VIEW.width;
         const letters = new Path2D();
-        letters.addPath(new Path2D(signature.querySelector('path')!.getAttribute('d')!), new DOMMatrix([scale, 0, 0, scale, -VIEW.x * scale, wordTop - VIEW.y * scale]));
+        // the letters the page shows: on 404 the O is left out (globals.css), and the scene must not land on it
+        const shown = [...signature.querySelectorAll<SVGPathElement>('path.footer-signature-letters')].filter((path) => getComputedStyle(path).display !== 'none');
+        const matrix = new DOMMatrix([scale, 0, 0, scale, -VIEW.x * scale, wordTop - VIEW.y * scale]);
+        for (const path of shown) letters.addPath(new Path2D(path.getAttribute('d')!), matrix);
         // the letters' top edge per column: the word filled once, read back once (a point test per pixel was ~30 000 calls)
         const columns = Math.ceil(width), rows = Math.ceil(height);
         probe.canvas.width = columns;
@@ -157,6 +165,9 @@ export function FooterSignatureLife() {
         fc.clearRect(0, 0, geometry.width, geometry.height);
         scene.back?.(bc, dt, time);
         scene.front?.(fc, dt, time);
+        // the home page fades from one direction to the next
+        const opacity = String(scene.opacity ?? 1);
+        if (back.style.opacity !== opacity) back.style.opacity = front.style.opacity = opacity;
       };
       const followArc = () => {
         const arc = scene?.arc ?? null;
