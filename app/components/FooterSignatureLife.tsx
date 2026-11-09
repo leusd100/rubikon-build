@@ -30,6 +30,25 @@ const STILL_STEPS = 240;
 /** The lamp's z over the letters: low for the arc, so the light falls on the letters around it */
 const LAMP_Z = 46;
 const ARC_Z = 22;
+/** The visitor's «Зупинити рух», kept for the next pages and visits */
+const STOPPED_KEY = 'rubikon-footer-motion';
+const STOP_LABEL = 'Зупинити рух';
+const START_LABEL = 'Увімкнути рух';
+const readStopped = () => {
+  try {
+    return window.localStorage.getItem(STOPPED_KEY) === 'off';
+  } catch {
+    return false;
+  }
+};
+const writeStopped = (stopped: boolean) => {
+  try {
+    if (stopped) window.localStorage.setItem(STOPPED_KEY, 'off');
+    else window.localStorage.removeItem(STOPPED_KEY);
+  } catch {
+    // storage may be off: the choice then lasts this page
+  }
+};
 
 export function FooterSignatureLife() {
   useEffect(() => {
@@ -41,6 +60,8 @@ export function FooterSignatureLife() {
     const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const cleanups: Array<() => void> = [];
+    // «Зупинити рух» stops the scene at a still frame and the lamp with it (WCAG 2.2.2: moving content longer than 5 s)
+    let stopped = readStopped();
 
     // ——— the lamp ———
     const lamp = { x: 700, y: 150, tx: 700, ty: 150, hover: false, arc: null as [number, number] | null, frame: 0 };
@@ -65,7 +86,7 @@ export function FooterSignatureLife() {
     };
     if (fine && !calm) {
       const move = (event: PointerEvent) => {
-        if (event.pointerType !== 'mouse') return;
+        if (event.pointerType !== 'mouse' || stopped) return;
         const toSvg = svg.getScreenCTM()?.inverse();
         if (!toSvg) return;
         const at = new DOMPoint(event.clientX, event.clientY).matrixTransform(toSvg);
@@ -224,13 +245,15 @@ export function FooterSignatureLife() {
         host.dataset.scene = 'still';
       };
 
-      if (calm) still();
+      if (calm || stopped) still();
       // Runs while the scene's canvas is on the screen, and stops off it — the canvas, not the word: below 1181 px (a narrowed
       // window, a zoom past 125 %) CSS hides the canvas while the word stays, and the loop must not draw for nobody
       // (review 09.11; LiveScene.tsx observes its canvas for the same reason)
+      let inView = false;
       const seen = new IntersectionObserver(([entry]) => {
-        if (calm) return;
-        if (entry.isIntersecting) resume();
+        inView = entry.isIntersecting;
+        if (calm || stopped) return;
+        if (inView) resume();
         else pause();
       });
       seen.observe(front);
@@ -241,12 +264,41 @@ export function FooterSignatureLife() {
         // must not restart a scene that has just come up (review 08.11)
         resized = window.setTimeout(() => {
           if (!geometry || Math.abs(host.getBoundingClientRect().width - laidWidth) < 1) return;
-          if (calm) still();
+          if (calm || stopped) still();
           else begin(WARM_UP_STEPS);
         }, 150);
       });
       sized.observe(host);
+
+      // The stop, in the footer's legal line (SiteChrome): shown only where a scene moves, so never with reduced motion
+      const toggle = host.closest('footer')?.querySelector<HTMLButtonElement>('[data-footer-motion]');
+      const label = () => {
+        if (toggle) toggle.textContent = stopped ? START_LABEL : STOP_LABEL;
+      };
+      const flip = () => {
+        stopped = !stopped;
+        writeStopped(stopped);
+        label();
+        if (stopped) {
+          pause();
+          still();
+          lamp.hover = false;
+          setLamp();
+        } else {
+          begin(WARM_UP_STEPS);
+          if (inView) resume();
+        }
+      };
+      if (toggle && !calm) {
+        label();
+        toggle.hidden = false;
+        toggle.addEventListener('click', flip);
+      }
       return () => {
+        if (toggle) {
+          toggle.removeEventListener('click', flip);
+          toggle.hidden = true;
+        }
         pause();
         seen.disconnect();
         sized.disconnect();

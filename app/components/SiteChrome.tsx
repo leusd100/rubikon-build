@@ -247,6 +247,10 @@ export function SiteFooter() {
           <div className="footer-legal">
             <a href={siteRoutes.privacy}>Політика конфіденційності</a>
             <CookieSettingsButton />
+            {/* The footer scene's stop (WCAG 2.2.2, owner 09.11): hidden until FooterSignatureLife has a scene running here */}
+            <button className="footer-legal-link" type="button" data-footer-motion="" hidden>
+              Зупинити рух
+            </button>
           </div>
         </div>
       </div>

@@ -114,6 +114,43 @@ test.describe('desktop', () => {
     await expect(word).not.toHaveAttribute('data-lamp');
   });
 
+  test('«Зупинити рух» stops the scene at a still frame, is kept for the next page, and starts it again', async ({ page }) => {
+    await toFooter(page, '/pokrivelni-roboty');
+    const stage = page.locator('.footer-signature-stage');
+    const stop = page.locator('footer [data-footer-motion]');
+    await expect(stage).toHaveAttribute('data-scene', 'playing');
+    await expect(stop).toBeVisible();
+    await expect(stop).toHaveText('Зупинити рух');
+    await stop.click();
+    await expect(stage).toHaveAttribute('data-scene', 'still');
+    await expect(stop).toHaveText('Увімкнути рух');
+    // the still frame stays still
+    const frame = () => page.locator('.footer-scene-front').evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+    const first = await frame();
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    expect(await frame()).toBe(first);
+    // and no lamp follows the mouse while stopped
+    const box = (await page.locator('svg.footer-signature').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
+    await expect(page.locator('svg.footer-signature')).not.toHaveAttribute('data-lamp');
+    // another page: still stopped
+    await toFooter(page, '/metalokonstruktsii');
+    await expect(stage).toHaveAttribute('data-scene', 'still');
+    await expect(stop).toHaveText('Увімкнути рух');
+    await stop.click();
+    await expect(stage).toHaveAttribute('data-scene', 'playing');
+    await expect(stop).toHaveText('Зупинити рух');
+  });
+
+  test('no «Зупинити рух» where nothing moves: the privacy page, and reduced motion', async ({ page }) => {
+    await toFooter(page, '/polityka-konfidentsiinosti');
+    await expect(page.locator('footer [data-footer-motion]')).toBeHidden();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await toFooter(page, '/pokrivelni-roboty');
+    await expect(page.locator('.footer-signature-stage')).toHaveAttribute('data-scene', 'still');
+    await expect(page.locator('footer [data-footer-motion]')).toBeHidden();
+  });
+
   test('reduced motion: one still frame of the scene, no play and no lamp', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await toFooter(page, '/metalokonstruktsii');
@@ -136,6 +173,7 @@ test('a phone has no footer scene, and its 404 keeps the whole word', async ({ p
   await toFooter(page, '/pokrivelni-roboty');
   await expect(page.locator('svg.footer-signature')).toBeVisible();
   await expect(page.locator('canvas.footer-scene')).toHaveCount(0);
+  await expect(page.locator('footer [data-footer-motion]')).toBeHidden();
   // review 09.11: the O was hidden on every width, and phones, without the scene, read «RUBIK N»
   await toFooter(page, '/takoi-storinky-nemaie');
   await expect(page.locator('canvas.footer-scene')).toHaveCount(0);
