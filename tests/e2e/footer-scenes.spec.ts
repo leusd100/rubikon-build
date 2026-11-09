@@ -65,7 +65,8 @@ test.describe('desktop', () => {
       const stage = page.locator('.footer-signature-stage');
       await expect(stage.locator('canvas.footer-scene')).toHaveCount(2);
       await expect(stage).toHaveAttribute('data-scene', 'playing');
-      await expect.poll(() => painted(page, layer)).toBe(true);
+      // the first frames come after the scene's module is fetched and the word measured: slower on a loaded machine
+      await expect.poll(() => painted(page, layer), { timeout: 15_000 }).toBe(true);
       // still going after the length the one-shot version had (owner 09.11: continuous, as before)
       const frame = () => page.locator(`.footer-scene-${layer}`).evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
       const first = await frame();

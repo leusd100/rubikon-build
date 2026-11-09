@@ -13,8 +13,9 @@ import type { FooterScene, WordGeometry } from './footerScenes';
 /** The pages with a footer scene: the <main> classes FOOTER_SCENES knows (tests/unit/footer-scenes.test.ts holds them equal) */
 export const FOOTER_SCENE_PAGES = ['roofing-page', 'metal-page', 'concrete-page', 'grain-page', 'process-page', 'angary-page', 'about-page', 'directions-page'] as const;
 const DESKTOP = '(min-width: 1181px)';
-/** The scene canvas reaches this far above the word (--footer-scene-head in globals.css), for the rain and the sparks */
+/** How far the scene canvas reaches above the word: --footer-scene-head in globals.css (less on the grain page), else this */
 const HEAD = 120;
+const headOf = (stage: HTMLElement) => Number.parseFloat(getComputedStyle(stage).getPropertyValue('--footer-scene-head')) || HEAD;
 /** viewBox of the signature: x from 521, y from 140, 802 wide */
 const VIEW = { x: 521, y: 140, width: 802 };
 const LONGEST_STEP = 1 / 20;
@@ -118,9 +119,9 @@ export function FooterSignatureLife() {
 
       const layout = () => {
         // the stage, not the svg: on narrower layouts the svg has a margin inside it, and the canvas spans the stage
-        const box = host.getBoundingClientRect(), word = signature.getBoundingClientRect();
-        const width = box.width, height = box.height + HEAD, ratio = Math.min(2, window.devicePixelRatio || 1);
-        const wordTop = HEAD + word.top - box.top;
+        const box = host.getBoundingClientRect(), word = signature.getBoundingClientRect(), head = headOf(host);
+        const width = box.width, height = box.height + head, ratio = Math.min(2, window.devicePixelRatio || 1);
+        const wordTop = head + word.top - box.top;
         for (const [index, canvas] of canvases.entries()) {
           canvas.width = Math.round(width * ratio);
           canvas.height = Math.round(height * ratio);
