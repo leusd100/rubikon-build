@@ -36,7 +36,8 @@ const footer = (page: Page) => page.locator('footer').evaluate((root) => {
     logo: box('.footer-brand .brand-link'), about: box('.footer-about'), aboutText: about?.textContent ?? null, aboutLines: lines,
     nav: box('.footer-nav'), directions: box('.footer-directions'), contacts: box('.footer-contact-stack'), bottom: box('.footer-bottom'),
     signature: box('.footer-signature'), signatureHidden: root.querySelector('.footer-signature')?.getAttribute('aria-hidden') ?? null,
-    bottomText: [...root.querySelectorAll('.footer-bottom > span, .footer-bottom a, .footer-bottom button')].map((part) => part.textContent?.trim()).join(' '),
+    // the legal line's own words: the footer scene's «Зупинити рух» stands beside them on a page with a scene (footer-scenes.spec.ts)
+    bottomText: [...root.querySelectorAll('.footer-bottom > span, .footer-bottom a, .footer-bottom button:not([data-footer-motion])')].map((part) => part.textContent?.trim()).join(' '),
     legalInContacts: root.querySelectorAll('.footer-contact-stack .footer-legal, .footer-contact-stack a[href="/polityka-konfidentsiinosti"]').length,
   };
 });
@@ -113,7 +114,8 @@ test.describe('W2-13 · phone footer', () => {
     expect(parts.legalInContacts).toBe(0);
     expect(parts.signature!.top).toBeGreaterThanOrEqual(parts.contacts!.bottom);
     expect(parts.bottom!.top).toBeGreaterThanOrEqual(parts.signature!.bottom);
-    const targets = await page.locator('footer').locator('.footer-nav a, .footer-directions a, .footer-legal a, .footer-legal button').evaluateAll((elements) => elements.map((element) => ({
+    // the targets a phone shows: the footer scene's «Зупинити рух» stays hidden where no scene runs (phones among them)
+    const targets = await page.locator('footer').locator('.footer-nav a, .footer-directions a, .footer-legal a, .footer-legal button:not([hidden])').evaluateAll((elements) => elements.map((element) => ({
       label: element.textContent?.trim(), height: element.getBoundingClientRect().height,
     })));
     expect(targets).toHaveLength(11);

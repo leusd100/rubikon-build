@@ -1,0 +1,181 @@
+import { expect, test, type Page } from '@playwright/test';
+
+// The footer's embossed RUBIKON (owner 08–09.11): on the eight pages with a live scene of their own, that scene plays on
+// the word continuously while the footer is on the screen and pauses off it; the home page plays all eight in turn and the
+// 404 page lowers the word's missing O into place; the privacy page and phones have no scene;
+// reduced motion gets one still frame; a mouse over the footer lights the letters (the lamp).
+
+test.beforeEach(async ({ context }) => {
+  await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
+  await context.addInitScript(() => {
+    localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
+  });
+});
+
+async function toFooter(page: Page, path: string) {
+  await page.addInitScript(recordStates);
+  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+  await page.goto(path, { waitUntil: 'load' });
+  // the page may still grow after the first scroll (late images, islands), carrying the footer off the screen before the
+  // scene is fetched: scroll until the word stands in view and stays there
+  const word = page.locator('svg.footer-signature');
+  await expect.poll(async () => {
+    await word.scrollIntoViewIfNeeded();
+    return word.evaluate((svg) => {
+      const box = svg.getBoundingClientRect();
+      return box.top >= 0 && box.bottom <= window.innerHeight;
+    });
+  // a cold server builds the page's islands on the first visit: the page settles later than on a warm one
+  }, { timeout: 20_000 }).toBe(true);
+}
+
+type Change = { state: string; at: number };
+/** Every value the stage's data-scene took, with when (recordStates, before the page loads) */
+const changes = (page: Page) => page.evaluate(() => (window as unknown as { sceneStates: Change[] }).sceneStates);
+const states = async (page: Page) => (await changes(page)).map((change) => change.state);
+const recordStates = () => {
+  const seen: Change[] = [];
+  (window as unknown as { sceneStates: Change[] }).sceneStates = seen;
+  new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      const state = (mutation.target as HTMLElement).dataset.scene;
+      // every write, repeats included: a play restarted over itself must show
+      if (state) seen.push({ state, at: performance.now() });
+    }
+  }).observe(document, { subtree: true, attributes: true, attributeFilter: ['data-scene'] });
+};
+
+/** Whether a scene canvas has anything drawn on it */
+const painted = (page: Page, layer: 'back' | 'front') => page.locator(`.footer-scene-${layer}`).evaluate((canvas: HTMLCanvasElement) => {
+  const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+  for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 0) return true;
+  return false;
+});
+
+test.describe('desktop', () => {
+  test.skip(({ isMobile }) => isMobile, 'the scenes are for 1181 px and wider');
+
+  // every page with a live scene of its own: the canvas its scene draws on (behind the word for the pour and the frame)
+  const pages = [
+    ['/pokrivelni-roboty', 'front'], ['/metalokonstruktsii', 'front'], ['/betonni-roboty', 'back'], ['/zernoskhovyshcha', 'front'],
+    ['/yak-pratsyuiemo', 'front'], ['/angary', 'back'], ['/pro-nas', 'front'], ['/napryamky', 'front'],
+    // home: every direction in turn, starting with the rain; 404: the missing O lowered into place
+    ['/', 'front'], ['/takoi-storinky-nemaie', 'front'],
+  ] as const;
+  for (const [path, layer] of pages) {
+    test(`${path}: the scene plays on while the footer is on the screen, and pauses off it`, async ({ page }) => {
+      await toFooter(page, path);
+      const stage = page.locator('.footer-signature-stage');
+      await expect(stage.locator('canvas.footer-scene')).toHaveCount(2);
+      await expect(stage).toHaveAttribute('data-scene', 'playing');
+      // the first frames come after the scene's module is fetched and the word measured: slower on a loaded machine
+      await expect.poll(() => painted(page, layer), { timeout: 15_000 }).toBe(true);
+      // still going after the length the one-shot version had (owner 09.11: continuous, as before)
+      const frame = () => page.locator(`.footer-scene-${layer}`).evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+      const first = await frame();
+      await expect.poll(frame, { timeout: 10_000 }).not.toBe(first);
+      expect(await states(page)).not.toContain('rest');
+      // off the screen it pauses, and plays again on the way back. A page too short to take the canvas off the screen (404)
+      // keeps it playing, rightly: the observer watches the canvas, which reaches above the word
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const offScreen = await page.locator(`.footer-scene-${layer}`).evaluate((canvas) => canvas.getBoundingClientRect().top >= window.innerHeight);
+      await expect(stage).toHaveAttribute('data-scene', offScreen ? 'paused' : 'playing');
+      await page.locator('svg.footer-signature').scrollIntoViewIfNeeded();
+      await expect(stage).toHaveAttribute('data-scene', 'playing');
+    });
+  }
+
+  test('the 404 page leaves the O out of the word and lowers it in; every other page has the whole word', async ({ page }) => {
+    await toFooter(page, '/takoi-storinky-nemaie');
+    await expect(page.locator('main.not-found-page')).toBeVisible();
+    await expect(page.locator('svg.footer-signature path.footer-signature-letters.footer-signature-o')).toBeHidden();
+    await expect(page.locator('.footer-signature-stage')).toHaveAttribute('data-scene', 'playing');
+    await toFooter(page, '/pokrivelni-roboty');
+    await expect(page.locator('svg.footer-signature path.footer-signature-letters.footer-signature-o')).toBeAttached();
+    expect(await page.locator('svg.footer-signature path.footer-signature-letters.footer-signature-o').evaluate((path) => getComputedStyle(path).display)).not.toBe('none');
+  });
+
+  test('a page without a scene has no canvas, and the lamp follows the mouse there too', async ({ page }) => {
+    await toFooter(page, '/polityka-konfidentsiinosti');
+    await expect(page.locator('canvas.footer-scene')).toHaveCount(0);
+    const word = page.locator('svg.footer-signature');
+    await expect(word).not.toHaveAttribute('data-lamp');
+    const box = (await word.boundingBox())!;
+    // into the footer from a point above it on the screen, then onto the word
+    const footer = (await page.locator('footer').boundingBox())!;
+    await page.mouse.move(box.x + box.width * .4, Math.max(2, footer.y - 40));
+    await page.mouse.move(box.x + box.width * .4, box.y + box.height * .3, { steps: 4 });
+    await expect(word).toHaveAttribute('data-lamp', 'on');
+    // the lamp's point glides to the pointer (viewBox units: x 521–1323)
+    await expect.poll(async () => Number(await page.locator('#footer-signature-lamp').getAttribute('x'))).toBeGreaterThan(521 + 802 * .35);
+    expect(Number(await page.locator('#footer-signature-lamp').getAttribute('x'))).toBeLessThan(521 + 802 * .45);
+    // out of the footer to a point on the screen above it
+    await page.mouse.move(box.x + box.width * .4, Math.max(2, footer.y - 40), { steps: 4 });
+    await expect(word).not.toHaveAttribute('data-lamp');
+  });
+
+  test('«Зупинити рух» stops the scene at a still frame, is kept for the next page, and starts it again', async ({ page }) => {
+    await toFooter(page, '/pokrivelni-roboty');
+    const stage = page.locator('.footer-signature-stage');
+    const stop = page.locator('footer [data-footer-motion]');
+    await expect(stage).toHaveAttribute('data-scene', 'playing');
+    await expect(stop).toBeVisible();
+    await expect(stop).toHaveText('Зупинити рух');
+    await stop.click();
+    await expect(stage).toHaveAttribute('data-scene', 'still');
+    await expect(stop).toHaveText('Увімкнути рух');
+    // the still frame stays still
+    const frame = () => page.locator('.footer-scene-front').evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+    const first = await frame();
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    expect(await frame()).toBe(first);
+    // and no lamp follows the mouse while stopped
+    const box = (await page.locator('svg.footer-signature').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
+    await expect(page.locator('svg.footer-signature')).not.toHaveAttribute('data-lamp');
+    // another page: still stopped
+    await toFooter(page, '/metalokonstruktsii');
+    await expect(stage).toHaveAttribute('data-scene', 'still');
+    await expect(stop).toHaveText('Увімкнути рух');
+    await stop.click();
+    await expect(stage).toHaveAttribute('data-scene', 'playing');
+    await expect(stop).toHaveText('Зупинити рух');
+  });
+
+  test('no «Зупинити рух» where nothing moves: the privacy page, and reduced motion', async ({ page }) => {
+    await toFooter(page, '/polityka-konfidentsiinosti');
+    await expect(page.locator('footer [data-footer-motion]')).toBeHidden();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await toFooter(page, '/pokrivelni-roboty');
+    await expect(page.locator('.footer-signature-stage')).toHaveAttribute('data-scene', 'still');
+    await expect(page.locator('footer [data-footer-motion]')).toBeHidden();
+  });
+
+  test('reduced motion: one still frame of the scene, no play and no lamp', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await toFooter(page, '/metalokonstruktsii');
+    const stage = page.locator('.footer-signature-stage');
+    await expect(stage).toHaveAttribute('data-scene', 'still');
+    // «ready» as the scene mounts (it lets the 404 page drop the word's O) and «still» come in one task, so the recorder may
+    // read both as «still»: what matters is the end, and that it never played
+    const seen = await states(page);
+    expect(seen.at(-1)).toBe('still');
+    expect(seen).not.toContain('playing');
+    expect(await painted(page, 'front')).toBe(true);
+    const box = (await page.locator('svg.footer-signature').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
+    await expect(page.locator('svg.footer-signature')).not.toHaveAttribute('data-lamp');
+  });
+});
+
+test('a phone has no footer scene, and its 404 keeps the whole word', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'the phone project');
+  await toFooter(page, '/pokrivelni-roboty');
+  await expect(page.locator('svg.footer-signature')).toBeVisible();
+  await expect(page.locator('canvas.footer-scene')).toHaveCount(0);
+  await expect(page.locator('footer [data-footer-motion]')).toBeHidden();
+  // review 09.11: the O was hidden on every width, and phones, without the scene, read «RUBIK N»
+  await toFooter(page, '/takoi-storinky-nemaie');
+  await expect(page.locator('canvas.footer-scene')).toHaveCount(0);
+  expect(await page.locator('svg.footer-signature path.footer-signature-letters.footer-signature-o').evaluate((path) => getComputedStyle(path).display)).not.toBe('none');
+});
