@@ -3,23 +3,24 @@
 import { useEffect } from 'react';
 import type { FooterScene, WordGeometry } from './footerScenes';
 
-// What moves on the footer's embossed RUBIKON (owner 08.11, «Один раз і застигає»):
+// What moves on the footer's embossed RUBIKON (owner 08–09.11):
 // - the lamp: where a mouse moves over the footer, a point light rakes the letters (FooterSignature's lamp pass). Only a
 //   fine pointer and motion allowed, as MaterialLight; a phone keeps the band of light that crosses the word once (motion.css).
-// - on three pages the page's own scene plays once on the word as the footer comes up and stops at its trace
-//   (footerScenes.ts), from 1181 px as the page scenes (LiveScene.tsx). Coming back to the footer plays it again. With
-//   reduced motion the trace is drawn at once, without the play. Nothing is fetched on the other pages.
+// - on the eight pages with a live scene of their own, that scene plays on the word (footerScenes.ts), continuously while
+//   the word is on the screen and paused off it, from 1181 px as the page scenes (LiveScene.tsx) — owner 09.11: «безперервно,
+//   як і було». With reduced motion one still frame of it, without the play. Nothing is fetched on the other pages.
 
 /** The pages with a footer scene: the <main> classes FOOTER_SCENES knows (tests/unit/footer-scenes.test.ts holds them equal) */
-export const FOOTER_SCENE_PAGES = ['roofing-page', 'metal-page', 'concrete-page'] as const;
+export const FOOTER_SCENE_PAGES = ['roofing-page', 'metal-page', 'concrete-page', 'grain-page', 'process-page', 'angary-page', 'about-page', 'directions-page'] as const;
 const DESKTOP = '(min-width: 1181px)';
 /** The scene canvas reaches this far above the word (--footer-scene-head in globals.css), for the rain and the sparks */
 const HEAD = 120;
 /** viewBox of the signature: x from 521, y from 140, 802 wide */
 const VIEW = { x: 521, y: 140, width: 802 };
 const LONGEST_STEP = 1 / 20;
-/** With reduced motion, or to redraw the trace at a new size: the scene run to its end at once, at most this many steps */
-const SETTLE_STEPS = 900;
+/** A scene comes up already going (rain mid-fall, the arc lit), not from an empty sky; reduced motion shows the frame after more */
+const WARM_UP_STEPS = 60;
+const STILL_STEPS = 240;
 /** The lamp's z over the letters: low for the arc, so the light falls on the letters around it */
 const LAMP_Z = 46;
 const ARC_Z = 22;
@@ -37,7 +38,6 @@ export function FooterSignatureLife() {
 
     // ——— the lamp ———
     const lamp = { x: 700, y: 150, tx: 700, ty: 150, hover: false, arc: null as [number, number] | null, frame: 0 };
-    let onLampMove: () => void = () => {};
     const setLamp = () => {
       point.setAttribute('x', lamp.x.toFixed(1));
       point.setAttribute('y', lamp.y.toFixed(1));
@@ -52,7 +52,6 @@ export function FooterSignatureLife() {
       lamp.x += (tx - lamp.x) * ease;
       lamp.y += (ty - lamp.y) * ease;
       setLamp();
-      onLampMove();
       if (Math.abs(tx - lamp.x) > .3 || Math.abs(ty - lamp.y) > .3) lamp.frame = requestAnimationFrame(glide);
     };
     const wake = () => {
@@ -77,8 +76,6 @@ export function FooterSignatureLife() {
       const leave = () => {
         lamp.hover = false;
         setLamp();
-        // the trace stops glinting where the light was (review 08.11)
-        onLampMove();
       };
       footer.addEventListener('pointermove', move);
       footer.addEventListener('pointerleave', leave);
@@ -172,10 +169,21 @@ export function FooterSignatureLife() {
         // the arc out under a resting mouse: the light goes back to the pointer
         if (!arc && lamp.hover) wake();
       };
-      const stop = () => {
+      /** A new scene for the present size, run a little so it comes up going */
+      const begin = (steps: number) => {
+        layout();
+        scene = make(geometry!);
+        time = 0;
+        for (let i = 0; i < steps; i++) {
+          time += 1 / 60;
+          draw(1 / 60);
+        }
+      };
+      const pause = () => {
         cancelAnimationFrame(frame);
         frame = 0;
-        // a weld cut short leaves no lamp burning at the arc
+        if (host.dataset.scene === 'playing') host.dataset.scene = 'paused';
+        // off the screen the arc lights nothing
         if (scene) scene.arc = null;
         followArc();
       };
@@ -185,71 +193,45 @@ export function FooterSignatureLife() {
         time += dt;
         draw(dt);
         followArc();
-        if (scene?.done(time)) {
-          host.dataset.scene = 'rest';
-          frame = 0;
-          return;
-        }
         frame = requestAnimationFrame(tick);
       };
-      const play = () => {
-        stop();
-        if (!geometry) layout();
-        scene = make(geometry!);
-        time = 0;
+      const resume = () => {
+        if (frame) return;
+        if (!scene) begin(WARM_UP_STEPS);
         host.dataset.scene = 'playing';
         last = performance.now();
         frame = requestAnimationFrame(tick);
       };
-      /** The trace at once: the scene run to its end without a frame on the screen */
-      const settle = () => {
-        stop();
-        layout();
-        scene = make(geometry!);
-        time = 0;
-        for (let i = 0; i < SETTLE_STEPS && !scene.done(time); i++) {
-          time += 1 / 60;
-          draw(1 / 60);
-        }
-        scene.arc = null;
+      /** Reduced motion: one frame of the scene, standing */
+      const still = () => {
+        begin(STILL_STEPS);
+        if (scene) scene.arc = null;
         followArc();
-        host.dataset.scene = 'rest';
-      };
-      // the trace at rest answers the lamp (the rain's beads glint): redrawn as it moves, nothing simulated
-      onLampMove = () => {
-        if (!frame && host.dataset.scene === 'rest' && scene?.answersLamp) draw(0);
+        host.dataset.scene = 'still';
       };
 
-      if (calm) settle();
-      // Plays when half the word is in view, once, until the word has left the screen altogether: a small scroll at the
-      // edge neither restarts it nor wipes its trace (review 08.11: on `isIntersecting` alone it started at the first
-      // pixel and again at half)
-      let armed = true;
+      if (calm) still();
+      // Runs while any of the word is on the screen, and stops off it
       const seen = new IntersectionObserver(([entry]) => {
         if (calm) return;
-        if (!entry.isIntersecting) {
-          stop();
-          armed = true;
-        } else if (armed && entry.intersectionRatio >= .5) {
-          armed = false;
-          play();
-        }
-      }, { threshold: [0, .5] });
+        if (entry.isIntersecting) resume();
+        else pause();
+      });
       seen.observe(signature);
       let resized = 0;
       const sized = new ResizeObserver(() => {
         window.clearTimeout(resized);
-        // a new width redraws the trace at once rather than replaying the scene under the visitor. Only a real change:
-        // the observer's first call, as it starts, cut a play that had just begun to 150 ms (review 08.11)
+        // a new width starts the scene again at the new size. Only a real change: the observer's first call, as it starts,
+        // must not restart a scene that has just come up (review 08.11)
         resized = window.setTimeout(() => {
           if (!geometry || Math.abs(host.getBoundingClientRect().width - laidWidth) < 1) return;
-          if (host.dataset.scene) settle();
-          else geometry = null;
+          if (calm) still();
+          else begin(WARM_UP_STEPS);
         }, 150);
       });
       sized.observe(host);
       return () => {
-        stop();
+        pause();
         seen.disconnect();
         sized.disconnect();
         window.clearTimeout(resized);

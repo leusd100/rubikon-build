@@ -1066,6 +1066,12 @@ footer > .section-divider-accent { width: 100%; height: 2px; }
 .footer-scene-front { z-index: 2; }
 /* The scenes are for 1181 px and wider (FooterSignatureLife.tsx): a window narrowed after they started does not keep them */
 @media (max-width: 1180px) { .footer-scene { display: none; } }
+/* On a page with a scene the word stands lower, so all of the scene's --footer-scene-head fits between the link columns and
+   the word: the beam, the streams and the grain must not pass over the links and the messenger buttons (seen 09.11 at
+   1440: the columns end 37 px above the word). The pages are FOOTER_SCENE_PAGES (tests/unit/footer-scenes.test.ts). */
+@media (min-width: 1181px) {
+  body:has(main:is(.roofing-page, .metal-page, .concrete-page, .grain-page, .process-page, .angary-page, .about-page, .directions-page)) .footer-signature-stage { margin-top: 88px; }
+}
 /* The lamp's pass (FooterSignature.tsx) is lit only while a pointer or the arc moves it */
 .footer-signature-lamp { opacity: 0; transition: opacity var(--motion-ui) var(--ease-standard); }
 .footer-signature[data-lamp] .footer-signature-lamp { opacity: 1; }

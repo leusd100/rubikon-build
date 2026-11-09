@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// The footer's embossed RUBIKON (owner 08.11, «Один раз і застигає»): on /pokrivelni-roboty, /metalokonstruktsii and
-// /betonni-roboty the page's scene plays once as the footer comes up and stops at its trace; the other pages and phones
-// have no scene; reduced motion gets the trace at once; a mouse over the footer lights the letters (the lamp).
+// The footer's embossed RUBIKON (owner 08–09.11): on the eight pages with a live scene of their own, that scene plays on
+// the word continuously while the footer is on the screen and pauses off it; the home page and phones have no scene;
+// reduced motion gets one still frame; a mouse over the footer lights the letters (the lamp).
 
 test.beforeEach(async ({ context }) => {
   await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
@@ -54,30 +54,28 @@ const painted = (page: Page, layer: 'back' | 'front') => page.locator(`.footer-s
 test.describe('desktop', () => {
   test.skip(({ isMobile }) => isMobile, 'the scenes are for 1181 px and wider');
 
-  for (const [path, layer] of [['/pokrivelni-roboty', 'front'], ['/metalokonstruktsii', 'front'], ['/betonni-roboty', 'back']] as const) {
-    test(`${path}: the scene plays once and stops at its trace`, async ({ page }) => {
+  // every page with a live scene of its own: the canvas its scene draws on (behind the word for the pour and the frame)
+  const pages = [
+    ['/pokrivelni-roboty', 'front'], ['/metalokonstruktsii', 'front'], ['/betonni-roboty', 'back'], ['/zernoskhovyshcha', 'front'],
+    ['/yak-pratsyuiemo', 'front'], ['/angary', 'back'], ['/pro-nas', 'front'], ['/napryamky', 'front'],
+  ] as const;
+  for (const [path, layer] of pages) {
+    test(`${path}: the scene plays on while the footer is on the screen, and pauses off it`, async ({ page }) => {
       await toFooter(page, path);
       const stage = page.locator('.footer-signature-stage');
       await expect(stage.locator('canvas.footer-scene')).toHaveCount(2);
+      await expect(stage).toHaveAttribute('data-scene', 'playing');
+      await expect.poll(() => painted(page, layer)).toBe(true);
+      // still going after the length the one-shot version had (owner 09.11: continuous, as before)
+      const frame = () => page.locator(`.footer-scene-${layer}`).evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+      const first = await frame();
+      await expect.poll(frame, { timeout: 10_000 }).not.toBe(first);
+      expect(await states(page)).not.toContain('rest');
+      // off the screen it pauses, and plays again on the way back
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await expect(stage).toHaveAttribute('data-scene', 'paused');
       await page.locator('svg.footer-signature').scrollIntoViewIfNeeded();
-      // about five seconds of play, then the still. The states are recorded as they change (states(), below), so a busy
-      // machine that is slow to look still sees the play happen and end — never a «rest» drawn at once
-      await expect.poll(() => states(page), { timeout: 30_000 }).toEqual(['playing', 'rest']);
-      // a real play, not one cut short: the rest comes seconds after the start (review 08.11: a resize observer cut it to
-      // 150 ms, and a ratio-blind observer restarted it)
-      const [start, end] = await changes(page);
-      expect(end.at - start.at).toBeGreaterThan(3500);
-      expect(await painted(page, layer)).toBe(true);
-      // a small scroll with the word still on the screen neither replays it nor wipes the trace: each scroll is waited
-      // for by the page's own position, then two frames, in which a replay would have set «playing» (Sonar S2925)
-      for (const delta of [-120, 120]) {
-        const before = await page.evaluate(() => window.scrollY);
-        await page.mouse.wheel(0, delta);
-        await expect.poll(() => page.evaluate(() => window.scrollY)).not.toBe(before);
-        await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
-      }
-      expect(await states(page)).toEqual(['playing', 'rest']);
-      expect(await painted(page, layer)).toBe(true);
+      await expect(stage).toHaveAttribute('data-scene', 'playing');
     });
   }
 
@@ -100,12 +98,12 @@ test.describe('desktop', () => {
     await expect(word).not.toHaveAttribute('data-lamp');
   });
 
-  test('reduced motion: the trace at once, no play and no lamp', async ({ page }) => {
+  test('reduced motion: one still frame of the scene, no play and no lamp', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await toFooter(page, '/metalokonstruktsii');
     const stage = page.locator('.footer-signature-stage');
-    await expect(stage).toHaveAttribute('data-scene', 'rest');
-    expect(await states(page)).toEqual(['rest']);
+    await expect(stage).toHaveAttribute('data-scene', 'still');
+    expect(await states(page)).toEqual(['still']);
     expect(await painted(page, 'front')).toBe(true);
     const box = (await page.locator('svg.footer-signature').boundingBox())!;
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 3 });
