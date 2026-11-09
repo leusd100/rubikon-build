@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useFirstViewWalk } from '../../hooks/useFirstViewWalk';
 import { FormatPrefillLink } from '../process/FormatPrefillLink';
 import type { FormatCard } from '../../lib/deliveryModelPresentation';
 import type { DeliveryFormatId } from '../../types/deliveryModel';
@@ -14,8 +15,9 @@ import type { DeliveryFormatId } from '../../types/deliveryModel';
 //   a drawing per format   — the same flat section of a building: RUBIKON's parts in copper, the others' in thin
 //                            graphite, a dashed frame for whose object it is (as before, one drawing per column now);
 //   the summary            — each format's own;
-//   RUBIKON's scope        — the whole agreed complex, or one package at a time (the foundation, the frame, the roof take
-//                            one turn each when the block comes into view and rest on the first: rule 7);
+//   RUBIKON's scope        — the whole agreed complex, or one package at a time: the frame, the roof, then the foundation
+//                            again take the drawings' copper in turn — an auto-show by the site's rule (useFirstViewWalk:
+//                            half the drawings in view, once, 2.2 s a step, a person's action ends it; rule 7);
 //   the contract           — the other party: the customer or the general contractor;
 //   who coordinates        — RUBIKON in the agreed scope, the customer or their general contractor, the general contractor.
 // A value that several formats share is said once, across their columns (the contract with the customer is the same
@@ -40,7 +42,8 @@ const LAYERS: readonly (readonly [Layer, string])[] = [
 ];
 /** The packages that take turns as «one package»: the model's summary names the foundation, the frame, the roof */
 const PACKAGES: readonly (readonly [Layer, string])[] = [['foundation', 'Фундамент'], ['frame', 'Каркас'], ['roof', 'Покрівля']];
-const STEP_MS = 1150;
+/** The packages' walk: from the foundation (at rest) through the frame and the roof, back to rest */
+const PACKAGE_WALK: readonly number[] = [1, 2, 0];
 
 /** What the dashed frame is, under each drawing where the drawings are a third of a phone wide and their own names
  *  would be too small (PDO-20: the frames' names must be readable on a phone) */
@@ -97,31 +100,27 @@ export function FormatsScope({ formats, terms, prefill = false }: Readonly<{
   const [turn, setTurn] = useState(0);
   const [inView, setInView] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+  const drawingsRef = useRef<HTMLDivElement>(null);
 
-  // On screen or not: the packages below walk only in view, and the copper frame runs round only in view
+  // The drawings on screen (half of their row, as the walk's own rule): RUBIKON's frame in the first runs round only
+  // then, and not while the table is still below the fold or not yet revealed (review 09.11)
   useEffect(() => {
-    const root = gridRef.current;
-    if (!root) return undefined;
+    const row = drawingsRef.current;
+    if (!row) return undefined;
     // The newest entry: one call can hold several, and the first of them may be a stale «out of view» (DrawingSheet)
-    const observer = new IntersectionObserver((entries) => setInView(Boolean(entries.at(-1)?.isIntersecting)));
-    observer.observe(root);
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries.at(-1);
+      setInView(Boolean(entry?.isIntersecting && entry.intersectionRatio >= 0.5));
+    }, { threshold: [0, 0.5] });
+    observer.observe(row);
     return () => observer.disconnect();
   }, []);
 
-  // «One package»: the packages take one turn each and rest on the first (rule 7: nothing loops while the block is on
-  // screen). The block coming back into view walks them again.
-  useEffect(() => {
-    if (!inView || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
-    let left = PACKAGES.length;
-    let timer = 0;
-    const next = () => {
-      left -= 1;
-      setTurn((value) => (left > 0 ? (value + 1) % PACKAGES.length : 0));
-      if (left > 0) timer = window.setTimeout(next, STEP_MS);
-    };
-    timer = window.setTimeout(next, STEP_MS);
-    return () => window.clearTimeout(timer);
-  }, [inView]);
+  // «One package»: the packages take one turn each and rest on the first — once, by the site's auto-show rule (a step
+  // of 2.2 s, paused off screen, one show at a time, ended for good by a person's action on the block). The start
+  // waits for the rows' rise (--dfmt-for-rise)
+  const rest = () => setTurn(0);
+  useFirstViewWalk(drawingsRef, { steps: PACKAGE_WALK, onStep: setTurn, onDone: rest, onStop: rest, startDelayMs: 700, actionsRef: gridRef });
 
   const whole = (format: FormatCard) => format.id === 'comprehensive';
   const scopedIn = (format: FormatCard) => (layer: Layer) => whole(format) || PACKAGES[turn][0] === layer;
@@ -154,7 +153,7 @@ export function FormatsScope({ formats, terms, prefill = false }: Readonly<{
     <div className="dfmt-grid" data-motion data-live={inView || undefined} ref={gridRef}>
       <p className="dfmt-key" aria-hidden="true">
         <span className="dfmt-key-shared"><i>01 · 02</i>Однаково для кількох форматів</span>
-        <span className="dfmt-key-differs"><i>03</i>Відрізняє формат</span>
+        <span className="dfmt-key-differs"><i />Відрізняє формат</span>
       </p>
       <div className="dfmt-table" role="table" aria-label="Формати участі">
         <div className="dfmt-row dfmt-row-head" role="row" style={{ '--i': 0 } as CSSProperties}>
@@ -165,7 +164,7 @@ export function FormatsScope({ formats, terms, prefill = false }: Readonly<{
             </span>
           ))}
         </div>
-        <div className="dfmt-row dfmt-row-draw" aria-hidden="true" style={{ '--i': 1 } as CSSProperties}>
+        <div className="dfmt-row dfmt-row-draw" aria-hidden="true" style={{ '--i': 1 } as CSSProperties} ref={drawingsRef}>
           <span className="dfmt-corner" />
           {formats.map((format) => (
             <figure className="dfmt-fig" key={format.id}>

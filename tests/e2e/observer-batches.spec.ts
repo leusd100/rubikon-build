@@ -114,7 +114,7 @@ const SITES: Site[] = [
   {
     site: 'FormatsScope',
     path: '/yak-pratsyuiemo',
-    target: '#obsiah .dfmt-grid',
+    target: '#obsiah .dfmt-row-draw',
     wide: true,
     arrived: async (page) => {
       // (on screen is all: the packages' walk is three short steps that end where they began, so a later look proves nothing)
@@ -191,9 +191,9 @@ test('GrainComplexBuilder: a drawing passed in one call has arrived and does not
 
 test('FormatsScope: a block passed in one call is not on screen, waits out of view, and walks when it comes back', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await holdReports(page, '#obsiah .dfmt-grid');
+  await holdReports(page, '#obsiah .dfmt-row-draw');
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  await reachInOneCall(page, '#obsiah .dfmt-grid');
+  await reachInOneCall(page, '#obsiah .dfmt-row-draw');
   await scrollTop(page);
   await expect.poll(async () => (await held(page)).at(-1)).toBe(false);
   await letGo(page);
@@ -201,6 +201,6 @@ test('FormatsScope: a block passed in one call is not on screen, waits out of vi
   // Rule 7 (ui-system §6.4): a walk stands out of view. It is not lost: it starts when the block is back
   const scoped = page.locator('#obsiah svg.fs[data-format="work-package"] .fs-layer[data-scope]');
   await expect(scoped).toHaveAttribute('data-layer', 'foundation');
-  await centre(page, '#obsiah .dfmt-grid');
+  await centre(page, '#obsiah .dfmt-row-draw');
   await expect(scoped).toHaveAttribute('data-layer', 'frame', { timeout: 10_000 });
 });

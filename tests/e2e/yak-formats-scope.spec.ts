@@ -66,33 +66,62 @@ for (const width of [1440, 390]) {
   });
 }
 
-test('in «one package» the packages take one turn each and rest on the first, in both formats together', async ({ page }) => {
+test('in «one package» the packages take one turn each and rest on the first, once, in both formats together', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.clock.install();
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const grid = page.locator(GRID);
-  await grid.scrollIntoViewIfNeeded();
-  await expect(grid).toHaveAttribute('data-live', 'true');
-  const scoped = () => grid.locator('svg.fs').evaluateAll((drawings) => drawings.slice(1)
+  const drawings = grid.locator('.dfmt-row-draw');
+  const scoped = () => grid.locator('svg.fs').evaluateAll((all) => all.slice(1)
     .map((drawing) => drawing.querySelector('.fs-layer[data-scope]')?.getAttribute('data-layer')).join(' '));
-  await expect.poll(scoped).toBe('foundation foundation');
-  const seen = [];
-  for (let turn = 0; turn < 3; turn += 1) {
-    await page.clock.runFor(1150);
-    seen.push(await scoped());
-  }
-  expect(seen).toEqual(['frame frame', 'roof roof', 'foundation foundation']);
-  // the tags follow the drawings
-  await expect(grid.locator('[data-row="scope"] [role="cell"]').last().locator('li[data-scope]')).toHaveText('Фундамент');
-  await page.clock.runFor(5000);
   expect(await scoped()).toBe('foundation foundation');
+  await drawings.evaluate((row) => row.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await expect(grid).toHaveAttribute('data-live', 'true');
+  // The site's auto-show (useFirstViewWalk): its observer is not on the clock, so the first step is polled for
+  await expect.poll(async () => { await page.clock.runFor(400); return scoped(); }, { timeout: 15_000 }).toBe('frame frame');
+  // the tags follow the drawings
+  await expect(grid.locator('[data-row="scope"] [role="cell"]').last().locator('li[data-scope]')).toHaveText('Каркас');
+  await page.clock.runFor(2200);
+  expect(await scoped()).toBe('roof roof');
+  await page.clock.runFor(2200);
+  expect(await scoped()).toBe('foundation foundation');
+  // Once: the block back in view does not walk again
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await page.clock.runFor(1000);
+  await drawings.evaluate((row) => row.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  for (let wait = 0; wait < 5; wait += 1) {
+    await page.clock.runFor(2200);
+    expect(await scoped()).toBe('foundation foundation');
+  }
+});
+
+test('the packages walk waits until half the drawings are on screen, and a press on the block ends it at rest', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.clock.install();
+  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+  const grid = page.locator(GRID);
+  const drawings = grid.locator('.dfmt-row-draw');
+  const scoped = () => grid.locator('svg.fs').nth(1).locator('.fs-layer[data-scope]').getAttribute('data-layer');
+  // the drawings' row a little over the fold: under half of it on screen
+  await drawings.evaluate((row) => window.scrollTo({ top: row.getBoundingClientRect().top + window.scrollY - window.innerHeight + row.getBoundingClientRect().height * 0.3, behavior: 'instant' }));
+  for (let wait = 0; wait < 4; wait += 1) {
+    await page.clock.runFor(2200);
+    expect(await scoped()).toBe('foundation');
+  }
+  await expect(grid).not.toHaveAttribute('data-live');
+  await drawings.evaluate((row) => row.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await expect.poll(async () => { await page.clock.runFor(400); return scoped(); }, { timeout: 15_000 }).toBe('frame');
+  await grid.locator('[data-row="text"]').click();
+  await expect.poll(scoped).toBe('foundation');
+  await page.clock.runFor(10_000);
+  expect(await scoped()).toBe('foundation');
 });
 
 test('/yak-pratsyuiemo nothing in the formats block loops while it is on screen', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const grid = page.locator(GRID);
-  await grid.scrollIntoViewIfNeeded();
+  await grid.locator('.dfmt-row-draw').evaluate((row) => row.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await expect(grid).toHaveAttribute('data-live', 'true');
   const endless = () => page.evaluate(() => document.getAnimations()
     .filter((animation) => animation.effect?.getTiming().iterations === Infinity)
@@ -125,6 +154,18 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
     for (const box of boxes) expect(box, where).toEqual({ size: expect.any(Number), inside: true });
     for (const box of boxes) expect(box.size, where).toBeGreaterThanOrEqual(11);
     await expect(grid.locator('svg.fs .fs-label').first()).toBeHidden();
+    // and no word of a name breaks mid-letter («ГЕНПІДРЯДНИКА» in capitals did at 320 px)
+    const split = await names.evaluateAll((all) => all.flatMap((name) => {
+      const text = name.firstChild!;
+      const words = [...(text.textContent ?? '').matchAll(/\S+/g)];
+      return words.filter((word) => {
+        const range = document.createRange();
+        range.setStart(text, word.index);
+        range.setEnd(text, word.index + word[0].length);
+        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size > 1;
+      }).map((word) => word[0]);
+    }));
+    expect(split, where).toEqual([]);
     // every value carries its formats' numbers; the shared one all of them
     await expect(grid.locator('[data-row="contract"] .dfmt-tag')).toHaveText(['01 · 02', '03']);
     await expect(grid.locator('[data-row="coordinator"] .dfmt-tag')).toHaveText(['01', '02', '03']);
@@ -133,19 +174,34 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
   });
 }
 
-test('the block keeps every word in place at 1440 px: the frames are named inside the drawings, the numbers are the columns', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+test('on a wide screen the frames are named inside the drawings, readable from 1051 px, and the numbers are the columns', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
-  const grid = page.locator(GRID);
-  await expect(grid.locator('svg.fs .fs-label').first()).toHaveCSS('font-size', '15px');
-  await expect(grid.locator('.dfmt-frame-name').first()).toBeHidden();
-  await expect(grid.locator('.dfmt-tag').first()).toBeHidden();
-  // a shared value runs across its columns: the contract with the customer is as wide as two formats
-  const widths = await grid.locator('[data-row="contract"] [role="cell"]').evaluateAll((cells) => cells.map((cell) => cell.getBoundingClientRect().width));
-  const column = await grid.locator('.dfmt-head').first().evaluate((head) => head.getBoundingClientRect().width);
-  expect(Math.abs(widths[0] - 2 * column)).toBeLessThan(2);
-  expect(Math.abs(widths[1] - column)).toBeLessThan(2);
+  for (const width of [1051, 1180, 1280, 1300, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
+    const grid = page.locator(GRID);
+    // PDO-20: the names are the only words for the frames — at least 11 px as drawn, inside the drawing
+    const labels = await grid.locator('svg.fs').evaluateAll((drawings) => drawings.flatMap((drawing) => {
+      const box = drawing.getBoundingClientRect();
+      const scale = box.width / (drawing as SVGSVGElement).viewBox.baseVal.width;
+      return [...drawing.querySelectorAll('.fs-label')].map((label) => {
+        const own = label.getBoundingClientRect();
+        return { px: parseFloat(getComputedStyle(label).fontSize) * scale, inside: own.left >= box.left - 1 && own.right <= box.right + 1 };
+      });
+    }));
+    expect(labels.length).toBe(4);
+    for (const label of labels) {
+      expect(label.px, `${width}px`).toBeGreaterThanOrEqual(11);
+      expect(label.inside, `${width}px`).toBe(true);
+    }
+    await expect(grid.locator('.dfmt-frame-name').first()).toBeHidden();
+    await expect(grid.locator('.dfmt-tag').first()).toBeHidden();
+    // a shared value runs across its columns: the contract with the customer is as wide as two formats
+    const widths = await grid.locator('[data-row="contract"] [role="cell"]').evaluateAll((cells) => cells.map((cell) => cell.getBoundingClientRect().width));
+    const column = await grid.locator('.dfmt-head').first().evaluate((head) => head.getBoundingClientRect().width);
+    expect(Math.abs(widths[0] - 2 * column)).toBeLessThan(2);
+    expect(Math.abs(widths[1] - column)).toBeLessThan(2);
+  }
 });
 
 test('with reduced motion nothing in the scope block animates', async ({ page }) => {

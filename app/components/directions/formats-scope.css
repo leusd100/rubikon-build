@@ -52,11 +52,15 @@
 .dfmt-grid .fs-frame { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 6 5; }
 .dfmt-grid .fs-outer { stroke-dasharray: 12 3 2 3 2 3; }
 .dfmt-grid .fs[data-format="comprehensive"] .fs-inner { stroke: var(--color-accent); stroke-width: 1.5; stroke-dasharray: 8 6; }
-/* The frames' names: 15 units, 11 px at the drawing's width on a wide screen */
-.dfmt-grid .fs-label { fill: var(--color-text-muted); font: 700 15px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+/* The frames' names: at least 11 px as drawn (PDO-20). The drawing is a column wide, 404 units: 16 units are 11.7 px at
+   1300 and 13 px at 1440; from 1051 to 1299, where the columns are narrowest, 19 units (11.2 px at 1051) */
+.dfmt-grid .fs-label { fill: var(--color-text-muted); font: 700 16px var(--font-condensed), sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+@media (min-width: 1051px) and (max-width: 1299px) { .dfmt-grid .fs-label { font-size: 19px; } }
 .dfmt-grid .fs-label-scope { fill: var(--color-accent-strong); }
 /* Under a drawing a third of a phone wide (below) */
-.dfmt-frame-name { display: none; margin-top: 6px; color: var(--color-text-muted); font: var(--type-label-tech-weight) 11px/1.3 var(--font-condensed), sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+/* (in lower case, unlike the names inside the drawings: «ГЕНПІДРЯДНИКА» in capitals is wider than a third of a 320 px
+   phone and broke mid-word) */
+.dfmt-frame-name { display: none; margin-top: 6px; color: var(--color-text-muted); font: 600 12px/1.3 var(--font-condensed), sans-serif; letter-spacing: .01em; }
 .dfmt-frame-name[data-ours] { color: var(--color-accent-strong); }
 
 /* The rows */
@@ -84,7 +88,6 @@
 
 /* Under each format: the way to the form with it chosen (/yak-pratsyuiemo) */
 .dfmt-cta { display: flex; align-items: flex-end; gap: 10px; padding: 20px clamp(16px, 1.8vw, 24px) 0; }
-.dfmt-cta .proc-scope-cta { margin: 0; }
 
 .dfmt-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
@@ -105,13 +108,15 @@
 @media (max-width: 1050px) {
   .dfmt-grid { --dfmt-cols: repeat(3, minmax(0, 1fr)); }
   .dfmt-key i { width: auto; height: auto; padding: 1px 6px; border: 1px solid var(--color-border-strong); background: none; color: var(--color-text-muted); font: 700 11px/1.5 var(--font-condensed), sans-serif; letter-spacing: .06em; }
-  .dfmt-key-differs i { border-color: var(--color-accent); color: var(--color-accent-strong); }
+  /* a sample of a copper number, with no number in it: «03» here would read as a claim about the third format */
+  .dfmt-key-differs i { width: 24px; height: 18px; padding: 0; border-color: var(--color-accent); }
   /* Out of the three columns, but not out of the table: a hidden corner would leave the header row one cell short,
      and a screen reader would name every cell after the wrong format */
   .dfmt-corner { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .dfmt-head, .dfmt-fig { padding-inline: 0 10px; border-left: 0; }
+  .dfmt-head, .dfmt-fig { padding-inline: 0 8px; border-left: 0; }
   .dfmt-head { gap: 6px; }
-  .dfmt-title { font-size: clamp(1.0625rem, 3.2vw, 1.5rem); }
+  /* «Комплексна» whole in a third of a 320 px phone (tests/e2e/words-whole.spec.ts): 15 px there, 24 px by 750 */
+  .dfmt-title { font-size: clamp(.9375rem, 3.2vw, 1.5rem); }
   .dfmt-fig { padding-block: 10px 16px; }
   .dfmt-grid .fs-label { display: none; }
   .dfmt-frame-name { display: block; }

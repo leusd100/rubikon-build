@@ -223,7 +223,7 @@ without motion. They arrive with M2-1; the table is the contract.
    (a `calc()` from the tokens only where a later step makes the time a token's multiple). It is the one place a number is
    allowed.
 7. **Auto-shows (W4-04, PDO-55):** one hook, `app/hooks/useFirstViewWalk.ts`, for `CostFactorsFigure`, `CapabilityFigure`,
-   `ChangeSheets` and the formats walk of `FormatsScope`, over the pure `app/lib/firstViewWalk.ts`: it starts when at least
+   `ChangeSheets` and the packages walk of `FormatsScope`, over the pure `app/lib/firstViewWalk.ts`: it starts when at least
    50 % of the block is in the window, runs once, a step of at least 2.2 s (OD-PX-34 (a), the owner, 30.10); any action of a
    person stops the show for good; it pauses off screen; one show plays at a time; no endless loops (`dfmt-march` is
    `1.4s linear 3`, not `infinite`). An action is a press, a tap, a key, focus, or a mouse that really moves over the block.

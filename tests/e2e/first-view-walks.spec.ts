@@ -315,15 +315,15 @@ test('/pro-nas a block reported «out of view, in view» in one call still walks
 
 test('/yak-pratsyuiemo a formats block reported «out of view, in view» in one call counts as on screen', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await holdReports(page, '.dfmt-grid');
+  await holdReports(page, '.dfmt-row-draw');
   await page.goto('/yak-pratsyuiemo', { waitUntil: 'load' });
   const held = () => page.evaluate(() => (window as unknown as { heldReports: boolean[] }).heldReports);
   await expect.poll(held).toContainEqual(false);
-  const figure = page.locator('.dfmt-grid');
+  const figure = page.locator('.dfmt-row-draw');
   await expect.poll(async () => {
     await figure.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
     return held();
   }).toContainEqual(true);
   await page.evaluate(() => (window as unknown as { letReportsGo: () => void }).letReportsGo());
-  await expect(figure).toHaveAttribute('data-live', 'true');
+  await expect(page.locator('.dfmt-grid')).toHaveAttribute('data-live', 'true');
 });
