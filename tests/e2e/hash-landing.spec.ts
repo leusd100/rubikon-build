@@ -12,7 +12,7 @@ test.beforeEach(async ({ context }) => {
   });
 });
 
-/** Holds the page's own scripts back, so the islands hydrate (and the blocks above the form grow) after the glide */
+/** Holds the page's own scripts back, so the page hydrates (and the blocks above the form grow) after the glide */
 async function hydrateLate(page: Page) {
   await page.route(/\/_next\/static\/chunks\/.*\.js(?:\?|$)/, async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -57,7 +57,9 @@ test('the visitor\'s own scroll ends the landing: a later growth above no longer
   await page.evaluate(() => {
     const block = document.createElement('div');
     block.style.height = '400px';
-    document.querySelector('main')!.prepend(block);
+    const main = document.querySelector('main')!;
+    // insertBefore, not prepend: the Workers types give Element prepend as HTMLRewriter's
+    main.insertBefore(block, main.firstChild);
   });
   await page.waitForTimeout(600);
   expect(await offFromPlace(page, 'inquiry')).toBeGreaterThanOrEqual(before + 390);
