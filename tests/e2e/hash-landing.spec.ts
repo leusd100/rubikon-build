@@ -53,15 +53,23 @@ test('the visitor\'s own scroll ends the landing: a later growth above no longer
   await page.keyboard.press('PageUp');
   await expect.poll(() => offFromPlace(page, 'inquiry'), { timeout: 5_000 }).toBeGreaterThan(200);
   const before = await offFromPlace(page, 'inquiry');
-  // a block above grows by 400 px, as an island would
-  await page.evaluate(() => {
+  // a block above grows by 400 px, as an island would. Resolved once a ResizeObserver made after HashLanding's has seen
+  // the growth (observers run in the order they were made, in the same frame) and two frames more: by then a landing
+  // still running would have put the form back
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    const grown = document.documentElement.getBoundingClientRect().height + 390;
+    const seen = new ResizeObserver((entries, observer) => {
+      if (entries[0].contentRect.height < grown) return;
+      observer.disconnect();
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
     const block = document.createElement('div');
     block.style.height = '400px';
     const main = document.querySelector('main')!;
     // insertBefore, not prepend: the Workers types give Element prepend as HTMLRewriter's
     main.insertBefore(block, main.firstChild);
-  });
-  await page.waitForTimeout(600);
+    seen.observe(document.documentElement);
+  }));
   expect(await offFromPlace(page, 'inquiry')).toBeGreaterThanOrEqual(before + 390);
 });
 
@@ -69,7 +77,7 @@ test('a reload keeps the place the browser restores, not the fragment\'s', async
   await page.goto('/#inquiry', { waitUntil: 'load' });
   await settled(page);
   await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'instant' }));
-  await page.waitForTimeout(300);
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(300);
   await page.reload({ waitUntil: 'load' });
   await settled(page);
   expect(Math.abs(await offFromPlace(page, 'inquiry'))).toBeGreaterThan(200);
