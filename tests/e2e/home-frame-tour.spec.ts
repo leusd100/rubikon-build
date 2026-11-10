@@ -66,6 +66,30 @@ test('the drawing\'s words carry no stroke of their own', async ({ page }) => {
   await expect(page.locator('.hv2-frame-tour .ft-dim-halo')).toHaveCount(await page.locator('.hv2-frame-tour .ft-dim-text').count());
 });
 
+// 10.11: the room used to come at hydration ([data-armed]), so a visitor who had scrolled on before it — a slow phone —
+// saw the sheet and all under it jump by the slot's height (CLS 0.46 at 1440, 0.99 on a Pixel 7, production)
+test('with script the room and its label are there from the first paint, before the page’s code runs', async ({ page }) => {
+  await page.route(/\/_next\/static\/chunks\/.*\.js(?:\?|$)/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await route.continue();
+  });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const room = () => page.evaluate(() => ({
+    armed: document.querySelector('.hv2-frame-slot')!.hasAttribute('data-armed'),
+    height: Math.round(document.querySelector('.hv2-frame-slot')!.getBoundingClientRect().height),
+    label: getComputedStyle(document.querySelector('.hv2-frame-label')!).display,
+    sheet: Math.round(document.querySelector('#real-object')!.getBoundingClientRect().top + window.scrollY),
+  }));
+  const early = await room();
+  expect(early.armed, 'the page has not hydrated yet').toBe(false);
+  expect(early.height).toBeGreaterThan(200);
+  expect(early.label).toBe('block');
+  await page.waitForFunction(() => document.querySelector('.hv2-frame-slot')?.hasAttribute('data-armed'), undefined, { timeout: 20_000 });
+  const hydrated = await room();
+  expect(hydrated.height).toBe(early.height);
+  expect(hydrated.sheet).toBe(early.sheet);
+});
+
 test('without script the block reads on and leaves no empty room for the tour', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
