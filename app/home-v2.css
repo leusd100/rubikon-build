@@ -1184,13 +1184,13 @@ main[data-home="v2"] .hv2-scope-number { position: absolute; z-index: 2; left: 2
    themes, as on the configurator's sheet; the inks are its Dark roles, and what FrameTour.tsx's picture takes from
    configurator-sheet.css, not loaded here, is restated below. The slot holds its room until the code arrives. */
 /* The slot's height is exact, not a guess: everything under it — the sheet, its pinned tests, a deep link to it — stands
-   where it will stay from hydration on, before the tour's code arrives. The picture is its width × 440 / 720 plus the
+   where it will stay from the first paint (scripting: enabled, below), before the tour's code arrives. The picture is its width × 440 / 720 plus the
    fixed rows round it; the side holds fixed rows too. Change a row here and in the formula together. */
 main[data-home="v2"] .hv2-frame-room {
   --hv2-frame-legend: 41px; --hv2-frame-stamp: 38px; --hv2-frame-top: 25px; --hv2-frame-side: 340px; --hv2-frame-gap: 40px;
   margin-top: 32px; container-type: inline-size;
 }
-main[data-home="v2"] .hv2-frame-slot[data-armed] { height: calc((100cqi - var(--hv2-frame-side) - var(--hv2-frame-gap)) * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px); }
+main[data-home="v2"] .hv2-frame-slot { --hv2-frame-slot: calc((100cqi - var(--hv2-frame-side) - var(--hv2-frame-gap)) * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px); }
 main[data-home="v2"] .hv2-frame-tour {
   display: grid; grid-template-columns: minmax(0, 1fr) var(--hv2-frame-side); gap: var(--hv2-frame-gap); align-items: stretch; height: 100%; padding: 0;
   color-scheme: dark;
@@ -1236,7 +1236,7 @@ main[data-home="v2"] .hv2-people-link { --link-ink: var(--hv2-text); --color-acc
   main[data-home="v2"] .hv2-people-note { grid-column: 1 / -1; }
   main[data-home="v2"] .hv2-frame-tour { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: 28px; }
   /* one above the other: the picture, then the five rows, the control and the words (5 lines here) */
-  main[data-home="v2"] .hv2-frame-slot[data-armed] { height: calc(100cqi * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px + 28px + 246px + 18px + 44px + 18px + 116.25px); }
+  main[data-home="v2"] .hv2-frame-slot { --hv2-frame-slot: calc(100cqi * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px + 28px + 246px + 18px + 44px + 18px + 116.25px); }
   main[data-home="v2"] .hv2-frame-text { height: 5lh; }
 }
 
@@ -1247,7 +1247,7 @@ main[data-home="v2"] .hv2-people-link { --link-ink: var(--hv2-text); --color-acc
   main[data-home="v2"] .hv2-signature-head h2 { font-size: var(--type-h2); line-height: 1.02; }
   main[data-home="v2"] .hv2-signature-support { padding-left: 16px; }
   main[data-home="v2"] .hv2-frame-room { --hv2-frame-legend: 72px; --hv2-frame-stamp: 70px; --hv2-frame-top: 22px; margin-top: 24px; }
-  main[data-home="v2"] .hv2-frame-slot[data-armed] { height: calc(100cqi * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px + 18px + 148px + 18px + 44px + 18px + 162.75px); }
+  main[data-home="v2"] .hv2-frame-slot { --hv2-frame-slot: calc(100cqi * 440 / 720 + var(--hv2-frame-top) + var(--hv2-frame-legend) + var(--hv2-frame-stamp) + 2px + 18px + 148px + 18px + 44px + 18px + 162.75px); }
   main[data-home="v2"] .hv2-frame-tour { --ft-k: 1.55; --ft-t: 1.5; gap: 18px; }
   main[data-home="v2"] .hv2-frame-stamp { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding: 0 12px; }
   /* the steps in one row of short numbers would hide their names: two columns of names, the text under them */
@@ -1656,6 +1656,15 @@ main[data-home="v2"] .hv2-signature-support p { margin: 0; }
 main[data-home="v2"] .hv2-proof-shortcut { min-height: 44px; margin-top: 8px; --link-ink: var(--hv2-copper); --link-hover-ink: var(--hv2-text); }
 main[data-home="v2"] .hv2-frame-label { display: none; margin: 0 0 12px; }
 main[data-home="v2"] .hv2-frame-room:has(.hv2-frame-slot[data-armed]) .hv2-frame-label { display: block; }
+/* The slot keeps its room, and the label stands over it, from the first paint wherever script runs — not from hydration:
+   kept at hydration, a visitor who had scrolled on before it (a slow phone) saw the sheet and everything under it jump by
+   the slot's height, CLS 0.46 at 1440 and 0.99 on a Pixel 7 (production, scripts held 2.5 s, 10.11). Without script the
+   slot stays empty and folded, as before; [data-armed] still keeps the room in an engine without the scripting feature */
+main[data-home="v2"] .hv2-frame-slot[data-armed] { height: var(--hv2-frame-slot); }
+@media (scripting: enabled) {
+  main[data-home="v2"] .hv2-frame-slot { height: var(--hv2-frame-slot); }
+  main[data-home="v2"] .hv2-frame-label { display: block; }
+}
 
 /* ── The camera on a node (07.11, owner: «Давай також реалізуємо ідеї» — useNodeCamera; this lifts ui-system §6.9's
    freeze on the node's opening for it) ──────────────────────────────────────────────────────────────────────────────
