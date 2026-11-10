@@ -112,6 +112,9 @@ export function ScopeCells({ items, linked = false, frames }: Readonly<{ items: 
             </g>
           </svg>
         );
+        // what the cell's hint says: with photo frames whether this one is on the sheet now, without them the scheme
+        let hint = 'на схемі';
+        if (frames) hint = held === part ? 'Показано на кресленні' : 'Показати на кресленні';
         return (
           <li key={item} data-scope={SCOPE_PART_OF[item]} style={{ '--i': index } as CSSProperties}>
             {part ? (
@@ -128,7 +131,7 @@ export function ScopeCells({ items, linked = false, frames }: Readonly<{ items: 
                 {glyph}
                 {frame && <i className="hv2-scope-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</i>}
                 <span className="hv2-scope-name">{item}</span>
-                <span className="hv2-scope-hint" aria-hidden="true"><Arrow to="up" /> {frames ? (held === part ? 'Показано на кресленні' : 'Показати на кресленні') : 'на схемі'}</span>
+                <span className="hv2-scope-hint" aria-hidden="true"><Arrow to="up" /> {hint}</span>
                 <span className="sr-only"> — показати на схемі вище</span>
               </button>
             ) : (
