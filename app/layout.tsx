@@ -28,6 +28,7 @@ import './daylight-prototype.css';
 import { SiteFooter, SiteHeader } from './components/SiteChrome';
 import AnalyticsConsent from './components/AnalyticsConsent';
 import { FocusClearance } from './components/FocusClearance';
+import { HashLanding } from './components/HashLanding';
 import { LiveScene } from './components/LiveScene';
 import { MaterialLight } from './components/MaterialLight';
 import { StackShade } from './components/StackShade';
@@ -209,6 +210,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <StackShade />
         <MaterialLight />
         <FocusClearance />
+        <HashLanding />
       </body>
     </html>
   );

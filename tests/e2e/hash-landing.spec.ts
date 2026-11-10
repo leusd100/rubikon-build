@@ -1,0 +1,74 @@
+import { expect, test, type Page } from '@playwright/test';
+
+// A visit by a link with a fragment — `rubikonbuild.com/#inquiry` from a card, a profile or a message — lands on its
+// target (HashLanding.tsx). On production (10.11) the browser's smooth glide to #inquiry aimed at where the form stood
+// before HOME's islands hydrated above it, and ended 781 px above it on a desktop and 965 px on a Pixel 7 in 3–5 visits
+// of 5. Here the page's scripts are held back until the browser has glided, so the late growth comes every time.
+
+test.beforeEach(async ({ context }) => {
+  await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
+  await context.addInitScript(() => {
+    localStorage.setItem('rubikon-consent-state', JSON.stringify({ analytics: 'denied', advertising: 'denied' }));
+  });
+});
+
+/** Holds the page's own scripts back, so the islands hydrate (and the blocks above the form grow) after the glide */
+async function hydrateLate(page: Page) {
+  await page.route(/\/_next\/static\/chunks\/.*\.js(?:\?|$)/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  await page.route(/\.mp4(?:\?|$)/, (route) => route.abort());
+}
+
+/** Where the target stands against where it should: its top minus its scroll-margin-top, in px */
+const offFromPlace = (page: Page, id: string) => page.evaluate((id) => {
+  const target = document.getElementById(id)!;
+  return Math.round(target.getBoundingClientRect().top - Number.parseFloat(getComputedStyle(target).scrollMarginTop));
+}, id);
+
+/** Waits until the page has hydrated and stood still for a moment */
+async function settled(page: Page) {
+  await expect(page.locator('#inquiry form.inquiry-form')).toBeAttached();
+  await expect.poll(() => page.evaluate(() => new Promise<number>((resolve) => {
+    const before = document.documentElement.scrollHeight;
+    setTimeout(() => resolve(document.documentElement.scrollHeight - before), 1500);
+  })), { timeout: 20_000 }).toBe(0);
+}
+
+for (const path of ['/', '/angary']) {
+  test(`${path}#inquiry from outside lands on the request block, also when the page grows above it after the glide`, async ({ page }) => {
+    await hydrateLate(page);
+    await page.goto(`${path}#inquiry`, { waitUntil: 'load' });
+    await settled(page);
+    expect(Math.abs(await offFromPlace(page, 'inquiry'))).toBeLessThanOrEqual(2);
+  });
+}
+
+test('the visitor\'s own scroll ends the landing: a later growth above no longer pulls the page back', async ({ page }) => {
+  await hydrateLate(page);
+  await page.goto('/#inquiry', { waitUntil: 'load' });
+  await expect(page.locator('#inquiry form.inquiry-form')).toBeAttached();
+  await expect.poll(() => offFromPlace(page, 'inquiry').then(Math.abs), { timeout: 20_000 }).toBeLessThanOrEqual(2);
+  await page.keyboard.press('PageUp');
+  await expect.poll(() => offFromPlace(page, 'inquiry'), { timeout: 5_000 }).toBeGreaterThan(200);
+  const before = await offFromPlace(page, 'inquiry');
+  // a block above grows by 400 px, as an island would
+  await page.evaluate(() => {
+    const block = document.createElement('div');
+    block.style.height = '400px';
+    document.querySelector('main')!.prepend(block);
+  });
+  await page.waitForTimeout(600);
+  expect(await offFromPlace(page, 'inquiry')).toBeGreaterThanOrEqual(before + 390);
+});
+
+test('a reload keeps the place the browser restores, not the fragment\'s', async ({ page }) => {
+  await page.goto('/#inquiry', { waitUntil: 'load' });
+  await settled(page);
+  await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'instant' }));
+  await page.waitForTimeout(300);
+  await page.reload({ waitUntil: 'load' });
+  await settled(page);
+  expect(Math.abs(await offFromPlace(page, 'inquiry'))).toBeGreaterThan(200);
+});
