@@ -184,6 +184,10 @@ function drawSeam(c: CanvasRenderingContext2D, seam: readonly { x: number; y: nu
 
 /** The arc's pace along the word, px a second */
 const WELD_PACE = 70;
+/** How far the arc goes before the light follows it, in the signature's units. Each step re-runs the signature's lighting
+    filter over the whole word (on the CPU in WebKit): 2 units held Safari at ~190 % (10.11), 3 with the filter's tighter
+    region about 107 %, and the light, soft and wide, moves as smoothly to the eye */
+export const ARC_STEP = 3;
 
 /** Metal: a weld runs along the top of the word and starts again; the arc carries the light, the seam cools and fades */
 export function weld(g: WordGeometry): FooterScene {
@@ -206,9 +210,9 @@ export function weld(g: WordGeometry): FooterScene {
   /** One frame of the arc: its sparks, the seam it lays and its glow */
   const burn = (c: CanvasRenderingContext2D, dt: number, time: number) => {
     const y = g.surface(x) - 1;
-    // the light follows the arc in steps of 2 units, not every frame: each step re-runs the signature's lighting filter
+    // the light follows the arc in steps (ARC_STEP), not every frame: each step re-runs the signature's lighting filter
     const arcX = 521 + x / g.scale, arcY = 140 + (y - 6 - g.wordTop) / g.scale;
-    if (!scene.arc || Math.abs(scene.arc[0] - arcX) >= 2 || Math.abs(scene.arc[1] - arcY) >= 2) scene.arc = [arcX, arcY];
+    if (!scene.arc || Math.abs(scene.arc[0] - arcX) >= ARC_STEP || Math.abs(scene.arc[1] - arcY) >= ARC_STEP) scene.arc = [arcX, arcY];
     if (random() < 3.6 * dt) burst = .3 + random() * 1.1;
     for (let i = spit((6 + random() * 10) * burst * 60, dt); i > 0; i--) {
       const angle = -1.57 + gauss() * 1.6, speed = 60 + random() * random() * 300;

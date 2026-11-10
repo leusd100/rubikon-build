@@ -38,8 +38,12 @@ export function FooterSignature() {
             <path d={LETTERS_WITHOUT_O} clipRule="evenodd" />
             <path className="footer-signature-o" d={LETTER_O} clipRule="evenodd" />
           </clipPath>
-          {/* The lamp: the softened letters as a height field, lit from a point the pointer (or the welding arc) moves */}
-          <filter id="footer-signature-lamp-light" x="-2%" y="-40%" width="104%" height="180%" colorInterpolationFilters="sRGB">
+          {/* The lamp: the softened letters as a height field, lit from a point the pointer (or the welding arc) moves.
+              Its region is the letters and the blur's reach around them, no more: the light is kept only on the letters
+              (the «in» below), and WebKit lights every pixel of the region on the CPU each time the point moves, so a
+              taller region only cost time (10.11: the weld held Safari at ~190 % CPU; 180 % → 112 % of the height gives
+              the same pixels). 5 % across, not less: on the O's own path 1 % is under the blur's reach and moved its sides */}
+          <filter id="footer-signature-lamp-light" x="-5%" y="-6%" width="110%" height="112%" colorInterpolationFilters="sRGB">
             <feGaussianBlur in="SourceAlpha" stdDeviation="1.3" result="height" />
             <feSpecularLighting in="height" surfaceScale="3.2" specularConstant="1.25" specularExponent="22" lightingColor="#F7E7D2" result="light">
               <fePointLight id="footer-signature-lamp" x="700" y="150" z="46" />

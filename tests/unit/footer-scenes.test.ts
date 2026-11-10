@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FOOTER_SCENE_PAGES } from '../../app/components/FooterSignatureLife';
-import { FOOTER_SCENES, IN_TURN, MISSING_FOR, QUIET, TURN, beam, five, flats, frames, grain, inTurn, masonry, missing, rain, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
+import { ARC_STEP, FOOTER_SCENES, IN_TURN, MISSING_FOR, QUIET, TURN, beam, five, flats, frames, grain, inTurn, masonry, missing, rain, weld, type FooterScene, type WordGeometry } from '../../app/components/footerScenes';
 
 const SCENE_BY_NAME = { rain, weld, grain, five };
 
@@ -81,6 +81,27 @@ describe('footer scenes: continuous', () => {
     expect(Math.max(...xs)).toBeGreaterThan(1280);
     const restarts = xs.filter((x, i) => i > 0 && x < xs[i - 1] - 400).length;
     expect(restarts).toBeGreaterThanOrEqual(1);
+  });
+
+  // 10.11: each move of the light re-runs the lighting filter over the whole word, on the CPU in Safari (~190 % at steps of 2)
+  it('the light follows the arc in steps of ARC_STEP units, not every frame', () => {
+    const { arcs } = run(weld(geometry), 40);
+    const steps = arcs.slice(1).map((arc, i) => Math.max(Math.abs(arc![0] - arcs[i]![0]), Math.abs(arc![1] - arcs[i]![1])));
+    const moves = steps.filter((step) => step > 0);
+    expect(moves.length).toBeGreaterThan(100);
+    expect(Math.min(...moves)).toBeGreaterThanOrEqual(ARC_STEP);
+    // at the weld's pace (70 px/s, here 56 units a second, with the jumps over the gaps): ~15 moves a second; steps of 2 made 20
+    expect(moves.length / 40).toBeLessThan(17);
+  });
+
+  it('the lamp\'s filter covers the letters and the blur\'s reach, not the 180 % of height it once lit for nothing', () => {
+    const source = readFileSync('app/components/FooterSignature.tsx', 'utf8');
+    const filter = /<filter id="footer-signature-lamp-light"([^>]*)>/.exec(source)![1];
+    const attribute = (name: string) => Number.parseFloat(new RegExp(`\\b${name}="(-?[\\d.]+)%"`).exec(filter)![1]);
+    expect(attribute('height')).toBeLessThanOrEqual(112);
+    expect(attribute('width')).toBeLessThanOrEqual(110);
+    // and still past the blur (stdDeviation 1.3, three of it ≈ 4 units) on the O, the narrowest path it lights (x 1089–1191, 102 units)
+    expect(-attribute('x') / 100 * 102).toBeGreaterThanOrEqual(4);
   });
 
   // review 09.11: particles were added per frame, so a 120 Hz screen had twice the rain and sparks of a 60 Hz one
