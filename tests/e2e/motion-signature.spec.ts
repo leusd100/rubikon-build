@@ -155,6 +155,26 @@ test.describe('the light on a material', () => {
     await expect(light).not.toHaveAttribute('data-on', '');
   });
 
+  // Safari 27.2 drew the colour-dodge light without its blend on the owner's Mac (10.11): a 620 px black disc with a grey
+  // middle over the process steps. A light of plain alpha, faint in every stop, draws the same in a browser that drops blends
+  test('is a faint light of its own, with no blend mode a browser could drop and no opaque colour in it', async ({ page }) => {
+    await open(page);
+    const light = page.locator('.material-light');
+    await expect(light).toHaveCount(1);
+    const { blend, image } = await light.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { blend: style.mixBlendMode, image: style.backgroundImage };
+    });
+    expect(blend).toBe('normal');
+    const colours = [...image.matchAll(/rgba?\(([^)]*)\)/g)].map(([, inner]) => inner.split(',').map((part) => Number.parseFloat(part)));
+    expect(colours.length).toBeGreaterThan(2);
+    // every stop transparent enough that, alone over the block, it lightens and never darkens
+    for (const [r, g, b, alpha = 1] of colours) {
+      expect(alpha).toBeLessThanOrEqual(.15);
+      expect(Math.min(r, g, b)).toBeGreaterThanOrEqual(150);
+    }
+  });
+
   test('a touch screen gets none', async ({ browser }) => {
     const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
     await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
