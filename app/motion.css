@@ -105,12 +105,18 @@
     [data-reveal="mask"], [data-reveal="rise"] { transition-duration: var(--sheets-for-reveal-phone); }
   }
 
-  /* The light that follows the pointer (MaterialLight.tsx), under the block's text. Grey and not white, because a dodge of
-     white is a fog over everything; a dodge of grey leaves black black and catches only the metal's edges */
+  /* The light that follows the pointer (MaterialLight.tsx), under the block's text: a faint warm light, plain alpha, no
+     blend mode. It was a colour-dodge of a grey-to-black disc, invisible where black meets dodge — and Safari 27.2 drew it
+     without the blend on the owner's Mac (10.11): a 620 px black disc with a grey middle over the process steps. Playwright's
+     WebKit 26.5 and Chromium blended it, so the failure could not be reproduced here; a light that does not depend on the
+     blend draws the same everywhere. Its alpha is set to the dodge's brightening as Chromium drew it on the knurl of
+     /yak-pratsyuiemo, ring by ring of 40 px from the pointer: +22, +16, +12, +9, +6, +3, +1, 0 (10.11) */
   main[data-field] > section:has(> .material-light) { isolation: isolate; overflow: clip; }
   .material-light {
     position: absolute; top: -310px; left: -310px; z-index: -1; width: 620px; height: 620px; border-radius: 50%; opacity: 0; pointer-events: none;
-    background: radial-gradient(closest-side, #8a8a86, #000 92%); mix-blend-mode: color-dodge;
+    background: radial-gradient(closest-side, rgb(205 202 194 / .145), rgb(205 202 194 / .1) 19%, rgb(205 202 194 / .072) 32%,
+      rgb(205 202 194 / .05) 45%, rgb(205 202 194 / .033) 58%, rgb(205 202 194 / .017) 71%, rgb(205 202 194 / .006) 84%,
+      rgb(205 202 194 / 0) 92%);
     transition: opacity var(--motion-ui) var(--ease-standard);
   }
   .material-light[data-on] { opacity: 1; }
