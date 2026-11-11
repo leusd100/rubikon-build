@@ -73,7 +73,8 @@ for (const { width, label, lead, header, costToFaq, compact } of [
     expect(entry).toEqual({ rule: 0, listRule: 1, label, lead, header });
 
     const seam = await page.evaluate(() => {
-      const list = document.querySelector('.cost-section .cost-list')!.getBoundingClientRect();
+      // the block's last line since 11.11 is its link to how an estimate is put together
+      const list = document.querySelector('.cost-section .cost-more')!.getBoundingClientRect();
       const faqLabel = document.querySelector('.faq-section .eyebrow')!.getBoundingClientRect();
       return Math.round(faqLabel.top - list.bottom);
     });

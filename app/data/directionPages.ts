@@ -1,37 +1,39 @@
 import { company } from './company';
 import { siteRoutes } from './navigation';
 import {
-  Blocks,
   Boxes,
   ClipboardCheck,
   ClipboardList,
   Construction,
   DoorOpen,
   DraftingCompass,
-  Droplets,
   Factory,
-  Grid3x3,
   Hammer,
   HardHat,
   Home,
   Layers,
   Layers3,
-  Link2,
   MapPinned,
-  PaintBucket,
   Ruler,
-  Search,
   Settings2,
   ShieldCheck,
   Thermometer,
-  Triangle,
   Truck,
   Warehouse,
-  Weight,
   Wheat,
 } from 'lucide-react';
 import type { DirectionPageConfig } from '../types/directionPage';
 import type { DirectionId } from './directions';
+
+/**
+ * The cost factors' names on the three template pages, in the order of their glyphs (CostGlyph.tsx). What each one
+ * means for an estimate is told once, on /yak-pratsyuiemo#koshtorys (11.11, owner: «стиснути блок»).
+ */
+const COST_FACTORS = {
+  metal: ['Обсяг металу', 'Складність вузлів', 'Захист поверхні', 'Умови монтажу'],
+  concrete: ['Тип основи', 'Армування і закладні', 'Вимоги до поверхні', 'Об’єм і логістика бетонування'],
+  roofing: ['Площа і геометрія даху', 'Тип системи', 'Стан основи', 'Вузли і водовідведення'],
+} as const;
 
 export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   angary: {
@@ -179,6 +181,8 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   metalokonstruktsii: {
     id: 'metalokonstruktsii',
     pageClassName: 'metal-page',
+    // 11.11 (owner: «прибрати повтори»): the page's own steps already tell what happens after a request, as on /angary
+    hideJourney: true,
     // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
     // on /angary (PDO-15)
     related: { placement: 'after-inquiry' },
@@ -258,12 +262,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     cost: {
       title: 'Вартість визначає конструкція, а не одна цифра за тонну',
       text: 'Для попередньої оцінки потрібні креслення або базові параметри майбутньої конструкції. Після цього можна предметно оцінити склад робіт.',
-      items: [
-        ['01', 'Обсяг металу', 'Тоннаж, довжина елементів і загальна кількість деталей у комплекті.', Weight],
-        ['02', 'Складність вузлів', 'Кількість операцій, типи з’єднань, точність і повторюваність елементів.', Link2],
-        ['03', 'Захист поверхні', 'Підготовка металу, ґрунтування, фарбування або інший погоджений захист.', PaintBucket],
-        ['04', 'Умови монтажу', 'Відстань до об’єкта, доступ техніки, висота робіт і організація майданчика.', MapPinned],
-      ],
+      factors: COST_FACTORS.metal,
     },
     faq: {
       title: 'Перед початком робіт',
@@ -282,6 +281,8 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   'betonni-roboty': {
     id: 'betonni-roboty',
     pageClassName: 'concrete-page',
+    // 11.11 (owner: «прибрати повтори»): the page's own steps already tell what happens after a request, as on /angary
+    hideJourney: true,
     // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
     // on /angary (PDO-15)
     related: { placement: 'after-inquiry' },
@@ -358,14 +359,10 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     },
     cost: {
       title: 'Вартість бетонних робіт залежить від типу основи та вимог до поверхні',
-      text: 'Однакова площа підлоги чи фундаменту може відрізнятися за вартістю залежно від навантажень, армування, вимог до рівності основи та умов майданчика.',
-      items: [
-        ['01', 'Тип основи', 'Стрічковий, плитний або локальний фундамент залежно від навантажень і конструктивної схеми.', Blocks],
-        ['02', 'Армування і закладні', 'Складність арматурного каркаса, кількість та точність закладних елементів під обладнання.', Grid3x3],
-        // the floors' boundary as the rest of the page and the hub hold it (owner 24.10, W2-04 · PDO-33 A)
-        ['03', 'Вимоги до поверхні', 'Рівність бетонної основи та умови експлуатації; спеціалізовані етапи підлог — за окремим погодженням.', Ruler],
-        ['04', 'Об’єм і логістика бетонування', 'Обсяг суміші, доступ техніки, відстань доставки та умови майданчика.', Truck],
-      ],
+      // the floors' boundary as the rest of the page and the hub hold it (owner 24.10, W2-04 · PDO-33 A): it stood in the
+      // third factor's text until the factors became names (11.11)
+      text: 'Однакова площа підлоги чи фундаменту може відрізнятися за вартістю залежно від навантажень, армування, вимог до рівності основи та умов майданчика. Спеціалізовані етапи підлог — за окремим погодженням.',
+      factors: COST_FACTORS.concrete,
     },
     faq: {
       title: 'Перед початком робіт',
@@ -383,6 +380,8 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   'pokrivelni-roboty': {
     id: 'pokrivelni-roboty',
     pageClassName: 'roofing-page',
+    // 11.11 (owner: «прибрати повтори»): the page's own steps already tell what happens after a request, as on /angary
+    hideJourney: true,
     // OD-PX-17 A (owner, 25.10): the FAQ leads straight into the form; the related directions close the page after it, as
     // on /angary (PDO-15)
     related: { placement: 'after-inquiry' },
@@ -467,12 +466,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     cost: {
       title: 'Вартість покрівлі залежить від системи покриття, а не лише площі',
       text: 'На вартість впливають тип покриття, ухил, стан несучої основи, обсяг утеплення та кількість складних вузлів і примикань.',
-      items: [
-        ['01', 'Площа і геометрія даху', 'Площа схилів, ухил, кількість площин та складність конфігурації покрівлі.', Triangle],
-        ['02', 'Тип системи', 'Неутеплений профільований лист або багатошарова утеплена система з пароізоляцією.', Thermometer],
-        ['03', 'Стан основи', 'Нове будівництво чи ремонт: потрібна лише перевірка основи чи демонтаж і підготовка.', Search],
-        ['04', 'Вузли і водовідведення', 'Кількість коників, примикань, проходів та складність системи водовідведення.', Droplets],
-      ],
+      factors: COST_FACTORS.roofing,
     },
     faq: {
       title: 'Перед початком робіт',
