@@ -25,6 +25,16 @@ import {
 import type { DirectionPageConfig } from '../types/directionPage';
 import type { DirectionId } from './directions';
 
+/**
+ * The cost factors' names on the three template pages, in the order of their glyphs (CostGlyph.tsx). What each one
+ * means for an estimate is told once, on /yak-pratsyuiemo#koshtorys (11.11, owner: «стиснути блок»).
+ */
+const COST_FACTORS = {
+  metal: ['Обсяг металу', 'Складність вузлів', 'Захист поверхні', 'Умови монтажу'],
+  concrete: ['Тип основи', 'Армування і закладні', 'Вимоги до поверхні', 'Об’єм і логістика бетонування'],
+  roofing: ['Площа і геометрія даху', 'Тип системи', 'Стан основи', 'Вузли і водовідведення'],
+} as const;
+
 export const directionPages: Record<DirectionId, DirectionPageConfig> = {
   angary: {
     id: 'angary',
@@ -252,7 +262,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     cost: {
       title: 'Вартість визначає конструкція, а не одна цифра за тонну',
       text: 'Для попередньої оцінки потрібні креслення або базові параметри майбутньої конструкції. Після цього можна предметно оцінити склад робіт.',
-      factors: ['Обсяг металу', 'Складність вузлів', 'Захист поверхні', 'Умови монтажу'],
+      factors: COST_FACTORS.metal,
     },
     faq: {
       title: 'Перед початком робіт',
@@ -352,7 +362,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
       // the floors' boundary as the rest of the page and the hub hold it (owner 24.10, W2-04 · PDO-33 A): it stood in the
       // third factor's text until the factors became names (11.11)
       text: 'Однакова площа підлоги чи фундаменту може відрізнятися за вартістю залежно від навантажень, армування, вимог до рівності основи та умов майданчика. Спеціалізовані етапи підлог — за окремим погодженням.',
-      factors: ['Тип основи', 'Армування і закладні', 'Вимоги до поверхні', 'Об’єм і логістика бетонування'],
+      factors: COST_FACTORS.concrete,
     },
     faq: {
       title: 'Перед початком робіт',
@@ -456,7 +466,7 @@ export const directionPages: Record<DirectionId, DirectionPageConfig> = {
     cost: {
       title: 'Вартість покрівлі залежить від системи покриття, а не лише площі',
       text: 'На вартість впливають тип покриття, ухил, стан несучої основи, обсяг утеплення та кількість складних вузлів і примикань.',
-      factors: ['Площа і геометрія даху', 'Тип системи', 'Стан основи', 'Вузли і водовідведення'],
+      factors: COST_FACTORS.roofing,
     },
     faq: {
       title: 'Перед початком робіт',
