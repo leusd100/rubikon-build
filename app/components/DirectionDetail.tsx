@@ -230,15 +230,34 @@ export function DirectionCostSection({
   title,
   text,
   items,
+  factors,
   directionId,
-}: Readonly<{
-  title: string;
-  text: string;
-  items: readonly DirectionItem[];
-  directionId: DirectionPageConfig['id'];
-}>) {
+}: Readonly<NonNullable<DirectionPageConfig['cost']> & { directionId: DirectionPageConfig['id'] }>) {
   // a direction's glyphs belong to its own list of factors: another list (the grain page's flag-off rollback) draws none
-  const glyphs = COST_GLYPHS[directionId]?.length === items.length ? COST_GLYPHS[directionId] : undefined;
+  const count = (factors ?? items).length;
+  const glyphs = COST_GLYPHS[directionId]?.length === count ? COST_GLYPHS[directionId] : undefined;
+  // The live pages (11.11, owner: «стиснути блок»): the factors' names in one row. What each one means for an estimate
+  // is told once, on /yak-pratsyuiemo#koshtorys — the page repeated it four times in four wordings.
+  if (factors) {
+    return (
+      <section className="page-section cost-section cost-section-compact">
+        <div className="shell">
+          <SectionHeader className="page-heading" eyebrow="Формування кошторису" title={title} supporting={text} />
+          <div className={classNames('cost-list cost-list-compact', glyphs && 'has-glyphs')} data-motion style={{ '--cost-count': count } as CSSProperties}>
+            {factors.map((factor, index) => (
+              <article key={factor} style={{ '--i': index } as CSSProperties}>
+                {glyphs?.[index] && <CostGlyph kind={glyphs[index]} />}
+                <h3>{keepHeadingWords(factor)}</h3>
+              </article>
+            ))}
+          </div>
+          <a className="link-arrow cost-more" href="/yak-pratsyuiemo#koshtorys">
+            Як формуємо кошторис і графік <Arrow to="right" />
+          </a>
+        </div>
+      </section>
+    );
+  }
   // Process (right above this section) is a sequence — ordered steps, a bordered card grid says
   // that correctly. Cost factors aren't ordered — they're simultaneous considerations, so this
   // deliberately is NOT a box grid: .cost-list is a full-width technical band list instead —
