@@ -5,7 +5,7 @@
 | Дата | 2026-11-18 |
 | Виконавець | Claude Code |
 | Підстава | Рішення Дмитра 18.11: пілот ролика «ангар будується в конфігураторі» схвалено («робимо далі»), місце на `/angary` — «у вступі конфігуратора» (обрано з двох варіантів; другий — окремий блок перед конфігуратором) |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#318](https://github.com/leusd100/rubikon-build/pull/318), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `design/angary-buildup-video` від `main` `324fe5d7` |
 | Коміти | `cd6a1cde` — ролик, компонент, стилі · `4dc15f6a` — виправлення за рев'ю 1, скрипт запису · `65227b33` — виправлення за рев'ю 2, завантаження з половини блоку · `f9c43c67` — пауза, поки відкрите живе 3D · (цей файл) |
 | Змінено | `app/components/configurator/ConfiguratorBuildUpVideo.tsx` (новий), `HangarConfigurator.tsx` (компонент у шапці, лише `embedded`), `HangarPreviewModes.tsx` (необов'язковий `onThreeShown`), `app/configurator-preview/configurator.css` (сітка шапки й стилі ролика), `public/media/angary/configurator-buildup-24x60-v1.{mp4,avif,webp}`, `scripts/capture-configurator-buildup.mjs` |
