@@ -285,6 +285,8 @@ export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ e
   // The open step: the controls show it, the drawing follows it (the frame on «Каркас», 07.10). The sizes first. On
   // /angary it lives with the configuration, so the draft brings the visitor back to the step they left.
   const [localStep, setLocalStep] = useState(0);
+  // The live 3D view is open: the recorded build-up above it pauses, the visitor has the real thing (18.11)
+  const [liveThreeShown, setLiveThreeShown] = useState(false);
   const step = sharedInquiry?.step ?? localStep;
   const setStep = sharedInquiry?.setStep ?? setLocalStep;
 
@@ -313,7 +315,7 @@ export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ e
               + 'на кресленні. Надіслати можна з будь-якого кроку: технічне рішення й те, чого не оберете, уточнимо разом.')
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
-        {embedded && <ConfiguratorBuildUpVideo />}
+        {embedded && <ConfiguratorBuildUpVideo suspended={liveThreeShown} />}
       </header>
 
       {/* A draft read back from this browser says so, with the way back to the example (07.10). «Почати заново» turns the
@@ -333,6 +335,7 @@ export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ e
           <HangarPreviewModes
             domain={previewDomain}
             frame={CONTROL_STEPS[step].id === 'frame'}
+            onThreeShown={embedded ? setLiveThreeShown : undefined}
             presentationDemo={presentationDemo}
             presentationAnnouncement={sharedInquiry?.presentationAnnouncement}
             onEndPresentationDemo={sharedInquiry?.endPresentationDemo}

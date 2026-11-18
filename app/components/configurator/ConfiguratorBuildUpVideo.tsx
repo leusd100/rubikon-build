@@ -13,7 +13,9 @@ const POSTER_WEBP = '/media/angary/configurator-buildup-24x60-v1.webp';
 // As the hero footage (DirectionHeroVideo): no video download on a phone unless the visitor asks for it
 const AUTOPLAY_QUERY = '(min-width: 761px)';
 
-export function ConfiguratorBuildUpVideo() {
+/** `suspended`: the live 3D view is open below. The loop shows the same thing, so it pauses rather than decode video
+ *  beside a live WebGL scene on a weak device (18.11) */
+export function ConfiguratorBuildUpVideo({ suspended = false }: Readonly<{ suspended?: boolean }>) {
   const videoRef = useRef<HTMLVideoElement>(null);
   // shouldLoadMedia is false under reduced motion and Save-Data: then the loop waits for the visitor's own «Відтворити»
   const { isVisible, shouldLoadMedia } = useDeferredMedia(videoRef, { rootMargin: '200px 0px' });
@@ -64,7 +66,9 @@ export function ConfiguratorBuildUpVideo() {
   // (a latch adjusted while rendering, the React way to keep state derived from other state)
   if (!attached && ((autoplay && seen) || requested)) setAttached(true);
   // A narrower window or reduced motion turned on mid-loop withdraws autoplay: the loop pauses until the visitor asks
-  const shouldPlay = attached && wanted && isVisible && !userPaused;
+  // …unless the visitor pressed «Відтворити» themselves
+  const held = suspended && !requested;
+  const shouldPlay = attached && wanted && isVisible && !userPaused && !held;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -91,7 +95,7 @@ export function ConfiguratorBuildUpVideo() {
   // Before anything plays the button starts it; after, it pauses and resumes. The word names the next action, as on
   // the hero's control, so the button carries no aria-pressed
   // Not yet attached reads as paused too: the poster is still, so the button offers «Відтворити»
-  const paused = !wanted || userPaused || !attached;
+  const paused = !wanted || userPaused || !attached || held;
   const toggle = () => {
     if (paused) {
       setRequested(true);

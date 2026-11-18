@@ -399,8 +399,11 @@ export function HangarPreviewModes({
   onEndPresentationDemo,
   sheet,
   frame = false,
+  onThreeShown,
 }: Readonly<{
   domain: HangarDomainModel;
+  /** Told whether the live 3D view is on screen: /angary pauses its recorded build-up while it is (18.11) */
+  onThreeShown?: (shown: boolean) => void;
   /** The configurator's «Каркас» step is open (07.10): the sheet shows the frame (ConfiguratorFrameView) */
   frame?: boolean;
   presentationDemo?: HangarPresentationDemo | null;
@@ -476,6 +479,9 @@ export function HangarPreviewModes({
   // empty frame is on screen waiting for an effect to fix the state.
   const effectiveMode: Mode = threeOver === view2d && threeAvailable ? 'three' : view2d;
   const showThree = effectiveMode === 'three';
+  useEffect(() => {
+    onThreeShown?.(showThree);
+  }, [onThreeShown, showThree]);
 
   const exitFullscreen = useCallback(() => setIsFullscreen(false), []);
   const selectMode = useCallback((next: Mode) => {
