@@ -1359,22 +1359,30 @@
 
 /* ── /angary: the recorded 3D build-up beside the band's heading (owner, 18.11) ─────────────────────────────────────
    The eyebrow, the heading and the lede share the left column and the loop takes the right one from the top, so the band
-   grows only by what the loop and its caption add over them (+89 px at 1440 and +60 px at 1024, measured 18.11). Below 1024 px it follows
-   the lede. */
+   grows only by what the loop and its caption add over them (+89 px at 1440 and +60 px at 1024, measured 18.11). Two
+   columns from 761 px: stacked under the lede at 820 px the loop was ~430 px tall and moved the configurator down by
+   ~450 px (review, 18.11). On a phone it follows the lede. */
 .hangar-configurator-embedded .hc-hero.hc-hero-with-video {
   grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr);
   grid-template-areas: "eyebrow video" "title video" "lede video";
   grid-template-rows: auto auto 1fr;
   align-items: start;
 }
-@media (max-width: 1023px) {
+@media (max-width: 760px) {
   .hangar-configurator-embedded .hc-hero.hc-hero-with-video { grid-template-columns: minmax(0, 1fr); grid-template-areas: "eyebrow" "title" "lede" "video"; grid-template-rows: none; }
+}
+/* A short laptop gives the band's height to the step (configurator-sheet.css, 07.10): the heading goes to one line and the
+   steps gained 13–25 px. A loop beside it would add ~140 px back at 1280×720, so there it is left out — owner to confirm. */
+@media (min-width: 1024px) and (max-height: 760px) {
+  .hangar-configurator-embedded .hc-hero.hc-hero-with-video { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "lede"; }
+  .hangar-configurator-embedded .hc-hero.hc-hero-with-video .hc-buildup { display: none; }
 }
 .hc-buildup { grid-area: video; margin: 0; min-width: 0; }
 .hc-buildup-frame { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #191a19; border: 1px solid var(--color-border-strong); }
 .hc-buildup-poster,
 .hc-buildup-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.hc-buildup-video { opacity: 0; transition: opacity var(--duration-medium, .3s) var(--ease-standard, ease); }
+.hc-buildup-video { opacity: 0; transition: opacity var(--duration-medium) var(--ease-standard); }
 .hc-buildup-video.is-playing { opacity: 1; }
-.hc-buildup .hero-video-control { right: 12px; bottom: 12px; }
+/* top: auto — on a phone the hero's own control is placed from the top (globals.css), which stretched this one */
+.hc-buildup .hero-video-control { top: auto; right: 12px; bottom: 12px; }
 .hc-buildup figcaption { margin-top: 10px; color: var(--color-text-muted); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1.4 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); text-transform: uppercase; }

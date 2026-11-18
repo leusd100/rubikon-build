@@ -21,6 +21,11 @@ export function ConfiguratorBuildUpVideo() {
   const [requested, setRequested] = useState(false);
   const [userPaused, setUserPaused] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
+  // useDeferredMedia starts out «visible» and its idle timer still fires in a tab opened in the background, where the
+  // observer never reports: that would fetch the MP4 for a block far below the fold (review, 18.11). The source waits for
+  // the block itself to be on screen in a visible tab once.
+  const [seen, setSeen] = useState(false);
+  const [attached, setAttached] = useState(false);
 
   useEffect(() => {
     const query = window.matchMedia(AUTOPLAY_QUERY);
@@ -30,36 +35,57 @@ export function ConfiguratorBuildUpVideo() {
     return () => query.removeEventListener('change', update);
   }, []);
 
+  useEffect(() => {
+    const target = videoRef.current;
+    if (!target || seen || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.at(-1)!.isIntersecting && document.visibilityState === 'visible') setSeen(true);
+    }, { rootMargin: '200px 0px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [seen]);
+
   const autoplay = autoplayWidth && shouldLoadMedia;
-  const attached = autoplay || requested;
-  const shouldPlay = attached && isVisible && !userPaused;
+  const wanted = autoplay || requested;
+  // Kept once set, as the hero's source is: taking it away later does not stop a playing resource (HTML load algorithm)
+  // and giving it back would reload the clip from its start
+  // (a latch adjusted while rendering, the React way to keep state derived from other state)
+  if (!attached && ((autoplay && seen) || requested)) setAttached(true);
+  // A narrower window or reduced motion turned on mid-loop withdraws autoplay: the loop pauses until the visitor asks
+  const shouldPlay = attached && wanted && isVisible && !userPaused;
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !attached) return;
+    if (!video) return;
     if (!shouldPlay) {
       video.pause();
       return;
     }
     const play = () => {
-      if (document.visibilityState === 'visible') void video.play().catch(() => undefined);
-      else video.pause();
+      if (document.visibilityState !== 'visible') {
+        video.pause();
+        return;
+      }
+      // Autoplay refused (Low Power Mode, Safari's per-site setting): the button must offer «Відтворити», not «Пауза»
+      void video.play().catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'NotAllowedError') setUserPaused(true);
+      });
     };
     play();
     document.addEventListener('visibilitychange', play);
     return () => document.removeEventListener('visibilitychange', play);
-  }, [attached, shouldPlay]);
+  }, [shouldPlay]);
 
   // Before anything plays the button starts it; after, it pauses and resumes. The word names the next action, as on
   // the hero's control, so the button carries no aria-pressed
-  const paused = !attached || userPaused;
+  const paused = !wanted || userPaused;
   const toggle = () => {
-    if (!attached) {
+    if (paused) {
       setRequested(true);
       setUserPaused(false);
       return;
     }
-    setUserPaused((value) => !value);
+    setUserPaused(true);
   };
 
   return (
