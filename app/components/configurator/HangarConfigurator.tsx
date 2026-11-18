@@ -10,6 +10,7 @@ import { ConfiguratorSummary } from './ConfiguratorSummary';
 import { useHangarInquiryContext } from './HangarInquiryContext';
 import { InquiryFormSlot } from '../inquiry/InquiryFormHost';
 import { HangarPreviewModes } from './HangarPreviewModes';
+import { ConfiguratorBuildUpVideo } from './ConfiguratorBuildUpVideo';
 import { keepHeadingWords, keepShortWords } from '../../lib/typography';
 import { sheetObjectLabel } from './sheetLabels';
 import './configurator-sheet.css';
@@ -293,7 +294,7 @@ export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ e
       id={embedded ? 'configurator' : undefined}
       aria-labelledby="hangar-configurator-title"
     >
-      <header className="hc-hero">
+      <header className={`hc-hero${embedded ? ' hc-hero-with-video' : ''}`}>
         <p className="hc-eyebrow">
           <span aria-hidden="true" />
           {embedded ? 'Конфігуратор · перший технічний бриф' : 'Proof of concept · дослідницький екран'}
@@ -312,6 +313,7 @@ export function HangarConfigurator({ embedded = false, nextSteps }: Readonly<{ e
               + 'на кресленні. Надіслати можна з будь-якого кроку: технічне рішення й те, чого не оберете, уточнимо разом.')
             : 'Змінюйте параметри зліва — ескіз і підсумок праворуч оновлюються одразу.'}
         </p>
+        {embedded && <ConfiguratorBuildUpVideo />}
       </header>
 
       {/* A draft read back from this browser says so, with the way back to the example (07.10). «Почати заново» turns the
