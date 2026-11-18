@@ -1374,7 +1374,8 @@
 /* A short laptop gives the band's height to the step (configurator-sheet.css, 07.10): the heading goes to one line and the
    steps gained 13–25 px. A loop beside it would add ~140 px back at 1280×720, so there it is left out — owner to confirm. */
 @media (min-width: 1024px) and (max-height: 760px) {
-  .hangar-configurator-embedded .hc-hero.hc-hero-with-video { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "lede"; }
+  /* main's short-laptop heading exactly: the title on one line beside the lede (review, 18.11) */
+  .hangar-configurator-embedded .hc-hero.hc-hero-with-video { grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr); grid-template-areas: "eyebrow eyebrow" "title lede"; grid-template-rows: none; }
   .hangar-configurator-embedded .hc-hero.hc-hero-with-video .hc-buildup { display: none; }
 }
 .hc-buildup { grid-area: video; margin: 0; min-width: 0; }

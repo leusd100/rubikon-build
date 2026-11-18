@@ -38,11 +38,23 @@ export function ConfiguratorBuildUpVideo() {
   useEffect(() => {
     const target = videoRef.current;
     if (!target || seen || typeof IntersectionObserver === 'undefined') return;
+    // Some browsers report entries in a hidden tab too: an entry dropped there is taken up once the tab is shown
+    let intersecting = false;
+    const check = () => {
+      if (intersecting && document.visibilityState === 'visible') setSeen(true);
+    };
     const observer = new IntersectionObserver((entries) => {
-      if (entries.at(-1)!.isIntersecting && document.visibilityState === 'visible') setSeen(true);
-    }, { rootMargin: '200px 0px' });
+      intersecting = entries.at(-1)!.isIntersecting;
+      check();
+    // Half of the loop in view, not its edge: at 768 × 1024 its top sits inside the first screen, and a page opened
+    // there fetched the MP4 before the visitor had scrolled at all (direction-static-hero.spec.ts, 18.11)
+    }, { threshold: 0.5 });
     observer.observe(target);
-    return () => observer.disconnect();
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', check);
+    };
   }, [seen]);
 
   const autoplay = autoplayWidth && shouldLoadMedia;
@@ -78,7 +90,8 @@ export function ConfiguratorBuildUpVideo() {
 
   // Before anything plays the button starts it; after, it pauses and resumes. The word names the next action, as on
   // the hero's control, so the button carries no aria-pressed
-  const paused = !wanted || userPaused;
+  // Not yet attached reads as paused too: the poster is still, so the button offers «Відтворити»
+  const paused = !wanted || userPaused || !attached;
   const toggle = () => {
     if (paused) {
       setRequested(true);

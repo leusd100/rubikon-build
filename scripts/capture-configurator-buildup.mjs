@@ -12,7 +12,7 @@
 // Needs system Chrome with a GPU (`--use-angle=metal` on macOS; SwiftShader also works, slowly), ffmpeg with libx264,
 // and Pillow for the posters. Output: <out>/configurator-buildup-<W>x<L>-v1.{mp4,webp,avif}.
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
@@ -30,14 +30,18 @@ const DT = 16;
 const fmt = (n) => String(n).replace('.', ',');
 
 const work = mkdtempSync(join(tmpdir(), 'buildup-'));
+// hundreds of PNGs: removed however the run ends
+process.on('exit', () => rmSync(work, { recursive: true, force: true }));
 const frames = join(work, 'frames');
-execFileSync('mkdir', ['-p', frames]);
+mkdirSync(frames, { recursive: true });
 
-// Extra Chrome flags, e.g. BUILDUP_CHROME_ARGS='--host-resolver-rules=MAP rubikonbuild.com <ip>' where a local DNS filter
-// blocks the address the resolver returns (18.11)
-const extraArgs = process.env.BUILDUP_CHROME_ARGS ? [process.env.BUILDUP_CHROME_ARGS] : [];
-const browser = await chromium.launch({ channel: 'chrome', args: ['--use-angle=metal', '--enable-gpu', ...extraArgs] });
+// Extra Chrome flags, space-separated (BUILDUP_CHROME_ARGS). Metal is macOS's GPU path; elsewhere Chrome picks its own
+const extraArgs = (process.env.BUILDUP_CHROME_ARGS ?? '').split(/\s+(?=--)/).filter(Boolean);
+const gpuArgs = process.platform === 'darwin' ? ['--use-angle=metal', '--enable-gpu'] : [];
+const browser = await chromium.launch({ channel: 'chrome', args: [...gpuArgs, ...extraArgs] });
 const page = await (await browser.newContext({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 2, colorScheme: 'light', locale: 'uk-UA' })).newPage();
+// A recording is not a visit: analytics and beacons are dropped before they leave the browser
+await page.context().route(/google-analytics\.com|googletagmanager\.com|doubleclick\.net|cloudflareinsights\.com/, (route) => route.abort());
 await page.clock.install();
 await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click({ timeout: 8000 }).catch(() => {});
@@ -145,4 +149,3 @@ execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-framerate'
   '-vf', 'scale=1280:720:flags=lanczos', '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'veryslow', '-crf', '27',
   '-pix_fmt', 'yuv420p', '-tune', 'animation', '-g', '60', '-movflags', '+faststart', '-an', join(out, `${name}.mp4`)], { stdio: 'inherit' });
 console.log(`${readdirSync(frames).length} frames → ${out}/${name}.mp4`);
-rmSync(work, { recursive: true, force: true });
