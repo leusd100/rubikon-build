@@ -5,7 +5,7 @@
 | Дата | 2026-11-19 |
 | Виконавець | Claude Code |
 | Підстава | Рішення Дмитра 19.11. Після живого прототипу: «дуже крута фіча для відкриття сторінки Ангарів», приклад за замовчуванням — двоє воріт для техніки й одні двері для людей, «зроби draft». Ролик у вступі конфігуратора (PR #318) цим замінено; HOME лишається як було |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#319](https://github.com/leusd100/rubikon-build/pull/319), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `design/angary-sheet-buildup` від `main` `324fe5d7` |
 | Коміти | `beccaa1b` — приклад «двоє воріт + двері» · `b925bedf` — перший показ будує каркас · `06851b05` — виправлення за незалежним рев'ю · (цей файл) |
 | Змінено | `types.ts` (приклад), `domainModel.ts` (отвори прикладу не «утримуються»), `draft.ts` (чернетки зі старим прикладом), `buildUpSequence.ts` (етап каркаса першого показу 1,8 с), `generalViewGeometry.ts` (`frameBuild`, `PLOT_END_MS`), `HangarGeneralView.tsx` + `general-view.css` (`.gv-build`, `.gv-skin`), `ConfiguratorControls.tsx` (held з `requestedOpenings`), `FrameTour.tsx` (порядок двох назв), `HomeFrameTour.tsx` (HOME — старий приклад), тести |
