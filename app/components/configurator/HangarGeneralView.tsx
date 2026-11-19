@@ -6,6 +6,7 @@ import { BUILD_STAGE_ORDER, isStageReleased, type BuildStage } from '../../lib/c
 import { ridgeHeightM } from '../../lib/configurator/parametricModel';
 import { overlaps, type Box } from '../angary/dimetric';
 import { generalViewGeometry, type GeneralViewFrame } from './generalViewGeometry';
+import { HINT_TEXT, HINT_TEXT_SHORT, placeHint3d, type Hint3dLayout } from './hint3d';
 import { previewDescription } from './sheetLabels';
 import { useLayerHighlight } from './useLayerHighlight';
 import './general-view.css';
@@ -36,6 +37,30 @@ const ALL_STAGES = BUILD_STAGE_ORDER.length;
 const ANSWER_HOLD_MS = 1100;
 /** How long the hangar's lines take to run to a new size, and its cladding to come back after (general-view.css) */
 const MORPH_MS = 650;
+/** The 3D callout (hint3d.ts, 19.11): it comes this long after the first view's last stage, as the gates settle; it is
+ *  gone this long after it came (general-view.css lets it step back from 4.6 s); a phone's drawing has no leader */
+const HINT_DELAY_MS = 700;
+const HINT_GONE_MS = 5400;
+const HINT_LEADER_MIN_PX = 480;
+/** Once per page load, as the first view: away to 3D and back, the chip keeps its copper and nothing points again */
+let hintedThisLoad = false;
+
+/** The 3D chip's box and the picture's in the drawing's px (its content box, as measureFrame lays the drawing out): the
+ *  chip stands in the picture's padding, above the drawing's box */
+function chipAndBounds(svg: SVGSVGElement): { chip: Box; bounds: Box } | null {
+  const chip = svg.parentElement?.querySelector<HTMLElement>('.hc-sheet-three');
+  if (!chip) return null;
+  const style = getComputedStyle(svg);
+  const rect = svg.getBoundingClientRect();
+  const [ox, oy] = [rect.left + (Number.parseFloat(style.paddingLeft) || 0), rect.top + (Number.parseFloat(style.paddingTop) || 0)];
+  const box = chip.getBoundingClientRect();
+  if (!box.width) return null;
+  return {
+    chip: [box.left - ox, box.top - oy, box.right - ox, box.bottom - oy],
+    bounds: [rect.left - ox, rect.top - oy, rect.right - ox, rect.bottom - oy],
+  };
+}
+
 /** Laid out for this until the first measure: a desktop sheet's drawing box */
 const FIRST_FRAME: GeneralViewFrame = { width: 640, height: 430, annotated: true, keepClear: [] };
 
@@ -85,17 +110,60 @@ export function HangarGeneralView({
   domain,
   released = ALL_STAGES,
   tools = false,
+  hint3d = false,
 }: Readonly<{
   domain: HangarDomainModel;
   /** Build stages requested so far by the first view (useFirstViewBuildUp); all of them by default */
   released?: number;
   /** The «Подивитися в 3D» chip is on the picture: the drawing keeps clear of it */
   tools?: boolean;
+  /** The first view played through: point at the 3D chip once (hint3d.ts) */
+  hint3d?: boolean;
 }>) {
   const svgRef = useRef<SVGSVGElement>(null);
   const frame = useDrawingFrame(svgRef, tools);
   const building = released < ALL_STAGES;
   const g = useMemo(() => generalViewGeometry(domain, frame, building), [domain, frame, building]);
+
+  // The 3D callout: placed when it comes, in the drawing as it stands then, and only where it lies on nothing
+  const [hint, setHint] = useState<(Hint3dLayout & { text: string }) | null>(null);
+  const [hinted, setHinted] = useState(hintedThisLoad);
+  const placing = useRef({ g, frame });
+  useEffect(() => {
+    placing.current = { g, frame };
+  });
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!hint3d || hintedThisLoad || !svg) return undefined;
+    hintedThisLoad = true;
+    let gone = 0;
+    const come = window.setTimeout(() => {
+      setHinted(true);
+      const measured = chipAndBounds(svg);
+      if (!measured) return;
+      const { g: view, frame: box } = placing.current;
+      const wide = box.width >= HINT_LEADER_MIN_PX;
+      const text = wide ? HINT_TEXT : HINT_TEXT_SHORT;
+      // the name's size as it renders, in its own type
+      const probe = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      probe.setAttribute('class', 'gv-hint-tag');
+      probe.textContent = text;
+      svg.appendChild(probe);
+      const size = { width: probe.getComputedTextLength(), height: (Number.parseFloat(getComputedStyle(probe).fontSize) || 11) * 1.2 };
+      probe.remove();
+      const layout = placeHint3d({
+        ...measured, size, keepClear: box.keepClear, meets: view.meets, sizeBoxes: view.sizeBoxes, anchor: view.hintAnchor,
+        withLeader: wide,
+      });
+      if (!layout) return;
+      setHint({ ...layout, text });
+      gone = window.setTimeout(() => setHint(null), HINT_GONE_MS);
+    }, HINT_DELAY_MS);
+    return () => {
+      window.clearTimeout(come);
+      window.clearTimeout(gone);
+    };
+  }, [hint3d]);
   const { dimensions, envelope, scope } = domain;
   const ridgeM = ridgeHeightM(dimensions.widthM, dimensions.eaveHeightM, domain.roof.pitchDeg);
 
@@ -134,6 +202,8 @@ export function HangarGeneralView({
       role="img"
       aria-label={previewDescription('technical', dimensions, ridgeM)}
       data-building={on(building)}
+      data-hinted={on(hinted)}
+      data-hinting={on(hint !== null)}
       data-morph={on(morphing)}
     >
       {/* the faces the camera sees, in the field's colour */}
@@ -191,6 +261,20 @@ export function HangarGeneralView({
           </g>
         ))}
       </g>
+      {hint && (
+        <g className="gv-hint" aria-hidden="true">
+          {hint.leader && (
+            <>
+              <circle className="gv-hint-mark" cx={hint.leader.from[0].toFixed(1)} cy={hint.leader.from[1].toFixed(1)} r={2.6} />
+              <path className="gv-hint-lead" pathLength={1} d={`M${hint.leader.from.map((v) => v.toFixed(1)).join(',')}L${hint.leader.to.map((v) => v.toFixed(1)).join(',')}`} />
+            </>
+          )}
+          {hint.connector && (
+            <path className="gv-hint-arrow" d={`M${hint.connector.from.map((v) => v.toFixed(1)).join(',')}L${hint.connector.to.map((v) => v.toFixed(1)).join(',')}m-4,-3l4,3l-4,3`} />
+          )}
+          <text className="gv-hint-tag" x={hint.tag.x.toFixed(1)} y={hint.tag.y.toFixed(1)} textAnchor={hint.tag.anchor}>{hint.text}</text>
+        </g>
+      )}
     </svg>
   );
 }

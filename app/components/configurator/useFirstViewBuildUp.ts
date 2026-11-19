@@ -27,8 +27,11 @@ const REACH_EVENTS = ['click', 'input', 'focusin'] as const;
 /** Once per page load: a return to /angary in the same tab, or a remount, shows the finished drawing */
 let shownThisLoad = false;
 
+/** `released`: the stages requested so far. `playedThrough`: the first view ran to its end on its own — not cut short
+ *  by a reach for a control — the moment the sheet may point at its 3D chip (19.11, HangarGeneralView) */
 export function useFirstViewBuildUp(drawingRef: RefObject<HTMLElement | null>, enabled: boolean, untouched: boolean) {
   const [released, setReleased] = useState(ALL_STAGES);
+  const [playedThrough, setPlayedThrough] = useState(false);
   const untouchedRef = useRef(untouched);
   const finishRef = useRef<() => void>(() => undefined);
 
@@ -62,7 +65,10 @@ export function useFirstViewBuildUp(drawingRef: RefObject<HTMLElement | null>, e
       firstViewStageStartsMs().forEach((at, index) => {
         timers.push(window.setTimeout(() => {
           setReleased(index + 1);
-          if (index + 1 === ALL_STAGES) stop();
+          if (index + 1 === ALL_STAGES) {
+            stop();
+            setPlayedThrough(true);
+          }
         }, SHEET_BEAT_MS + at));
       });
     }, { threshold: 0.5 });
@@ -96,5 +102,5 @@ export function useFirstViewBuildUp(drawingRef: RefObject<HTMLElement | null>, e
     };
   }, [enabled, drawingRef]);
 
-  return released;
+  return { released, playedThrough };
 }

@@ -50,6 +50,12 @@ export type GeneralView = {
   sizes: { key: SizeKey; d: string; dot?: Pt; label: SizeLabel; plate?: Box }[];
   /** The first view's frame and the skins that close over it — only when asked for (`withBuild`) */
   build?: FrameBuild;
+  /** Where the sheet's one-time 3D callout leaves the roof (19.11, hint3d.ts): on the far slope, towards the chip */
+  hintAnchor: Pt;
+  /** Whether a box on the picture meets the drawing — its silhouette, its sizes' lines and values */
+  meets: (box: Box) => boolean;
+  /** The sizes' value boxes: a leader keeps off them */
+  sizeBoxes: Box[];
 };
 
 /** One member the first view plots: its line, its weight, and when it starts and how long it runs, in ms from the frame
@@ -440,7 +446,8 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
   // (Measuring the length along the near eave instead, up in the empty corner, was tried for the phone, 10.10: the
   // picture is held by its height there, and the eave's size made it taller — it came out smaller still.)
   const { k, O } = fit();
-  const { P, ground, sizes } = layoutAt(k, O);
+  const placed = layoutAt(k, O);
+  const { P, ground, sizes } = placed;
   const line = (...points: P3[]) => pathOf(points.map(P));
 
   // ── the surfaces and their edges ──
@@ -535,5 +542,8 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
     hatch,
     sizes: sizePaths,
     ...(withBuild && scope.frame ? { build: frameBuild(domain, model, at, skins, line) } : {}),
+    hintAnchor: P([W * 0.75, L * 0.85, roofZ(W * 0.75)]),
+    meets: (box: Box) => layoutMeets(placed, box),
+    sizeBoxes: placed.sizes.map((size) => size.box),
   };
 }

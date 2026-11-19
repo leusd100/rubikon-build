@@ -458,6 +458,9 @@ test.describe('the first view builds the drawing', () => {
       expect(state.moving, stage).toBe(0);
     }
     await expect(picture.locator('svg.gv')).not.toHaveAttribute('data-building');
+    // a first view cut short does not point at the 3D chip afterwards (19.11): the visitor is already at the controls
+    await page.waitForTimeout(1500);
+    await expect(picture.locator('.gv-hint')).toHaveCount(0);
   });
 
   test('switching to 3D mid-build shows the whole hangar, and so does the way back', async ({ page }, testInfo) => {
@@ -512,6 +515,74 @@ test.describe('the first view builds the drawing', () => {
     }, [markup, STAGES] as const);
     expect(drawing).toEqual({ stages: 5, sizes: 4, held: 0, building: false });
   });
+});
+
+// The 3D callout (owner, 19.11: «3D можна легко пропустити», variant C; «протестуй, щоб не налазило»): once the first
+// view has played through, a copper leader and a name point at the 3D chip, and nothing of them lies on the drawing — its
+// lines, its sizes' values, the chip, a held legend — at every screen; then it steps back and the chip keeps its copper
+test.describe('the 3D callout after the first view', () => {
+  for (const [width, height] of [[1440, 900], [1280, 800], [1280, 720], [1024, 768], [820, 1180], [390, 844], [360, 780]] as const) {
+    test(`names the 3D chip once at ${width} × ${height}, lying on nothing`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name === 'mobile-chromium', 'the screens are set here, one by one');
+      await page.setViewportSize({ width, height });
+      await openHangarPage(page);
+      const picture = pictureOf(page);
+      await expect(picture).toHaveAttribute('data-build', 'armed');
+      await bringSheetIntoView(page);
+      const tag = picture.locator('.gv-hint-tag');
+      await expect(tag).toBeVisible({ timeout: 8000 });
+      // the leader plotted and the name in (general-view.css: .7 s, then .4 s)
+      await page.waitForTimeout(1300);
+      const hits = await picture.evaluate((root) => {
+        const rect = (element: Element) => element.getBoundingClientRect();
+        const grow = (box: DOMRect, by: number) => ({ left: box.left - by, top: box.top - by, right: box.right + by, bottom: box.bottom + by });
+        type Area = { left: number; top: number; right: number; bottom: number };
+        const meets = (a: Area, b: Area) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+        const within = (x: number, y: number, a: Area) => x > a.left && x < a.right && y > a.top && y < a.bottom;
+        const points = (path: SVGGeometryElement, step = 2) => {
+          // a surface's outline out of the request is an empty path while every surface is in
+          if (!path.getAttribute('d')) return [];
+          const matrix = path.getScreenCTM()!;
+          const out: [number, number][] = [];
+          for (let at = 0; at <= path.getTotalLength(); at += step) {
+            const p = path.getPointAtLength(at);
+            out.push([matrix.a * p.x + matrix.c * p.y + matrix.e, matrix.b * p.x + matrix.d * p.y + matrix.f]);
+          }
+          return out;
+        };
+        const found: string[] = [];
+        const name = root.querySelector('.gv-hint-tag')!;
+        const nameBox = grow(rect(name), 2);
+        // painted, not clipped: the name is what lies at its own middle, and inside the picture
+        const box = rect(name);
+        const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        if (!top?.closest('.gv-hint')) found.push(`the name not painted at its place (${top?.className ?? 'nothing'})`);
+        const picture = rect(root);
+        if (box.left < picture.left || box.right > picture.right || box.top < picture.top || box.bottom > picture.bottom) found.push('the name outside the picture');
+        const chip = root.querySelector('.hc-sheet-three')!;
+        const boxes: [string, Element][] = [
+          ['the 3D chip', chip],
+          ...[...root.querySelectorAll('.gv-value, .gv-plate')].map((element): [string, Element] => [`a size «${element.textContent ?? 'plate'}»`, element]),
+          ...[...root.querySelectorAll('.hc-section')].map((element): [string, Element] => ['the legend', element]),
+        ];
+        for (const [what, element] of boxes) if (meets(nameBox, rect(element))) found.push(`the name on ${what}`);
+        for (const path of root.querySelectorAll<SVGGeometryElement>('.gv-front, .gv-edge, .gv-out, .gv-dim, .gv-ground, .gv-hatch, .gv-cladding, .gv-opening')) {
+          if (points(path, 3).some(([x, y]) => within(x, y, nameBox))) found.push(`the name on a line (${path.getAttribute('class')})`);
+        }
+        const lead = root.querySelector<SVGGeometryElement>('.gv-hint-lead');
+        if (lead) {
+          const along = points(lead).slice(0, -2);
+          for (const [what, element] of boxes) if (along.some(([x, y]) => within(x, y, rect(element)))) found.push(`the leader through ${what}`);
+          if (along.some(([x, y]) => within(x, y, rect(name)))) found.push('the leader through the name');
+        }
+        return found;
+      });
+      expect(hits).toEqual([]);
+      // it steps back, once; the chip keeps its copper
+      await expect(picture.locator('.gv-hint')).toHaveCount(0, { timeout: 8000 });
+      await expect(picture.locator('svg.gv')).toHaveAttribute('data-hinted', '');
+    });
+  }
 });
 
 // 03.10 sweep: the drawing reads at any size, the band keeps the page's edges, the mini drawing stays small and never

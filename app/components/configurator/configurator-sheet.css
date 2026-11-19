@@ -86,6 +86,8 @@
 .hc-sheet-expand::after, .hc-sheet-chip::after { position: absolute; inset: -7px 0; content: ''; }
 .hc-sheet-expand:hover, .hc-sheet-chip:hover, .hc-sheet-chip[aria-expanded="true"] { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .4); }
 .hc-sheet-expand:focus-visible, .hc-sheet-chip:focus-visible { outline: 3px solid var(--color-accent-on-dark); outline-offset: 4px; } /* the outer ring, on the sheet's charcoal */
+/* once the sheet has pointed at it (19.11, HangarGeneralView data-hinted), the 3D chip keeps its copper: a way, not a tag */
+.hc-preview-image:has(> .gv[data-hinted]) .hc-sheet-three:not(:hover) { color: var(--color-dark-text); border-color: color-mix(in srgb, var(--color-accent-on-dark) 70%, transparent); }
 /* the colours, opened from their chip: a note laid on the picture under the chips, on the sheet's paper */
 .hangar-configurator-embedded .hc-preview-sheet .hc-sheet-options {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 3;

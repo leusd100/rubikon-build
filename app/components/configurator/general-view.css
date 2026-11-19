@@ -15,6 +15,9 @@
   --gv-for-build-draw: 1.1s;
   /* a new size: the lines, the sizes and their values run to their new places, an even ease in and out */
   --gv-for-morph: .55s;
+  /* the 3D callout (19.11): its leader plotted, then it holds and steps back */
+  --gv-for-hint-plot: .7s;
+  --gv-at-hint-away: 4.6s;
 }
 
 .gv {
@@ -115,3 +118,20 @@
   .gv[data-morph] .gv-value { transition: transform var(--gv-for-morph) var(--ease-plot), fill var(--gv-for-return) var(--ease-standard); }
   .gv[data-morph] :is(.gv-cladding, .gv-hatch) { opacity: 0; transition: none; }
 }
+
+/* The sheet's one-time callout to its 3D chip (owner, 19.11, variant C; hint3d.ts): a copper leader from the roof, the
+   name in the drawing's letters, a short arrow to the chip — then it steps back, and the chip keeps its copper. Mounted
+   only for those seconds; reduced motion never plays the first view, so it never comes. */
+/* The name may stand in the picture's padding beside the chip, above the drawing's box: for its few seconds the drawing
+   lets it show there (the drawing itself is fitted inside its box, so nothing else reaches the padding) */
+.gv[data-hinting] { overflow: visible; }
+.gv-hint path { fill: none; stroke: var(--color-accent-on-dark); stroke-width: 1.3px; stroke-linecap: round; stroke-linejoin: round; }
+.gv-hint .gv-hint-mark { fill: var(--color-accent-on-dark); }
+.gv-hint-tag { fill: var(--color-accent-on-dark); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); dominant-baseline: central; }
+@media (prefers-reduced-motion: no-preference) {
+  .gv-hint .gv-hint-lead { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gv-plot var(--gv-for-hint-plot) var(--ease-plot) both; }
+  .gv-hint :is(.gv-hint-tag, .gv-hint-mark, .gv-hint-arrow) { animation: gv-hint-in var(--gv-for-value-fade) ease var(--gv-for-hint-plot) both; }
+  .gv-hint { animation: gv-hint-away var(--gv-for-fade) ease var(--gv-at-hint-away) forwards; }
+}
+@keyframes gv-hint-in { from { opacity: 0; } }
+@keyframes gv-hint-away { to { opacity: 0; } }
