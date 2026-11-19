@@ -86,7 +86,6 @@
    length from its own start, in «Каркас»'s weights — the front frame in the paper's ink and the heaviest line, the frames
    behind and the members along the building lighter, the bracing in copper — then the walls' and the roof's faces close
    over it in the field's colour. Mounted only while the first view plays, so nothing of it outlives it. */
-.gv-build path { fill: none; }
 .gv-build-front { stroke: var(--gv-ink); stroke-width: calc(2.2px * var(--gv-w)); }
 .gv-build-post { stroke: var(--gv-ink-2); stroke-width: calc(1.2px * var(--gv-w)); }
 .gv-build-chord { stroke: var(--gv-ink-2); stroke-width: calc(1px * var(--gv-w)); }

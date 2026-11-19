@@ -250,56 +250,63 @@ function frameOutside(domain: HangarDomainModel, model: ReturnType<typeof buildP
 
 /** The first view's frame plot (owner, 19.11: «вау» on opening /angary, and in code, not a video): the whole frame,
  *  station by station from the front — the columns rise, the frames' roof members follow, then the members along the
- *  building and the bracing in copper — before the walls and the roof close over it. In ms from the frame stage's start;
- *  all of it inside FIRST_VIEW_FRAME_SPAN_MS (buildUpSequence.ts), so the walls come as the bracing lands. */
+ *  building (the walls' first) and the bracing in copper (the walls' first) — before the walls and the roof close over
+ *  it. In ms from the frame stage's start. Every run spreads over a fixed span, so a 120 m hangar's many frames take
+ *  no longer than a short one's, and every member is drawn before the walls' stage (90 % of FIRST_VIEW_FRAME_SPAN_MS,
+ *  buildUpSequence.ts) begins to close over it: PLOT_END_MS, held by generalViewGeometry.test.ts. */
 const PLOT = {
-  wave: 600, // the columns' start runs this long from the front frame to the last, however many frames there are
+  wave: 600, // the columns' start runs this long from the front frame to the last
   post: 450,
-  chordAt: 350,
-  chord: 500,
-  longAt: 1000,
-  longStep: 25,
-  long: 520,
-  braceAt: 1250,
-  braceSpan: 250,
-  brace: 300,
+  chordAt: 420, // as the front frame's columns reach the eave
+  chord: 480,
+  longAt: 900,
+  longSpan: 300,
+  long: 400,
+  braceAt: 1000,
+  braceSpan: 300,
+  brace: 250,
 } as const;
+/** When the last member of the first view's frame is drawn, at the latest */
+export const PLOT_END_MS = Math.max(PLOT.chordAt + PLOT.wave + PLOT.chord, PLOT.longAt + PLOT.longSpan + PLOT.long, PLOT.braceAt + PLOT.braceSpan + PLOT.brace);
+
+/** `count` starts spread evenly over `span` ms from `at` */
+const spread = (at: number, span: number, count: number) => (index: number) => at + (count > 1 ? (span * index) / (count - 1) : 0);
 
 function frameBuild(domain: HangarDomainModel, model: ReturnType<typeof buildParametricModel>, at: { W: number; L: number; E: number; R: number; roofZ: (x: number) => number }, faces: { walls: string; roof: string }, line: Line): FrameBuild {
   const { W, L, E, R, roofZ } = at;
   const truss = domain.structural.roofStructure === 'truss';
   const centre = domain.structural.scheme === 'centerSupport';
   const frames = deriveBayLayout(L).stationsM;
-  const step = frames.length > 1 ? PLOT.wave / (frames.length - 1) : 0;
+  const wave = spread(0, PLOT.wave, frames.length);
   const panelXs = trussPanelNodesM(W).panelXsM;
   const members: BuildMember[] = [];
   frames.forEach((d, index) => {
     const kind = index === 0 ? 'front' : 'post';
-    for (const x of centre ? [0, W / 2, W] : [0, W]) members.push({ d: line([x, d, 0], [x, d, E]), kind, at: index * step, dur: PLOT.post });
+    for (const x of centre ? [0, W / 2, W] : [0, W]) members.push({ d: line([x, d, 0], [x, d, E]), kind, at: wave(index), dur: PLOT.post });
     for (const points of roofMembersAt(d, { W, E, R, truss, panelXs })) {
-      members.push({ d: line(...points), kind: index === 0 ? 'front' : 'chord', at: PLOT.chordAt + index * step, dur: PLOT.chord });
+      members.push({ d: line(...points), kind: index === 0 ? 'front' : 'chord', at: PLOT.chordAt + wave(index), dur: PLOT.chord });
     }
   });
   const purlinXs = roofPurlinPositionsM(W, domain.structural.roofStructure).filter((purlin) => purlin.kind === 'purlin').map((purlin) => purlin.xM);
+  // the walls' members first: the walls close over them before the roof does
   const along: P3[][] = [
     ...[0, W].map((x): P3[] => [[x, 0, E], [x, L, E]]),
     ...[E / 3, (2 * E) / 3].flatMap((z) => [0, W].map((x): P3[] => [[x, 0, z], [x, L, z]])),
     ...purlinXs.map((x): P3[] => [[x, 0, roofZ(x)], [x, L, roofZ(x)]]),
     [[W / 2, 0, R], [W / 2, L, R]],
   ];
-  along.forEach((points, index) => members.push({ d: line(...points), kind: 'long', at: PLOT.longAt + index * PLOT.longStep, dur: PLOT.long }));
+  const longs = spread(PLOT.longAt, PLOT.longSpan, along.length);
+  along.forEach((points, index) => members.push({ d: line(...points), kind: 'long', at: longs(index), dur: PLOT.long }));
   const braced = [...new Set(model.bracing.map((brace) => brace.bayIndex))].filter((bay) => bay >= 0 && bay < frames.length - 1);
   const slopes = [[0, ...purlinXs.filter((x) => x < W / 2), W / 2], [W / 2, ...purlinXs.filter((x) => x > W / 2), W]];
   const panels = slopes.flatMap((xs) => xs.slice(1).map((x, index): Pt => [xs[index], x]));
-  const braces = braced.flatMap((bay) => {
-    const [a, b] = [frames[bay], frames[bay + 1]];
-    return [
-      ...[0, W].flatMap((x) => [line([x, a, 0], [x, b, E]), line([x, b, 0], [x, a, E])]),
-      ...panels.flatMap(([p, q]) => [line([p, a, roofZ(p)], [q, b, roofZ(q)]), line([p, b, roofZ(p)], [q, a, roofZ(q)])]),
-    ];
-  });
-  const braceStep = braces.length > 1 ? PLOT.braceSpan / (braces.length - 1) : 0;
-  braces.forEach((d, index) => members.push({ d, kind: 'brace', at: PLOT.braceAt + index * braceStep, dur: PLOT.brace }));
+  const bayEnds = (bay: number) => [frames[bay], frames[bay + 1]];
+  const braces = [
+    ...braced.flatMap((bay) => { const [a, b] = bayEnds(bay); return [0, W].flatMap((x) => [line([x, a, 0], [x, b, E]), line([x, b, 0], [x, a, E])]); }),
+    ...braced.flatMap((bay) => { const [a, b] = bayEnds(bay); return panels.flatMap(([p, q]) => [line([p, a, roofZ(p)], [q, b, roofZ(q)]), line([p, b, roofZ(p)], [q, a, roofZ(q)])]); }),
+  ];
+  const braceAt = spread(PLOT.braceAt, PLOT.braceSpan, braces.length);
+  braces.forEach((d, index) => members.push({ d, kind: 'brace', at: braceAt(index), dur: PLOT.brace }));
   return { members, ...faces };
 }
 
@@ -447,7 +454,11 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
   ];
   const planes = faces.map((face) => pathOf(face.map(P), true)).join('');
   // the first view's skins: the end and side walls, then the two roof slopes (the faces above, in that order)
-  const skins = { walls: faces.slice(0, 2).map((face) => pathOf(face.map(P), true)).join(''), roof: faces.slice(2).map((face) => pathOf(face.map(P), true)).join('') };
+  // (a surface out of the request has no skin: its frame stays in view, as the drawing shows it once built)
+  const skins = {
+    walls: scope.walls ? faces.slice(0, 2).map((face) => pathOf(face.map(P), true)).join('') : '',
+    roof: scope.roof ? faces.slice(2).map((face) => pathOf(face.map(P), true)).join('') : '',
+  };
   const { front, edges, out } = outlinePaths(wallsIn, roofIn, {
     frontBase: line([0, 0, E], [0, 0, 0], [W, 0, 0], [W, 0, E]),
     frontTop: line([0, 0, E], [W / 2, 0, R], [W, 0, E]),

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { BUILD_STAGE_ORDER, firstViewStageStartsMs, totalSequenceDurationMs } from '../../lib/configurator/buildUpSequence';
 
-// /angary's first view (owner, 03.10): the drawing builds itself — foundation, frame, walls, roof, gates, ≈2.5 s
+// /angary's first view (owner, 03.10): the drawing builds itself — foundation, frame, walls, roof, gates, under 3 s (≈2.8 s since 19.11, the frame plotted whole)
 // (buildUpSequence.ts) — the first time its sheet is at least half in view, once per page load. It arms only after
 // hydration and only while the sheet is not in view at all, the DrawingSheet pattern: the server markup, a visitor who
 // is already there when the page wakes up and reduced motion all get the complete drawing. Armed, the layers are put

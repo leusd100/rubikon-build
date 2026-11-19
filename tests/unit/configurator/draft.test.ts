@@ -108,6 +108,16 @@ describe('a stored configuration is read through the controls’ bounds', () => 
     expect(read.sizesUnknown).toBe(false);
   });
 
+  it('reads openings nobody answered as the example\'s, and keeps answered ones (19.11: the example changed)', () => {
+    // a draft from before 19.11: the example then had one gate and no door, and the sizes were changed
+    const before = readConfiguration({ dimensions: { width: 30, length: 60, height: 8 }, gates: 1, gateType: 'standard', doors: 0, confirmed: ['dimensions'] });
+    expect([before.gates, before.gateType, before.doors]).toEqual([DEFAULT_CONFIGURATOR_STATE.gates, DEFAULT_CONFIGURATOR_STATE.gateType, DEFAULT_CONFIGURATOR_STATE.doors]);
+    expect(before.dimensions.width).toBe(30);
+    // the same openings answered: the visitor's, kept
+    const answered = readConfiguration({ gates: 1, gateType: 'double', doors: 0, confirmed: ['openings'] });
+    expect([answered.gates, answered.gateType, answered.doors]).toEqual([1, 'double', 0]);
+  });
+
   it('reads nothing at all as the untouched example', () => {
     expect(readConfiguration(undefined)).toEqual(DEFAULT_CONFIGURATOR_STATE);
   });

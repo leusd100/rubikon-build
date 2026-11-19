@@ -153,8 +153,8 @@ export function HangarGeneralView({
       {/* …and the faces that close over it with the walls' and the roof's stages, in the field's colour */}
       {g.build && (
         <>
-          <path className="gv-stage gv-skin" data-held={held('walls')} d={g.build.walls} />
-          <path className="gv-stage gv-skin" data-held={held('roof')} d={g.build.roof} />
+          {g.build.walls && <path className="gv-stage gv-skin" data-held={held('walls')} d={g.build.walls} />}
+          {g.build.roof && <path className="gv-stage gv-skin" data-held={held('roof')} d={g.build.roof} />}
         </>
       )}
       {g.walls && (

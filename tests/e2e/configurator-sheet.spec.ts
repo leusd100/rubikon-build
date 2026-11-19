@@ -74,6 +74,8 @@ async function expectWholeDrawing(picture: Locator) {
     await expect(picture.locator(selector), stage).not.toHaveAttribute('data-held');
   }
   await expect(picture.locator('svg.gv')).not.toHaveAttribute('data-building');
+  // the first view's frame and its skins (19.11) exist only while it plays: none outlives it
+  await expect(picture.locator('.gv-build, .gv-skin')).toHaveCount(0);
 }
 
 for (const theme of ['light', 'dark'] as const) {
@@ -413,7 +415,7 @@ test.describe('the first view builds the drawing', () => {
     const order = (Object.keys(STAGES) as (keyof typeof STAGES)[]).map((stage) => seen[stage]);
     for (const at of order) expect(at).toBeGreaterThan(0);
     for (let index = 1; index < order.length; index += 1) expect(order[index]).toBeGreaterThan(order[index - 1]);
-    // ≈2.5 s from the foundation to the gates, however busy the machine
+    // ≈2.6 s from the foundation to the gates (19.11), however busy the machine
     expect(order[order.length - 1] - order[0]).toBeGreaterThan(1500);
     expect(order[order.length - 1] - order[0]).toBeLessThan(4500);
 

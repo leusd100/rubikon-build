@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
-import { generalViewGeometry, type GeneralViewFrame } from '../../../app/components/configurator/generalViewGeometry';
+import { generalViewGeometry, PLOT_END_MS, type GeneralViewFrame } from '../../../app/components/configurator/generalViewGeometry';
+import { FIRST_VIEW_FRAME_SPAN_MS } from '../../../app/lib/configurator/buildUpSequence';
 import { overlaps, type Box } from '../../../app/components/angary/dimetric';
 
 // «Загальний вигляд» on /angary's sheet (10.10): the clad hangar in the frame drawing's language, laid out in screen px
@@ -82,6 +83,55 @@ describe('the general view', () => {
     for (const { label } of g.sizes) {
       const box: Box = [label.x - 20, label.y - 8, label.x + 20, label.y + 8];
       expect(overlaps(box, chip)).toBe(false);
+    }
+  });
+});
+
+// The first view's frame (owner, 19.11): only when asked for, inside the drawing, and drawn before the walls close over it
+describe('the first view\'s frame plot', () => {
+  const build = (patch: Partial<ConfiguratorState> = {}, frame: GeneralViewFrame = DESKTOP) =>
+    generalViewGeometry(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...patch }), frame, true).build;
+
+  it('is not drawn unless the first view asks for it — the drawing is the one the server sends', () => {
+    expect(view().build).toBeUndefined();
+    expect(view({}, PHONE).build).toBeUndefined();
+  });
+
+  it('plots the example\'s whole frame: columns, roof members, members along it and bracing, with both skins', () => {
+    const plot = build()!;
+    const kinds = new Set(plot.members.map((member) => member.kind));
+    expect([...kinds].sort()).toEqual(['brace', 'chord', 'front', 'long', 'post']);
+    expect(plot.walls.length).toBeGreaterThan(10);
+    expect(plot.roof.length).toBeGreaterThan(10);
+  });
+
+  it('has nothing to plot without the frame, and no skin for a surface out of the request', () => {
+    expect(build(partial('foundation', 'walls', 'roof'))).toBeUndefined();
+    const open = build(partial('foundation', 'frame', 'roof'))!;
+    expect(open.walls).toBe('');
+    expect(open.roof.length).toBeGreaterThan(10);
+  });
+
+  it('draws every member before the walls\' stage begins, however long the hangar', () => {
+    // the walls are released at 90 % of the frame stage (buildUpSequence FIRST_VIEW_HANDOVER)
+    expect(PLOT_END_MS).toBeLessThanOrEqual(FIRST_VIEW_FRAME_SPAN_MS * 0.9);
+    for (const dimensions of [{ width: 10, length: 10, height: 4 }, { width: 24, length: 60, height: 8 }, { width: 50, length: 120, height: 15 }]) {
+      const plot = build({ dimensions })!;
+      for (const member of plot.members) expect(member.at + member.dur).toBeLessThanOrEqual(PLOT_END_MS);
+    }
+  });
+
+  it('keeps every member inside the drawing\'s box', () => {
+    for (const frame of [DESKTOP, PHONE]) {
+      for (const member of build({}, frame)!.members) {
+        const values = numbers(member.d);
+        for (let index = 0; index < values.length; index += 2) {
+          expect(values[index]).toBeGreaterThanOrEqual(0);
+          expect(values[index]).toBeLessThanOrEqual(frame.width);
+          expect(values[index + 1]).toBeGreaterThanOrEqual(0);
+          expect(values[index + 1]).toBeLessThanOrEqual(frame.height);
+        }
+      }
     }
   });
 });

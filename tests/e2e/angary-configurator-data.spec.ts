@@ -174,6 +174,9 @@ test('openings: «одні / двоє», one sign per size, the door placed wher
   await page.setViewportSize({ width: 390, height: 844 });
   await openHangarPage(page);
   await openControlGroup(page, 'openings');
+  // from one gate and no door to two and a door: changes, the example has two and a door since 19.11
+  await page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^1$/ }).click();
+  await page.locator('label:has(input[name="hc-doors"][value="0"])').click();
   await page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^2$/ }).click();
   await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
   await expect(stampFact(page, 'Ворота').locator('dd')).toHaveText('Двоє стандартних, 4 × 4 м');

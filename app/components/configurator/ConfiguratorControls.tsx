@@ -589,8 +589,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // The openings as placed — held to what fits at these sizes (deriveDomainModel). The controls show these; the
   // visitor's own choice stays in the state and returns once it fits (04.10).
   const shown = { gates: domain.gates, gateType: domain.gateType, doors: domain.doors };
-  const gatesHeld = state.gates !== shown.gates || state.gateType !== shown.gateType;
-  const doorHeld = state.doors !== shown.doors;
+  // held: asked and not drawn — the example's openings are never held, they follow what fits (domainModel, 19.11)
+  const asked = domain.requestedOpenings;
+  const gatesHeld = asked.gates !== shown.gates || asked.gateType !== shown.gateType;
+  const doorHeld = asked.doors !== shown.doors;
   // what the drawing, the stamp and the lead treat as asked for: the mode's works (drawnScope), not the kept list
   const wallsInScope = domain.scope.walls;
   const heldNote = wallsInScope ? heldOpeningsNote(state, shown, gatesHeld, doorHeld) : null;

@@ -165,6 +165,18 @@ describe('personnel door label', () => {
   it('says so plainly when there is none, rather than omitting the row', () => {
     expect(summaryFor({ doors: 0 }).doorsLabel).toBe('Не передбачені');
   });
+
+  // 19.11: the example has two gates and a door; under 16 m the door has no room beside them. The example's openings are
+  // nobody's choice: they follow what fits, and nothing says «у схемі немає місця» — an answered door still does
+  it('lets the example\'s door go quietly where it does not fit, and says why only for a door asked for', () => {
+    const narrow = { dimensions: { ...DEFAULT_CONFIGURATOR_STATE.dimensions, width: 12 }, confirmed: ['dimensions' as const] };
+    const example = summaryFor(narrow);
+    expect(deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, ...narrow }).doors).toBe(0);
+    expect(example.doorsLabel).toBe('Не передбачені');
+    expect(example.gatesLabel).not.toContain('—');
+    const asked = summaryFor({ ...narrow, confirmed: ['dimensions', 'openings'] });
+    expect(asked.doorsLabel).toBe(nb('Одні службові, 1_×_2,1_м_— у схемі немає місця'));
+  });
 });
 
 describe('deriveSummary — "Обсяг заявки" is the master fact (Phase 3F.2)', () => {

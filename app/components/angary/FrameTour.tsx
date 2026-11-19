@@ -608,7 +608,10 @@ function frameGeometry(domain: HangarDomainModel, rowGap = ROW_GAP) {
   // Keep bracing leaders horizontal so they cannot read as extensions of a diagonal; place roof names above
   // the ridge-side purlins (owner visual review, 05.11), with a first-bay fallback for short buildings.
   const tagPurlins = roofLabelPurlins(purlinXs, W);
-  const baysTags = [
+  // Placed one after another, each keeping off the ones before it: the end wall's posts before its wall purlins (19.11).
+  // The posts' name has a few places by the posts; the purlins' has the side wall too. With a door in a 12 m end wall the
+  // purlins' name took the posts' place under it, and «стійки фахверку» was left to lie on a wall purlin.
+  const [braceTag, purlinTag] = [
     placeTag('в’язі', [0.62, 0.4, 0.8].map((t) => ({ from: xy([W, s * t, E * t]), leaders: [[64, 0], [82, 0], [100, 0]] as Pt[] })), baysBase.view, bayTaken, bayLines, { bars, others: greyLines, ring: false }),
     // up from a purlin, over the roof where the picture is free (10.10, owner: «"прогони" краще показати зверху де є
     // вільне місце» — the ring had put it under the side wall, among the other names)
@@ -616,19 +619,22 @@ function frameGeometry(domain: HangarDomainModel, rowGap = ROW_GAP) {
       from: xy([x, s * t, roofZ(x)]),
       leaders: [[0, -44], [-16, -44], [0, -60]] as Pt[],
     }))), baysBase.view, bayTaken, bayLines, { bars, others: greyLines, ring: false }),
-    // on a wall purlin of the end wall, the name above or below it; else out from the side wall's
-    placeTag('стінові прогони', [
-      ...bands.map(({ z, from, to }) => ({ from: xy([(from + to) / 2, 0, z]), leaders: [[-14, -20], [14, -20], [-14, 22], [14, 22]] as Pt[] })),
-      ...sideWall.flatMap((t) => [(2 * E) / 3, E / 3].map((z) => ({ from: xy([W, s * t, z]), leaders: [[26, -16], [30, 10], [26, 16]] as Pt[] }))),
-    ], baysBase.view, bayTaken, bayLines, { bars, others: greyLines }),
+  ];
+  const postTag =
     // on a post, into the end wall beside it, or above the roof from its top
     placeTag('стійки фахверку', [
       ...[...postXs].reverse().flatMap((x) => [0.8, 0.62, 0.45].map((t) => ({ from: xy([x, 0, E * t]), leaders: [[-24, -14], [24, -14], [-24, 14], [24, 14]] as Pt[] }))),
       ...postXs.map((x) => ({ from: xy([x, 0, roofZ(x) - 0.3]), leaders: [[-18, -34], [18, -34], [-30, -50]] as Pt[] })),
       // or down from a post's foot, under the end wall
       ...postXs.map((x) => ({ from: xy([x, 0, E * 0.12]), leaders: [[-24, 58], [24, 58], [-36, 74], [36, 74]] as Pt[] })),
-    ], baysBase.view, bayTaken, bayLines, { bars, others: greyLines }),
-  ];
+    ], baysBase.view, bayTaken, bayLines, { bars, others: greyLines });
+  const wallPurlinTag =
+    // on a wall purlin of the end wall, the name above or below it; else out from the side wall's
+    placeTag('стінові прогони', [
+      ...bands.map(({ z, from, to }) => ({ from: xy([(from + to) / 2, 0, z]), leaders: [[-14, -20], [14, -20], [-14, 22], [14, 22]] as Pt[] })),
+      ...sideWall.flatMap((t) => [(2 * E) / 3, E / 3].map((z) => ({ from: xy([W, s * t, z]), leaders: [[26, -16], [30, 10], [26, 16]] as Pt[] }))),
+    ], baysBase.view, bayTaken, bayLines, { bars, others: greyLines });
+  const baysTags = [braceTag, purlinTag, wallPurlinTag, postTag];
   const baysCamera = camera(baysFocus, 1.5, union([baysEssentials, ...baysTags.map((tag) => tag.box)]));
 
   // The overview as the configurator shows it (07.10): the frame, its footings and the letters of its dimensions held

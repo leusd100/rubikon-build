@@ -96,9 +96,16 @@ export function readConfiguration(raw: unknown): ConfiguratorState {
     roofSystem: oneOf(CLADDING_SYSTEM_ORDER, value.roofSystem, base.roofSystem),
     foundationType: oneOf(FOUNDATION_TYPE_ORDER, value.foundationType, base.foundationType),
     scope: Array.isArray(value.scope) ? SCOPE_ORDER.filter((item) => (value.scope as unknown[]).includes(item)) : base.scope,
-    gates: oneOf(GATES_OPTIONS, value.gates, base.gates),
-    gateType: oneOf(GATE_TYPE_ORDER, value.gateType, base.gateType),
-    doors: oneOf(DOOR_OPTIONS, value.doors, base.doors),
+    // Openings nobody answered were the example's when the draft was saved: they are the example's now. The example
+    // changed on 19.11 (two gates and a door); a draft from before kept one gate and no door, and read as a choice.
+    // Every change to the openings confirms them (ConfiguratorControls withOpeningsAnswer), so this keeps every answer.
+    ...(confirmed.includes('openings')
+      ? {
+        gates: oneOf(GATES_OPTIONS, value.gates, base.gates),
+        gateType: oneOf(GATE_TYPE_ORDER, value.gateType, base.gateType),
+        doors: oneOf(DOOR_OPTIONS, value.doors, base.doors),
+      }
+      : { gates: base.gates, gateType: base.gateType, doors: base.doors }),
     objectProfile: readObjectProfile(value.objectProfile),
     confirmed,
     sizesUnknown: value.sizesUnknown === true,
