@@ -9,7 +9,7 @@ import { formatNumber } from '../../lib/configurator/formatNumber';
 import {
   buildParametricModel, deriveBayLayout, ridgeHeightM, roofPurlinPositionsM, trussPanelNodesM,
 } from '../../lib/configurator/parametricModel';
-import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
+import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../lib/configurator/types';
 import { TourProgress } from '../directions/TourParts';
 import { keepShortWords } from '../../lib/typography';
 import {
@@ -706,10 +706,10 @@ const at = (index: number) => ({ '--n': index }) as CSSProperties;
 /** An arrow's own beat in the falling snow and the wind's gusts */
 const beat = (index: number) => ({ '--k': index }) as CSSProperties;
 /** The frame drawing's model from the business configuration: its geometry, the five steps and the title block's words —
- *  for the configurator's «Каркас» view (07.10) */
-export function useFrameTourModel() {
+ *  for the configurator's «Каркас» view (07.10). Without a configurator on the page (HOME) it draws `example`. */
+export function useFrameTourModel(example: ConfiguratorState = DEFAULT_CONFIGURATOR_STATE) {
   const inquiry = useHangarInquiryContext();
-  const state = inquiry?.state ?? DEFAULT_CONFIGURATOR_STATE;
+  const state = inquiry?.state ?? example;
   const domain = useMemo(() => deriveDomainModel(state), [state]);
   const wide = useSyncExternalStore(watchWideSheet, () => window.matchMedia(WIDE_SHEET).matches, () => false);
   const g = useMemo(() => frameGeometry(domain, wide ? ROW_GAP_WIDE : ROW_GAP), [domain, wide]);

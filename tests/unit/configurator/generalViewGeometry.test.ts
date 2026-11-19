@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { deriveDomainModel } from '../../../app/lib/configurator/domainModel';
 import { DEFAULT_CONFIGURATOR_STATE, type ConfiguratorState } from '../../../app/lib/configurator/types';
 import { generalViewGeometry, PLOT_END_MS, type GeneralViewFrame } from '../../../app/components/configurator/generalViewGeometry';
-import { FIRST_VIEW_FRAME_SPAN_MS } from '../../../app/lib/configurator/buildUpSequence';
+import { firstViewStageStartsMs } from '../../../app/lib/configurator/buildUpSequence';
 import { overlaps, type Box } from '../../../app/components/angary/dimetric';
+import { HOME_FRAME_EXAMPLE } from '../../../app/components/home-v2/homeFrameExample';
 
 // «Загальний вигляд» on /angary's sheet (10.10): the clad hangar in the frame drawing's language, laid out in screen px
 const DESKTOP: GeneralViewFrame = { width: 640, height: 430, annotated: true, keepClear: [] };
@@ -113,8 +114,9 @@ describe('the first view\'s frame plot', () => {
   });
 
   it('draws every member before the walls\' stage begins, however long the hangar', () => {
-    // the walls are released at 90 % of the frame stage (buildUpSequence FIRST_VIEW_HANDOVER)
-    expect(PLOT_END_MS).toBeLessThanOrEqual(FIRST_VIEW_FRAME_SPAN_MS * 0.9);
+    // from the frame stage's release to the walls' (buildUpSequence: index 1 → 2)
+    const [, frameAt, wallsAt] = firstViewStageStartsMs();
+    expect(PLOT_END_MS).toBeLessThanOrEqual(wallsAt - frameAt);
     for (const dimensions of [{ width: 10, length: 10, height: 4 }, { width: 24, length: 60, height: 8 }, { width: 50, length: 120, height: 15 }]) {
       const plot = build({ dimensions })!;
       for (const member of plot.members) expect(member.at + member.dur).toBeLessThanOrEqual(PLOT_END_MS);
@@ -133,5 +135,12 @@ describe('the first view\'s frame plot', () => {
         }
       }
     }
+  });
+});
+
+describe('HOME\'s «Каркас» example', () => {
+  it('keeps the one gate and no door HOME showed (owner, 19.11), whatever the configurator\'s example', () => {
+    expect([HOME_FRAME_EXAMPLE.gates, HOME_FRAME_EXAMPLE.gateType, HOME_FRAME_EXAMPLE.doors]).toEqual([1, 'standard', 0]);
+    expect(HOME_FRAME_EXAMPLE.dimensions).toEqual(DEFAULT_CONFIGURATOR_STATE.dimensions);
   });
 });

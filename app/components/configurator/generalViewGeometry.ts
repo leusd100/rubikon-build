@@ -454,7 +454,8 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
   ];
   const planes = faces.map((face) => pathOf(face.map(P), true)).join('');
   // the first view's skins: the end and side walls, then the two roof slopes (the faces above, in that order)
-  // (a surface out of the request has no skin: its frame stays in view, as the drawing shows it once built)
+  // (a surface out of the request has no skin: its frame stays in view, as the drawing shows it once built. Not reached
+  // today — the first view plays only for the untouched example, every surface in — but kept true if it ever is)
   const skins = {
     walls: scope.walls ? faces.slice(0, 2).map((face) => pathOf(face.map(P), true)).join('') : '',
     roof: scope.roof ? faces.slice(2).map((face) => pathOf(face.map(P), true)).join('') : '',

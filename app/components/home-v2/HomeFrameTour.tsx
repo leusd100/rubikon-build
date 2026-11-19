@@ -6,7 +6,7 @@ import { sheetObjectLabel } from '../configurator/sheetLabels';
 import { TourControl } from '../directions/TourParts';
 import { useDrawingTour } from '../useDrawingTour';
 import { deriveDomainModel, sizesProvenance } from '../../lib/configurator/domainModel';
-import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
+import { HOME_FRAME_EXAMPLE } from './homeFrameExample';
 
 // HOME's first engineering picture (owner 02.11: the best motion of the site stood at the end of /angary's configurator,
 // and a client may never get there). This is that tour, not a redrawing of it: /angary's own drawing and steps, the
@@ -14,13 +14,12 @@ import { DEFAULT_CONFIGURATOR_STATE } from '../../lib/configurator/types';
 // once, as the drawing comes half into view, and stops off screen (useDrawingTour); a step chosen by hand or a pause
 // hands it over to the visitor. Reduced motion: the whole frame, and the steps switch at once.
 
-// HOME stays as it was (owner, 19.11): the configurator's example has two gates and a door since then, HOME's frame
-// keeps the one gate and no door it showed — its end wall's posts and its tour's names were set out for that
-const EXAMPLE = deriveDomainModel({ ...DEFAULT_CONFIGURATOR_STATE, gates: 1, gateType: 'standard', doors: 0 });
+// HOME's own example (homeFrameExample.ts): the drawing, its steps and its label all read it
+const EXAMPLE = deriveDomainModel(HOME_FRAME_EXAMPLE);
 const EXAMPLE_LABEL = sheetObjectLabel(sizesProvenance(EXAMPLE), EXAMPLE.dimensions);
 
 export function HomeFrameTour() {
-  const { g, summary, steps, captions } = useFrameTourModel();
+  const { g, summary, steps, captions } = useFrameTourModel(HOME_FRAME_EXAMPLE);
   const { visualRef, step, touring, run, size, motion, stepMs, choose, toggle, hover } = useDrawingTour(steps.length, { durations: FRAME_TOUR_DURATIONS });
   const active = step ? steps[step - 1] : g.cameras.overview;
 

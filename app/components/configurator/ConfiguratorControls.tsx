@@ -453,7 +453,9 @@ function withOpeningsAnswer(state: ConfiguratorState, shown: ShownOpenings, answ
  *  the choice: «0» says «без воріт» (10.10, QA). Null for a count not shown: its own change answers it. */
 function shownGatesPressed(state: ConfiguratorState, shown: ShownOpenings, option: GatesCount): ConfiguratorState | null {
   if (shown.gates !== option) return null;
-  return state.gates === option ? withConfirmed(state, 'openings') : withOpeningsAnswer(state, shown, { gates: option });
+  // always from what is shown: confirming the raw state made the example's hidden door (no room for it at 10–15 m beside
+  // two gates, 19.11) the visitor's choice. Answered openings that match give the same state as before.
+  return withOpeningsAnswer(state, shown, { gates: option });
 }
 
 /** A cold store's note under the shell (10.10): why there is no «Без утеплення», and while its warm hangar is a

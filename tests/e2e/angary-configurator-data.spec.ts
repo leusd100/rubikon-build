@@ -204,6 +204,24 @@ test('openings: «одні / двоє», one sign per size, the door placed wher
   for (const chip of await chips.all()) expect(await chip.evaluate((span) => span.getClientRects().length)).toBe(1);
 });
 
+// 19.11: the example has two gates and a door, and under 16 m the door has no room beside them. The example's openings
+// are nobody's choice: they follow what fits without a word, and pressing the shown gate count answers what is shown —
+// it does not make the hidden door the visitor's (second review, 19.11)
+test('the example\'s door gives way quietly where it does not fit, and stays away when the shown gates are pressed', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
+  await openHangarPage(page);
+  await typeSize(page, 'width', '12');
+  await openControlGroup(page, 'openings');
+  const warning = page.locator('[data-group="openings"] .hc-field-note-warning');
+  await expect(warning).toHaveCount(0);
+  await expect(stampFact(page, 'Двері').locator('dd')).toHaveText('Не передбачені');
+  // the gate count shown (two gates fit at 12 m), pressed again
+  await page.getByRole('radiogroup', { name: 'Ворота' }).locator('label:has(input:checked)').click();
+  await expect(warning).toHaveCount(0);
+  await expect(stampFact(page, 'Двері').locator('dd')).toHaveText('Не передбачені');
+  await expect(stampFact(page, 'Двері').locator('dd')).not.toContainText('немає місця');
+});
+
 test('a size passing through a smaller one keeps the gates, the door and the ridge the visitor chose', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the state contract is viewport-independent');
   await openHangarPage(page);
