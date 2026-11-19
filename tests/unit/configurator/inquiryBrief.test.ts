@@ -43,7 +43,8 @@ describe('hangar inquiry brief', () => {
   it('uses the same non-empty rows for the visible summary and submitted payload', () => {
     const brief = createHangarInquiryBrief(deriveDomainModel({
       ...DEFAULT_CONFIGURATOR_STATE,
-      doors: 1,
+      // an answer that differs from the example (which has a door since 19.11)
+      doors: 0,
     }));
     const sections = createHangarInquiryBriefSections(brief);
     const formatted = formatHangarInquiryBrief(brief);
@@ -202,7 +203,8 @@ describe('the example’s values are never the visitor’s choice (04.10; 08.10)
       envelope: 'insulated',
       wallSystem: 'sandwich-panel',
       roofSystem: 'sandwich-panel',
-      gates: 2,
+      // one gate: an answer, the example has two since 19.11
+      gates: 1,
     })));
     const part = (id: string) => outline.find((section) => section.id === id)?.rows.map((row) => row.label);
     // the wall height (8 m) is still the example's, each size on its own row (Phase 4); the ridge follows the width

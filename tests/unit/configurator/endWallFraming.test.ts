@@ -114,9 +114,10 @@ describe('every configuration the configurator allows', () => {
     expect(problems).toEqual([]);
   });
 
-  it('frames the default gate at 10–17 m with posts at its jambs', () => {
+  // One gate, as the example had until 19.11 (it has two and a door now; every count is in the sweep above)
+  it('frames a single gate at 10–17 m with posts at its jambs', () => {
     for (const width of [10, 12, 16, 17]) {
-      const { openings, postXs } = framingFor({ width });
+      const { openings, postXs } = framingFor({ width, gates: 1, doors: 0 });
       const [only] = openings;
       expect(only.kind).toBe('gate');
       expect(postXs).toContain(only.xM);

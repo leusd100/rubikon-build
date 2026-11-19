@@ -150,10 +150,11 @@ describe('projectIsometricScene', () => {
   });
 
   it('renders no gate rectangles when gates is 0, and one 4-point rect per gate otherwise', () => {
-    expect(projectFor({ gates: 0 }).gates).toHaveLength(0);
-    expect(projectFor({ gates: 1 }).gates).toHaveLength(1);
-    expect(projectFor({ gates: 2 }).gates).toHaveLength(2);
-    expect(projectFor({ gates: 1 }).gates[0].points).toHaveLength(4);
+    // the gates alone: the example has a door since 19.11, and it is drawn as an opening too
+    expect(projectFor({ gates: 0, doors: 0 }).gates).toHaveLength(0);
+    expect(projectFor({ gates: 1, doors: 0 }).gates).toHaveLength(1);
+    expect(projectFor({ gates: 2, doors: 0 }).gates).toHaveLength(2);
+    expect(projectFor({ gates: 1, doors: 0 }).gates[0].points).toHaveLength(4);
   });
 
   it("keeps every gate within the front gable's own projected width", () => {
