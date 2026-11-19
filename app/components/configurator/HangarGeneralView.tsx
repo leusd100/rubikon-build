@@ -145,8 +145,8 @@ export function HangarGeneralView({
       {/* the first view's frame, mounted as its stage is released: each member plotted from its start, at its own time */}
       {g.build && isStageReleased('frame', released) && (
         <g className="gv-build" aria-hidden="true">
-          {g.build.members.map((member, index) => (
-            <path key={index} className={`gv-build-${member.kind}`} pathLength={1} d={member.d} style={{ '--gv-at': `${member.at}ms`, '--gv-dur': `${member.dur}ms` } as CSSProperties} />
+          {g.build.members.map((member) => (
+            <path key={member.id} className={`gv-build-${member.kind}`} pathLength={1} d={member.d} style={{ '--gv-at': `${member.at}ms`, '--gv-dur': `${member.dur}ms` } as CSSProperties} />
           ))}
         </g>
       )}

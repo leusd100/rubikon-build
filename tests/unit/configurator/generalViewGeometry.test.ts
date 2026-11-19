@@ -102,6 +102,8 @@ describe('the first view\'s frame plot', () => {
     const plot = build()!;
     const kinds = new Set(plot.members.map((member) => member.kind));
     expect([...kinds].sort()).toEqual(['brace', 'chord', 'front', 'long', 'post']);
+    // each member named by its place in the building: a stable React key
+    expect(new Set(plot.members.map((member) => member.id)).size).toBe(plot.members.length);
     expect(plot.walls.length).toBeGreaterThan(10);
     expect(plot.roof.length).toBeGreaterThan(10);
   });

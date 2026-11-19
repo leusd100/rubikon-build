@@ -54,7 +54,7 @@ export type GeneralView = {
 
 /** One member the first view plots: its line, its weight, and when it starts and how long it runs, in ms from the frame
  *  stage's start (HangarGeneralView mounts them then; general-view.css plots each along its length) */
-export type BuildMember = { d: string; kind: 'front' | 'post' | 'chord' | 'long' | 'brace'; at: number; dur: number };
+export type BuildMember = { id: string; d: string; kind: 'front' | 'post' | 'chord' | 'long' | 'brace'; at: number; dur: number };
 /** …and the faces the walls' and the roof's stages close over the frame, in the field's colour */
 export type FrameBuild = { members: BuildMember[]; walls: string; roof: string };
 
@@ -282,10 +282,10 @@ function frameBuild(domain: HangarDomainModel, model: ReturnType<typeof buildPar
   const members: BuildMember[] = [];
   frames.forEach((d, index) => {
     const kind = index === 0 ? 'front' : 'post';
-    for (const x of centre ? [0, W / 2, W] : [0, W]) members.push({ d: line([x, d, 0], [x, d, E]), kind, at: wave(index), dur: PLOT.post });
-    for (const points of roofMembersAt(d, { W, E, R, truss, panelXs })) {
-      members.push({ d: line(...points), kind: index === 0 ? 'front' : 'chord', at: PLOT.chordAt + wave(index), dur: PLOT.chord });
-    }
+    (centre ? [0, W / 2, W] : [0, W]).forEach((x, column) => members.push({ id: `column-${index}-${column}`, d: line([x, d, 0], [x, d, E]), kind, at: wave(index), dur: PLOT.post }));
+    roofMembersAt(d, { W, E, R, truss, panelXs }).forEach((points, part) => {
+      members.push({ id: `roof-${index}-${part}`, d: line(...points), kind: index === 0 ? 'front' : 'chord', at: PLOT.chordAt + wave(index), dur: PLOT.chord });
+    });
   });
   const purlinXs = roofPurlinPositionsM(W, domain.structural.roofStructure).filter((purlin) => purlin.kind === 'purlin').map((purlin) => purlin.xM);
   // the walls' members first: the walls close over them before the roof does
@@ -296,7 +296,7 @@ function frameBuild(domain: HangarDomainModel, model: ReturnType<typeof buildPar
     [[W / 2, 0, R], [W / 2, L, R]],
   ];
   const longs = spread(PLOT.longAt, PLOT.longSpan, along.length);
-  along.forEach((points, index) => members.push({ d: line(...points), kind: 'long', at: longs(index), dur: PLOT.long }));
+  along.forEach((points, index) => members.push({ id: `along-${index}`, d: line(...points), kind: 'long', at: longs(index), dur: PLOT.long }));
   const braced = [...new Set(model.bracing.map((brace) => brace.bayIndex))].filter((bay) => bay >= 0 && bay < frames.length - 1);
   const slopes = [[0, ...purlinXs.filter((x) => x < W / 2), W / 2], [W / 2, ...purlinXs.filter((x) => x > W / 2), W]];
   const panels = slopes.flatMap((xs) => xs.slice(1).map((x, index): Pt => [xs[index], x]));
@@ -306,7 +306,7 @@ function frameBuild(domain: HangarDomainModel, model: ReturnType<typeof buildPar
     ...braced.flatMap((bay) => { const [a, b] = bayEnds(bay); return panels.flatMap(([p, q]) => [line([p, a, roofZ(p)], [q, b, roofZ(q)]), line([p, b, roofZ(p)], [q, a, roofZ(q)])]); }),
   ];
   const braceAt = spread(PLOT.braceAt, PLOT.braceSpan, braces.length);
-  braces.forEach((d, index) => members.push({ d, kind: 'brace', at: braceAt(index), dur: PLOT.brace }));
+  braces.forEach((d, index) => members.push({ id: `brace-${index}`, d, kind: 'brace', at: braceAt(index), dur: PLOT.brace }));
   return { members, ...faces };
 }
 
