@@ -458,9 +458,11 @@ test.describe('the first view builds the drawing', () => {
       expect(state.moving, stage).toBe(0);
     }
     await expect(picture.locator('svg.gv')).not.toHaveAttribute('data-building');
-    // a first view cut short does not point at the 3D chip afterwards (19.11): the visitor is already at the controls
-    await page.waitForTimeout(1500);
+    // a first view cut short does not point at the 3D chip afterwards (19.11): the visitor is already at the controls.
+    // Counted in frames past when it would come (HangarGeneralView HINT_DELAY_MS 700), not slept
+    await nextFrames(page, 90);
     await expect(picture.locator('.gv-hint')).toHaveCount(0);
+    await expect(picture.locator('svg.gv')).not.toHaveAttribute('data-hinted');
   });
 
   test('switching to 3D mid-build shows the whole hangar, and so does the way back', async ({ page }, testInfo) => {
@@ -531,8 +533,11 @@ test.describe('the 3D callout after the first view', () => {
       await bringSheetIntoView(page);
       const tag = picture.locator('.gv-hint-tag');
       await expect(tag).toBeVisible({ timeout: 8000 });
-      // the leader plotted and the name in (general-view.css: .7 s, then .4 s)
-      await page.waitForTimeout(1300);
+      // the leader plotted and the name in (general-view.css: .7 s, then .4 s): their entrances have finished
+      await expect.poll(() => picture.evaluate((root) => {
+        const hint = root.querySelector('.gv-hint');
+        return hint ? hint.getAnimations({ subtree: true }).filter((animation) => animation.playState === 'running' && animation.currentTime !== null && Number(animation.currentTime) < 1200).length : -1;
+      }), { timeout: 4000 }).toBe(0);
       const hits = await picture.evaluate((root) => {
         const rect = (element: Element) => element.getBoundingClientRect();
         const grow = (box: DOMRect, by: number) => ({ left: box.left - by, top: box.top - by, right: box.right + by, bottom: box.bottom + by });
@@ -616,8 +621,11 @@ test.describe('the 3D callout after the first view', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openHangarPage(page);
     await bringSheetIntoView(page);
-    await page.waitForTimeout(4500);
+    // the whole drawing at once, and no first view to play through: counted in frames past when a callout would come
+    await expectWholeDrawing(pictureOf(page));
+    await nextFrames(page, 240);
     await expect(pictureOf(page).locator('.gv-hint')).toHaveCount(0);
+    await expect(pictureOf(page).locator('svg.gv')).not.toHaveAttribute('data-hinted');
   });
 });
 

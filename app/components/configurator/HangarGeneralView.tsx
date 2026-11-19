@@ -132,7 +132,7 @@ export function HangarGeneralView({
   // placed for one drawing: `frame` and `domain` as they were — a new box (a resize, a phone's mini drawing) or a new
   // configuration is another drawing, and the callout is not drawn on it (third review, 19.11)
   const [hint, setHint] = useState<(Hint3dLayout & { text: string; frame: GeneralViewFrame; domain: HangarDomainModel }) | null>(null);
-  const shownHint = hint && hint.frame === frame && hint.domain === domain ? hint : null;
+  const shownHint = hint?.frame === frame && hint?.domain === domain ? hint : null;
   const [hinted, setHinted] = useState(hintedThisLoad);
   const placing = useRef({ g, frame });
   const domainRef = useRef(domain);

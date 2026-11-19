@@ -57,26 +57,31 @@ function segmentsCross([[ax, ay], [bx, by]]: Segment, [[cx, cy], [dx, dy]]: Segm
   return side(ax, ay, bx, by, cx, cy) * side(ax, ay, bx, by, dx, dy) < 0 && side(cx, cy, dx, dy, ax, ay) * side(cx, cy, dx, dy, bx, by) < 0;
 }
 
-/** The callout's layout, or null when no place is clear */
-export function placeHint3d({ chip, bounds, size, keepClear, meets, sizeBoxes, sizeLines = [], anchor, withLeader }: Hint3dInput): Hint3dLayout | null {
-  const [cl, ct, cr, cb] = chip;
+type Place = { box: Box; x: number; y: number; anchor: 'start' | 'end'; beside: boolean };
+
+/** The places the name may take, in the order they are tried */
+function placesFor([cl, ct, cr, cb]: Box, { width: w, height: h }: Hint3dInput['size']): Place[] {
   const cy = (ct + cb) / 2;
-  const { width: w, height: h } = size;
   // beside the chip, on its left — on its line, or on its top edge where the drawing fills its box up to the chip (a short
   // laptop's) — and further left in steps where the roof's far end stands under the chip (1280 × 800): the arrow grows
-  const beside = SLIDE.flatMap((slide) => [cy - h / 2, ct].map((top) => ({
-    box: [cl - BESIDE - slide - w, top, cl - BESIDE - slide, top + h] as Box,
+  const beside = SLIDE.flatMap((slide) => [cy - h / 2, ct].map((top): Place => ({
+    box: [cl - BESIDE - slide - w, top, cl - BESIDE - slide, top + h],
     x: cl - BESIDE - slide,
     y: top + h / 2,
-    anchor: 'end' as const,
+    anchor: 'end',
     beside: true,
   })));
-  const places: { box: Box; x: number; y: number; anchor: 'start' | 'end'; beside: boolean }[] = [
+  return [
     ...beside,
     // under it, on its right edge, then on its left edge
     { box: [cr - w, cb + GAP, cr, cb + GAP + h], x: cr, y: cb + GAP + h / 2, anchor: 'end', beside: false },
     { box: [cl, cb + GAP, cl + w, cb + GAP + h], x: cl, y: cb + GAP + h / 2, anchor: 'start', beside: false },
   ];
+}
+
+/** The callout's layout, or null when no place is clear */
+export function placeHint3d(input: Hint3dInput): Hint3dLayout | null {
+  const { chip, bounds, keepClear, meets, sizeBoxes, sizeLines = [], anchor, withLeader } = input;
   const clearOf = (box: Box) => inside(box, bounds)
     && !meets(grow(box, CLEAR))
     && !keepClear.some((other) => overlaps(other, grow(box, CLEAR)))
@@ -88,17 +93,14 @@ export function placeHint3d({ chip, bounds, size, keepClear, meets, sizeBoxes, s
     return ![chip, ...keepClear, ...sizeBoxes].some((box) => crosses(segment, grow(box, CLEAR / 2)))
       && !sizeLines.some((line) => segmentsCross(line, segment));
   };
-  for (const leader of withLeader ? [true, false] : [false]) {
-    for (const place of places) {
-      if (!clearOf(place.box)) continue;
-      const to = leaderTo(place.box);
-      if (leader && !leaderClear(to)) continue;
-      return {
-        tag: { x: place.x, y: place.y, anchor: place.anchor, box: place.box },
-        leader: leader ? { from: anchor, to } : null,
-        connector: place.beside ? { from: [place.x + 5, place.y], to: [cl - 4, place.y] } : null,
-      };
-    }
-  }
-  return null;
+  const clear = placesFor(chip, input.size).filter((place) => clearOf(place.box));
+  // with a leader where one is clear, else the name alone
+  const led = withLeader ? clear.find((place) => leaderClear(leaderTo(place.box))) : undefined;
+  const place = led ?? clear[0];
+  if (!place) return null;
+  return {
+    tag: { x: place.x, y: place.y, anchor: place.anchor, box: place.box },
+    leader: led ? { from: anchor, to: leaderTo(led.box) } : null,
+    connector: place.beside ? { from: [place.x + 5, place.y], to: [chip[0] - 4, place.y] } : null,
+  };
 }
