@@ -54,8 +54,9 @@ export type GeneralView = {
   hintAnchor: Pt;
   /** Whether a box on the picture meets the drawing — its silhouette, its sizes' lines and values */
   meets: (box: Box) => boolean;
-  /** The sizes' value boxes: a leader keeps off them */
+  /** The sizes' value boxes and lines: a leader keeps off them */
   sizeBoxes: Box[];
+  sizeLines: Segment[];
 };
 
 /** One member the first view plots: its line, its weight, and when it starts and how long it runs, in ms from the frame
@@ -543,7 +544,9 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
     sizes: sizePaths,
     ...(withBuild && scope.frame ? { build: frameBuild(domain, model, at, skins, line) } : {}),
     hintAnchor: P([W * 0.75, L * 0.85, roofZ(W * 0.75)]),
-    meets: (box: Box) => layoutMeets(placed, box),
+    // the drawing, and the ground line whose ends run past it (high on a long hangar's far end)
+    meets: (box: Box) => layoutMeets(placed, box) || placed.ground.slice(1).some((point, index) => crosses([placed.ground[index], point], box)),
     sizeBoxes: placed.sizes.map((size) => size.box),
+    sizeLines: placed.sizes.flatMap((size) => size.segments),
   };
 }

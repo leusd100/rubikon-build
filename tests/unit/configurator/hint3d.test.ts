@@ -36,12 +36,23 @@ describe('the 3D callout', () => {
     expect(layout.connector).toBeNull();
   });
 
-  it('drops the leader before it would cross a size\'s value, and keeps the name', () => {
-    // a value right across the way from the roof to the name
-    const value: Box = [600, 60, 720, 90];
+  it('drops the leader before it would cross a size\'s value or line, and keeps the name beside the chip', () => {
+    // a value right across every way from the roof to a name: no leader is clear, so the name stands alone, with its arrow
+    const value: Box = [560, 40, 720, 110];
     const layout = placeHint3d({ ...base, sizeBoxes: [value] })!;
-    if (layout.leader) expect(crosses([layout.leader.from, layout.leader.to], value)).toBe(false);
+    expect(layout.leader).toBeNull();
+    expect(layout.connector).not.toBeNull();
     expect(overlaps(layout.tag.box, value)).toBe(false);
+    // the same across a size's line
+    const lined = placeHint3d({ ...base, sizeLines: [[[560, 100], [740, 100]]] })!;
+    expect(lined.leader).toBeNull();
+  });
+
+  it('keeps clear of a legend laid on the picture, and of the picture\'s edge', () => {
+    const legend: Box = [380, -20, 660, 60];
+    const layout = placeHint3d({ ...base, keepClear: [chip, legend] })!;
+    expect(overlaps(layout.tag.box, legend)).toBe(false);
+    expect(layout.tag.box[0]).toBeGreaterThanOrEqual(base.bounds[0] + 4);
   });
 
   it('has no callout at all when nowhere is clear', () => {

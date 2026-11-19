@@ -583,6 +583,42 @@ test.describe('the 3D callout after the first view', () => {
       await expect(picture.locator('svg.gv')).toHaveAttribute('data-hinted', '');
     });
   }
+
+  // placed for one drawing, it never stays on another (third review, 19.11): a phone scrolled on into the mini drawing,
+  // or a reach for a control, takes it away at once
+  test('goes at once when a phone scrolls on into the mini drawing', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the screen is set here');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openHangarPage(page);
+    const picture = pictureOf(page);
+    await expect(picture).toHaveAttribute('data-build', 'armed');
+    await bringSheetIntoView(page);
+    await expect(picture.locator('.gv-hint-tag')).toBeVisible({ timeout: 8000 });
+    await scrollToMiniHold(page);
+    await expect(picture.locator('.gv-hint')).toHaveCount(0, { timeout: 1000 });
+  });
+
+  test('goes at once when the visitor reaches for a control', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the reach is viewport-independent');
+    await openHangarPage(page);
+    const picture = pictureOf(page);
+    await expect(picture).toHaveAttribute('data-build', 'armed');
+    await bringSheetIntoView(page);
+    await expect(picture.locator('.gv-hint-tag')).toBeVisible({ timeout: 8000 });
+    await page.locator('#hc-step-size-tab').focus();
+    await expect(picture.locator('.gv-hint')).toHaveCount(0, { timeout: 1000 });
+    // the chip keeps its copper all the same
+    await expect(picture.locator('svg.gv')).toHaveAttribute('data-hinted', '');
+  });
+
+  test('never comes under reduced motion', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile-chromium', 'the motion contract is viewport-independent');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openHangarPage(page);
+    await bringSheetIntoView(page);
+    await page.waitForTimeout(4500);
+    await expect(pictureOf(page).locator('.gv-hint')).toHaveCount(0);
+  });
 });
 
 // 03.10 sweep: the drawing reads at any size, the band keeps the page's edges, the mini drawing stays small and never

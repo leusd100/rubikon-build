@@ -44,6 +44,9 @@ const HINT_GONE_MS = 5400;
 const HINT_LEADER_MIN_PX = 480;
 /** Once per page load, as the first view: away to 3D and back, the chip keeps its copper and nothing points again */
 let hintedThisLoad = false;
+/** What counts as reaching for a control (as useFirstViewBuildUp): the visitor is at the controls, the callout goes */
+const HINT_CONTROL = 'button, input, select, textarea, a, label, summary';
+const HINT_REACH = ['click', 'input', 'focusin'] as const;
 
 /** The 3D chip's box and the picture's in the drawing's px (its content box, as measureFrame lays the drawing out): the
  *  chip stands in the picture's padding, above the drawing's box */
@@ -126,19 +129,39 @@ export function HangarGeneralView({
   const g = useMemo(() => generalViewGeometry(domain, frame, building), [domain, frame, building]);
 
   // The 3D callout: placed when it comes, in the drawing as it stands then, and only where it lies on nothing
-  const [hint, setHint] = useState<(Hint3dLayout & { text: string }) | null>(null);
+  // placed for one drawing: `frame` and `domain` as they were — a new box (a resize, a phone's mini drawing) or a new
+  // configuration is another drawing, and the callout is not drawn on it (third review, 19.11)
+  const [hint, setHint] = useState<(Hint3dLayout & { text: string; frame: GeneralViewFrame; domain: HangarDomainModel }) | null>(null);
+  const shownHint = hint && hint.frame === frame && hint.domain === domain ? hint : null;
   const [hinted, setHinted] = useState(hintedThisLoad);
   const placing = useRef({ g, frame });
+  const domainRef = useRef(domain);
   useEffect(() => {
     placing.current = { g, frame };
+    domainRef.current = domain;
   });
   useEffect(() => {
     const svg = svgRef.current;
     if (!hint3d || hintedThisLoad || !svg) return undefined;
-    hintedThisLoad = true;
     let gone = 0;
+    const section = svg.closest('.hangar-configurator') ?? svg;
+    const drop = () => {
+      window.clearTimeout(come);
+      window.clearTimeout(gone);
+      setHint(null);
+    };
+    // a reach for a control before it comes or while it shows: the visitor is at the controls already
+    const reach = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest(HINT_CONTROL)) drop();
+    };
+    for (const type of HINT_REACH) section.addEventListener(type, reach, true);
     const come = window.setTimeout(() => {
+      // spent here, not before the delay: React's development double run would otherwise spend it on the first run
+      hintedThisLoad = true;
       setHinted(true);
+      const shown = svg.getBoundingClientRect();
+      // a sheet already scrolled away is not pointed at: nobody would see it
+      if (shown.bottom < shown.height / 2 || shown.top > window.innerHeight - shown.height / 2) return;
       const measured = chipAndBounds(svg);
       if (!measured) return;
       const { g: view, frame: box } = placing.current;
@@ -152,16 +175,17 @@ export function HangarGeneralView({
       const size = { width: probe.getComputedTextLength(), height: (Number.parseFloat(getComputedStyle(probe).fontSize) || 11) * 1.2 };
       probe.remove();
       const layout = placeHint3d({
-        ...measured, size, keepClear: box.keepClear, meets: view.meets, sizeBoxes: view.sizeBoxes, anchor: view.hintAnchor,
-        withLeader: wide,
+        ...measured, size, keepClear: box.keepClear, meets: view.meets, sizeBoxes: view.sizeBoxes, sizeLines: view.sizeLines,
+        anchor: view.hintAnchor, withLeader: wide,
       });
       if (!layout) return;
-      setHint({ ...layout, text });
+      setHint({ ...layout, text, frame: box, domain: domainRef.current });
       gone = window.setTimeout(() => setHint(null), HINT_GONE_MS);
     }, HINT_DELAY_MS);
     return () => {
       window.clearTimeout(come);
       window.clearTimeout(gone);
+      for (const type of HINT_REACH) section.removeEventListener(type, reach, true);
     };
   }, [hint3d]);
   const { dimensions, envelope, scope } = domain;
@@ -203,7 +227,7 @@ export function HangarGeneralView({
       aria-label={previewDescription('technical', dimensions, ridgeM)}
       data-building={on(building)}
       data-hinted={on(hinted)}
-      data-hinting={on(hint !== null)}
+      data-hinting={on(shownHint !== null)}
       data-morph={on(morphing)}
     >
       {/* the faces the camera sees, in the field's colour */}
@@ -261,18 +285,18 @@ export function HangarGeneralView({
           </g>
         ))}
       </g>
-      {hint && (
+      {shownHint && (
         <g className="gv-hint" aria-hidden="true">
-          {hint.leader && (
+          {shownHint.leader && (
             <>
-              <circle className="gv-hint-mark" cx={hint.leader.from[0].toFixed(1)} cy={hint.leader.from[1].toFixed(1)} r={2.6} />
-              <path className="gv-hint-lead" pathLength={1} d={`M${hint.leader.from.map((v) => v.toFixed(1)).join(',')}L${hint.leader.to.map((v) => v.toFixed(1)).join(',')}`} />
+              <circle className="gv-hint-mark" cx={shownHint.leader.from[0].toFixed(1)} cy={shownHint.leader.from[1].toFixed(1)} r={2.6} />
+              <path className="gv-hint-lead" pathLength={1} d={`M${shownHint.leader.from.map((v) => v.toFixed(1)).join(',')}L${shownHint.leader.to.map((v) => v.toFixed(1)).join(',')}`} />
             </>
           )}
-          {hint.connector && (
-            <path className="gv-hint-arrow" d={`M${hint.connector.from.map((v) => v.toFixed(1)).join(',')}L${hint.connector.to.map((v) => v.toFixed(1)).join(',')}m-4,-3l4,3l-4,3`} />
+          {shownHint.connector && (
+            <path className="gv-hint-arrow" d={`M${shownHint.connector.from.map((v) => v.toFixed(1)).join(',')}L${shownHint.connector.to.map((v) => v.toFixed(1)).join(',')}m-4,-3l4,3l-4,3`} />
           )}
-          <text className="gv-hint-tag" x={hint.tag.x.toFixed(1)} y={hint.tag.y.toFixed(1)} textAnchor={hint.tag.anchor}>{hint.text}</text>
+          <text className="gv-hint-tag" x={shownHint.tag.x.toFixed(1)} y={shownHint.tag.y.toFixed(1)} textAnchor={shownHint.tag.anchor}>{shownHint.text}</text>
         </g>
       )}
     </svg>

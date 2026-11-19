@@ -1,4 +1,4 @@
-import { crosses, overlaps, type Box, type Pt } from '../angary/dimetric';
+import { crosses, overlaps, type Box, type Pt, type Segment } from '../angary/dimetric';
 
 // The sheet's one-time callout to its 3D chip (owner, 19.11: «3D можна легко пропустити»; variant C «виноска»): once the
 // first view has built the drawing, a copper leader runs from the roof to a name beside the chip, in the drawing's own
@@ -39,8 +39,9 @@ export type Hint3dInput = {
   keepClear: readonly Box[];
   /** Whether a box meets the drawing (generalViewGeometry meets) */
   meets: (box: Box) => boolean;
-  /** The sizes' values, for the leader to keep off */
+  /** The sizes' values and lines, for the leader to keep off */
   sizeBoxes: readonly Box[];
+  sizeLines?: readonly Segment[];
   /** Where the leader leaves the roof */
   anchor: Pt;
   /** Whether to draw a leader at all */
@@ -50,8 +51,14 @@ export type Hint3dInput = {
 const grow = ([l, t, r, b]: Box, by: number): Box => [l - by, t - by, r + by, b + by];
 const inside = ([l, t, r, b]: Box, [bl, bt, br, bb]: Box) => l >= bl + CLEAR && t >= bt + CLEAR && r <= br - CLEAR && b <= bb - CLEAR;
 
+/** Whether two segments cross (their ends on either side of each other's line) */
+function segmentsCross([[ax, ay], [bx, by]]: Segment, [[cx, cy], [dx, dy]]: Segment) {
+  const side = (px: number, py: number, qx: number, qy: number, rx: number, ry: number) => Math.sign((qx - px) * (ry - py) - (qy - py) * (rx - px));
+  return side(ax, ay, bx, by, cx, cy) * side(ax, ay, bx, by, dx, dy) < 0 && side(cx, cy, dx, dy, ax, ay) * side(cx, cy, dx, dy, bx, by) < 0;
+}
+
 /** The callout's layout, or null when no place is clear */
-export function placeHint3d({ chip, bounds, size, keepClear, meets, sizeBoxes, anchor, withLeader }: Hint3dInput): Hint3dLayout | null {
+export function placeHint3d({ chip, bounds, size, keepClear, meets, sizeBoxes, sizeLines = [], anchor, withLeader }: Hint3dInput): Hint3dLayout | null {
   const [cl, ct, cr, cb] = chip;
   const cy = (ct + cb) / 2;
   const { width: w, height: h } = size;
@@ -78,7 +85,8 @@ export function placeHint3d({ chip, bounds, size, keepClear, meets, sizeBoxes, a
   const leaderTo = (box: Box): Pt => [Math.min(Math.max(anchor[0], box[0] + 8), box[2] - 8), box[3] + 3];
   const leaderClear = (to: Pt) => {
     const segment = [anchor, to] as const;
-    return ![chip, ...keepClear, ...sizeBoxes].some((box) => crosses(segment, grow(box, CLEAR / 2)));
+    return ![chip, ...keepClear, ...sizeBoxes].some((box) => crosses(segment, grow(box, CLEAR / 2)))
+      && !sizeLines.some((line) => segmentsCross(line, segment));
   };
   for (const leader of withLeader ? [true, false] : [false]) {
     for (const place of places) {
