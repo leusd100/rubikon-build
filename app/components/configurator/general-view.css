@@ -82,6 +82,22 @@
 }
 .hc-preview-image:is([data-build="armed"], [data-build="complete"]) .gv :is(.gv-stage, .gv-size, .gv-front, .gv-edge) { transition-property: none; }
 
+/* The first view's frame (owner, 19.11; HangarGeneralView, generalViewGeometry frameBuild): every member plotted along its
+   length from its own start, in «Каркас»'s weights — the front frame in the paper's ink and the heaviest line, the frames
+   behind and the members along the building lighter, the bracing in copper — then the walls' and the roof's faces close
+   over it in the field's colour. Mounted only while the first view plays, so nothing of it outlives it. */
+.gv-build path { fill: none; }
+.gv-build-front { stroke: var(--gv-ink); stroke-width: calc(2.2px * var(--gv-w)); }
+.gv-build-post { stroke: var(--gv-ink-2); stroke-width: calc(1.2px * var(--gv-w)); }
+.gv-build-chord { stroke: var(--gv-ink-2); stroke-width: calc(1px * var(--gv-w)); }
+.gv-build-long { stroke: var(--gv-ink-3); stroke-width: calc(1px * var(--gv-w)); }
+.gv-build-brace { stroke: var(--color-accent); stroke-width: calc(1.1px * var(--gv-w)); }
+.gv .gv-skin { fill: var(--gv-field); stroke: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .gv-build path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gv-plot var(--gv-dur) var(--ease-plot) var(--gv-at) both; }
+}
+@keyframes gv-plot { to { stroke-dashoffset: 0; } }
+
 /* The phone's mini drawing held under the header: the picture alone, its sizes in the title block's readout — and the
    ground's line without its hatch, which on a 100 px picture was a comb under the hangar */
 @media (max-width: 760px) {

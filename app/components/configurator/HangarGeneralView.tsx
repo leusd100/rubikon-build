@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import { BUILD_STAGE_ORDER, isStageReleased, type BuildStage } from '../../lib/configurator/buildUpSequence';
 import { ridgeHeightM } from '../../lib/configurator/parametricModel';
@@ -24,9 +24,11 @@ import './general-view.css';
 // and the door move where the configurator places them. Insulation does not change the outside: the legend beside the
 // drawing (CladdingSection) shows it.
 //
-// The first view still builds itself (useFirstViewBuildUp), in the drawing's own way: the ground, then the outline
-// plotted, then the walls' and the roof's cladding, then the openings — the sizes are there from the start, as they
-// were.
+// The first view still builds itself (useFirstViewBuildUp), in the drawing's own way: the ground, then the whole frame
+// plotted station by station with the outline — columns, the frames' roof members, the members along the building, the
+// bracing in copper (owner, 19.11) — then the walls and the roof close over it, then the openings; the sizes are there
+// from the start, as they were. The frame and its skins exist only while the first view plays: once it has, the drawing
+// is exactly the one the server sent.
 
 const ALL_STAGES = BUILD_STAGE_ORDER.length;
 /** How long a changed choice stays copper on the drawing (10.10, owner: «що змінив — те засвітилось»): the 260 ms it
@@ -92,7 +94,8 @@ export function HangarGeneralView({
 }>) {
   const svgRef = useRef<SVGSVGElement>(null);
   const frame = useDrawingFrame(svgRef, tools);
-  const g = useMemo(() => generalViewGeometry(domain, frame), [domain, frame]);
+  const building = released < ALL_STAGES;
+  const g = useMemo(() => generalViewGeometry(domain, frame, building), [domain, frame, building]);
   const { dimensions, envelope, scope } = domain;
   const ridgeM = ridgeHeightM(dimensions.widthM, dimensions.eaveHeightM, domain.roof.pitchDeg);
 
@@ -130,7 +133,7 @@ export function HangarGeneralView({
       viewBox={g.viewBox}
       role="img"
       aria-label={previewDescription('technical', dimensions, ridgeM)}
-      data-building={on(released < ALL_STAGES)}
+      data-building={on(building)}
       data-morph={on(morphing)}
     >
       {/* the faces the camera sees, in the field's colour */}
@@ -139,6 +142,21 @@ export function HangarGeneralView({
         <path className="gv-hatch" d={g.hatch} />
         <path className="gv-ground" d={g.ground} />
       </g>
+      {/* the first view's frame, mounted as its stage is released: each member plotted from its start, at its own time */}
+      {g.build && isStageReleased('frame', released) && (
+        <g className="gv-build" aria-hidden="true">
+          {g.build.members.map((member, index) => (
+            <path key={index} className={`gv-build-${member.kind}`} pathLength={1} d={member.d} style={{ '--gv-at': `${member.at}ms`, '--gv-dur': `${member.dur}ms` } as CSSProperties} />
+          ))}
+        </g>
+      )}
+      {/* …and the faces that close over it with the walls' and the roof's stages, in the field's colour */}
+      {g.build && (
+        <>
+          <path className="gv-stage gv-skin" data-held={held('walls')} d={g.build.walls} />
+          <path className="gv-stage gv-skin" data-held={held('roof')} d={g.build.roof} />
+        </>
+      )}
       {g.walls && (
         <path className="gv-stage gv-cladding" data-system={g.walls.system} data-active={on(wallsActive)} data-held={held('walls')} d={g.walls.d} />
       )}

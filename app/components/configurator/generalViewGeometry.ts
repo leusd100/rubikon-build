@@ -48,7 +48,15 @@ export type GeneralView = {
   hatch: string;
   /** The sizes: each one's lines (extension lines, dimension line, ticks — or the ridge's leader) and its value */
   sizes: { key: SizeKey; d: string; dot?: Pt; label: SizeLabel; plate?: Box }[];
+  /** The first view's frame and the skins that close over it — only when asked for (`withBuild`) */
+  build?: FrameBuild;
 };
+
+/** One member the first view plots: its line, its weight, and when it starts and how long it runs, in ms from the frame
+ *  stage's start (HangarGeneralView mounts them then; general-view.css plots each along its length) */
+export type BuildMember = { d: string; kind: 'front' | 'post' | 'chord' | 'long' | 'brace'; at: number; dur: number };
+/** …and the faces the walls' and the roof's stages close over the frame, in the field's colour */
+export type FrameBuild = { members: BuildMember[]; walls: string; roof: string };
 
 const n = (value: number) => value.toFixed(1);
 const metres = (value: number) => `${formatNumber(value)} м`;
@@ -240,7 +248,62 @@ function frameOutside(domain: HangarDomainModel, model: ReturnType<typeof buildP
   return { front: parts.front.join(''), back: parts.back.join(''), thin: parts.thin.join(''), brace: parts.brace.join('') };
 }
 
-export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralViewFrame): GeneralView {
+/** The first view's frame plot (owner, 19.11: «вау» on opening /angary, and in code, not a video): the whole frame,
+ *  station by station from the front — the columns rise, the frames' roof members follow, then the members along the
+ *  building and the bracing in copper — before the walls and the roof close over it. In ms from the frame stage's start;
+ *  all of it inside FIRST_VIEW_FRAME_SPAN_MS (buildUpSequence.ts), so the walls come as the bracing lands. */
+const PLOT = {
+  wave: 600, // the columns' start runs this long from the front frame to the last, however many frames there are
+  post: 450,
+  chordAt: 350,
+  chord: 500,
+  longAt: 1000,
+  longStep: 25,
+  long: 520,
+  braceAt: 1250,
+  braceSpan: 250,
+  brace: 300,
+} as const;
+
+function frameBuild(domain: HangarDomainModel, model: ReturnType<typeof buildParametricModel>, at: { W: number; L: number; E: number; R: number; roofZ: (x: number) => number }, faces: { walls: string; roof: string }, line: Line): FrameBuild {
+  const { W, L, E, R, roofZ } = at;
+  const truss = domain.structural.roofStructure === 'truss';
+  const centre = domain.structural.scheme === 'centerSupport';
+  const frames = deriveBayLayout(L).stationsM;
+  const step = frames.length > 1 ? PLOT.wave / (frames.length - 1) : 0;
+  const panelXs = trussPanelNodesM(W).panelXsM;
+  const members: BuildMember[] = [];
+  frames.forEach((d, index) => {
+    const kind = index === 0 ? 'front' : 'post';
+    for (const x of centre ? [0, W / 2, W] : [0, W]) members.push({ d: line([x, d, 0], [x, d, E]), kind, at: index * step, dur: PLOT.post });
+    for (const points of roofMembersAt(d, { W, E, R, truss, panelXs })) {
+      members.push({ d: line(...points), kind: index === 0 ? 'front' : 'chord', at: PLOT.chordAt + index * step, dur: PLOT.chord });
+    }
+  });
+  const purlinXs = roofPurlinPositionsM(W, domain.structural.roofStructure).filter((purlin) => purlin.kind === 'purlin').map((purlin) => purlin.xM);
+  const along: P3[][] = [
+    ...[0, W].map((x): P3[] => [[x, 0, E], [x, L, E]]),
+    ...[E / 3, (2 * E) / 3].flatMap((z) => [0, W].map((x): P3[] => [[x, 0, z], [x, L, z]])),
+    ...purlinXs.map((x): P3[] => [[x, 0, roofZ(x)], [x, L, roofZ(x)]]),
+    [[W / 2, 0, R], [W / 2, L, R]],
+  ];
+  along.forEach((points, index) => members.push({ d: line(...points), kind: 'long', at: PLOT.longAt + index * PLOT.longStep, dur: PLOT.long }));
+  const braced = [...new Set(model.bracing.map((brace) => brace.bayIndex))].filter((bay) => bay >= 0 && bay < frames.length - 1);
+  const slopes = [[0, ...purlinXs.filter((x) => x < W / 2), W / 2], [W / 2, ...purlinXs.filter((x) => x > W / 2), W]];
+  const panels = slopes.flatMap((xs) => xs.slice(1).map((x, index): Pt => [xs[index], x]));
+  const braces = braced.flatMap((bay) => {
+    const [a, b] = [frames[bay], frames[bay + 1]];
+    return [
+      ...[0, W].flatMap((x) => [line([x, a, 0], [x, b, E]), line([x, b, 0], [x, a, E])]),
+      ...panels.flatMap(([p, q]) => [line([p, a, roofZ(p)], [q, b, roofZ(q)]), line([p, b, roofZ(p)], [q, a, roofZ(q)])]),
+    ];
+  });
+  const braceStep = braces.length > 1 ? PLOT.braceSpan / (braces.length - 1) : 0;
+  braces.forEach((d, index) => members.push({ d, kind: 'brace', at: PLOT.braceAt + index * braceStep, dur: PLOT.brace }));
+  return { members, ...faces };
+}
+
+export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralViewFrame, withBuild = false): GeneralView {
   const { widthM: W, lengthM: L, eaveHeightM: E } = domain.dimensions;
   const R = ridgeHeightM(W, E, domain.roof.pitchDeg);
   const roofZ = roofHeight(W, E, R);
@@ -383,6 +446,8 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
     [[W / 2, 0, R], [W, 0, E], [W, L, E], [W / 2, L, R]],
   ];
   const planes = faces.map((face) => pathOf(face.map(P), true)).join('');
+  // the first view's skins: the end and side walls, then the two roof slopes (the faces above, in that order)
+  const skins = { walls: faces.slice(0, 2).map((face) => pathOf(face.map(P), true)).join(''), roof: faces.slice(2).map((face) => pathOf(face.map(P), true)).join('') };
   const { front, edges, out } = outlinePaths(wallsIn, roofIn, {
     frontBase: line([0, 0, E], [0, 0, 0], [W, 0, 0], [W, 0, E]),
     frontTop: line([0, 0, E], [W / 2, 0, R], [W, 0, E]),
@@ -457,5 +522,6 @@ export function generalViewGeometry(domain: HangarDomainModel, frame: GeneralVie
     ground: groundPath,
     hatch,
     sizes: sizePaths,
+    ...(withBuild && scope.frame ? { build: frameBuild(domain, model, at, skins, line) } : {}),
   };
 }
