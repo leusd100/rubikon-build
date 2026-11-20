@@ -402,7 +402,7 @@ Labels, three roles (each rule keeps its own family and line-height):
 |---|---|---|---|
 | UI | 800 / 12 px / .10em | Manrope | eyebrows, crumbs, kickers (conversation, form, HOME, configurator), the form's group titles, the footer's group titles, «Зателефонувати» over a number, table and builder group titles, a person's role over the name |
 | action | 800 / 13 px / .06em | Manrope | `.button`, `.text-link`, `.section-link`, the form toggle, field labels and legends, reply-method choices, entry and principle links |
-| technical | 700 / 12 px / .08em | IBM Plex Sans Condensed | «Ілюстрація» stamps (box reserved at 8.75em against the late swap), «Ви / Ми», the process key, a step's result, drawing captions, sheet heads, the /angary stamp |
+| technical | 700 / 12 px / .08em | Rubikon Condensed (IBM Plex Sans Condensed, subset — app/fonts/rubikon-condensed.css) | «Ілюстрація» stamps (box reserved at 8.75em against the late swap), «Ви / Ми», the process key, a step's result, drawing captions, sheet heads, the /angary stamp |
 
 The floor (PDO-16): no text outside a drawing under 12 px; actions and field labels 13 px; inside a
 drawing-like HTML sheet (stamps, the /yak change sheet, HOME's direction strips, the configurator's

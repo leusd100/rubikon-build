@@ -2,29 +2,29 @@
 
 IBM Plex Sans Condensed is licensed under the SIL OFL 1.1 with the Reserved Font Name "Plex": a Modified Version —
 a subset is one — may not carry that name. The site used IBM's own split files unmodified for that reason (PR #93).
-On 20.11 the owner chose to rename and subset (Weight audit: the faces were 123 KB of the 158 KB the self-hosted fonts
-weigh; at the characters the site sets they are 76 KB). The outlines, metrics, hinting and OpenType features are IBM's,
-untouched; only characters the site never sets are dropped, and the name table no longer says Plex.
+On 20.11 the owner chose to rename and subset (Weight audit: the nine files weighed 145 KB, the four every page
+preloads 81.7 KB; the subsets weigh 92 KB and 57 KB). The outlines, metrics, hinting, glyph names and OpenType features
+are IBM's, untouched; only characters the site never sets are dropped, and the name table no longer says Plex.
 
     python3 scripts/fonts/subset_rubikon_condensed.py <IBM split woff2 dir> app/fonts/rubikon-condensed
 
 <IBM split woff2 dir> holds IBM's fonts/split/woff2 files of npm @ibm/plex-sans-condensed@2.0.0 (the files the site
 served until 20.11; app/fonts/rubikon-condensed/README.md lists their checksums). For each weight it writes a Latin, a
-Cyrillic and a Pi file and prints the unicode-range to paste into app/fonts/rubikon-condensed.css.
+Cyrillic and a Pi file and prints each one's unicode-range — its cmap — to paste into app/fonts/rubikon-condensed.css.
 
 What each subset keeps:
   - Latin: all of ASCII, the punctuation and signs a Ukrainian page sets, and every other character in app/**
-    (.ts, .tsx, .css) that IBM's Latin1 file had — so no character the site sets falls to the fallback face;
+    (.ts, .tsx, .css) that IBM's Latin1 file had, in both cases (the condensed labels are mostly uppercase) — so no
+    character the site sets falls to the fallback face;
   - Cyrillic: the basic Cyrillic block (Ukrainian, and the Russian letters a visitor may type), Ґ ґ, and every other
     character in app/** that IBM's Cyrillic file had;
-  - Pi: the five characters its CSS range has given it since PR #93 (′ ″ ↑ ↓ ∕), and every other character in
-    app/** that IBM's Pi file had. WebKit (Safari, every iPhone browser) draws a character from a loaded face whose
-    file has it even outside the face's unicode-range (measured 20.11: with IBM's Pi loaded, № ← → ↔ ↗ ↺ √ ≈ ≤ ≥ ✓
-    came from Plex in WebKit and from the fallback in Chromium). The file keeps them and the CSS range stays the five,
-    so neither engine draws anything differently.
+  - Pi: the five characters its CSS range has given it since PR #93 (′ ″ ↑ ↓ ∕). The site's other arrows and signs
+    (→ ≈ № …) are outside every range and drawn by the fallback face, with IBM's files as with these (measured on
+    production and on this build, Chromium and WebKit, 20.11).
 Glyph names (post format 2) are kept: without them Chromium on macOS rasterised the same outlines a shade differently.
 tests/unit/rubikon-condensed-font.test.ts fails when app/** sets a character the old faces had and these do not: run
-this script again then. Needs fontTools with brotli (pip install fonttools brotli); built with fontTools 4.68.0.
+this script again then. Needs fontTools with brotli (pip install fonttools brotli); built with fontTools 4.68.0 and
+brotli 1.2.1 — the WOFF2 bytes depend on both.
 """
 import hashlib
 import sys
@@ -48,11 +48,15 @@ PI = [0x2032, 0x2033, 0x2191, 0x2193, 0x2215]
 
 
 def site_characters(root: Path) -> set[int]:
-    """Every character in the site's sources: text, data and CSS content alike"""
+    """Every character in the site's sources — text, data and CSS content alike — in both cases, as text-transform
+    may set it"""
     chars = set()
     for pattern in ('**/*.ts', '**/*.tsx', '**/*.css'):
         for file in root.glob(pattern):
-            chars.update(ord(c) for c in file.read_text(encoding='utf-8') if ord(c) > 0x7E)
+            for c in file.read_text(encoding='utf-8'):
+                for form in {c, c.upper(), c.lower()}:
+                    chars.update(ord(f) for f in form if ord(f) > 0x7E)
+    assert chars, f'no characters under {root}'
     return chars
 
 
@@ -88,20 +92,19 @@ def rename(font: TTFont, style: str, short: str) -> None:
     for name_id, value in names.items():
         table.removeNames(nameID=name_id)
         table.setName(value, name_id, 3, 1, 0x409)
-        table.setName(value, name_id, 1, 0, 0)
     for record in table.names:
         assert 'Plex' not in record.toUnicode() or record.nameID in (0, 10), (record.nameID, record.toUnicode())
 
 
 def main(source_dir: str, out_dir: str) -> None:
     source, out = Path(source_dir), Path(out_dir)
-    used = site_characters(Path('app'))
+    used = site_characters(Path(__file__).resolve().parents[2] / 'app')
     for style, (full, short) in WEIGHTS.items():
         for part, base, ibm in (('Latin', LATIN_BASE, 'Latin1'), ('Cyrillic', CYRILLIC_BASE, 'Cyrillic'), ('Pi', PI, 'Pi')):
             src = source / f'IBMPlexSansCondensed-{style}-{ibm}.woff2'
             print(f'source {src.name} sha256 {hashlib.sha256(src.read_bytes()).hexdigest()}')
             had = set(TTFont(str(src)).getBestCmap())
-            wanted = (set(base) | used) & had
+            wanted = (set(base) | (used if part != 'Pi' else set())) & had
             options = subset.Options()
             options.flavor = 'woff2'
             options.layout_features = ['*']
@@ -118,9 +121,8 @@ def main(source_dir: str, out_dir: str) -> None:
             subset.save_font(font, str(target), options)
             cmap = set(TTFont(str(target)).getBestCmap())
             print(f'  -> {target.name} {target.stat().st_size} B, sha256 {hashlib.sha256(target.read_bytes()).hexdigest()}')
-            # the CSS range: the file's cmap — for Pi, the five characters it has always been given (see above)
-            print(f'     unicode-range: {ranges(cmap & set(PI)) if part == "Pi" else ranges(cmap)}')
-            print(f'     cmap: {ranges(cmap)}')
+            assert all(record.platformID == 3 for record in font['name'].names), 'Windows name records only'
+            print(f'     unicode-range: {ranges(cmap)}')
 
 
 if __name__ == '__main__':

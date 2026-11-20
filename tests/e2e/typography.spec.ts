@@ -102,9 +102,10 @@ test.describe('condensed face', () => {
       const inlined = await page.evaluate(async () => {
         const sheets = [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map((link) => link.href);
         const texts = await Promise.all(sheets.map((href) => fetch(href).then((response) => response.text())));
-        return texts.filter((text) => text.includes('data:font/')).length;
+        return { sheets: sheets.length, withFont: texts.filter((text) => text.includes('data:font/')).length };
       });
-      expect(inlined, 'stylesheets with a base64 font').toBe(0);
+      expect(inlined.sheets, 'the page links its stylesheets').toBeGreaterThan(0);
+      expect(inlined.withFont, 'stylesheets with a base64 font').toBe(0);
     });
   }
 });

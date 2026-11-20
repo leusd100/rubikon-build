@@ -44,15 +44,20 @@ const IBM_RANGES = parseRanges([
   'U+2032-2033, U+2191, U+2193, U+2215',
 ].join(', '));
 
-/** Every character in the site's sources — text, data and CSS content — as the subset script reads them */
+/** Every character in the site's sources — text, data and CSS content — in both cases, as the subset script reads them
+ *  (the condensed labels are mostly text-transform: uppercase) */
 function siteCharacters() {
   const root = path.join(process.cwd(), 'app');
   const chars = new Set<number>();
   for (const file of readdirSync(root, { recursive: true }) as string[]) {
     if (!/\.(tsx?|css)$/.test(file)) continue;
     for (const char of readFileSync(path.join(root, file), 'utf8')) {
-      const code = char.codePointAt(0) ?? 0;
-      if (code > 0x7e) chars.add(code);
+      for (const form of new Set([char, char.toUpperCase(), char.toLowerCase()])) {
+        for (const unit of form) {
+          const code = unit.codePointAt(0) ?? 0;
+          if (code > 0x7e) chars.add(code);
+        }
+      }
     }
   }
   return chars;
@@ -123,15 +128,17 @@ function nameRecords(file: string) {
   const name = woff2Table(file, 'name');
   const count = name.readUInt16BE(2);
   const strings = name.readUInt16BE(4);
-  const records: { id: number; text: string }[] = [];
+  const records: { platform: number; id: number; text: string }[] = [];
   for (let r = 0; r < count; r += 1) {
     const record = 6 + r * 12;
-    if (name.readUInt16BE(record) !== 3) continue;
+    const platform = name.readUInt16BE(record);
     const id = name.readUInt16BE(record + 6);
     const length = name.readUInt16BE(record + 8);
     const start = strings + name.readUInt16BE(record + 10);
-    // UTF-16BE; copied before swapping, as two records may share one string
-    records.push({ id, text: Buffer.from(name.subarray(start, start + length)).swap16().toString('utf16le') });
+    const bytes = Buffer.from(name.subarray(start, start + length));
+    // Windows (3) and Unicode (0) records are UTF-16BE (copied before swapping: two records may share one string);
+    // a Mac (1) record is a single-byte encoding, read as Latin-1 — enough to find a name in it
+    records.push({ platform, id, text: platform === 1 ? bytes.toString('latin1') : bytes.swap16().toString('utf16le') });
   }
   return records;
 }
@@ -167,25 +174,25 @@ describe('self-hosted Rubikon Condensed (IBM Plex Sans Condensed, subset)', () =
     expect(lost).toEqual([]);
   });
 
-  // WebKit draws a character from a loaded face whose file has it, inside the face's unicode-range or not: with IBM's Pi
-  // loaded, Safari took № ← → ↔ ↗ ↺ √ ≈ ≤ ≥ ✓ from it (20.11). The Pi file keeps every such character the site sets.
-  it.each(condensedFaces.filter((face) => face.src.endsWith('-Pi.woff2')).map((face) => face.src))('%s keeps what WebKit drew from IBM\'s Pi', (src) => {
-    const IBM_PI = parseRanges('U+0E3F, U+2000-200D, U+2015, U+2028-2029, U+202F, U+2032-2033, U+2070, U+2074-2079, U+2080-2089, U+2113, U+2116, U+2126, U+212E, U+2150-2151, U+2153-215E, U+2190-2199, U+21A9-21AA, U+21B0-21B3, U+21B6-21B7, U+21BA-21BB, U+21C4, U+21C6, U+2202, U+2206, U+220F, U+2211, U+2215, U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25CA, U+2713, U+274C, U+2B0E-2B11');
-    const kept = cmapOf(path.join(fontDirectory, src));
-    const lost = [...siteCharacters()].filter((code) => inRanges(IBM_PI, code) && !kept.has(code)).map((code) => String.fromCodePoint(code));
-    expect(lost).toEqual([]);
+  // Each face's unicode-range is its file's cmap: a range wider than the file sends a character to a face without its
+  // glyph (the fallback draws it, mid-word); a narrower one leaves a glyph the file carries unused. The ranges are pasted
+  // from the subset script's output, so this keeps them honest.
+  it.each(condensedFaces.map((face) => face.src))('%s declares exactly the characters its file has', (src) => {
+    const face = condensedFaces.find((candidate) => candidate.src === src)!;
+    const declared = new Set(face.ranges.flatMap(([start, end]) => Array.from({ length: end - start + 1 }, (_, i) => start + i)));
+    expect([...cmapOf(path.join(fontDirectory, src))].sort((a, b) => a - b)).toEqual([...declared].sort((a, b) => a - b));
   });
 
   // SIL OFL 1.1, Reserved Font Name "Plex": a Modified Version may not be called Plex. IBM's copyright and the licence
   // notice stay; the description (ID 10) says what the font is derived from.
   it.each(condensedFaces.map((face) => face.src))('%s is named Rubikon Condensed, not Plex', (src) => {
     const records = nameRecords(path.join(fontDirectory, src));
-    const text = (id: number) => records.find((record) => record.id === id)?.text ?? '';
+    const text = (id: number) => records.find((record) => record.platform === 3 && record.id === id)?.text ?? '';
     expect(text(16)).toBe('Rubikon Condensed');
     expect(text(1)).toMatch(/^Rubikon Condensed /);
     expect(text(6)).toMatch(/^RubikonCondensed-/);
     expect(text(13)).toContain('SIL Open Font License');
     expect(text(0)).toContain('IBM Corp');
-    for (const record of records.filter(({ id }) => id !== 0 && id !== 10)) expect(record.text, `name ID ${record.id}`).not.toContain('Plex');
+    for (const record of records.filter(({ id }) => id !== 0 && id !== 10)) expect(record.text, `name ID ${record.id} (platform ${record.platform})`).not.toContain('Plex');
   });
 });
