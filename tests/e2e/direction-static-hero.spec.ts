@@ -366,6 +366,9 @@ for (const viewport of [
         expect(requests, `${path}: hero files fetched`).toHaveLength(1);
         expect(shown, `${path}: the art shown is the one fetched`).toBe(requests[0]);
         expect(shown, `${path}: ${mode.shown} art`).toMatch(mode.shown === 'dark' ? /blue-hour|-dark-/ : /photo-variant|daylight|-light-/);
+        // a direction page's hero comes in AVIF in every theme mode, the phone's window and, since 20.11, the landscape
+        // art too (/napryamky's sequence ships WebP)
+        if (path !== '/napryamky') expect(shown, `${path}: ${mode.shown} art in AVIF`).toMatch(/\.avif$/);
       }
     });
   }

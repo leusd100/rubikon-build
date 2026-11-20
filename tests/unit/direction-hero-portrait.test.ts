@@ -50,6 +50,8 @@ describe('direction hero phone window', () => {
       expect(avif.map(([, width]) => width)).toEqual(webp.map(([, width]) => width));
       for (const [index, [file, width]] of avif.entries()) {
         expect(file).toMatch(new RegExp(`-${width.slice(0, -1)}w\\.[0-9a-f]{8}\\.avif$`));
+        // the same art, theme and width as its WebP: only the hash and the format differ
+        expect(file.replace(/\.[0-9a-f]{8}\.avif$/, '')).toBe(webp[index][0].replace(/\.[0-9a-f]{8}\.webp$/, ''));
         expect(imageSize(file), file).toEqual(imageSize(webp[index][0]));
       }
     }
