@@ -41,8 +41,9 @@ ROOF_CROP = (429, 180, 1213, 1024)  # generate-roof-phone-crop.py
 
 # How many lines a drawing keeps (the longest), and the timing: the guides, then the structure from the ground up
 LINES = {'landscape': 200, 'portrait': 130}
-GUIDE_AT, GUIDE_FOR = 0.0, 0.7
-LINES_FROM, LINES_SPAN, LINE_FOR = 0.35, 1.25, 0.42
+# (owner, 20.11, «2 · Скан»: quicker lines, the copper scan starting over them at .95 s — globals.css «Hero trace»)
+GUIDE_AT, GUIDE_FOR = 0.0, 0.55
+LINES_FROM, LINES_SPAN, LINE_FOR = 0.2, 0.9, 0.34
 
 
 # On a phone the copy's overlay is nearly opaque from ~220 px down a ~844 px hero (phone-hero.css): a line wholly below

@@ -101,6 +101,7 @@ export function DirectionHeroImage({ asset }: Readonly<DirectionHeroImageProps>)
             after hydration does not replay them. The drawing has no src until the photo is in (the script picks the
             crop by the phone query the photo's <picture> uses). CSS: globals.css «Hero trace». */}
         <span className="direction-hero-veil" aria-hidden="true" />
+        <span className="direction-hero-scan" aria-hidden="true" />
         <img
           className="direction-hero-trace"
           data-landscape={asset.trace.landscape}

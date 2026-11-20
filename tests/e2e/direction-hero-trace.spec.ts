@@ -55,17 +55,24 @@ for (const { route, viewport, file } of [
     expect(run?.photoComplete, 'the photo was in when the intro started').toBe(true);
     expect(run?.drawing, 'the drawing had loaded when the intro started').toMatch(file);
 
-    // the drawing lies exactly as the photo does
-    const layout = (locator: ReturnType<typeof photo>) => locator.evaluate((element: HTMLElement) => {
-      const box = element.getBoundingClientRect();
-      const style = getComputedStyle(element);
-      return { box: [box.x, box.y, box.width, box.height].map(Math.round), fit: style.objectFit, position: style.objectPosition, mask: style.maskImage };
-    });
-    expect(await layout(trace(page))).toEqual(await layout(photo(page)));
+    // the photo and its drawing settle on one clock (the same zoom at every moment)…
+    const settle = (locator: ReturnType<typeof photo>) => locator.evaluate((element) =>
+      element.getAnimations().filter((a) => (a as CSSAnimation).animationName === 'hero-settle').map((a) => Math.round(Number(a.startTime))));
+    expect(await settle(trace(page))).toEqual(await settle(photo(page)));
 
     // the intro ends with the photo alone
     await expect.poll(() => veil(page).evaluate((el) => getComputedStyle(el).visibility), { timeout: 8_000 }).toBe('hidden');
     await expect.poll(() => trace(page).evaluate((el) => getComputedStyle(el).visibility), { timeout: 8_000 }).toBe('hidden');
+
+    // …and the drawing lies exactly as the photo does (a hidden element keeps its box)
+    const layout = (locator: ReturnType<typeof photo>) => locator.evaluate((element: HTMLElement) => {
+      const box = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return { box: [box.x, box.y, box.width, box.height].map((v) => Math.round(v) + 0 /* -0, a hair left of 0, is 0 */), fit: style.objectFit, position: style.objectPosition, mask: style.maskImage, transform: style.transform };
+    });
+    // settled: no zoom left (the animation holds its last frame as the identity matrix)
+    await expect.poll(() => photo(page).evaluate((el) => getComputedStyle(el).transform), { timeout: 5_000 }).toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
+    expect(await layout(trace(page))).toEqual(await layout(photo(page)));
     expect(await page.evaluate(() => (window as Probe).__traceShifts)).toEqual([]);
   });
 }
