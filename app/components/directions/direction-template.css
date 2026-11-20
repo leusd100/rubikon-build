@@ -162,5 +162,19 @@
   .cost-list.has-glyphs h3 { grid-column: 3; }
   .cost-glyph { width: 36px; height: 36px; }
 }
+/* The live pages' cost factors as one row of names (11.11, owner: «стиснути блок»): the glyph over its name, the same
+   copper rule and draw as the full list; what each factor means is told once, on /yak-pratsyuiemo#koshtorys */
+.cost-list-compact { display: grid; grid-template-columns: repeat(var(--cost-count, 4), minmax(0, 1fr)); }
+.cost-list.cost-list-compact article { grid-template-columns: minmax(0, 1fr); row-gap: 14px; align-content: start; align-items: start; padding: 22px 20px 24px 0; }
+.cost-list.cost-list-compact article + article { padding-left: 20px; border-left: 1px solid var(--color-border); }
+.cost-list.cost-list-compact h3 { grid-column: auto; font-size: 18px; }
+.cost-more { margin-top: 24px; }
+@media (max-width: 760px) {
+  .cost-list-compact { grid-template-columns: minmax(0, 1fr); }
+  .cost-list.cost-list-compact article { grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto; gap: 0 14px; align-items: center; padding: 12px 0; }
+  .cost-list.cost-list-compact article + article { padding-left: 0; border-left: 0; }
+  .cost-list.cost-list-compact h3 { grid-column: 2; font-size: 17px; }
+  .cost-more { margin-top: 20px; }
+}
 
 /* «Ви · Ми» (.process-split) lives in process-split.css — shared with /yak-pratsyuiemo and /angary. */

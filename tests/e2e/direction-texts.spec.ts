@@ -24,7 +24,10 @@ test.describe('direction texts (W2-04)', () => {
     await open(page, '/betonni-roboty', 1440);
     const cost = page.locator('.cost-section');
     await expect(cost).toContainText('вимог до рівності основи');
-    await expect(cost).toContainText('Рівність бетонної основи та умови експлуатації; спеціалізовані етапи підлог — за окремим погодженням.');
+    // in the block's lead since 11.11: the factors are names in one row
+    await expect(cost).toContainText('Спеціалізовані етапи підлог — за окремим погодженням.');
+    await expect(cost.locator('.cost-list-compact h3')).toHaveText(['Тип основи', 'Армування і закладні', 'Вимоги до поверхні', 'Об’єм і логістика бетонування']);
+    await expect(cost.locator('.cost-more')).toHaveAttribute('href', '/yak-pratsyuiemo#koshtorys');
     await expect(cost).not.toContainText(/клас\S*\s+рівності/i);
   });
 

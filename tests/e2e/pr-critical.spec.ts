@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
 import { capabilityLedger, deliveryFaq, participationChoices, processSteps, responsibilityByFormat } from '../../app/lib/deliveryModelPresentation';
-import { DEFAULT_JOURNEY, DIRECTION_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
+import { DEFAULT_JOURNEY, JOURNEY_TITLES } from '../../app/data/conversation';
 import { company, companyContactLinks } from '../../app/data/company';
 import { homeProofCase } from '../../app/data/homeProof';
 import { directions, undecidedDirection } from '../../app/data/directions';
@@ -295,8 +295,9 @@ test('homepage conversation explains the four steps without promising an estimat
 test('the conversation intro never slides over the steps, and sticks only where it has its column to itself', async ({ page, isMobile }) => {
   test.skip(isMobile, 'the sticky intro is a desktop layout');
   await page.setViewportSize({ width: 1440, height: 900 });
-  // /angary has no journey under the call (UX review 2026-10), so its intro has the column to itself, as on /yak
-  for (const [path, sticks] of [['/', false], ['/angary', true], ['/yak-pratsyuiemo', true]] as const) {
+  // a direction page has no journey under the call (/angary since the UX review 2026-10, the rest since 11.11), so its
+  // intro has the column to itself, as on /yak
+  for (const [path, sticks] of [['/', false], ['/angary', true], ['/metalokonstruktsii', true], ['/yak-pratsyuiemo', true]] as const) {
     await page.goto(path, { waitUntil: 'load' });
     const scroll = await page.evaluate(async () => {
       const section = document.querySelector<HTMLElement>('#inquiry')!;
@@ -625,11 +626,13 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 800 }
 // One closing conversation block everywhere: the same four step titles, each page's own explanations, and on a
 // direction page the form already names that direction. /yak-pratsyuiemo shows its steps in the route instead.
 // /napryamky showed its start track instead until Phase 3 (DEC-45, PROPOSED; see the next test).
-const CONVERSATION_PAGES: ReadonlyArray<{ path: string; journey: readonly string[] }> = [
+// A direction page tells the route in its own steps block, so its form leaves «Що буде після звернення» out: /angary
+// since the UX review 2026-10, the other four since 11.11 (owner: «прибрати повтори»).
+const CONVERSATION_PAGES: ReadonlyArray<{ path: string; journey: readonly string[] | null }> = [
   { path: '/', journey: DEFAULT_JOURNEY },
   { path: '/napryamky', journey: DEFAULT_JOURNEY },
   { path: '/pro-nas', journey: DEFAULT_JOURNEY },
-  ...Object.entries(DIRECTION_JOURNEY).map(([id, journey]) => ({ path: `/${id}`, journey: journey ?? [] })),
+  ...['/angary', '/zernoskhovyshcha', '/metalokonstruktsii', '/betonni-roboty', '/pokrivelni-roboty'].map((path) => ({ path, journey: null })),
 ];
 
 test('every page closes with the same conversation block, in its own words', async ({ page }) => {
@@ -647,15 +650,10 @@ test('every page closes with the same conversation block, in its own words', asy
     expect(text.call, path).toEqual([companyContactLinks.phone]);
     expect(text.channels, path).toHaveLength(4);
     expect(text.form, path).toHaveLength(1);
-    expect(text.titles, path).toEqual([...JOURNEY_TITLES]);
-    expect(text.steps, path).toEqual([...journey]);
+    expect(text.titles, path).toEqual(journey ? [...JOURNEY_TITLES] : []);
+    expect(text.steps, path).toEqual(journey ? [...journey] : []);
     expect(text.legacy, path).toEqual([]);
   }
-  // /angary closes with the same block, without «Що буде після звернення»: the route on the page tells it
-  const angary = await serverText(page, '/angary', { sections: '#inquiry.conversation', form: '#inquiry .inquiry-form', titles: '#inquiry .conversation-journey h3' });
-  expect(angary.sections).toHaveLength(1);
-  expect(angary.form).toHaveLength(1);
-  expect(angary.titles).toEqual([]);
 });
 
 // /napryamky invites people who have not picked a direction: its form starts on «Ще не визначено» (a real, accepted
@@ -674,8 +672,8 @@ test('/napryamky form starts on «Ще не визначено» and shows the f
 
 test('the form carries no step numbers; a phone folds the step texts behind one button', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  // /angary tells the route itself and leaves the journey out of its form (UX review 2026-10)
-  await page.goto('/metalokonstruktsii', { waitUntil: 'load' });
+  // the direction pages tell the route themselves and leave the journey out of their form, so a page that keeps it
+  await page.goto('/pro-nas', { waitUntil: 'load' });
   const form = page.locator('#inquiry .inquiry-form');
   await expect(form.locator('.inquiry-form-section-title')).toHaveText(['Контакт', 'Завдання']);
   await expect(form.getByText('Підтвердження', { exact: true })).toHaveCount(0);

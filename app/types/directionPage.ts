@@ -126,11 +126,15 @@ export type DirectionPageConfig = {
      */
     split?: readonly ProcessSplit[];
   };
+  /**
+   * `factors`: the live direction pages since 11.11 (owner: «стиснути блок») — the factors' names in one row and a link
+   * to how an estimate is put together (/yak-pratsyuiemo#koshtorys). `items`: the full list with a text per factor,
+   * which only the planner composition (/planner-preview) still draws.
+   */
   cost?: {
     title: string;
     text: string;
-    items: readonly DirectionItem[];
-  };
+  } & ({ items: readonly DirectionItem[]; factors?: never } | { factors: readonly string[]; items?: never });
   faq?: {
     title: string;
     items: readonly DirectionFaqItem[];
