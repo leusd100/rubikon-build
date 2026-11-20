@@ -12,6 +12,11 @@ const HERO_SIZES = '(max-width: 760px) and (max-height: 700px) 150svh, (max-widt
 // never shows more than that window, so every DPR receives the same pixels as from the landscape file, in half the bytes.
 const PHONE = '(max-width: 440px)';
 
+// The first view of a direction page draws its photo in lines, then the photo develops (owner, 20.11: prototype B). Once a
+// session per page: a return to it shows the photo at once. Runs while the hero is parsed, before its first paint, so a
+// seen hero never flashes the veil; storage refused (a private window) plays the intro, as on a first visit.
+const HERO_TRACE_ONCE_SCRIPT = `(function(m){try{var k='rb-hero-trace:'+location.pathname;if(sessionStorage.getItem(k))m.setAttribute('data-hero-seen','');else sessionStorage.setItem(k,'1')}catch(e){}})(document.currentScript.parentNode)`;
+
 type DirectionHeroImageProps = {
   asset: DirectionHeroImageAsset;
 };
@@ -49,9 +54,10 @@ export function DirectionHeroImage({ asset }: Readonly<DirectionHeroImageProps>)
   }, [art.fallbackSrc, theme]);
 
   return (
-    // A new image element cannot retain the previously decoded light bitmap while
-    // its dark source loads. Updating src and data-art-theme on one node could.
-    // With System the browser itself re-selects when the OS theme changes.
+    <>
+    {/* A new image element cannot retain the previously decoded light bitmap while
+        its dark source loads. Updating src and data-art-theme on one node could.
+        With System the browser itself re-selects when the OS theme changes. */}
     <picture key={`${asset.fallbackSrc}-${preference}`}>
       {!theme && <source data-dark="" media={darkMedia(PHONE)} type="image/avif" srcSet={phoneDarkArt.avif} suppressHydrationWarning />}
       {!theme && <source data-dark="" media={darkMedia(PHONE)} type="image/webp" srcSet={phoneDarkArt.webp} suppressHydrationWarning />}
@@ -79,5 +85,30 @@ export function DirectionHeroImage({ asset }: Readonly<DirectionHeroImageProps>)
         style={style}
       />
     </picture>
+    {asset.trace && (
+      <>
+        <script dangerouslySetInnerHTML={{ __html: HERO_TRACE_ONCE_SCRIPT }} />
+        {/* The veil is the hero's own colour over the photo, which is painted under it from the first frame (so its LCP
+            does not wait); the drawing lies on it in an <img> of the photo's size, fit and position, and the browser lays
+            it on the photo as it lays the photo, at every width. Neither is keyed by theme: a stored theme's picture
+            swap after hydration does not replay them. CSS: globals.css «Hero trace». */}
+        <span className="direction-hero-veil" aria-hidden="true" />
+        <picture className="direction-hero-trace-picture">
+          <source media={PHONE} type="image/svg+xml" srcSet={asset.trace.phoneCrop ?? asset.trace.portrait} />
+          <img
+            className="direction-hero-trace"
+            src={asset.trace.landscape}
+            alt=""
+            aria-hidden="true"
+            width={1536}
+            height={1024}
+            decoding="async"
+            fetchPriority="low"
+            style={style}
+          />
+        </picture>
+      </>
+    )}
+    </>
   );
 }

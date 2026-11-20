@@ -1,7 +1,7 @@
 /* Mobile media selection prototype, pending owner preview (24.10).
    No text or header changes. Desktop and tablet layouts are unchanged. */
 @media (max-width: 440px) {
-  .service-subhero-media .direction-hero-image {
+  .service-subhero-media :is(.direction-hero-image, .direction-hero-trace) {
     object-position: var(--direction-phone-image-position, var(--direction-hero-image-position-mobile, center 60%));
   }
 }
