@@ -3,7 +3,7 @@
  *
  * The background artwork (og-social-background.jpg) has an older wordmark and tagline baked in; generate-brand-assets.mjs
  * --social covers both with its soft graphite band and composites this layer under the logo. The text is set in the
- * site's own IBM Plex Sans Condensed Medium (app/fonts), embedded here, and the result is committed — the brand
+ * site's own Rubikon Condensed Medium (IBM Plex Sans Condensed subset, app/fonts), embedded here, and the result is committed — the brand
  * build keeps its rule of never depending on a font installed on the machine that runs it.
  *
  * Re-run only when the approved tagline changes (owner, 20.10, OD-PX-13 A; review 18.10, PDO-32): «ПІД КЛЮЧ» is not a claim the site
@@ -15,7 +15,7 @@ import path from 'node:path';
 import { chromium } from '@playwright/test';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const fonts = path.join(root, 'app/fonts/ibm-plex-sans-condensed');
+const fonts = path.join(root, 'app/fonts/rubikon-condensed');
 const fontUrl = async (file) => `data:font/woff2;base64,${(await readFile(path.join(fonts, file))).toString('base64')}`;
 
 // Where the old tagline stood: caps from y 372, starting at x 122 — the composition is kept, only the words change
@@ -30,10 +30,10 @@ const IVORY = '#F7F7F4';
 const ORANGE = '#FF7415';
 
 const html = `<!doctype html><html><head><style>
-  @font-face { font-family: Plex; font-weight: 500; src: url(${await fontUrl('IBMPlexSansCondensed-Medium-Cyrillic.woff2')}); }
-  @font-face { font-family: Plex; font-weight: 500; src: url(${await fontUrl('IBMPlexSansCondensed-Medium-Latin1.woff2')}); unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: Condensed; font-weight: 500; src: url(${await fontUrl('RubikonCondensed-Medium-Cyrillic.woff2')}); }
+  @font-face { font-family: Condensed; font-weight: 500; src: url(${await fontUrl('RubikonCondensed-Medium-Latin.woff2')}); unicode-range: U+0000-00FF, U+2000-206F; }
   html, body { margin: 0; background: transparent; }
-  #t { position: absolute; left: ${LEFT}px; top: 0; font: 500 ${FONT_SIZE}px/1 Plex; letter-spacing: ${TRACKING}em; color: ${IVORY}; white-space: nowrap; }
+  #t { position: absolute; left: ${LEFT}px; top: 0; font: 500 ${FONT_SIZE}px/1 Condensed; letter-spacing: ${TRACKING}em; color: ${IVORY}; white-space: nowrap; }
   #t b { font-weight: 500; color: ${ORANGE}; padding: 0 .1em; }
 </style></head><body><div id="t">${TAGLINE[0]} <b>·</b> ${TAGLINE[1]}</div></body></html>`;
 

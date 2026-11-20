@@ -74,7 +74,7 @@ test.describe('PDO-19 · header hierarchy', () => {
         };
       });
       expect(header.framed, `${width}px`).toEqual(['header-phone']);
-      expect(header.face, `${width}px`).toContain('IBM Plex Sans Condensed');
+      expect(header.face, `${width}px`).toContain('Rubikon Condensed');
       expect(header.weight, `${width}px`).toBe('600');
       expect(header.size, `${width}px`).toBe(width < 1280 ? '15px' : '17px');
       expect(header.navWeight, `${width}px`).toBe('600');

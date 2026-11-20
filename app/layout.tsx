@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
-// Self-hosted rather than next/font/google: Google's copy of Plex Sans Condensed has no Cyrillic.
-import './fonts/ibm-plex-sans-condensed.css';
-import condensedBoldCyrillic from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-Bold-Cyrillic.woff2?url';
-import condensedBoldLatin from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-Bold-Latin1.woff2?url';
-import condensedSemiBoldCyrillic from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-SemiBold-Cyrillic.woff2?url';
-import condensedSemiBoldLatin from './fonts/ibm-plex-sans-condensed/IBMPlexSansCondensed-SemiBold-Latin1.woff2?url';
+// Self-hosted rather than next/font/google: Google's copy of Plex Sans Condensed has no Cyrillic. Rubikon Condensed is
+// IBM Plex Sans Condensed subset to the site's characters and renamed, as its licence asks (app/fonts/rubikon-condensed.css).
+import './fonts/rubikon-condensed.css';
+import condensedBoldCyrillic from './fonts/rubikon-condensed/RubikonCondensed-Bold-Cyrillic.woff2?url';
+import condensedBoldLatin from './fonts/rubikon-condensed/RubikonCondensed-Bold-Latin.woff2?url';
+import condensedSemiBoldCyrillic from './fonts/rubikon-condensed/RubikonCondensed-SemiBold-Cyrillic.woff2?url';
+import condensedSemiBoldLatin from './fonts/rubikon-condensed/RubikonCondensed-SemiBold-Latin.woff2?url';
 // Display face, self-hosted (not on Google Fonts): Fixel Display 400 in a Latin and a Cyrillic subset.
 import './fonts/fixel-display.css';
 import displayCyrillic from './fonts/fixel-display/FixelDisplay-Regular-Cyrillic.woff2?url';
@@ -160,7 +161,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             the cookie banner's room from the first frame instead of moving once it mounts after hydration
             (app/lib/consentStorage.ts, phone-hero.css; PDO-09). */}
         <script dangerouslySetInnerHTML={{ __html: CONSENT_PENDING_INIT_SCRIPT }} />
-        {/* Plex Condensed sets first-screen text since the UX pass (the «Ілюстрація» stamp, the configurator's eyebrow on
+        {/* The condensed face (Rubikon Condensed) sets first-screen text since the UX pass (the «Ілюстрація» stamp, the configurator's eyebrow on
             a phone). Fetched with the CSS, as next/font does for Manrope, it is in before the first paint
             instead of swapping in later and shifting the hero (direction-static-hero.spec.ts). Only the faces nearly every
             page sets: 600 and 700, Latin and Cyrillic; 500 and the Pi subsets stay on demand. */}

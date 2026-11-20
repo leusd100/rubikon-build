@@ -83,7 +83,7 @@ describe('metric fallbacks', () => {
 
   it.each([
     ['Manrope Fallback Arial-metric'], ['Manrope Fallback Roboto'], ['Manrope Fallback DejaVu'],
-    ['IBM Plex Sans Condensed Fallback Arial-metric'], ['IBM Plex Sans Condensed Fallback Roboto'], ['IBM Plex Sans Condensed Fallback DejaVu'],
+    ['Rubikon Condensed Fallback Arial-metric'], ['Rubikon Condensed Fallback Roboto'], ['Rubikon Condensed Fallback DejaVu'],
   ])('declares %s with its own size-adjust', (family) => {
     const faces = fallbacks.filter((face) => face.family === family);
     expect(faces.length).toBeGreaterThan(0);
@@ -92,7 +92,7 @@ describe('metric fallbacks', () => {
 
   it('wires the support faces into their stacks', () => {
     expect(readFileSync(path.join(process.cwd(), 'app/layout.tsx'), 'utf8')).toMatch(/fallback: \['Manrope Fallback Arial-metric', 'Manrope Fallback Roboto', 'Manrope Fallback DejaVu'\]/);
-    expect(read('ibm-plex-sans-condensed.css')).toMatch(/--font-condensed:[^;]*'IBM Plex Sans Condensed Fallback Arial-metric',\s*'IBM Plex Sans Condensed Fallback Roboto', 'IBM Plex Sans Condensed Fallback DejaVu'/);
+    expect(read('rubikon-condensed.css')).toMatch(/--font-condensed:[^;]*'Rubikon Condensed Fallback Arial-metric',\s*'Rubikon Condensed Fallback Roboto', 'Rubikon Condensed Fallback DejaVu'/);
   });
 });
 
