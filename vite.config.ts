@@ -62,6 +62,10 @@ export default defineConfig(async () => {
 
   return {
     css: { postcss: { plugins: [tailwindcss()] } },
+    // Fonts stay files, never base64 in the CSS: a face under Vite's 4 KB inline limit (Rubikon Condensed's Pi subsets,
+    // ~3 KB since 20.11) would otherwise ride in the render-blocking stylesheet of every page, though a page fetches it
+    // only when it draws one of its characters.
+    build: { assetsInlineLimit: (file: string) => (file.endsWith('.woff2') ? false : undefined) },
     // RSC client modules must not be pre-bundled differently between the
     // server and browser environments. Excluding them prevents Vite from
     // repeatedly invalidating the dependency graph during local startup.

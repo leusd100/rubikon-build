@@ -62,6 +62,53 @@ test.describe('display face', () => {
   }
 });
 
+// 20.11: the condensed face is Rubikon Condensed — IBM Plex Sans Condensed subset to the site's characters and renamed
+// (app/fonts/rubikon-condensed.css). Every glyph the condensed text sets is the subset's own, none from a fallback face;
+// and no face rides in the stylesheet as base64 (a ~3 KB Pi subset is under Vite's inline limit, vite.config.ts).
+test.describe('condensed face', () => {
+  for (const route of ROUTES) {
+    test(`${route}: Rubikon Condensed draws every condensed character, and no font is inlined in the CSS`, async ({ page, context, browserName }) => {
+      test.skip(browserName !== 'chromium', 'CDP reports the fonts that drew each node');
+      await page.route(/\.mp4(?:\?|$)/, (r) => r.abort());
+      await consent(page);
+      await page.goto(route, { waitUntil: 'load' });
+      await settle(page);
+      const marked = await page.evaluate(() => {
+        let count = 0;
+        for (const el of document.querySelectorAll('body *')) {
+          if (![...el.childNodes].some((node) => node.nodeType === 3 && node.textContent?.trim())) continue;
+          const family = getComputedStyle(el).fontFamily;
+          if (!/^"?Rubikon Condensed"?,/.test(family)) continue;
+          // CDP counts a node's descendants too: an element holding text in another face (a Manrope status in a <dt>) is
+          // measured through its own condensed children, not as a whole
+          if ([...el.querySelectorAll('*')].some((child) => child.textContent?.trim() && getComputedStyle(child).fontFamily !== family)) continue;
+          el.setAttribute('data-condensed-audit', '');
+          count += 1;
+        }
+        return count;
+      });
+      expect(marked).toBeGreaterThan(5);
+      const cdp = await context.newCDPSession(page);
+      await cdp.send('DOM.enable');
+      await cdp.send('CSS.enable');
+      const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
+      const { nodeIds } = await cdp.send('DOM.querySelectorAll', { nodeId: root.nodeId, selector: '[data-condensed-audit]' });
+      const drawnBy = new Map<string, number>();
+      for (const nodeId of nodeIds) {
+        const { fonts: used } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+        for (const font of used) drawnBy.set(font.familyName, (drawnBy.get(font.familyName) ?? 0) + font.glyphCount);
+      }
+      expect([...drawnBy.keys()].filter((family) => !family.startsWith('Rubikon Condensed'))).toEqual([]);
+      const inlined = await page.evaluate(async () => {
+        const sheets = [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map((link) => link.href);
+        const texts = await Promise.all(sheets.map((href) => fetch(href).then((response) => response.text())));
+        return texts.filter((text) => text.includes('data:font/')).length;
+      });
+      expect(inlined, 'stylesheets with a base64 font').toBe(0);
+    });
+  }
+});
+
 test.describe('late fonts', () => {
   // DebugBear's mobile profile fetches the fonts after the first paint. Held back 3 s here, the swap to Fixel Display,
   // Manrope and Plex must not move the page: each face's metric fallback stands in at the brand face's size. 0.01 is
