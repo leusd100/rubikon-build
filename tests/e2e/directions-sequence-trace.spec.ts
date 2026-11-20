@@ -237,7 +237,8 @@ test('/angary: a drawing not in within .7 s is not waited for — the sheet plot
   await expect(sheet(page)).toHaveAttribute('data-sheet-state', 'on', { timeout: 1_500 });
   await expect(sheet(page)).not.toHaveAttribute('data-sheet-trace');
   // and when it does come, it stays out of sight
-  await page.waitForTimeout(2_000);
+  await expect.poll(() => sheetTrace(page).evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0), { timeout: 5_000 }).toBe(true);
+  await expect(sheet(page)).not.toHaveAttribute('data-sheet-trace');
   await expect(sheetTrace(page)).toHaveCSS('display', 'none');
 });
 
@@ -249,7 +250,8 @@ test('/angary with reduced motion: the sheet stands complete and its drawing is 
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, '/angary');
   await sheet(page).evaluate((el) => el.scrollIntoView({ block: 'center' }));
-  await page.waitForTimeout(500);
+  // the sheet in view with its photo in: where motion is allowed it would have plotted by now
+  await expect.poll(() => sheetPhoto(page).evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   await expect(sheet(page)).not.toHaveAttribute('data-sheet-state');
   await expect(sheetTrace(page)).toHaveCSS('display', 'none');
   expect(drawings).toEqual([]);

@@ -939,6 +939,10 @@ html[data-daylight="a"][data-theme="light"] .service-subhero.phone-hero .service
    sequence only (data-hero-turn: the paper comes over the slide going out, the slides swap under it). The layers sit in
    the hero itself, after the slides and before the overlay (z-index 0 in that order), so the overlay and copy stay on top. */
 .directions-subhero :is(.dhs-veil, .dhs-scan, .dhs-trace) { display: none; }
+/* the zoom grows the slide past the page's sides: the hero clips across (nothing of it reached past them before —
+   napryamky-row-sheets, page-sheets: no sideways scroll), not down, where its copy may run on */
+/* (phone-hero.css: main.inner-page > .phone-hero:is(.subhero, …) { overflow: visible } — this outweighs it, across only) */
+.directions-subhero, main.inner-page > .directions-subhero.phone-hero.subhero { overflow-x: clip; }
 .dhs-veil, .dhs-scan { z-index: 0; }
 .directions-subhero .dhs-trace { pointer-events: none; filter: invert(1) hue-rotate(180deg); }
 html[data-daylight="a"][data-theme="light"] .directions-page .directions-subhero img.dhs-trace { filter: none; }
@@ -947,9 +951,10 @@ html[data-daylight="a"][data-theme="light"] .directions-page .directions-subhero
 .directions-subhero[data-hero-run] .dhs-veil { animation: hero-wipe var(--site-for-hero-scan) var(--ease-plot) var(--site-at-hero-scan) both, hero-gone var(--site-for-hero-veil) linear var(--site-at-hero-veil) both; }
 .directions-subhero[data-hero-run][data-hero-turn] .dhs-veil { animation: hero-veil-in var(--site-for-hero-veil-in) linear both, hero-wipe var(--site-for-hero-scan) var(--ease-plot) var(--site-at-hero-scan) both, hero-gone var(--site-for-hero-veil) linear var(--site-at-hero-veil) both; }
 .directions-subhero[data-hero-run] .dhs-scan { animation: hero-wipe var(--site-for-hero-scan) var(--ease-plot) var(--site-at-hero-scan) both, hero-scan-glow var(--site-for-hero-scan) linear var(--site-at-hero-scan) both; }
-/* (two rules, not one :is() — the slide's two classes would outweigh the drawing's own rule and keep its lines) */
-.directions-subhero[data-hero-run] .directions-hero-sequence-image.is-active { transform-origin: 70% 55%; animation: hero-settle var(--site-for-hero-settle) var(--ease-premium) var(--site-at-hero-settle) both; }
-.directions-subhero[data-hero-run] .dhs-trace { transform-origin: 70% 55%; animation: hero-settle var(--site-for-hero-settle) var(--ease-premium) var(--site-at-hero-settle) both, hero-gone var(--site-for-hero-trace) ease var(--site-at-hero-trace) both; }
+/* (two rules, not one :is() — the slide's two classes would outweigh the drawing's own rule and keep its lines). The zoom
+   holds the slides' top edge: here the photos start under the header (#301), and stay there */
+.directions-subhero[data-hero-run] .directions-hero-sequence-image.is-active { transform-origin: 70% 0; animation: hero-settle var(--site-for-hero-settle) var(--ease-premium) var(--site-at-hero-settle) both; }
+.directions-subhero[data-hero-run] .dhs-trace { transform-origin: 70% 0; animation: hero-settle var(--site-for-hero-settle) var(--ease-premium) var(--site-at-hero-settle) both, hero-gone var(--site-for-hero-trace) ease var(--site-at-hero-trace) both; }
 /* a drawn turn swaps the slides under the paper: quickly, once the paper is over them (the inline 2 s cross-fade is the
    sequence's own, so only !important can shorten it for this one turn) */
 .directions-subhero[data-hero-turn] .directions-hero-sequence-image { transition-duration: var(--site-for-hero-swap) !important; transition-delay: var(--site-at-hero-swap); }

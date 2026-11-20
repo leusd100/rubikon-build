@@ -75,7 +75,7 @@ export function DirectionsHeroImageSequence() {
     const hero = traceRef.current?.closest<HTMLElement>('.directions-subhero');
     if (!hero || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     // The first view's script has claimed this session's drawing; without it (a page reached in the app), claim it here
-    let allowed = hero.hasAttribute('data-hero-seq');
+    let allowed = 'heroSeq' in hero.dataset;
     if (!allowed) {
       try {
         allowed = !sessionStorage.getItem(TRACE_SESSION_KEY);
@@ -120,21 +120,23 @@ export function DirectionsHeroImageSequence() {
     // the first slide is the first view's (the script's); a turn is a change of slide
     if (state.shown === activeIndex || !hero || !trace) return;
     state.shown = activeIndex;
-    hero.removeAttribute('data-hero-run');
-    hero.removeAttribute('data-hero-play');
-    hero.removeAttribute('data-hero-turn');
+    delete hero.dataset.heroRun;
+    delete hero.dataset.heroPlay;
+    delete hero.dataset.heroTurn;
     const ahead = state.ready.get(activeIndex);
     if (!state.allowed || state.drawn.has(activeIndex) || !ahead?.complete || !ahead.naturalWidth) return;
     state.drawn.add(activeIndex);
-    hero.setAttribute('data-hero-turn', '');
+    hero.dataset.heroTurn = '';
     // the drawing's animations start over on the next data-hero-run, so this one must first be seen without it
-    void hero.offsetWidth;
-    const drop = window.setTimeout(() => hero.removeAttribute('data-hero-turn'), 900);
+    hero.getBoundingClientRect();
+    const drop = window.setTimeout(() => {
+      delete hero.dataset.heroTurn;
+    }, 900);
     trace.onload = () => {
       window.clearTimeout(drop);
-      if (!hero.hasAttribute('data-hero-turn')) return;
-      hero.setAttribute('data-hero-play', '');
-      hero.setAttribute('data-hero-run', '');
+      if (!('heroTurn' in hero.dataset)) return;
+      hero.dataset.heroPlay = '';
+      hero.dataset.heroRun = '';
     };
     trace.src = ahead.src;
   }, [activeIndex]);
