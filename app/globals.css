@@ -868,7 +868,7 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .subhero-side > p { margin: 0; color: rgba(255,255,255,.7); font-size: 16px; line-height: 1.75; }
 
 .service-subhero { position: relative; min-height: 100svh; height: auto; display: flex; align-items: flex-end; overflow: hidden; color: var(--color-dark-text); background: var(--color-dark); }
-.service-subhero-media { position: absolute; inset: var(--header-h) 0 0; } /* under the fixed header: /zernoskhovyshcha ≥1100 px until W2-12; every other hero starts at y 0 behind it (PDO-18, «One header model») */
+.service-subhero-media { position: absolute; inset: var(--header-h) 0 0; background-color: inherit; isolation: isolate; } /* under the fixed header: /zernoskhovyshcha ≥1100 px until W2-12; every other hero starts at y 0 behind it (PDO-18, «One header model») */
 .service-subhero-media img,
 .service-subhero-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); }
 /* Under .service-subhero-media: its `img` rule above sets the hero's default position, and each picture's focal point wins here */
@@ -893,8 +893,8 @@ body:has(main:is([data-home="v2"], .about-page)) {
    under the veil from the first frame. The drawing takes the photo's size, fit, position and fade (the rules above); in the
    dark theme its graphite turns light and its copper stays copper. Once a session per page (data-hero-seen, set by the
    hero's inline script before its first paint); never with reduced motion. */
-/* its own stacking context: the veil and the drawing stay under the overlay and the copy, as the photo does */
-.service-subhero-media { background-color: inherit; isolation: isolate; }
+/* .service-subhero-media (above) takes the hero's colour, for the veil to inherit, and is its own stacking context: the
+   veil and the drawing stay under the overlay and the copy, as the photo does */
 .direction-hero-veil { position: absolute; inset: 0; z-index: 1; background-color: inherit; pointer-events: none; animation: hero-veil-lift var(--site-for-hero-veil) var(--ease-premium) var(--site-at-hero-veil) both; }
 .service-subhero-media .direction-hero-trace { z-index: 2; filter: none; pointer-events: none; animation: hero-trace-settle var(--site-for-hero-trace) ease var(--site-at-hero-trace) both; }
 :root[data-theme="dark"] .service-subhero-media .direction-hero-trace { filter: invert(1) hue-rotate(180deg); }

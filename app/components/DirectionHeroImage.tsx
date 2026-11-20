@@ -16,9 +16,9 @@ const PHONE = '(max-width: 440px)';
 // session per hero: a return shows the photo at once. Keyed by the drawing, not the address: two pages with one hero
 // (/zernoskhovyshcha, /planner-preview) play it once, and the key names no page (grain-page.spec keeps storage free of
 // planner words). Runs while the hero is parsed, before its first paint, so a seen hero never flashes the veil; storage
-// refused (a private window) plays the intro, as on a first visit.
-const heroTraceOnceScript = (drawing: string) =>
-  `(function(m,k){try{if(sessionStorage.getItem(k))m.setAttribute('data-hero-seen','');else sessionStorage.setItem(k,'1')}catch(e){}})(document.currentScript.parentNode,${JSON.stringify(`rb-hero-trace:${drawing}`)})`;
+// refused (a private window) plays the intro, as on a first visit. The script is a constant: it reads its drawing from
+// its own data-drawing, so nothing is spliced into code (CodeQL, PR #323).
+const HERO_TRACE_ONCE_SCRIPT = "(function(s){var m=s.parentNode,k='rb-hero-trace:'+s.getAttribute('data-drawing');try{if(sessionStorage.getItem(k))m.setAttribute('data-hero-seen','');else sessionStorage.setItem(k,'1')}catch(e){}})(document.currentScript)";
 
 type DirectionHeroImageProps = {
   asset: DirectionHeroImageAsset;
@@ -90,7 +90,7 @@ export function DirectionHeroImage({ asset }: Readonly<DirectionHeroImageProps>)
     </picture>
     {asset.trace && (
       <>
-        <script dangerouslySetInnerHTML={{ __html: heroTraceOnceScript(asset.trace.landscape.split('/').pop() ?? '') }} />
+        <script data-drawing={asset.trace.landscape.split('/').pop()} dangerouslySetInnerHTML={{ __html: HERO_TRACE_ONCE_SCRIPT }} />
         {/* The veil is the hero's own colour over the photo, which is painted under it from the first frame (so its LCP
             does not wait); the drawing lies on it in an <img> of the photo's size, fit and position, and the browser lays
             it on the photo as it lays the photo, at every width. Neither is keyed by theme: a stored theme's picture
