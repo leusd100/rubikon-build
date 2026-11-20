@@ -100,6 +100,8 @@ for (const viewport of viewports) {
           : /-portrait-784w\.[0-9a-f]{8}\.avif$/);
       } else {
         expect(imageState.currentSrc, `${path} keeps the landscape art from ${viewport.width} px`).not.toContain('-portrait-');
+        // …in AVIF, as a phone's window (20.11: the landscape widths' twins are 15–16 % smaller at no lower SSIM)
+        expect(imageState.currentSrc, `${path} gets the landscape art in AVIF`).toMatch(/-(?:480|768|1200|1536)w\.[0-9a-f]{8}\.avif$/);
       }
       expect(mediaRequests, `${path} must not request a legacy hero video`).toEqual([]);
 

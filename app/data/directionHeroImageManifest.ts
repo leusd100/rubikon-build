@@ -4,8 +4,10 @@ type PortraitSources = { avif: string; webp: string };
 export type DirectionHeroImageAsset = {
   fallbackSrc: string;
   srcSet: string;
+  /** The same widths in AVIF, for tablets and computers (20.11: 15–16 % smaller at no lower SSIM, see the generator) */
+  avifSrcSet: string;
   portrait: PortraitSources;
-  dark: { fallbackSrc: string; srcSet: string; portrait: PortraitSources };
+  dark: { fallbackSrc: string; srcSet: string; avifSrcSet: string; portrait: PortraitSources };
   /** Optional phone-only art window; existing tablet and desktop compositions remain intact. */
   phoneCrop?: { light: PortraitSources; dark: PortraitSources; position: string };
   /** Desktop object-position (from 761 px). The y keeps the structure's top in frame: a wide window crops the art top
@@ -31,55 +33,65 @@ const responsiveSrcSet = (name: string, variants: { w480: string; w768: string; 
     `/media-responsive/direction-hero-photo-variant-${name}-1536w.${variants.w1536}.webp 1536w`,
   ].join(', ');
 
+const WIDTHS = [480, 768, 1200, 1536] as const;
+
+/** The landscape widths' AVIF twins, hashes in WIDTHS order */
+const avifSrcSet = (prefix: string, name: string, hashes: readonly string[]) =>
+  WIDTHS.map((width, index) => `/media-responsive/${prefix}-${name}-${width}w.${hashes[index]}.avif ${width}w`).join(', ');
+
 const portrait = (prefix: string, name: string, hashes: PortraitSources): PortraitSources => ({
   avif: `/media-responsive/${prefix}-${name}-portrait-784w.${hashes.avif}.avif`,
   webp: `/media-responsive/${prefix}-${name}-portrait-784w.${hashes.webp}.webp`,
 });
 
-const blueHour = (name: string, hashes: readonly string[], portraitHashes: PortraitSources) => {
-  const widths = [480, 768, 1200, 1536];
-  const sources = widths.map((width, index) =>
+const blueHour = (name: string, hashes: readonly string[], avifHashes: readonly string[], portraitHashes: PortraitSources) => {
+  const sources = WIDTHS.map((width, index) =>
     `/media-responsive/direction-hero-blue-hour-${name}-${width}w.${hashes[index]}.webp`);
   return {
     fallbackSrc: sources[3],
-    srcSet: sources.map((src, index) => `${src} ${widths[index]}w`).join(', '),
+    srcSet: sources.map((src, index) => `${src} ${WIDTHS[index]}w`).join(', '),
+    avifSrcSet: avifSrcSet('direction-hero-blue-hour', name, avifHashes),
     portrait: portrait('direction-hero-blue-hour', name, portraitHashes),
   };
 };
 
 export const directionHeroImageAssets = {
   angary: {
-    dark: blueHour('angary', ['71582417', '6a77e891', '02cc7516', 'c0b42098'], { avif: '16131ec7', webp: '12bde85e' }),
+    dark: blueHour('angary', ['71582417', '6a77e891', '02cc7516', 'c0b42098'], ['23c010de', '5abcc76b', 'e51dc977', 'c83446d7'], { avif: '16131ec7', webp: '12bde85e' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-angary-1536w.ff7e8c1a.webp',
     srcSet: responsiveSrcSet('angary', { w480: '7891bedb', w768: '78a42fed', w1200: 'c45ee5de', w1536: 'ff7e8c1a' }),
+    avifSrcSet: avifSrcSet('direction-hero-photo-variant', 'angary', ['0076c020', '88e89100', '55f4a9a9', '8eeeec27']),
     portrait: portrait('direction-hero-photo-variant', 'angary', { avif: '49b633f8', webp: '476428bc' }),
     focalPosition: `56% ${ART_TOP}`,
     mobileFocalPosition: '58% center',
     artTop: ART_TOP,
   },
   zernoskhovyshcha: {
-    dark: blueHour('zernoskhovyshcha', ['5a79f6ba', '2f78371a', '7ffff1ab', '9fe7da9c'], { avif: 'a1cbbcca', webp: 'd538b9fe' }),
+    dark: blueHour('zernoskhovyshcha', ['5a79f6ba', '2f78371a', '7ffff1ab', '9fe7da9c'], ['f79ec25f', '781dec8c', '9ca825d4', '9c0af657'], { avif: 'a1cbbcca', webp: 'd538b9fe' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-zernoskhovyshcha-1536w.90934f90.webp',
     srcSet: responsiveSrcSet('zernoskhovyshcha', {
       w480: 'be87c7d8', w768: '7c67f3ef', w1200: 'b394ed98', w1536: '90934f90',
     }),
+    avifSrcSet: avifSrcSet('direction-hero-photo-variant', 'zernoskhovyshcha', ['fa10145b', 'f5de18aa', '56bb9516', '44a11bd3']),
     portrait: portrait('direction-hero-photo-variant', 'zernoskhovyshcha', { avif: '26cc2513', webp: '1f960375' }),
     focalPosition: '57% 8%',
     mobileFocalPosition: '62% center',
   },
   metalokonstruktsii: {
-    dark: blueHour('metalokonstruktsii', ['e7aed6ee', '81efe464', 'e02e6b56', 'ec750520'], { avif: '6bd96938', webp: '3032c3f6' }),
+    dark: blueHour('metalokonstruktsii', ['e7aed6ee', '81efe464', 'e02e6b56', 'ec750520'], ['22dbb640', '5e9f5db9', '72d5704a', 'a22f5617'], { avif: '6bd96938', webp: '3032c3f6' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-metalokonstruktsii-1536w.ec2184d1.webp',
     srcSet: responsiveSrcSet('metalokonstruktsii', { w480: '3ed1b208', w768: 'd09493a3', w1200: 'f005df53', w1536: 'ec2184d1' }),
+    avifSrcSet: avifSrcSet('direction-hero-photo-variant', 'metalokonstruktsii', ['1c1dc768', '4d76bc34', '1c7e7802', '7c951554']),
     portrait: portrait('direction-hero-photo-variant', 'metalokonstruktsii', { avif: '2366c8f5', webp: 'd533bf1f' }),
     focalPosition: `55% ${ART_TOP}`,
     mobileFocalPosition: '58% center',
     artTop: ART_TOP,
   },
   'betonni-roboty': {
-    dark: blueHour('betonni-roboty', ['0cb83a64', '45c050c5', '91423a3f', '49ecb41b'], { avif: 'f90f90fc', webp: 'fd178407' }),
+    dark: blueHour('betonni-roboty', ['0cb83a64', '45c050c5', '91423a3f', '49ecb41b'], ['4ad8a1d9', '38e2815e', '2fc3e6ea', '9a614acc'], { avif: 'f90f90fc', webp: 'fd178407' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-betonni-roboty-1536w.82ef0687.webp',
     srcSet: responsiveSrcSet('betonni-roboty', { w480: 'ac51425f', w768: '5b92afff', w1200: 'd89f0df8', w1536: '82ef0687' }),
+    avifSrcSet: avifSrcSet('direction-hero-photo-variant', 'betonni-roboty', ['df2f3add', '02078988', 'caf7ba4f', '5c873034']),
     portrait: portrait('direction-hero-photo-variant', 'betonni-roboty', { avif: '7c3c6b2f', webp: '7f09c390' }),
     focalPosition: '53% 4%',
     mobileFocalPosition: '55% center',
@@ -96,11 +108,12 @@ export const directionHeroImageAssets = {
       },
       position: '45% center',
     },
-    dark: blueHour('pokrivelni-roboty', ['ad1d869e', 'e973dec4', 'd2853a0c', '9040f15b'], { avif: '777cdb44', webp: '173f83b4' }),
+    dark: blueHour('pokrivelni-roboty', ['ad1d869e', 'e973dec4', 'd2853a0c', '9040f15b'], ['aa7cdb46', 'ed9c8a53', '3ba39d8b', '292cdcba'], { avif: '777cdb44', webp: '173f83b4' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-pokrivelni-roboty-1536w.9e89e366.webp',
     srcSet: responsiveSrcSet('pokrivelni-roboty', {
       w480: 'a8e0dc26', w768: '8519ff54', w1200: '016676cf', w1536: '9e89e366',
     }),
+    avifSrcSet: avifSrcSet('direction-hero-photo-variant', 'pokrivelni-roboty', ['98326491', '642bf756', 'c36d8f1e', '2c317354']),
     portrait: portrait('direction-hero-photo-variant', 'pokrivelni-roboty', { avif: '5e80d22b', webp: '01119a21' }),
     focalPosition: '55% 62%',
     mobileFocalPosition: '57% center',

@@ -57,7 +57,10 @@ export function DirectionHeroImage({ asset }: Readonly<DirectionHeroImageProps>)
       {!theme && <source data-dark="" media={darkMedia(PHONE)} type="image/webp" srcSet={phoneDarkArt.webp} suppressHydrationWarning />}
       <source media={PHONE} type="image/avif" srcSet={phoneArt.avif} />
       <source media={PHONE} type="image/webp" srcSet={phoneArt.webp} />
+      {/* From 441 px the landscape art, AVIF first as on a phone (20.11: 15–16 % smaller at no lower SSIM) */}
+      {!theme && <source data-dark="" media={darkMedia()} type="image/avif" srcSet={asset.dark.avifSrcSet} sizes={HERO_SIZES} suppressHydrationWarning />}
       {!theme && <source data-dark="" media={darkMedia()} type="image/webp" srcSet={asset.dark.srcSet} sizes={HERO_SIZES} suppressHydrationWarning />}
+      <source type="image/avif" srcSet={art.avifSrcSet} sizes={HERO_SIZES} />
       <source type="image/webp" srcSet={art.srcSet} sizes={HERO_SIZES} />
       {!theme && <script dangerouslySetInnerHTML={{ __html: HERO_THEME_SCRIPT }} />}
       <img

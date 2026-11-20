@@ -47,7 +47,9 @@ DIRECTION_HERO_PORTRAIT_POSITIONS = {
     "pokrivelni-roboty": .57,
 }
 # AVIF twins of the portrait crops, at the lowest quality whose rendered SSIM is not below the WebP's (Stage 03, 13.10):
-# the daylight WebP is q85, the blue-hour WebP q90.
+# the daylight WebP is q85, the blue-hour WebP q90. The landscape widths (tablets and computers) have AVIF twins at the
+# same qualities since 20.11: against the lossless resize their SSIM is not below the WebP's at any of the 40 files
+# (worst +0.0001) and they are 15–16 % smaller (2913 → 2447 KB daylight, 3465 → 2934 KB blue hour).
 DIRECTION_HERO_PORTRAIT_AVIF_QUALITY = {"direction-hero-photo-variant": 75, "direction-hero-blue-hour": 85}
 IMAGE_SETS = [
     ("design-assets/direction-hero-blue-hour", "direction-hero-blue-hour", [
@@ -119,6 +121,9 @@ def main() -> None:
             quality = 90 if output_prefix in ("directions-sequence-daylight", "directions-sequence-blue-hour", "direction-hero-blue-hour") else QUALITY
             widths = sorted(set(WIDTHS + ([image.width] if is_sequence else [])))
             emit_variants(image, output_prefix, base, widths, results, quality)
+            if output_prefix in DIRECTION_HERO_PORTRAIT_AVIF_QUALITY:
+                emit_variants(image, output_prefix, base, widths, results,
+                              DIRECTION_HERO_PORTRAIT_AVIF_QUALITY[output_prefix], fmt="AVIF")
             if output_prefix in DIRECTION_HERO_PORTRAIT_AVIF_QUALITY:
                 crop_width = DIRECTION_HERO_PORTRAIT_WIDTH
                 left = round((image.width - crop_width) * DIRECTION_HERO_PORTRAIT_POSITIONS[base])
