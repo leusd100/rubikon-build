@@ -71,3 +71,19 @@ for (const width of [1199, 768, 390, 1200, 1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   });
 }
+
+// 20.11: from 1181 px the five cards stand in one row and each picture covers its card's height, so the file it needs is
+// set by the row, not by the width the old sizes promised (65vw / 35vw). At 1440 × 900 @1 the hangar's 4:5 picture is
+// drawn ~465 px wide and the 3:2 ones ~837 px: the 480w and 768w files, not the 1200w and a blurred 480w.
+test('on a computer the cards ask for the file their row draws', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a wide-screen row');
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 800 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/', { waitUntil: 'load' });
+    const cards = page.locator('#directions a.direction-card img');
+    await cards.first().scrollIntoViewIfNeeded();
+    await expect.poll(() => cards.evaluateAll((images) => images.every((image) => (image as HTMLImageElement).complete && (image as HTMLImageElement).currentSrc !== ''))).toBe(true);
+    const picked = await cards.evaluateAll((images) => images.map((image) => (image as HTMLImageElement).currentSrc.match(/-(\d+)w\./)?.[1]));
+    expect(picked, `${viewport.width} px`).toEqual(['480', '768', '768', '768', '768']);
+  }
+});

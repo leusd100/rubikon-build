@@ -41,4 +41,19 @@ describe('direction hero phone window', () => {
     expect(asset.portrait.avif).toContain('direction-hero-photo-variant-');
     expect(asset.dark.portrait.avif).toContain('direction-hero-blue-hour-');
   });
+
+  // 20.11: tablets and computers get the landscape widths in AVIF first; each twin is its WebP's size, at every width
+  it.each(Object.entries(directionHeroImageAssets))('%s ships AVIF twins of its landscape widths for both themes', (_name, asset) => {
+    for (const art of [asset, asset.dark]) {
+      const avif = art.avifSrcSet.split(', ').map((entry) => entry.split(' '));
+      const webp = art.srcSet.split(', ').map((entry) => entry.split(' '));
+      expect(avif.map(([, width]) => width)).toEqual(webp.map(([, width]) => width));
+      for (const [index, [file, width]] of avif.entries()) {
+        expect(file).toMatch(new RegExp(`-${width.slice(0, -1)}w\\.[0-9a-f]{8}\\.avif$`));
+        // the same art, theme and width as its WebP: only the hash and the format differ
+        expect(file.replace(/\.[0-9a-f]{8}\.avif$/, '')).toBe(webp[index][0].replace(/\.[0-9a-f]{8}\.webp$/, ''));
+        expect(imageSize(file), file).toEqual(imageSize(webp[index][0]));
+      }
+    }
+  });
 });

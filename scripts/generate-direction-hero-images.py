@@ -4,7 +4,7 @@
 The source images live in design-assets/, so they are not deployed with the site.
 Landscape variants preserve the complete source. The /napryamky sequence also
 gets portrait crops for tall screens, and the direction page photos get phone
-crops in WebP and AVIF; source artwork is never modified.
+crops in WebP and AVIF, and AVIF twins of their landscape widths; source artwork is never modified.
 Output filenames are content-hashed for the immutable media-responsive cache policy.
 """
 
@@ -47,8 +47,10 @@ DIRECTION_HERO_PORTRAIT_POSITIONS = {
     "pokrivelni-roboty": .57,
 }
 # AVIF twins of the portrait crops, at the lowest quality whose rendered SSIM is not below the WebP's (Stage 03, 13.10):
-# the daylight WebP is q85, the blue-hour WebP q90.
-DIRECTION_HERO_PORTRAIT_AVIF_QUALITY = {"direction-hero-photo-variant": 75, "direction-hero-blue-hour": 85}
+# the daylight WebP is q85, the blue-hour WebP q90. The landscape widths (tablets and computers) have AVIF twins at the
+# same qualities since 20.11: against the lossless resize their SSIM is not below the WebP's at any of the 40 files
+# (worst +0.0001) and they are 15–16 % smaller (2913 → 2447 KB daylight, 3465 → 2934 KB blue hour).
+DIRECTION_HERO_AVIF_QUALITY = {"direction-hero-photo-variant": 75, "direction-hero-blue-hour": 85}
 IMAGE_SETS = [
     ("design-assets/direction-hero-blue-hour", "direction-hero-blue-hour", [
         "angary.png",
@@ -119,13 +121,15 @@ def main() -> None:
             quality = 90 if output_prefix in ("directions-sequence-daylight", "directions-sequence-blue-hour", "direction-hero-blue-hour") else QUALITY
             widths = sorted(set(WIDTHS + ([image.width] if is_sequence else [])))
             emit_variants(image, output_prefix, base, widths, results, quality)
-            if output_prefix in DIRECTION_HERO_PORTRAIT_AVIF_QUALITY:
+            if output_prefix in DIRECTION_HERO_AVIF_QUALITY:
+                emit_variants(image, output_prefix, base, widths, results,
+                              DIRECTION_HERO_AVIF_QUALITY[output_prefix], fmt="AVIF")
                 crop_width = DIRECTION_HERO_PORTRAIT_WIDTH
                 left = round((image.width - crop_width) * DIRECTION_HERO_PORTRAIT_POSITIONS[base])
                 portrait = image.crop((left, 0, left + crop_width, image.height))
                 emit_variants(portrait, output_prefix, base + "-portrait", [crop_width], results, quality)
                 emit_variants(portrait, output_prefix, base + "-portrait", [crop_width], results,
-                              DIRECTION_HERO_PORTRAIT_AVIF_QUALITY[output_prefix], fmt="AVIF")
+                              DIRECTION_HERO_AVIF_QUALITY[output_prefix], fmt="AVIF")
             if is_sequence:
                 crop_width = min(image.width, round(image.height * 3 / 4))
                 left = round((image.width - crop_width) * SEQUENCE_CONCEPT_PORTRAIT_POSITIONS[base])
