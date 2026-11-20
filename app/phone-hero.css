@@ -23,7 +23,7 @@
   main.inner-page > .phone-hero :is(.service-subhero-media, .about-hero-media, .proc-hero-media) {
     position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden;
   }
-  main.inner-page > .phone-hero .directions-hero-sequence-image { top: 0; height: 100%; }
+  main.inner-page > .phone-hero :is(.directions-hero-sequence-image, .dhs-trace) { top: 0; height: 100%; }
   main.inner-page > .phone-hero :is(.subhero-overlay, .service-subhero-overlay, .proc-hero-shade) {
     inset: 0; mask-image: none;
     background: linear-gradient(180deg, rgba(18,22,19,.18), rgba(18,22,19,.28) var(--phone-scene-header), rgba(18,22,19,.79) calc(var(--phone-scene-header) + 140px), rgba(18,22,19,.82) 60%, rgba(18,22,19,.88));

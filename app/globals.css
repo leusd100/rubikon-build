@@ -142,6 +142,10 @@
   --site-for-hero-trace: .8s;
   --site-at-hero-veil: 2.2s;
   --site-for-hero-veil: .1s;
+  /* …and on /napryamky, each slide's turn: the paper comes over the slide going out, the slides swap under it */
+  --site-for-hero-veil-in: .3s;
+  --site-at-hero-swap: .3s;
+  --site-for-hero-swap: .3s;
   --site-for-hover: .25s;
   /* the disclosure arrows of the inquiry's brief and details */
   --site-for-chevron: .25s;
@@ -793,7 +797,9 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .subhero-grid { position: absolute; inset: 0; opacity: .16; background-image: linear-gradient(rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px); background-size: 96px 96px; mask-image: linear-gradient(90deg, black, transparent 82%); pointer-events: none; }
 .subhero-media > img,
 .subhero-media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; filter: saturate(.45) contrast(1.08); }
-.directions-hero-sequence-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--directions-hero-image-position, center 60%); filter: saturate(.45) contrast(1.08) brightness(.94) blur(.7px); opacity: 0; transition: opacity var(--site-for-hero-sequence) var(--ease-standard), filter var(--site-for-hero-sequence) var(--ease-standard); }
+/* the slide's drawing (.dhs-trace, «Hero trace» below) lies on the slide exactly as the slide lies in the hero */
+:is(.directions-hero-sequence-image, .dhs-trace) { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--directions-hero-image-position, center 60%); }
+.directions-hero-sequence-image { filter: saturate(.45) contrast(1.08) brightness(.94) blur(.7px); opacity: 0; transition: opacity var(--site-for-hero-sequence) var(--ease-standard), filter var(--site-for-hero-sequence) var(--ease-standard); }
 .directions-hero-sequence-image.is-active { filter: saturate(.45) contrast(1.08); opacity: 1; }
 .direction-hero-poster { z-index: 0; opacity: 1; object-fit: cover; object-position: center 60%; filter: saturate(.55) contrast(1.08); transition: opacity var(--motion-media-fade) var(--ease-standard); }
 .direction-hero-poster.is-hidden { opacity: 0; }
@@ -905,15 +911,20 @@ body:has(main:is([data-home="v2"], .about-page)) {
    drawing settle together from a 6 % zoom, so the lines stay on the photo while they last. */
 @property --hero-wipe { syntax: '<percentage>'; inherits: false; initial-value: -30%; }
 .service-subhero-media :is(.direction-hero-veil, .direction-hero-scan, .direction-hero-trace) { display: none; }
-.direction-hero-veil, .direction-hero-scan { position: absolute; inset: 0; pointer-events: none; }
-.direction-hero-veil { z-index: 1; background-color: inherit; mask-image: linear-gradient(255deg, transparent calc(var(--hero-wipe) - 3%), #000 var(--hero-wipe)); }
-.direction-hero-scan { z-index: 3; opacity: 0; background: linear-gradient(255deg, transparent calc(var(--hero-wipe) - 2.2%), rgb(183 100 50 / .85) calc(var(--hero-wipe) - .5%), rgb(250 214 176) var(--hero-wipe), rgb(183 100 50 / .85) calc(var(--hero-wipe) + .5%), transparent calc(var(--hero-wipe) + 2.2%)); }
+.direction-hero-veil, .direction-hero-scan, .dhs-veil, .dhs-scan { position: absolute; inset: 0; pointer-events: none; }
+.direction-hero-veil { z-index: 1; }
+.direction-hero-scan { z-index: 3; }
+:is(.direction-hero-veil, .dhs-veil) { background-color: inherit; mask-image: linear-gradient(255deg, transparent calc(var(--hero-wipe) - 3%), #000 var(--hero-wipe)); }
+:is(.direction-hero-scan, .dhs-scan) { opacity: 0; background: linear-gradient(255deg, transparent calc(var(--hero-wipe) - 2.2%), rgb(183 100 50 / .85) calc(var(--hero-wipe) - .5%), rgb(250 214 176) var(--hero-wipe), rgb(183 100 50 / .85) calc(var(--hero-wipe) + .5%), transparent calc(var(--hero-wipe) + 2.2%)); }
 .service-subhero-media .direction-hero-trace { z-index: 2; pointer-events: none; filter: invert(1) hue-rotate(180deg); }
 html[data-daylight="a"][data-theme="light"] .service-subhero.phone-hero .service-subhero-media .direction-hero-trace { filter: none; }
 .service-subhero-media[data-hero-play] .direction-hero-veil { display: block; }
 .service-subhero-media[data-hero-run] :is(.direction-hero-scan, .direction-hero-trace) { display: block; }
 .service-subhero-media[data-hero-run] .direction-hero-veil { animation: hero-wipe var(--site-for-hero-scan) var(--ease-plot) var(--site-at-hero-scan) both, hero-gone var(--site-for-hero-veil) linear var(--site-at-hero-veil) both; }
 .service-subhero-media[data-hero-run] .direction-hero-scan { animation: hero-wipe var(--site-for-hero-scan) var(--ease-plot) var(--site-at-hero-scan) both, hero-scan-glow var(--site-for-hero-scan) linear var(--site-at-hero-scan) both; }
+/* The zoom moves the photo's box (its top rises ~13 px on a phone): never a scroll anchor, or a reload mid-intro (Chrome restores
+   by the anchor's offset) lands that much down the page — consent-pending-hero.spec, 375 × 667 */
+.service-subhero-media :is(.direction-hero-image, .direction-hero-trace), .directions-subhero :is(.directions-hero-sequence-image, .dhs-trace) { overflow-anchor: none; }
 .service-subhero-media[data-hero-run] :is(.direction-hero-image, .direction-hero-trace) { transform-origin: 70% 55%; animation: hero-settle var(--site-for-hero-settle) var(--ease-premium) var(--site-at-hero-settle) both; }
 .service-subhero-media[data-hero-run] .direction-hero-trace { animation: hero-settle var(--site-for-hero-settle) var(--ease-premium) var(--site-at-hero-settle) both, hero-gone var(--site-for-hero-trace) ease var(--site-at-hero-trace) both; }
 @media (max-width: 760px) { .service-subhero-media[data-hero-run] :is(.direction-hero-image, .direction-hero-trace) { transform-origin: 60% 30%; } }
@@ -922,6 +933,28 @@ html[data-daylight="a"][data-theme="light"] .service-subhero.phone-hero .service
 @keyframes hero-settle { from { transform: scale(1.06); } to { transform: none; } }
 @keyframes hero-gone { to { opacity: 0; visibility: hidden; } }
 @media (prefers-reduced-motion: reduce) { .service-subhero-media :is(.direction-hero-veil, .direction-hero-scan, .direction-hero-trace) { display: none; } }
+/* The same on /napryamky (owner, 20.11: «так само застосуємо»): each slide of the sequence draws, then the copper edge
+   leaves its photo behind — the first as the hero's first view (DirectionsHeroImageSequence's script: data-hero-play
+   before the first paint, data-hero-run when the drawing is in), every next one on its turn, in the first round of the
+   sequence only (data-hero-turn: the paper comes over the slide going out, the slides swap under it). The layers sit in
+   the hero itself, after the slides and before the overlay (z-index 0 in that order), so the overlay and copy stay on top. */
+.directions-subhero :is(.dhs-veil, .dhs-scan, .dhs-trace) { display: none; }
+.dhs-veil, .dhs-scan { z-index: 0; }
+.directions-subhero .dhs-trace { pointer-events: none; filter: invert(1) hue-rotate(180deg); }
+html[data-daylight="a"][data-theme="light"] .directions-page .directions-subhero img.dhs-trace { filter: none; }
+.directions-subhero[data-hero-play] .dhs-veil { display: block; }
+.directions-subhero[data-hero-run] :is(.dhs-scan, .dhs-trace) { display: block; }
+.directions-subhero[data-hero-run] .dhs-veil { animation: hero-wipe var(--site-for-hero-scan) var(--ease-plot) var(--site-at-hero-scan) both, hero-gone var(--site-for-hero-veil) linear var(--site-at-hero-veil) both; }
+.directions-subhero[data-hero-run][data-hero-turn] .dhs-veil { animation: hero-veil-in var(--site-for-hero-veil-in) linear both, hero-wipe var(--site-for-hero-scan) var(--ease-plot) var(--site-at-hero-scan) both, hero-gone var(--site-for-hero-veil) linear var(--site-at-hero-veil) both; }
+.directions-subhero[data-hero-run] .dhs-scan { animation: hero-wipe var(--site-for-hero-scan) var(--ease-plot) var(--site-at-hero-scan) both, hero-scan-glow var(--site-for-hero-scan) linear var(--site-at-hero-scan) both; }
+/* (two rules, not one :is() — the slide's two classes would outweigh the drawing's own rule and keep its lines) */
+.directions-subhero[data-hero-run] .directions-hero-sequence-image.is-active { transform-origin: 70% 55%; animation: hero-settle var(--site-for-hero-settle) var(--ease-premium) var(--site-at-hero-settle) both; }
+.directions-subhero[data-hero-run] .dhs-trace { transform-origin: 70% 55%; animation: hero-settle var(--site-for-hero-settle) var(--ease-premium) var(--site-at-hero-settle) both, hero-gone var(--site-for-hero-trace) ease var(--site-at-hero-trace) both; }
+/* a drawn turn swaps the slides under the paper: quickly, once the paper is over them (the inline 2 s cross-fade is the
+   sequence's own, so only !important can shorten it for this one turn) */
+.directions-subhero[data-hero-turn] .directions-hero-sequence-image { transition-duration: var(--site-for-hero-swap) !important; transition-delay: var(--site-at-hero-swap); }
+@keyframes hero-veil-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .directions-subhero :is(.dhs-veil, .dhs-scan, .dhs-trace) { display: none; } }
 .service-subhero-content { position: relative; z-index: 2; padding-top: var(--hero-pad-top); padding-bottom: var(--hero-pad-bottom); }
 .service-subhero-content h1 { max-width: 1040px; }
 .service-subhero-content .service-subhero-lead { max-width: 650px; margin: var(--hero-gap-lead) 0 0; color: rgba(255,255,255,.7); font-size: var(--hero-lead); line-height: 1.75; }
@@ -1307,7 +1340,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
     --compact-hero-header-edge: calc(var(--header-h) + var(--phone-hero-safe-top));
   }
   body .service-subhero-media { top: 0; }
-  body .directions-page .directions-hero-sequence-image { top: 0; height: 100%; }
+  body .directions-page :is(.directions-hero-sequence-image, .dhs-trace) { top: 0; height: 100%; }
   :is(.service-subhero-overlay, .directions-subhero .subhero-overlay, .proc-hero-shade) {
     mask-image: linear-gradient(180deg, transparent calc(var(--compact-hero-header-edge) - 24px), #000 var(--compact-hero-header-edge));
   }
@@ -1442,7 +1475,7 @@ body:has(> .cookie-banner) > footer { padding-bottom: var(--cookie-banner-cleara
   .subhero, .service-subhero { min-height: 660px; height: auto; }
   .service-subhero-media { top: 77px; } /* under the phone header */
   .subhero-grid { background-size: 46px 46px; }
-  .directions-hero-sequence-image { object-position: var(--directions-hero-image-position-mobile, center 60%); }
+  :is(.directions-hero-sequence-image, .dhs-trace) { object-position: var(--directions-hero-image-position-mobile, center 60%); }
   .subhero-layout { grid-template-columns: 1fr; gap: 42px; padding-top: 148px; padding-bottom: 56px; }
   .directions-subhero .subhero-layout { padding-bottom: 74px; }
   .directions-hero-actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 28px; }

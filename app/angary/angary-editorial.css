@@ -128,7 +128,7 @@
   .angary-real-sheet .sheet-stamp .sheet-cell-note + .sheet-cell { border-left: 0; }
   /* A phone crops to 4:3 at HOME's point, the gable end with its gates */
   .angary-real-sheet .angary-real-media { aspect-ratio: 4 / 3; }
-  .angary-real-media img { object-position: 86% 55%; }
+  .angary-real-media img, .angary-real-sheet .sheet-trace { object-position: 86% 55%; } /* the drawing (DrawingSheet `trace`) crops as the photo */
   .angary-real-facts h2 { font-size: var(--type-h2-minor); }
   .angary-real .hv2-scope-chips { margin-top: 22px; }
   .angary-real .hv2-scope-chips li { gap: 10px; padding: 12px 10px 10px; }

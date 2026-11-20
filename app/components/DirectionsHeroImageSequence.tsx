@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { directionsHeroSequenceAssets } from '../data/directionsHeroSequenceManifest';
+import { directionsSequenceTraces, type SequenceTrace } from '../data/directionHeroTraceManifest';
 import { directions } from '../data/directions';
 import { readPreference, subscribeTheme } from '../lib/theme';
 import { HERO_THEME_SCRIPT, darkMedia } from '../lib/heroThemeSources';
@@ -17,6 +18,22 @@ const PORTRAIT_SIZES = '100vw';
 const PHONE = '(max-width: 760px)';
 const PORTRAIT_TABLET = '(min-width: 761px) and (max-width: 1050px) and (orientation: portrait)';
 const pad = (value: number) => String(value).padStart(2, '0');
+
+// Each slide draws itself, then its photo is left behind a copper edge (owner, 20.11: «так само застосуємо» — the
+// direction heroes' trace, «2 · Скан»; styles: «Hero trace» in globals.css). Once a session, in the sequence's first
+// round, with motion allowed. Which drawing a slide gets is read from the file its photo actually shows: the theme
+// (daylight or blue hour) and the crop (landscape, a tablet's portrait, the phone's 3 : 2 window).
+const TRACE_SESSION_KEY = 'rubikon-hero-trace:directions-sequence';
+function cropOf(photoSrc: string): keyof SequenceTrace {
+  if (photoSrc.includes('/mobile-directions-')) return 'mobile';
+  return photoSrc.includes('-portrait-') ? 'portrait' : 'landscape';
+}
+const traceOf = (traces: SequenceTrace | undefined, photoSrc: string) => traces?.[cropOf(photoSrc)];
+const tracesOf = (id: string, photoSrc: string) => directionsSequenceTraces[`${/-blue-hour-/.test(photoSrc) ? 'dark' : 'daylight'}/${id}`];
+// The first slide draws as the hero's first view: the script runs before the first paint, so the paper covers the hero
+// while its photo comes in (as DirectionHeroImage's). No photo within 2.5 s, or no drawing within .9 s after it: the
+// paper goes and the hero is as before. Its drawings ride on the trace's data-traces, by theme.
+const SEQUENCE_TRACE_SCRIPT = `(function(s){var t=s.querySelector('.dhs-trace'),k='${TRACE_SESSION_KEY}',t0=Date.now(),run=0;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){return}if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;s.setAttribute('data-hero-seq','');s.setAttribute('data-hero-play','');var stop=function(){if(!run)s.removeAttribute('data-hero-play')};(function wait(){var p=s.querySelector('.directions-hero-sequence-image'),c,m;if(Date.now()-t0>2500)return stop();if(!p||!p.complete||!p.naturalWidth)return setTimeout(wait,50);c=p.currentSrc;m=JSON.parse(t.getAttribute('data-traces'))[/-blue-hour-/.test(c)?'dark':'daylight'];t.onload=function(){if(s.hasAttribute('data-hero-play')){run=1;s.setAttribute('data-hero-run','')}};t.onerror=stop;setTimeout(stop,900);t.src=m[/mobile-directions-/.test(c)?'mobile':/-portrait-/.test(c)?'portrait':'landscape']})()})(document.currentScript.parentNode)`;
 
 /** The slide order follows the five direction records. */
 function directionTitle(id: string) {
@@ -49,6 +66,78 @@ export function DirectionsHeroImageSequence() {
   // bar restarts with every slide and every resume
   const [paused, setPaused] = useState(false);
   const [resumes, setResumes] = useState(0);
+  // The slides' drawings: whether they play in this view, the slides drawn, and each next slide's drawing loaded ahead
+  // of its turn (only a drawing already in plays — a turn never waits for one)
+  const traceRef = useRef<HTMLImageElement>(null);
+  const drawing = useRef({ allowed: false, drawn: new Set<number>([0]), ready: new Map<number, HTMLImageElement>(), shown: 0 });
+
+  useEffect(() => {
+    const hero = traceRef.current?.closest<HTMLElement>('.directions-subhero');
+    if (!hero || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // The first view's script has claimed this session's drawing; without it (a page reached in the app), claim it here
+    let allowed = hero.hasAttribute('data-hero-seq');
+    if (!allowed) {
+      try {
+        allowed = !sessionStorage.getItem(TRACE_SESSION_KEY);
+        if (allowed) sessionStorage.setItem(TRACE_SESSION_KEY, '1');
+      } catch { /* storage unavailable: no drawing */ }
+    }
+    drawing.current.allowed = allowed;
+  }, []);
+
+  // A theme change replaces the photos: the drawings loaded ahead were for the old ones (before the effect below reads them)
+  useEffect(() => {
+    drawing.current.ready.clear();
+  }, [preference]);
+
+  // The next slide's drawing, once its photo is in (the drawing of the file that photo shows)
+  useEffect(() => {
+    const state = drawing.current;
+    const next = (activeIndex + 1) % directionsHeroSequenceAssets.length;
+    const photo = traceRef.current?.closest<HTMLElement>('.directions-subhero')?.querySelectorAll<HTMLImageElement>('.directions-hero-sequence-image')[next];
+    if (!state.allowed || !shouldLoadMedia || !photo || state.drawn.has(next) || state.ready.has(next)) return;
+    const arm = () => {
+      const src = traceOf(tracesOf(directionsHeroSequenceAssets[next].id, photo.currentSrc), photo.currentSrc);
+      if (!photo.naturalWidth || !src) return;
+      const ahead = new Image();
+      ahead.src = src;
+      state.ready.set(next, ahead);
+    };
+    if (photo.complete) {
+      arm();
+      return;
+    }
+    photo.addEventListener('load', arm, { once: true });
+    return () => photo.removeEventListener('load', arm);
+  }, [activeIndex, shouldLoadMedia, maxUnlockedIndex, preference]);
+
+  // A turn: the slide going out ends whatever the last one drew; a slide not drawn yet, with its drawing in, draws. Set
+  // before the paint that swaps the slides, so the swap is the drawn turn's quick one under the paper.
+  useLayoutEffect(() => {
+    const state = drawing.current;
+    const hero = traceRef.current?.closest<HTMLElement>('.directions-subhero');
+    const trace = traceRef.current;
+    // the first slide is the first view's (the script's); a turn is a change of slide
+    if (state.shown === activeIndex || !hero || !trace) return;
+    state.shown = activeIndex;
+    hero.removeAttribute('data-hero-run');
+    hero.removeAttribute('data-hero-play');
+    hero.removeAttribute('data-hero-turn');
+    const ahead = state.ready.get(activeIndex);
+    if (!state.allowed || state.drawn.has(activeIndex) || !ahead?.complete || !ahead.naturalWidth) return;
+    state.drawn.add(activeIndex);
+    hero.setAttribute('data-hero-turn', '');
+    // the drawing's animations start over on the next data-hero-run, so this one must first be seen without it
+    void hero.offsetWidth;
+    const drop = window.setTimeout(() => hero.removeAttribute('data-hero-turn'), 900);
+    trace.onload = () => {
+      window.clearTimeout(drop);
+      if (!hero.hasAttribute('data-hero-turn')) return;
+      hero.setAttribute('data-hero-play', '');
+      hero.setAttribute('data-hero-run', '');
+    };
+    trace.src = ahead.src;
+  }, [activeIndex]);
 
   useEffect(() => {
     // Out of sight the slides wait (07.10): every 6 s the sequence re-rendered, cross-faded two full-screen pictures and
@@ -118,6 +207,33 @@ export function DirectionsHeroImageSequence() {
           </picture>
         );
       })}
+      {/* The slide's drawing over it, the paper of the hero's colour it draws on, and the copper edge that leaves the
+          photo behind (see SEQUENCE_TRACE_SCRIPT); the script and the turns set its source */}
+      <span className="dhs-veil" aria-hidden="true" />
+      {/* In a span as each slide is in its picture: a direct child of the hero would take .subhero-media > img's
+          position and lie off the slide */}
+      <span className="dhs-trace-frame">
+        {/* eslint-disable-next-line @next/next/no-img-element -- a 10–15 KB SVG drawing set by script, never the LCP */}
+        <img
+          ref={traceRef}
+          className="dhs-trace"
+          alt=""
+          aria-hidden="true"
+          width={directionsHeroSequenceAssets[visibleIndex].daylight.width}
+          height={directionsHeroSequenceAssets[visibleIndex].daylight.height}
+          data-traces={JSON.stringify({
+            daylight: directionsSequenceTraces[`daylight/${directionsHeroSequenceAssets[0].id}`],
+            dark: directionsSequenceTraces[`dark/${directionsHeroSequenceAssets[0].id}`],
+          })}
+          style={{
+            '--directions-hero-image-position': directionsHeroSequenceAssets[visibleIndex].focalPosition,
+            '--directions-hero-image-position-mobile': directionsHeroSequenceAssets[visibleIndex].mobileFocalPosition,
+          } as CSSProperties}
+          suppressHydrationWarning
+        />
+      </span>
+      <span className="dhs-scan" aria-hidden="true" />
+      <script dangerouslySetInnerHTML={{ __html: SEQUENCE_TRACE_SCRIPT }} />
       {shouldLoadMedia && (
         <>
           {/* Which direction the slide shows — the sequence otherwise cycles without saying what it is */}

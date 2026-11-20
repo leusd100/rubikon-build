@@ -158,7 +158,7 @@ test('/angary shows HOME\'s real hangar after the frame, with its attribution an
   const stamp = real.locator('.sheet-stamp');
   await expect(stamp).toContainText('Фото об’єкта');
   await expect(stamp).toContainText(`Реальний об’єкт. ${proof.caption}. Фото з ретушшю переднього плану.`);
-  const image = real.locator('img');
+  const image = real.locator('.sheet-image img');
   await expect(image).toHaveAttribute('alt', proof.photo.alt);
   await expect(image).toHaveAttribute('src', proof.photo.src);
   await expect(image).toHaveAttribute('loading', 'lazy');
@@ -330,7 +330,7 @@ test.describe('the real hangar on a 3× phone', () => {
   test('takes the 1536w photo for its 4 : 3 crop, as HOME does', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === 'mobile-chromium', 'the DPR case runs once');
     await page.goto('/angary', { waitUntil: 'load' });
-    const image = page.locator('#real-object img');
+    const image = page.locator('#real-object .sheet-image img');
     await image.scrollIntoViewIfNeeded();
     // 04.10: sizes said 314 px for a photo drawn ~474 px wide in the crop, and a 3× phone took the 960w
     await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).currentSrc)).toContain('hangar-retouched-1536w.webp');

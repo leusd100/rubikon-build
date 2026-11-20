@@ -81,8 +81,9 @@ for (const viewport of viewports) {
         return {
           currentSrc: image.currentSrc,
           naturalWidth: image.naturalWidth,
-          imageWidth: image.getBoundingClientRect().width,
-          heroWidth: hero.getBoundingClientRect().width,
+          // its laid-out width: a first view's intro zooms the photo for 3 s (direction-hero-trace.spec), which a box would count
+          imageWidth: image.offsetWidth,
+          heroWidth: hero.offsetWidth,
           heroHeight: hero.getBoundingClientRect().height,
           devicePixelRatio: window.devicePixelRatio,
         };
