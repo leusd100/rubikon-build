@@ -1,0 +1,115 @@
+/*
+ * Rubikon Condensed — IBM Plex Sans Condensed 3.000 (IBM Corp.), subset to the characters the site sets and renamed.
+ * The outlines, metrics, hinting and OpenType features are IBM's; only characters the site never sets are left out.
+ *
+ * Why the name: Plex is licensed under the SIL OFL 1.1 with the Reserved Font Name "Plex", and a subset is a Modified
+ * Version, which may not carry it. Until 20.11 the site served IBM's split files unmodified (npm
+ * @ibm/plex-sans-condensed@2.0.0, fonts/split/woff2) for that reason; the owner then chose the subset under a name of
+ * its own (Weight audit 20.11: 81.7 → 56.8 KB in the four files every page preloads). Built by
+ * scripts/fonts/subset_rubikon_condensed.py; provenance and checksums in ./rubikon-condensed/README.md, the licence in
+ * ./rubikon-condensed/OFL.txt.
+ *
+ * Not next/font/google: Google Fonts serves Plex Sans Condensed 1.3, which has no Cyrillic.
+ *
+ * Each weight is split three ways, as IBM split it, and a browser downloads a file only when the page draws a character
+ * in its unicode-range — each range is its file's cmap. Latin: ASCII, the punctuation and signs of a Ukrainian page and
+ * every other character in app/** that IBM's Latin1 file had, in both cases (the labels are mostly uppercase); Cyrillic:
+ * the basic block (the Ukrainian letters and the Russian ones a visitor may type) and Ґ ґ; Pi: ′ ″ ↑ ↓ ∕, as since PR #93
+ * (in practice the ↓ of HOME's «Навантаження» toggle; the site's other arrows are drawn, Arrow.tsx, and → ≈ № … fall to
+ * the fallback face, as they did with IBM's files). Every character the site sets renders pixel-identical to IBM's files.
+ * tests/unit/rubikon-condensed-font.test.ts fails when the site sets a character the faces lost.
+ *
+ * Only 500/600/700 ship: the 400 and 800 used in CSS resolve to 500 and 700, as they did with Google.
+ */
+
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-Medium-Latin.woff2') format('woff2');
+  unicode-range: U+0020-007E, U+00A0, U+00A7, U+00A9, U+00AB, U+00AD, U+00B0-00B2, U+00B7, U+00BB, U+00C7, U+00C9, U+00D7, U+00E7, U+00E9, U+2013-2014, U+2018-201A, U+201C-201E, U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2212;
+}
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-Medium-Cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491;
+}
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-Medium-Pi.woff2') format('woff2');
+  unicode-range: U+2032-2033, U+2191, U+2193, U+2215;
+}
+
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-SemiBold-Latin.woff2') format('woff2');
+  unicode-range: U+0020-007E, U+00A0, U+00A7, U+00A9, U+00AB, U+00AD, U+00B0-00B2, U+00B7, U+00BB, U+00C7, U+00C9, U+00D7, U+00E7, U+00E9, U+2013-2014, U+2018-201A, U+201C-201E, U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2212;
+}
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-SemiBold-Cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491;
+}
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-SemiBold-Pi.woff2') format('woff2');
+  unicode-range: U+2032-2033, U+2191, U+2193, U+2215;
+}
+
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-Bold-Latin.woff2') format('woff2');
+  unicode-range: U+0020-007E, U+00A0, U+00A7, U+00A9, U+00AB, U+00AD, U+00B0-00B2, U+00B7, U+00BB, U+00C7, U+00C9, U+00D7, U+00E7, U+00E9, U+2013-2014, U+2018-201A, U+201C-201E, U+2022, U+2026, U+2039-203A, U+20AC, U+2122, U+2212;
+}
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-Bold-Cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491;
+}
+@font-face {
+  font-family: 'Rubikon Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./rubikon-condensed/RubikonCondensed-Bold-Pi.woff2') format('woff2');
+  unicode-range: U+2032-2033, U+2191, U+2193, U+2215;
+}
+
+/* Metric-matched Arial for the swap period, unchanged from what next/font generated for Plex Sans Condensed
+   (ascent 1025, descent 275, UPM 1000 — identical in 1.3 and 3.000, and in this subset). */
+@font-face {
+  font-family: 'Rubikon Condensed Fallback';
+  src: local("Arial");
+  ascent-override: 112.27%;
+  descent-override: 30.12%;
+  line-gap-override: 0.00%;
+  size-adjust: 91.30%;
+}
+
+:root {
+  /* Arial first (macOS, iOS, Windows), then the Linux and Android faces in app/fonts/fallback-metrics.css. */
+  --font-condensed: 'Rubikon Condensed', 'Rubikon Condensed Fallback', 'Rubikon Condensed Fallback Arial-metric',
+    'Rubikon Condensed Fallback Roboto', 'Rubikon Condensed Fallback DejaVu';
+}
