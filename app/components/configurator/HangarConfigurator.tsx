@@ -57,6 +57,11 @@ const IN_BLOCK_JUMPS = '#configurator a[href="#hc-stamp"], #hc-stamp a[href="#in
  * its height not yet given back) let scroll anchoring lift the page by that height mid-fling, and the sheet let go again
  * at once (07.10: 12 of 30 fast flings).
  */
+/** How long without a scroll the page counts as at rest, for the mini drawing to follow the lines either way (19.11) */
+const STILL_MS = 160;
+/** How far the page must go back against its way for the way to turn, px: past a fling's settling (20.11) */
+const TURN_PX = 8;
+
 function useMiniPreview(enabled: boolean) {
   const layoutRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -79,6 +84,36 @@ function useMiniPreview(enabled: boolean) {
     let reach: IntersectionObserver | undefined;
     let leave: IntersectionObserver | undefined;
     let frame = 0;
+    // Which way the page is moving (20.11, owner's iPhone recording: on a fling back up the sheet went mini ↔ whole
+    // three times in a row, not reproduced in Chrome or desktop WebKit). The lines are a pixel apart, and anything that
+    // moves the controls' top across them mid-scroll — the sheet's own change, Safari's toolbar, a fling settling a few
+    // px back, with no scroll anchoring in Safari to steady the page — turned the sheet back. So the sheet turns mini only
+    // while the page moves down and whole only while it moves up, a way counting once the page has gone TURN_PX in it;
+    // at rest (STILL_MS without a scroll) either way, as the lines say. Read from the scroll position alone: no layout
+    // is forced.
+    let moving: 'down' | 'up' | null = null;
+    // The farthest the page went the way it is moving (where it was at rest, while at rest)
+    let turn = window.scrollY;
+    let still = 0;
+    const scrolled = () => {
+      const y = window.scrollY;
+      const ahead = moving === 'up' ? turn - y : y - turn;
+      if (moving === null) {
+        if (y !== turn) moving = y > turn ? 'down' : 'up';
+        turn = y;
+      } else if (ahead > 0) turn = y;
+      else if (-ahead >= TURN_PX) {
+        moving = moving === 'up' ? 'down' : 'up';
+        turn = y;
+      }
+      window.clearTimeout(still);
+      still = window.setTimeout(() => {
+        moving = null;
+        turn = window.scrollY;
+        frame ||= window.requestAnimationFrame(settle);
+      }, STILL_MS);
+    };
+    window.addEventListener('scroll', scrolled, { passive: true });
     // Calls back with whether the controls' top is at or under `at` px from the top of the screen, whenever that changes
     const watchLine = (at: number, onChange: (under: boolean) => void) => {
       const observer = new IntersectionObserver((entries) => {
@@ -147,8 +182,8 @@ function useMiniPreview(enabled: boolean) {
     const settle = () => {
       frame = 0;
       if (!phone.matches) return;
-      if (!held() && !underReach) hold();
-      else if (held() && underLetGo) release();
+      if (!held() && !underReach && moving !== 'up') hold();
+      else if (held() && underLetGo && moving !== 'down') release();
     };
     // Whenever the sheet's size changes — the step, the readout, a fold, a 3D view, the fonts — and once on observing.
     // A portrait tablet's sheet sticks whole: its height is all the layout needs.
@@ -191,6 +226,8 @@ function useMiniPreview(enabled: boolean) {
     return () => {
       phone.removeEventListener('change', update);
       tablet.removeEventListener('change', update);
+      window.removeEventListener('scroll', scrolled);
+      window.clearTimeout(still);
       resized.disconnect();
       unwatch();
       window.cancelAnimationFrame(frame);

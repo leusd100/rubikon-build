@@ -294,6 +294,41 @@ test('on a phone the mini drawing reads its sizes in one readout, and nothing un
   await expect(readout).toBeHidden();
 });
 
+// 20.11, the owner's iPhone recording: scrolled back up, the sheet went mini ↔ whole three times before it stayed whole.
+// Not reproduced in Chrome or desktop WebKit as they are, so the test makes the page as an iPhone's can be mid-scroll: no
+// scroll anchoring (Safari has none), the held sheet's layout off by a few px (as a toolbar or a fling's settling moves
+// it), and the page going a few px back now and then. Scrolled up through the let-go, the sheet turns whole once.
+test('on a phone the mini drawing lets go once on the way back up, whatever moves under it mid-scroll', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit mobile viewport runs once');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openHangarPage(page);
+  const layout = page.locator('#configurator .hc-layout');
+  await bringSheetIntoView(page);
+  await scrollToMiniHold(page, 120);
+  await page.addStyleTag({ content: `
+    html, body { overflow-anchor: none !important; }
+    .hc-layout[data-shifted][data-configuring] .hc-preview-surface.hc-preview-sheet { margin-bottom: calc(var(--hc-mini-give, 0px) + 12px) !important; }
+  ` });
+  const turns = await layout.evaluate(async (element: HTMLElement) => {
+    const states: boolean[] = [];
+    const watch = new MutationObserver(() => states.push('configuring' in element.dataset));
+    watch.observe(element, { attributes: true, attributeFilter: ['data-configuring'] });
+    const frames = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    element.dataset.shifted = '';
+    for (let step = 0; step < 40; step += 1) {
+      window.scrollBy({ top: step % 3 === 2 ? 4 : -16, behavior: 'instant' });
+      await frames();
+    }
+    delete element.dataset.shifted;
+    await new Promise((done) => setTimeout(done, 400));
+    watch.disconnect();
+    return states;
+  });
+  expect(turns).toEqual([false]);
+  await expect(layout).not.toHaveAttribute('data-configuring', '');
+});
+
 test('on a phone the mini drawing folds to its sizes’ line and back, and says «≈» while they are an orientation', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit mobile viewport runs once');
   await page.setViewportSize({ width: 390, height: 844 });
