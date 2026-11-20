@@ -22,7 +22,7 @@ describe('step header values (03.10; steps 07.10)', () => {
       // the whole list unless the visitor narrows it (scopeMode, 07.10)
       scope: 'Комплекс робіт',
       // «одні ворота», not «1 ворота» (04.10)
-      openings: 'одні ворота · без дверей',
+      openings: 'двоє воріт · одні двері',
       space: 'Ще не знаю',
       project: 'Ще не вказано',
     });
@@ -55,7 +55,7 @@ describe('step header values (03.10; steps 07.10)', () => {
     const frameOnly = valuesFor({ scopeMode: 'partial', scope: ['frame'] });
     expect(frameOnly.envelope).toBe('Поза обсягом робіт');
     expect(frameOnly.scope).toBe('1 з 4 робіт');
-    expect(valuesFor({ gates: 0 }).openings).toBe('без воріт · без дверей');
+    expect(valuesFor({ gates: 0, doors: 0 }).openings).toBe('без воріт · без дверей');
   });
 
   it('marks sizes not known yet as an orientation', () => {

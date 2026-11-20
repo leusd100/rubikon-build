@@ -54,7 +54,8 @@ describe('cross-renderer parity — technical vs 3D', () => {
   });
 
   it.each([0, 1, 2] as const)('agrees on opening geometry for %d gate(s)', (gates) => {
-    const domain = domainFor({ gates });
+    // the gates alone: the example has a door since 19.11, a hole of its own
+    const domain = domainFor({ gates, doors: 0 });
     const technical = buildTechnicalScene(domain);
     const three = buildThreeScene(domain);
 
@@ -190,7 +191,8 @@ describe('buildThreeScene', () => {
     // Real bug, not a hypothetical: caught live on the running preview (both this renderer and
     // SVG's HangarPreview.tsx independently had `gates > 0` alone as the trigger), a gate stayed
     // on screen after switching walls out of scope. Fixed identically in both places.
-    const noGates = buildThreeScene(domainFor({ gates: 0, scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] }));
+    // no gates and no door: the example has a door since 19.11, and it counts as an opening here
+    const noGates = buildThreeScene(domainFor({ gates: 0, doors: 0, scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] }));
     const gatesNoWalls = buildThreeScene(domainFor({ gates: 2, scopeMode: 'partial', scope: ['foundation', 'frame', 'roof'] }));
     const gatesWithWalls = buildThreeScene(domainFor({ gates: 2, scopeMode: 'partial', scope: ['foundation', 'frame', 'walls', 'roof'] }));
 

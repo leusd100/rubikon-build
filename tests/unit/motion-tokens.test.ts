@@ -64,6 +64,9 @@ const INLINE: Readonly<Record<string, string>> = {
   '--parts': 'ProofDetails.tsx',
   // the hold of the tour's step, read with a fallback: app/components/home-v2/ProofContour.tsx:834
   '--hold': 'ProofContour.tsx',
+  // each member's start and run in the first view's frame plot: app/components/configurator/HangarGeneralView.tsx
+  '--gv-at': 'HangarGeneralView.tsx',
+  '--gv-dur': 'HangarGeneralView.tsx',
 };
 
 const isChoreography = (name: string) => CHOREOGRAPHY.test(name);

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { HangarDomainModel } from '../../lib/configurator/domainModel';
 import { BUILD_STAGE_ORDER, isStageReleased, type BuildStage } from '../../lib/configurator/buildUpSequence';
 import { ridgeHeightM } from '../../lib/configurator/parametricModel';
 import { overlaps, type Box } from '../angary/dimetric';
 import { generalViewGeometry, type GeneralViewFrame } from './generalViewGeometry';
+import { HINT_TEXT, HINT_TEXT_SHORT, placeHint3d, type Hint3dLayout } from './hint3d';
 import { previewDescription } from './sheetLabels';
 import { useLayerHighlight } from './useLayerHighlight';
 import './general-view.css';
@@ -24,9 +25,11 @@ import './general-view.css';
 // and the door move where the configurator places them. Insulation does not change the outside: the legend beside the
 // drawing (CladdingSection) shows it.
 //
-// The first view still builds itself (useFirstViewBuildUp), in the drawing's own way: the ground, then the outline
-// plotted, then the walls' and the roof's cladding, then the openings — the sizes are there from the start, as they
-// were.
+// The first view still builds itself (useFirstViewBuildUp), in the drawing's own way: the ground, then the whole frame
+// plotted station by station with the outline — columns, the frames' roof members, the members along the building, the
+// bracing in copper (owner, 19.11) — then the walls and the roof close over it, then the openings; the sizes are there
+// from the start, as they were. The frame and its skins exist only while the first view plays: once it has, the drawing
+// is exactly the one the server sent.
 
 const ALL_STAGES = BUILD_STAGE_ORDER.length;
 /** How long a changed choice stays copper on the drawing (10.10, owner: «що змінив — те засвітилось»): the 260 ms it
@@ -34,6 +37,33 @@ const ALL_STAGES = BUILD_STAGE_ORDER.length;
 const ANSWER_HOLD_MS = 1100;
 /** How long the hangar's lines take to run to a new size, and its cladding to come back after (general-view.css) */
 const MORPH_MS = 650;
+/** The 3D callout (hint3d.ts, 19.11): it comes this long after the first view's last stage, as the gates settle; it is
+ *  gone this long after it came (general-view.css lets it step back from 4.6 s); a phone's drawing has no leader */
+const HINT_DELAY_MS = 700;
+const HINT_GONE_MS = 5400;
+const HINT_LEADER_MIN_PX = 480;
+/** Once per page load, as the first view: away to 3D and back, the chip keeps its copper and nothing points again */
+let hintedThisLoad = false;
+/** What counts as reaching for a control (as useFirstViewBuildUp): the visitor is at the controls, the callout goes */
+const HINT_CONTROL = 'button, input, select, textarea, a, label, summary';
+const HINT_REACH = ['click', 'input', 'focusin'] as const;
+
+/** The 3D chip's box and the picture's in the drawing's px (its content box, as measureFrame lays the drawing out): the
+ *  chip stands in the picture's padding, above the drawing's box */
+function chipAndBounds(svg: SVGSVGElement): { chip: Box; bounds: Box } | null {
+  const chip = svg.parentElement?.querySelector<HTMLElement>('.hc-sheet-three');
+  if (!chip) return null;
+  const style = getComputedStyle(svg);
+  const rect = svg.getBoundingClientRect();
+  const [ox, oy] = [rect.left + (Number.parseFloat(style.paddingLeft) || 0), rect.top + (Number.parseFloat(style.paddingTop) || 0)];
+  const box = chip.getBoundingClientRect();
+  if (!box.width) return null;
+  return {
+    chip: [box.left - ox, box.top - oy, box.right - ox, box.bottom - oy],
+    bounds: [rect.left - ox, rect.top - oy, rect.right - ox, rect.bottom - oy],
+  };
+}
+
 /** Laid out for this until the first measure: a desktop sheet's drawing box */
 const FIRST_FRAME: GeneralViewFrame = { width: 640, height: 430, annotated: true, keepClear: [] };
 
@@ -83,16 +113,81 @@ export function HangarGeneralView({
   domain,
   released = ALL_STAGES,
   tools = false,
+  hint3d = false,
 }: Readonly<{
   domain: HangarDomainModel;
   /** Build stages requested so far by the first view (useFirstViewBuildUp); all of them by default */
   released?: number;
   /** The «Подивитися в 3D» chip is on the picture: the drawing keeps clear of it */
   tools?: boolean;
+  /** The first view played through: point at the 3D chip once (hint3d.ts) */
+  hint3d?: boolean;
 }>) {
   const svgRef = useRef<SVGSVGElement>(null);
   const frame = useDrawingFrame(svgRef, tools);
-  const g = useMemo(() => generalViewGeometry(domain, frame), [domain, frame]);
+  const building = released < ALL_STAGES;
+  const g = useMemo(() => generalViewGeometry(domain, frame, building), [domain, frame, building]);
+
+  // The 3D callout: placed when it comes, in the drawing as it stands then, and only where it lies on nothing
+  // placed for one drawing: `frame` and `domain` as they were — a new box (a resize, a phone's mini drawing) or a new
+  // configuration is another drawing, and the callout is not drawn on it (third review, 19.11)
+  const [hint, setHint] = useState<(Hint3dLayout & { text: string; frame: GeneralViewFrame; domain: HangarDomainModel }) | null>(null);
+  const shownHint = hint?.frame === frame && hint?.domain === domain ? hint : null;
+  const [hinted, setHinted] = useState(hintedThisLoad);
+  const placing = useRef({ g, frame });
+  const domainRef = useRef(domain);
+  useEffect(() => {
+    placing.current = { g, frame };
+    domainRef.current = domain;
+  });
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!hint3d || hintedThisLoad || !svg) return undefined;
+    let gone = 0;
+    const section = svg.closest('.hangar-configurator') ?? svg;
+    const drop = () => {
+      window.clearTimeout(come);
+      window.clearTimeout(gone);
+      setHint(null);
+    };
+    // a reach for a control before it comes or while it shows: the visitor is at the controls already
+    const reach = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest(HINT_CONTROL)) drop();
+    };
+    for (const type of HINT_REACH) section.addEventListener(type, reach, true);
+    const come = window.setTimeout(() => {
+      // spent here, not before the delay: React's development double run would otherwise spend it on the first run
+      hintedThisLoad = true;
+      setHinted(true);
+      const shown = svg.getBoundingClientRect();
+      // a sheet already scrolled away is not pointed at: nobody would see it
+      if (shown.bottom < shown.height / 2 || shown.top > window.innerHeight - shown.height / 2) return;
+      const measured = chipAndBounds(svg);
+      if (!measured) return;
+      const { g: view, frame: box } = placing.current;
+      const wide = box.width >= HINT_LEADER_MIN_PX;
+      const text = wide ? HINT_TEXT : HINT_TEXT_SHORT;
+      // the name's size as it renders, in its own type
+      const probe = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      probe.setAttribute('class', 'gv-hint-tag');
+      probe.textContent = text;
+      svg.appendChild(probe);
+      const size = { width: probe.getComputedTextLength(), height: (Number.parseFloat(getComputedStyle(probe).fontSize) || 11) * 1.2 };
+      probe.remove();
+      const layout = placeHint3d({
+        ...measured, size, keepClear: box.keepClear, meets: view.meets, sizeBoxes: view.sizeBoxes, sizeLines: view.sizeLines,
+        anchor: view.hintAnchor, withLeader: wide,
+      });
+      if (!layout) return;
+      setHint({ ...layout, text, frame: box, domain: domainRef.current });
+      gone = window.setTimeout(() => setHint(null), HINT_GONE_MS);
+    }, HINT_DELAY_MS);
+    return () => {
+      window.clearTimeout(come);
+      window.clearTimeout(gone);
+      for (const type of HINT_REACH) section.removeEventListener(type, reach, true);
+    };
+  }, [hint3d]);
   const { dimensions, envelope, scope } = domain;
   const ridgeM = ridgeHeightM(dimensions.widthM, dimensions.eaveHeightM, domain.roof.pitchDeg);
 
@@ -130,7 +225,9 @@ export function HangarGeneralView({
       viewBox={g.viewBox}
       role="img"
       aria-label={previewDescription('technical', dimensions, ridgeM)}
-      data-building={on(released < ALL_STAGES)}
+      data-building={on(building)}
+      data-hinted={on(hinted)}
+      data-hinting={on(shownHint !== null)}
       data-morph={on(morphing)}
     >
       {/* the faces the camera sees, in the field's colour */}
@@ -139,6 +236,21 @@ export function HangarGeneralView({
         <path className="gv-hatch" d={g.hatch} />
         <path className="gv-ground" d={g.ground} />
       </g>
+      {/* the first view's frame, mounted as its stage is released: each member plotted from its start, at its own time */}
+      {g.build && isStageReleased('frame', released) && (
+        <g className="gv-build" aria-hidden="true">
+          {g.build.members.map((member) => (
+            <path key={member.id} className={`gv-build-${member.kind}`} pathLength={1} d={member.d} style={{ '--gv-at': `${member.at}ms`, '--gv-dur': `${member.dur}ms` } as CSSProperties} />
+          ))}
+        </g>
+      )}
+      {/* …and the faces that close over it with the walls' and the roof's stages, in the field's colour */}
+      {g.build && (
+        <>
+          {g.build.walls && <path className="gv-stage gv-skin" data-held={held('walls')} d={g.build.walls} />}
+          {g.build.roof && <path className="gv-stage gv-skin" data-held={held('roof')} d={g.build.roof} />}
+        </>
+      )}
       {g.walls && (
         <path className="gv-stage gv-cladding" data-system={g.walls.system} data-active={on(wallsActive)} data-held={held('walls')} d={g.walls.d} />
       )}
@@ -173,6 +285,20 @@ export function HangarGeneralView({
           </g>
         ))}
       </g>
+      {shownHint && (
+        <g className="gv-hint" aria-hidden="true">
+          {shownHint.leader && (
+            <>
+              <circle className="gv-hint-mark" cx={shownHint.leader.from[0].toFixed(1)} cy={shownHint.leader.from[1].toFixed(1)} r={2.6} />
+              <path className="gv-hint-lead" pathLength={1} d={`M${shownHint.leader.from.map((v) => v.toFixed(1)).join(',')}L${shownHint.leader.to.map((v) => v.toFixed(1)).join(',')}`} />
+            </>
+          )}
+          {shownHint.connector && (
+            <path className="gv-hint-arrow" d={`M${shownHint.connector.from.map((v) => v.toFixed(1)).join(',')}L${shownHint.connector.to.map((v) => v.toFixed(1)).join(',')}m-4,-3l4,3l-4,3`} />
+          )}
+          <text className="gv-hint-tag" x={shownHint.tag.x.toFixed(1)} y={shownHint.tag.y.toFixed(1)} textAnchor={shownHint.tag.anchor}>{shownHint.text}</text>
+        </g>
+      )}
     </svg>
   );
 }

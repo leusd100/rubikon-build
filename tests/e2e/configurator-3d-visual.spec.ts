@@ -212,7 +212,7 @@ test.describe('configurator 3D visual states', () => {
 // moved. CI's Linux Chromium read litMean 107.2091 on 5612861 (all three attempts); litFrac 0.398391 is this Mac's
 // Chrome on SwiftShader, which read litMean 107.0000 there — re-pinned with the 21 configurator / FAQ baselines on the
 // owner's OK (13.10, Phase 5). Both checks are soft, so a run reports both halves at once.
-const RENDER_TONE = { litMean: 107.2091, litFrac: 0.398391 } as const;
+const RENDER_TONE = { litMean: 106.8637, litFrac: 0.398391 } as const;
 const LIT_MEAN_TOLERANCE = 0.3;
 const LIT_FRAC_TOLERANCE = 0.002;
 

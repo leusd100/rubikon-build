@@ -187,7 +187,7 @@ export type ConfiguratorState = {
 
 /**
  * The groups the visitor answered themselves (07.10). Everything else in the state is the page's example — the
- * configurator starts from 24 × 60 × 8 м, cold, profiled sheet, one gate, the whole scope — and the stamp and the lead
+ * configurator starts from 24 × 60 × 8 м, cold, profiled sheet, two gates and a door (19.11), the whole scope — and the stamp and the lead
  * must not call it «Ви обрали»: changing the width alone used to make every default the visitor's choice. A group is
  * confirmed by any change in it, or by choosing its current value again: an answer, not a difference.
  */
@@ -336,11 +336,11 @@ export const DEFAULT_CONFIGURATOR_STATE: ConfiguratorState = {
   // derived from `dimensions.width` on every render by deriveStructuralVisualization. At this
   // default 24 m width that derivation yields truss + centerSupport.
   scope: ['foundation', 'frame', 'walls', 'roof'],
-  gates: 1,
+  // Two gates for vehicles and a personnel door (owner, 19.11: the example reads as a working hangar). Still the
+  // example's, not the customer's: `confirmed` stays empty, so the request says «з прикладу» until they are answered.
+  gates: 2,
   gateType: 'standard',
-  // A personnel door is a real, common part of a hangar facade, but it is the customer's call —
-  // defaulted off so a fresh configurator claims nothing that was not chosen.
-  doors: 0,
+  doors: 1,
   // Every «Об’єкт» answer starts unanswered — «Ще не знаю», no purpose — so the defaults stay «untouched»
   objectProfile: DEFAULT_OBJECT_PROFILE,
   // Nothing answered yet: every value above is the example's

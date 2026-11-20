@@ -279,6 +279,7 @@ function DrawnView({
   domain,
   released,
   tools,
+  hint3d = false,
   onCaption,
 }: Readonly<{
   mode: Mode;
@@ -286,12 +287,14 @@ function DrawnView({
   domain: HangarDomainModel;
   released: number;
   tools: boolean;
+  /** The first view has played through and the 3D chip is on the picture: the sheet points at it once (19.11) */
+  hint3d?: boolean;
   onCaption: (caption: string) => void;
 }>) {
   if (mode === 'frame' && onSheet) return <ConfiguratorFrameView onCaption={onCaption} />;
   // /angary's sheet draws the general view in the frame drawing's language (10.10, HangarGeneralView); the research
   // screen keeps the old technical view
-  if (onSheet) return <HangarGeneralView domain={domain} released={released} tools={tools} />;
+  if (onSheet) return <HangarGeneralView domain={domain} released={released} tools={tools} hint3d={hint3d} />;
   return <HangarPreview domain={domain} released={released} />;
 }
 
@@ -454,7 +457,7 @@ export function HangarPreviewModes({
   const [toolsInsetPx, setToolsInsetPx] = useState(0);
   const modeSwitchAnchorRef = useRef<HTMLDivElement>(null);
   const drawingRef = useRef<HTMLDivElement>(null);
-  const released = useFirstViewBuildUp(drawingRef, onSheet, sheet?.untouched ?? false);
+  const { released, playedThrough } = useFirstViewBuildUp(drawingRef, onSheet, sheet?.untouched ?? false);
   // The phone's mini drawing reads its sizes in the title block, not off the drawing (configurator-sheet.css)
   const readout = useMemo(() => miniReadout(domain), [domain]);
 
@@ -547,7 +550,7 @@ export function HangarPreviewModes({
       />
     </FullscreenPreviewFrame>
   ) : (
-    <DrawnView mode={effectiveMode} onSheet={onSheet} domain={domain} released={released} tools={threeAvailable} onCaption={setFrameCaption} />
+    <DrawnView mode={effectiveMode} onSheet={onSheet} domain={domain} released={released} tools={threeAvailable} hint3d={playedThrough && threeAvailable} onCaption={setFrameCaption} />
   );
 
   // Fullscreen and secondary 3D actions — brief §10's own suggested hierarchy: mode switch stays

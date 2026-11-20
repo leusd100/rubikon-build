@@ -98,6 +98,8 @@ test.describe('hangar configurator visual states — named build states (A–F)'
   test('(E) complete shell — foundation, frame, walls and roof, no gates', async ({ page }) => {
     await openConfigurator(page);
     await setGates(page, 0);
+    // a shell with no openings, as before (F) — the example has a service door too since 19.11 (owner)
+    await page.getByRole('radiogroup', { name: 'Службові двері' }).locator('label.hc-option-card', { hasText: 'Ні' }).click();
     await expect(page.locator('.hc-preview-surface')).toHaveScreenshot('configurator-e-complete-shell.png');
   });
 

@@ -131,9 +131,10 @@ describe('buildTechnicalScene', () => {
   });
 
   it('emits exactly `gates` opening-cutout primitives', () => {
-    expect(kinds(sceneFor({ gates: 0 }), 'opening-cutout')).toHaveLength(0);
-    expect(kinds(sceneFor({ gates: 1 }), 'opening-cutout')).toHaveLength(1);
-    expect(kinds(sceneFor({ gates: 2 }), 'opening-cutout')).toHaveLength(2);
+    // the gates alone: the example has a door since 19.11, a cutout of its own
+    expect(kinds(sceneFor({ gates: 0, doors: 0 }), 'opening-cutout')).toHaveLength(0);
+    expect(kinds(sceneFor({ gates: 1, doors: 0 }), 'opening-cutout')).toHaveLength(1);
+    expect(kinds(sceneFor({ gates: 2, doors: 0 }), 'opening-cutout')).toHaveLength(2);
   });
 
   it('emits four dimension guides, with the ridge marked derived and the rest user-chosen', () => {

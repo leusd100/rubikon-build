@@ -15,6 +15,9 @@
   --gv-for-build-draw: 1.1s;
   /* a new size: the lines, the sizes and their values run to their new places, an even ease in and out */
   --gv-for-morph: .55s;
+  /* the 3D callout (19.11): its leader plotted, then it holds and steps back */
+  --gv-for-hint-plot: .7s;
+  --gv-at-hint-away: 4.6s;
 }
 
 .gv {
@@ -82,6 +85,21 @@
 }
 .hc-preview-image:is([data-build="armed"], [data-build="complete"]) .gv :is(.gv-stage, .gv-size, .gv-front, .gv-edge) { transition-property: none; }
 
+/* The first view's frame (owner, 19.11; HangarGeneralView, generalViewGeometry frameBuild): every member plotted along its
+   length from its own start, in «Каркас»'s weights — the front frame in the paper's ink and the heaviest line, the frames
+   behind and the members along the building lighter, the bracing in copper — then the walls' and the roof's faces close
+   over it in the field's colour. Mounted only while the first view plays, so nothing of it outlives it. */
+.gv-build-front { stroke: var(--gv-ink); stroke-width: calc(2.2px * var(--gv-w)); }
+.gv-build-post { stroke: var(--gv-ink-2); stroke-width: calc(1.2px * var(--gv-w)); }
+.gv-build-chord { stroke: var(--gv-ink-2); stroke-width: calc(1px * var(--gv-w)); }
+.gv-build-long { stroke: var(--gv-ink-3); stroke-width: calc(1px * var(--gv-w)); }
+.gv-build-brace { stroke: var(--color-accent); stroke-width: calc(1.1px * var(--gv-w)); }
+.gv .gv-skin { fill: var(--gv-field); stroke: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .gv-build path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gv-plot var(--gv-dur) var(--ease-plot) var(--gv-at) both; }
+}
+@keyframes gv-plot { to { stroke-dashoffset: 0; } }
+
 /* The phone's mini drawing held under the header: the picture alone, its sizes in the title block's readout — and the
    ground's line without its hatch, which on a 100 px picture was a comb under the hangar */
 @media (max-width: 760px) {
@@ -100,3 +118,20 @@
   .gv[data-morph] .gv-value { transition: transform var(--gv-for-morph) var(--ease-plot), fill var(--gv-for-return) var(--ease-standard); }
   .gv[data-morph] :is(.gv-cladding, .gv-hatch) { opacity: 0; transition: none; }
 }
+
+/* The sheet's one-time callout to its 3D chip (owner, 19.11, variant C; hint3d.ts): a copper leader from the roof, the
+   name in the drawing's letters, a short arrow to the chip — then it steps back, and the chip keeps its copper. Mounted
+   only for those seconds; reduced motion never plays the first view, so it never comes. */
+/* The name may stand in the picture's padding beside the chip, above the drawing's box: for its few seconds the drawing
+   lets it show there (the drawing itself is fitted inside its box, so nothing else reaches the padding) */
+.gv[data-hinting] { overflow: visible; }
+.gv-hint path { fill: none; stroke: var(--color-accent-on-dark); stroke-width: 1.3px; stroke-linecap: round; stroke-linejoin: round; }
+.gv-hint .gv-hint-mark { fill: var(--color-accent-on-dark); }
+.gv-hint-tag { fill: var(--color-accent-on-dark); font: var(--type-label-tech-weight) var(--type-label-tech-size)/1 var(--font-condensed), sans-serif; letter-spacing: var(--type-label-tech-track); dominant-baseline: central; }
+@media (prefers-reduced-motion: no-preference) {
+  .gv-hint .gv-hint-lead { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gv-plot var(--gv-for-hint-plot) var(--ease-plot) both; }
+  .gv-hint :is(.gv-hint-tag, .gv-hint-mark, .gv-hint-arrow) { animation: gv-hint-in var(--gv-for-value-fade) ease var(--gv-for-hint-plot) both; }
+  .gv-hint { animation: gv-hint-away var(--gv-for-fade) ease var(--gv-at-hint-away) forwards; }
+}
+@keyframes gv-hint-in { from { opacity: 0; } }
+@keyframes gv-hint-away { to { opacity: 0; } }

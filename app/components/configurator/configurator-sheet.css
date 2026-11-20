@@ -86,6 +86,8 @@
 .hc-sheet-expand::after, .hc-sheet-chip::after { position: absolute; inset: -7px 0; content: ''; }
 .hc-sheet-expand:hover, .hc-sheet-chip:hover, .hc-sheet-chip[aria-expanded="true"] { color: var(--color-dark-text); border-color: rgba(255, 255, 255, .4); }
 .hc-sheet-expand:focus-visible, .hc-sheet-chip:focus-visible { outline: 3px solid var(--color-accent-on-dark); outline-offset: 4px; } /* the outer ring, on the sheet's charcoal */
+/* once the sheet has pointed at it (19.11, HangarGeneralView data-hinted), the 3D chip keeps its copper: a way, not a tag */
+.hc-preview-image:has(> .gv[data-hinted]) .hc-sheet-three:not(:hover) { color: var(--color-dark-text); border-color: color-mix(in srgb, var(--color-accent-on-dark) 70%, transparent); }
 /* the colours, opened from their chip: a note laid on the picture under the chips, on the sheet's paper */
 .hangar-configurator-embedded .hc-preview-sheet .hc-sheet-options {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 3;
@@ -503,6 +505,19 @@
 }
 @media (max-width: 760px) {
   .hangar-configurator-embedded .hc-layout[data-configuring] .hc-preview-image > .hc-section { position: absolute; margin: 0; }
+}
+
+/* A phone's sheet has no legend (owner, 19.11: «на телефоні прибрати блок "переріз стіни та покрівлі", бо ангар виглядає
+   як дитячий»): under the drawing it took 102 px of the field and the hangar shrank to 172 px wide at 390 px. Its words
+   are in the stamp («Утеплення», «Стіни й покрівля»). The drawing — and the 3D in its place — takes the legend's room, as
+   «Каркас» already has it (--hc-frame-h above): the hangar grows to 225 px, held by the width, and the sheet keeps its
+   height from step to step (2 px off «Каркас», 22 before). The mini drawing keeps its own height. */
+@media (max-width: 760px) {
+  .hangar-configurator-embedded .hc-preview-image > .hc-section { display: none; }
+  /* …where it stood under the drawing: a sheet 700 px and wider had it as a column beside, and keeps its height */
+  @container sheet (max-width: 699px) {
+    .hangar-configurator-embedded .hc-layout:not([data-configuring]) .hc-preview-sheet :is(.hc-preview-svg, .hc-preview-canvas, .hc-preview-loading) { height: calc(var(--hc-sheet-h) + 102px); }
+  }
 }
 
 /* The overview on the configurator's sheet reads in three weights (07.10, owner: «деякі елементи виділити»): the front

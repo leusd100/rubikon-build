@@ -453,7 +453,9 @@ function withOpeningsAnswer(state: ConfiguratorState, shown: ShownOpenings, answ
  *  the choice: «0» says «без воріт» (10.10, QA). Null for a count not shown: its own change answers it. */
 function shownGatesPressed(state: ConfiguratorState, shown: ShownOpenings, option: GatesCount): ConfiguratorState | null {
   if (shown.gates !== option) return null;
-  return state.gates === option ? withConfirmed(state, 'openings') : withOpeningsAnswer(state, shown, { gates: option });
+  // always from what is shown: confirming the raw state made the example's hidden door (no room for it at 10–15 m beside
+  // two gates, 19.11) the visitor's choice. Answered openings that match give the same state as before.
+  return withOpeningsAnswer(state, shown, { gates: option });
 }
 
 /** A cold store's note under the shell (10.10): why there is no «Без утеплення», and while its warm hangar is a
@@ -589,8 +591,10 @@ export function ConfiguratorControls({ state, onChange, step, onStep: setStep, f
   // The openings as placed — held to what fits at these sizes (deriveDomainModel). The controls show these; the
   // visitor's own choice stays in the state and returns once it fits (04.10).
   const shown = { gates: domain.gates, gateType: domain.gateType, doors: domain.doors };
-  const gatesHeld = state.gates !== shown.gates || state.gateType !== shown.gateType;
-  const doorHeld = state.doors !== shown.doors;
+  // held: asked and not drawn — the example's openings are never held, they follow what fits (domainModel, 19.11)
+  const asked = domain.requestedOpenings;
+  const gatesHeld = asked.gates !== shown.gates || asked.gateType !== shown.gateType;
+  const doorHeld = asked.doors !== shown.doors;
   // what the drawing, the stamp and the lead treat as asked for: the mode's works (drawnScope), not the kept list
   const wallsInScope = domain.scope.walls;
   const heldNote = wallsInScope ? heldOpeningsNote(state, shown, gatesHeld, doorHeld) : null;

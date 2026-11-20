@@ -146,8 +146,17 @@ export function stageSpanMs(stage: BuildStage): number {
 }
 
 /** Each stage is requested when the one before it is this far built, so the five read as one motion, not five
- * separate fades — and the whole first view takes about 2.5 s (owner, 03.10) */
+ * separate fades — and the whole first view takes under 3 s (owner, 03.10: about 2.5 s; 19.11: the frame a little longer) */
 const FIRST_VIEW_HANDOVER = 0.9;
+
+/** The first view's frame stage on /angary's sheet: the whole frame plotted station by station before the walls close
+ *  over it (owner, 19.11; generalViewGeometry.ts frameBuild). Longer than the layers' own 1.4 s, so the frame reads. */
+export const FIRST_VIEW_FRAME_SPAN_MS = 1800;
+
+/** How long a stage of the first view runs: the frame's own plot, the others their layers' span */
+export function firstViewSpanMs(stage: BuildStage): number {
+  return stage === 'frame' ? FIRST_VIEW_FRAME_SPAN_MS : stageSpanMs(stage);
+}
 
 /** When each stage of the first view is requested, ms from its start, in `BUILD_STAGE_ORDER` */
 export function firstViewStageStartsMs(): number[] {
@@ -155,7 +164,7 @@ export function firstViewStageStartsMs(): number[] {
   let at = 0;
   for (const stage of BUILD_STAGE_ORDER) {
     starts.push(at);
-    at += Math.round(stageSpanMs(stage) * FIRST_VIEW_HANDOVER);
+    at += Math.round(firstViewSpanMs(stage) * FIRST_VIEW_HANDOVER);
   }
   return starts;
 }
@@ -164,7 +173,7 @@ export function firstViewStageStartsMs(): number[] {
 export function firstViewDurationMs(): number {
   const starts = firstViewStageStartsMs();
   const last = BUILD_STAGE_ORDER.length - 1;
-  return starts[last] + stageSpanMs(BUILD_STAGE_ORDER[last]);
+  return starts[last] + firstViewSpanMs(BUILD_STAGE_ORDER[last]);
 }
 
 /** Whether a stage is requested yet, `released` stages into the first view (all of them when it is not playing) */

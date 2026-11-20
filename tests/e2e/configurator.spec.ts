@@ -38,6 +38,19 @@ function classesTaken(page: Page) {
   return page.evaluate(() => [...(window as unknown as { __classesTaken: Set<string> }).__classesTaken]);
 }
 
+/** «Службові двері: Так / Ні» (10.10): one switch */
+function doorOption(page: Page, answer: 'Так' | 'Ні') {
+  return page.getByRole('radiogroup', { name: 'Службові двері' }).locator('label.hc-option-card', { hasText: answer });
+}
+
+/** One gate and no door — the example until 19.11 (two gates and a door since, owner): where a test counts gate shapes
+ *  or watches a 1 ↔ 2 change, it starts from here */
+async function oneGateNoDoor(page: Page) {
+  await doorOption(page, 'Ні').click();
+  await gateCount(page, 1).click();
+  await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(1);
+}
+
 /** «Для заїзду техніки · 5 × 5 м»: the type's size is in its name since 07.10 */
 function equipmentGate(page: Page) {
   return page.locator('label.hc-option-card', { has: page.locator('input[name="hc-gate-type"]'), hasText: 'Для заїзду техніки' });
@@ -147,7 +160,7 @@ test.describe('hangar configurator POC', () => {
     await openControlGroup(page, 'openings');
     await equipmentGate(page).click();
     await expect(equipmentGate(page).locator('input')).toBeChecked();
-    await expect(page.locator('.hc-summary-facts')).toContainText('Одні для заїзду техніки');
+    await expect(page.locator('.hc-summary-facts')).toContainText('Двоє для заїзду техніки');
 
     await openThree(page);
     await backToDrawing(page);
@@ -155,7 +168,7 @@ test.describe('hangar configurator POC', () => {
     await expect(page.locator('.hc-preview-svg')).toBeVisible();
     await expect(equipmentGate(page)).toBeVisible();
     await expect(equipmentGate(page).locator('input')).toBeChecked();
-    await expect(page.locator('.hc-summary-facts')).toContainText('Одні для заїзду техніки');
+    await expect(page.locator('.hc-summary-facts')).toContainText('Двоє для заїзду техніки');
   });
 
   // Reported bug: the dimension boxes clamped on every keystroke, so clearing one produced
@@ -291,7 +304,7 @@ test.describe('hangar configurator POC', () => {
 
     // Phase 3F.1: the summary now carries the gate's own real, fixed size alongside count/type
     // (brief §D), not just a bare count — counted «одні / двоє» since 04.10.
-    await expect(page.locator('.hc-preview-svg .hc-gate')).toHaveCount(1);
+    await oneGateNoDoor(page);
     await expect(page.locator('.hc-summary-facts')).toContainText('Одні стандартні, 4 × 4 м');
 
     await gateCount(page, 2).click();
@@ -571,8 +584,9 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
 
   test('gates replay on the 0↔some transition, never on a 1↔2 count change', async ({ page }) => {
     await openConfigurator(page);
-    await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
     await openControlGroup(page, 'openings');
+    await oneGateNoDoor(page);
+    await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
 
     // 1 → 2 gates: never touches the gate layer's phase. The lifecycle answers in the commit's effects: 50 ms at 60 Hz
     await recordClasses(page, '.hc-gate');
@@ -610,7 +624,8 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     await openConfigurator(page);
     await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
-    await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
+    // the first opening: the example has two gates and a door since 19.11
+    await expect(page.locator('.hc-gate').first()).toHaveAttribute('class', /hc-phase-visible/);
 
     await openControlGroup(page, 'dimensions');
     const widthInput = page.locator('#hc-dimension-width');
@@ -620,7 +635,7 @@ test.describe('hangar configurator POC — build-up lifecycle (Phase 2B)', () =>
     await expect(page.locator('.hc-preview-svg')).toContainText('40 м');
     await expect(page.locator('.hc-front polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
     await expect(page.locator('.hc-top polygon').first()).toHaveAttribute('class', /hc-phase-visible/);
-    await expect(page.locator('.hc-gate')).toHaveAttribute('class', /hc-phase-visible/);
+    await expect(page.locator('.hc-gate').first()).toHaveAttribute('class', /hc-phase-visible/);
   });
 
   test('reduced motion resolves walls/roof/gates immediately too', async ({ page }) => {

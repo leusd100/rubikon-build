@@ -5,7 +5,7 @@ import { FOUNDATION_TYPE_LABELS, INTERNAL_SUPPORTS_LABELS, SCOPE_MODE_LABELS, SC
 
 // The configurator's control groups in their order, and the one-line value each group's phone header shows (03.10): on
 // a phone the groups fold into an accordion, and a folded group still says what is set in it — «24 × 60 × 8 м»,
-// «одні ворота · без дверей» — so the visitor does not have to open it to know.
+// «двоє воріт · одні двері» — so the visitor does not have to open it to know.
 
 // 07.10: «Об’єкт» is split by where each answer matters — what the hangar is for and where, first («Задача»); the
 // lifting equipment with the columns inside («Простір усередині», on «Каркас»); the project with the scope, last.

@@ -289,7 +289,8 @@ describe('openings', () => {
   it('stay inside the front face — on it, within its width, and below the eave', () => {
     for (const gates of [1, 2] as const) {
       for (const width of [W.min, 24, W.max]) {
-        const m = modelFor({ width }, { gates });
+        // the gates alone: the example has a door since 19.11
+        const m = modelFor({ width }, { gates, doors: 0 });
         expect(m.openings).toHaveLength(gates);
 
         for (const opening of m.openings) {
@@ -311,7 +312,7 @@ describe('openings', () => {
   });
 
   it('produces no openings when the configuration has no gates', () => {
-    expect(modelFor({}, { gates: 0 }).openings).toHaveLength(0);
+    expect(modelFor({}, { gates: 0, doors: 0 }).openings).toHaveLength(0);
   });
 });
 

@@ -3,7 +3,9 @@ import {
   BUILD_LAYER_ORDER,
   BUILD_STAGE_ORDER,
   buildLayerForPrimitive,
+  FIRST_VIEW_FRAME_SPAN_MS,
   firstViewDurationMs,
+  firstViewSpanMs,
   firstViewStageStartsMs,
   isStageReleased,
   layerStartOffsetMs,
@@ -106,13 +108,20 @@ describe('the first view (/angary, 03.10)', () => {
     for (let index = 1; index < starts.length; index += 1) {
       const previous = BUILD_STAGE_ORDER[index - 1];
       expect(starts[index]).toBeGreaterThan(starts[index - 1]);
-      expect(starts[index]).toBeLessThan(starts[index - 1] + stageSpanMs(previous));
+      // the first view's own spans: its frame stage plots the whole frame (19.11)
+      expect(starts[index]).toBeLessThan(starts[index - 1] + firstViewSpanMs(previous));
     }
   });
 
-  it('takes about two and a half seconds, whatever the hangar', () => {
+  it('takes under three seconds, whatever the hangar', () => {
     expect(firstViewDurationMs()).toBeGreaterThanOrEqual(2000);
     expect(firstViewDurationMs()).toBeLessThanOrEqual(3000);
+  });
+
+  it('gives the first view\'s frame stage more time than the layers\' own sequence, so the whole frame is seen', () => {
+    expect(firstViewSpanMs('frame')).toBe(FIRST_VIEW_FRAME_SPAN_MS);
+    expect(FIRST_VIEW_FRAME_SPAN_MS).toBeGreaterThan(stageSpanMs('frame'));
+    for (const stage of ['foundation', 'walls', 'roof', 'gates'] as const) expect(firstViewSpanMs(stage)).toBe(stageSpanMs(stage));
   });
 
   it('counts the whole columns → rafters → purlins sequence as the frame stage', () => {

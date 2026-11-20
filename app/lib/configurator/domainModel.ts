@@ -174,6 +174,7 @@ export function deriveDomainModel(answered: ConfiguratorState): HangarDomainMode
   if (state.internalSupports === 'not-allowed') structural = { ...byWidth, scheme: 'clearSpan' };
   else if (state.internalSupports === 'allowed' && byWidth.roofStructure === 'truss') structural = { ...byWidth, scheme: 'centerSupport' };
 
+  const doorSelection = clampDoorSelection(state.doors, gateSelection.gates, gateSelection.gateType, width, structural.scheme === 'centerSupport');
   return {
     objectType: 'hangar',
     dimensions: { widthM: width, lengthM: length, eaveHeightM: height },
@@ -195,7 +196,7 @@ export function deriveDomainModel(answered: ConfiguratorState): HangarDomainMode
     ...gateSelection,
     // Door placement reads the CLAMPED gate selection, not the raw state: if a gate was just
     // dropped for not fitting, the door's legal positions change with it.
-    ...clampDoorSelection(state.doors, gateSelection.gates, gateSelection.gateType, width, structural.scheme === 'centerSupport'),
+    ...doorSelection,
     areaSqm: Math.round(width * length),
     objectProfile: { ...state.objectProfile },
     confirmed: [...state.confirmed],
@@ -204,8 +205,12 @@ export function deriveDomainModel(answered: ConfiguratorState): HangarDomainMode
     scopeMode: state.scopeMode,
     exampleTopics: exampleTopics(state),
     sizes: sizeStatuses(state),
-    // the openings as the visitor chose them: the summary says which of them the sizes leave no room for
-    requestedOpenings: { gates: state.gates, gateType: state.gateType, doors: state.doors },
+    // the openings as the visitor chose them: the summary says which of them the sizes leave no room for. The example's
+    // openings are nobody's choice: while they are still the example's they follow what fits, and nothing is «held»
+    // (19.11: the example's door does not fit beside two gates under 16 m, and the step said «Ваш вибір повернеться»)
+    requestedOpenings: exampleTopics(state).includes('openings')
+      ? { gates: gateSelection.gates, gateType: gateSelection.gateType, doors: doorSelection.doors }
+      : { gates: state.gates, gateType: state.gateType, doors: state.doors },
   };
 }
 

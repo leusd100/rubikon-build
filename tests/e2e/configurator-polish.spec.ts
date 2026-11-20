@@ -91,24 +91,28 @@ test('3D on a phone: no table of sizes, the sheet as tall as the drawing’s, an
   await expect(pictureOf(page).locator('.hc-preview-svg')).toBeVisible();
 });
 
-test('the cladding legend names its materials on a phone’s whole sheet, inside it, and the mini keeps the glyphs (F56)', async ({ page }, testInfo) => {
+// The cladding legend on a phone (owner, 19.11: «прибрати блок "переріз стіни та покрівлі", бо ангар виглядає як
+// дитячий» — it replaced F56's legend under the drawing, 10.10): no legend on the whole sheet nor on the mini drawing, the
+// drawing takes its room and the hangar fills it, and the materials are said in the stamp
+test('a phone’s sheet has no cladding legend: the drawing takes its room, the stamp names the materials (owner 19.11)', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chromium', 'the explicit viewports run once');
   for (const [width, height] of [[320, 568], [360, 800], [390, 844]] as const) {
     await openHangarPage(page, { width, height });
     await bringSheetIntoView(page);
     const legend = pictureOf(page).locator('.hc-section');
-    await expect(legend.locator('figcaption')).toBeVisible();
-    await expect(legend.locator('dd span')).toHaveCount(2);
-    for (const name of await legend.locator('dd span').all()) await expect(name).toBeVisible();
+    await expect(legend).toBeHidden();
+    // nothing under the drawing in the field: the drawing is the picture's whole height, and the hangar most of its width
     const field = (await pictureOf(page).boundingBox())!;
-    const box = (await legend.boundingBox())!;
-    expect(box.x + box.width, `${width}`).toBeLessThanOrEqual(field.x + field.width);
-    for (const size of await fontSizes(page, '#configurator .hc-section dd span')) expect(size).toBeGreaterThanOrEqual(12);
+    const drawing = (await pictureOf(page).locator('svg.gv').boundingBox())!;
+    expect(field.height - drawing.height, `${width}`).toBeLessThanOrEqual(1);
+    const hangar = (await pictureOf(page).locator('svg.gv .gv-plane').boundingBox())!;
+    expect(hangar.width / drawing.width, `${width}`).toBeGreaterThan(0.58);
+    // the materials are said in the stamp, the legend's words
+    await expect(page.locator('.hc-stamp-row .hc-summary-facts')).toContainText('Профнастил');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     if (height >= 800) {
       await scrollToMiniHold(page);
-      await expect(legend.locator('figcaption')).toBeHidden();
-      for (const name of await legend.locator('dd span').all()) await expect(name).toBeHidden();
+      await expect(legend).toBeHidden();
     }
   }
 });

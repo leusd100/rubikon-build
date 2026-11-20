@@ -136,14 +136,16 @@ test.describe('configurator attachment contract', () => {
       name: 'gate',
       edit: async (page) => {
         await openControlGroup(page, 'openings');
-        await page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^2$/ }).click();
+        // one gate: a change, the example has two since 19.11
+        await page.getByRole('radiogroup', { name: 'Ворота' }).locator('label').filter({ hasText: /^1$/ }).click();
       },
     },
     {
       name: 'personnel door',
       edit: async (page) => {
         await openControlGroup(page, 'openings');
-        await page.locator('label:has(input[name="hc-doors"][value="1"])').click();
+        // no door: a change, the example has one since 19.11
+        await page.locator('label:has(input[name="hc-doors"][value="0"])').click();
       },
     },
     // «Обсяг робіт» is «Комплекс робіт» until the visitor picks «Окремі роботи» (07.10): the works are ticked there

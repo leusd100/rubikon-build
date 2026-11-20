@@ -72,7 +72,7 @@ test('the frame drawing follows the configuration and walks a snow and a wind lo
   // the title block's capitals keep the metre a lower-case «м» (04.10)
   await expect(stamp.locator('.sheet-unit')).toHaveText('м');
   await expect(stamp.locator('.sheet-unit')).toHaveCSS('text-transform', 'none');
-  // the example's gate is drawn on the end wall, as the configurator places it
+  // the example's openings (two gates and a door since 19.11) are drawn on the end wall, as the configurator places them
   await expect(frame.locator('path.ft-opening')).toHaveCount(1);
   // nothing chosen yet: the whole frame, and the panel says what it offers
   await expect(items).toHaveText(['Ширина L', 'Ферма', 'Прогони й в’язі', 'Сніг на покрівлі', 'Вітер у торець']);
