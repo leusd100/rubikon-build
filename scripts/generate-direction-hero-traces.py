@@ -45,8 +45,14 @@ GUIDE_AT, GUIDE_FOR = 0.0, 0.7
 LINES_FROM, LINES_SPAN, LINE_FOR = 0.35, 1.25, 0.42
 
 
-def segments(image: np.ndarray, keep: int):
-    """The photo's straight edges, longest first, without the ground's clutter, each run on 3 % past its ends"""
+# On a phone the copy's overlay is nearly opaque from ~220 px down a ~844 px hero (phone-hero.css): a line wholly below
+# this share of the phone drawing would draw unseen and leave the visible part blank for its first second (review, #323)
+PHONE_VISIBLE = 0.40
+
+
+def segments(image: np.ndarray, keep: int, visible: float = 1.0):
+    """The photo's straight edges, longest first, without the ground's clutter or what lies wholly below `visible` of the
+    height, each run on 3 % past its ends"""
     h, w = image.shape[:2]
     gray = cv2.bilateralFilter(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), 7, 40, 7)
     found = np.asarray(cv2.createLineSegmentDetector(cv2.LSD_REFINE_STD).detect(gray)[0]).reshape(-1, 4)
@@ -56,7 +62,7 @@ def segments(image: np.ndarray, keep: int):
         angle = abs(math.degrees(math.atan2(y2 - y1, x2 - x1))) % 180
         flat = min(angle, 180 - angle) < 12
         low = min(y1, y2) > h * 0.70
-        if length < w * 0.03 or (low and (flat or length < w * 0.08)):
+        if length < w * 0.03 or (low and (flat or length < w * 0.08)) or min(y1, y2) > h * visible:
             continue
         kept.append((x1, y1, x2, y2, length))
     kept.sort(key=lambda s: -s[4])
@@ -103,7 +109,7 @@ def svg(w: int, h: int, segs, guide_lines) -> str:
 
 def write(name: str, image: np.ndarray, kind: str) -> str:
     h, w = image.shape[:2]
-    segs = segments(image, LINES[kind])
+    segs = segments(image, LINES[kind], PHONE_VISIBLE if kind == 'portrait' else 1.0)
     data = svg(w, h, segs, guides(segs, w)).encode()
     file = f'hero-trace-{name}.{hashlib.sha256(data).hexdigest()[:8]}.svg'
     for old in OUT.glob(f'hero-trace-{name}.*.svg'):

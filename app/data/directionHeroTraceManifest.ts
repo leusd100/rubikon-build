@@ -4,9 +4,9 @@
 export type DirectionHeroTrace = { landscape: string; portrait: string; phoneCrop?: string };
 
 export const directionHeroTraces: Record<string, DirectionHeroTrace> = {
-  'angary': { landscape: '/media-responsive/hero-trace-angary-1536w.e0421ace.svg', portrait: '/media-responsive/hero-trace-angary-portrait-784w.454577b9.svg' },
-  'zernoskhovyshcha': { landscape: '/media-responsive/hero-trace-zernoskhovyshcha-1536w.dbe4bd2d.svg', portrait: '/media-responsive/hero-trace-zernoskhovyshcha-portrait-784w.de7aff7d.svg' },
-  'metalokonstruktsii': { landscape: '/media-responsive/hero-trace-metalokonstruktsii-1536w.8f525b4f.svg', portrait: '/media-responsive/hero-trace-metalokonstruktsii-portrait-784w.b1ce1d7b.svg' },
-  'betonni-roboty': { landscape: '/media-responsive/hero-trace-betonni-roboty-1536w.a84a26d4.svg', portrait: '/media-responsive/hero-trace-betonni-roboty-portrait-784w.0c5b2920.svg' },
-  'pokrivelni-roboty': { landscape: '/media-responsive/hero-trace-pokrivelni-roboty-1536w.cb59b9d9.svg', portrait: '/media-responsive/hero-trace-pokrivelni-roboty-portrait-784w.4cf6a33b.svg', phoneCrop: '/media-responsive/hero-trace-pokrivelni-roboty-roof-mobile-784w.11a83385.svg' },
+  'angary': { landscape: '/media-responsive/hero-trace-angary-1536w.e0421ace.svg', portrait: '/media-responsive/hero-trace-angary-portrait-784w.1c1673ba.svg' },
+  'zernoskhovyshcha': { landscape: '/media-responsive/hero-trace-zernoskhovyshcha-1536w.dbe4bd2d.svg', portrait: '/media-responsive/hero-trace-zernoskhovyshcha-portrait-784w.ff9ac9d0.svg' },
+  'metalokonstruktsii': { landscape: '/media-responsive/hero-trace-metalokonstruktsii-1536w.8f525b4f.svg', portrait: '/media-responsive/hero-trace-metalokonstruktsii-portrait-784w.75eac7c3.svg' },
+  'betonni-roboty': { landscape: '/media-responsive/hero-trace-betonni-roboty-1536w.a84a26d4.svg', portrait: '/media-responsive/hero-trace-betonni-roboty-portrait-784w.f45c1393.svg' },
+  'pokrivelni-roboty': { landscape: '/media-responsive/hero-trace-pokrivelni-roboty-1536w.cb59b9d9.svg', portrait: '/media-responsive/hero-trace-pokrivelni-roboty-portrait-784w.f9f5b7e0.svg', phoneCrop: '/media-responsive/hero-trace-pokrivelni-roboty-roof-mobile-784w.32a27c45.svg' },
 };
