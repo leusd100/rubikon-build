@@ -2,6 +2,7 @@ import type { HomeProofCase } from '../../data/homeProof';
 import { DrawingSheet } from '../DrawingSheet';
 import { ScopeCells } from '../home-v2/ScopeCells';
 import { keepHeadingWords } from '../../lib/typography';
+import { hangarSheetTrace } from '../../data/directionHeroTraceManifest';
 
 // /angary right after «Каркас вашого ангара» (owner, 03.10): the drawing above is the visitor's frame as a scheme, this
 // is a built one as a photo — the one real hangar the site may show, HOME's proof record (app/data/homeProof.ts). Only
@@ -26,6 +27,9 @@ export function HangarRealObject({ proof }: Readonly<{ proof: HomeProofCase }>) 
         <DrawingSheet
           className="angary-real-sheet"
           imageClassName="angary-real-media"
+          // the photo's own lines draw on the sheet, then the plot turns them into the built hangar (owner, 20.11); traced
+          // from the 1536w WebP of the srcSet below, so in its 1536 × 788 frame
+          trace={{ src: hangarSheetTrace, width: 1536, height: 788 }}
           cells={[
             { tone: 'note', label: 'Об’єкт', value: <><b>Реальний об’єкт.</b> {proof.caption}. Фото з ретушшю переднього плану.</> },
             { label: 'Зображення', value: 'Фото об’єкта' },

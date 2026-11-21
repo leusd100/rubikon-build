@@ -121,7 +121,8 @@ function DirectionHero({
           honours it too; Firefox ignores it and paints as before. direction-static-hero.spec.ts stalls the HTML on purpose. */}
       <link rel="expect" href={`#${HERO_COPY_END_ID}`} blocking="render" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceData) }} />
-      <div className="service-subhero-media">
+      {/* data-hero-play / data-hero-run are set by the hero trace script before hydration (DirectionHeroImage) */}
+      <div className="service-subhero-media" suppressHydrationWarning>
         <DirectionHeroImage asset={heroImage} />
       </div>
       <div className="service-subhero-overlay" />

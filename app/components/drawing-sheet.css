@@ -16,6 +16,11 @@
   --sheet-for-replay-in: 420ms;
   --sheet-at-replay-second: 70ms;
   --sheet-at-replay-third: 140ms;
+  /* a sheet with a drawing (`trace`): the photo's lines draw on the paper first (~1.5 s, the drawing's own animation),
+     the plot starts over them, and the lines go once the plot has passed */
+  --sheet-at-plot-traced: 1.1s;
+  --sheet-at-trace-out: 1.7s;
+  --sheet-for-trace-out: 600ms;
 }
 
 .sheet {
@@ -63,6 +68,12 @@
 .sheet[data-sheet-state] .sheet-image { isolation: isolate; }
 .sheet[data-sheet-state] .sheet-cover { position: absolute; z-index: 3; inset: 0; display: block; background: var(--sheet-paper); transform-origin: bottom; }
 .sheet[data-sheet-state="on"] .sheet-cover { transform: scaleY(0); }
+
+/* The drawing (`trace`): over the paper, under the plotter line, laid as the picture is (cover, centred); graphite on
+   light paper, light on dark */
+.sheet-trace { display: none; }
+.sheet[data-sheet-trace] .sheet-trace { position: absolute; z-index: 3; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+:root[data-theme="dark"] .sheet[data-sheet-trace] .sheet-trace { filter: invert(1) hue-rotate(180deg); }
 
 /* The plotter line: rides down the picture as it is drawn in, then goes out — on a transform of a box as tall as the
    picture (its own 100 %): moving it by `top` made 25 small layout shifts per reveal (03.10) */
@@ -118,7 +129,13 @@
   .sheet-stamp[data-replay] :is(.sheet-cell, .sheet-action) { animation: sheet-in var(--sheet-for-replay-in) ease both; }
   .sheet-stamp[data-replay] .sheet-cell:nth-child(2) { animation-delay: var(--sheet-at-replay-second); }
   .sheet-stamp[data-replay] .sheet-cell:nth-child(3) { animation-delay: var(--sheet-at-replay-third); }
+  /* With a drawing: the plot waits for its lines, then they go */
+  .sheet[data-sheet-trace][data-sheet-state="on"] .sheet-cover { transition-delay: var(--sheet-at-plot-traced); }
+  .sheet[data-sheet-trace][data-sheet-state="on"] .sheet-scan { animation-delay: var(--sheet-at-plot-traced); }
+  .sheet[data-sheet-trace] .sheet-trace { animation: sheet-trace-out var(--sheet-for-trace-out) ease var(--sheet-at-trace-out) both; }
 }
+@keyframes sheet-trace-out { to { opacity: 0; visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .sheet-trace { display: none; } }
 
 @media (max-width: 760px) {
   .sheet { --sheet-pad: 10px; --sheet-gutter: 22px; }

@@ -16,7 +16,7 @@ describe('immutable asset cache policy', () => {
     expect(files.length).toBeGreaterThan(0);
 
     for (const filename of files) {
-      const filenameHash = filename.match(/\.([0-9a-f]{8})\.(?:webp|avif)$/)?.[1];
+      const filenameHash = filename.match(/\.([0-9a-f]{8})\.(?:webp|avif|svg)$/)?.[1];
       const contentHash = createHash('sha256')
         .update(readFileSync(path.join(directory, filename)))
         .digest('hex')
@@ -32,6 +32,8 @@ describe('immutable asset cache policy', () => {
     '/_next/static/_vinext_fonts/manrope-abcd1234/font-1234abcd.woff2',
     '/media-responsive/serhii-prior-hangar-480w.60d83ab6.webp',
     '/media-responsive/direction-hero-photo-variant-angary-portrait-784w.fc8f2270.avif',
+    // the hero traces (20.11): content-hashed line drawings beside the photos
+    '/media-responsive/hero-trace-angary-1536w.035f6360.svg',
   ])('recognises version-safe asset path %s', (pathname) => {
     expect(isImmutableAssetPathname(pathname)).toBe(true);
   });

@@ -1,3 +1,5 @@
+import { directionHeroTraces, type DirectionHeroTrace } from './directionHeroTraceManifest';
+
 /** A phone's window of the art at native size, 784 × 1024 (see DIRECTION_HERO_PORTRAIT_WIDTH in the generator). */
 type PortraitSources = { avif: string; webp: string };
 
@@ -8,6 +10,8 @@ export type DirectionHeroImageAsset = {
   avifSrcSet: string;
   portrait: PortraitSources;
   dark: { fallbackSrc: string; srcSet: string; avifSrcSet: string; portrait: PortraitSources };
+  /** The line drawing of this art its first view draws before the photo develops (scripts/generate-direction-hero-traces.py) */
+  trace?: DirectionHeroTrace;
   /** Optional phone-only art window; existing tablet and desktop compositions remain intact. */
   phoneCrop?: { light: PortraitSources; dark: PortraitSources; position: string };
   /** Desktop object-position (from 761 px). The y keeps the structure's top in frame: a wide window crops the art top
@@ -57,6 +61,7 @@ const blueHour = (name: string, hashes: readonly string[], avifHashes: readonly 
 
 export const directionHeroImageAssets = {
   angary: {
+    trace: directionHeroTraces['angary'],
     dark: blueHour('angary', ['71582417', '6a77e891', '02cc7516', 'c0b42098'], ['23c010de', '5abcc76b', 'e51dc977', 'c83446d7'], { avif: '16131ec7', webp: '12bde85e' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-angary-1536w.ff7e8c1a.webp',
     srcSet: responsiveSrcSet('angary', { w480: '7891bedb', w768: '78a42fed', w1200: 'c45ee5de', w1536: 'ff7e8c1a' }),
@@ -67,6 +72,7 @@ export const directionHeroImageAssets = {
     artTop: ART_TOP,
   },
   zernoskhovyshcha: {
+    trace: directionHeroTraces['zernoskhovyshcha'],
     dark: blueHour('zernoskhovyshcha', ['5a79f6ba', '2f78371a', '7ffff1ab', '9fe7da9c'], ['f79ec25f', '781dec8c', '9ca825d4', '9c0af657'], { avif: 'a1cbbcca', webp: 'd538b9fe' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-zernoskhovyshcha-1536w.90934f90.webp',
     srcSet: responsiveSrcSet('zernoskhovyshcha', {
@@ -78,6 +84,7 @@ export const directionHeroImageAssets = {
     mobileFocalPosition: '62% center',
   },
   metalokonstruktsii: {
+    trace: directionHeroTraces['metalokonstruktsii'],
     dark: blueHour('metalokonstruktsii', ['e7aed6ee', '81efe464', 'e02e6b56', 'ec750520'], ['22dbb640', '5e9f5db9', '72d5704a', 'a22f5617'], { avif: '6bd96938', webp: '3032c3f6' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-metalokonstruktsii-1536w.ec2184d1.webp',
     srcSet: responsiveSrcSet('metalokonstruktsii', { w480: '3ed1b208', w768: 'd09493a3', w1200: 'f005df53', w1536: 'ec2184d1' }),
@@ -88,6 +95,7 @@ export const directionHeroImageAssets = {
     artTop: ART_TOP,
   },
   'betonni-roboty': {
+    trace: directionHeroTraces['betonni-roboty'],
     dark: blueHour('betonni-roboty', ['0cb83a64', '45c050c5', '91423a3f', '49ecb41b'], ['4ad8a1d9', '38e2815e', '2fc3e6ea', '9a614acc'], { avif: 'f90f90fc', webp: 'fd178407' }),
     fallbackSrc: '/media-responsive/direction-hero-photo-variant-betonni-roboty-1536w.82ef0687.webp',
     srcSet: responsiveSrcSet('betonni-roboty', { w480: 'ac51425f', w768: '5b92afff', w1200: 'd89f0df8', w1536: '82ef0687' }),
@@ -97,6 +105,7 @@ export const directionHeroImageAssets = {
     mobileFocalPosition: '55% center',
   },
   'pokrivelni-roboty': {
+    trace: directionHeroTraces['pokrivelni-roboty'],
     phoneCrop: {
       light: {
         avif: '/media-responsive/direction-hero-roof-mobile-light-784w.cadd63a3.avif',

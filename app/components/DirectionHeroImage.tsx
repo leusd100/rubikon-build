@@ -12,6 +12,19 @@ const HERO_SIZES = '(max-width: 760px) and (max-height: 700px) 150svh, (max-widt
 // never shows more than that window, so every DPR receives the same pixels as from the landscape file, in half the bytes.
 const PHONE = '(max-width: 440px)';
 
+// The first view of a direction hero draws its photo in lines, then the photo develops (owner, 20.11: prototype B). The
+// script runs while the hero is parsed, before its first paint, and decides whether the intro plays at all:
+//  - once a session per hero: keyed by the drawing, not the address (two pages share one hero; grain-page.spec keeps
+//    storage free of planner words); storage refused (a private window) plays it, as on a first visit;
+//  - never with reduced motion, nor without JS: the intro is opt-in (data-hero-play), the photo is the default;
+//  - in step: the veil covers the hero at once, the drawing is fetched only when the photo is in, and the veil's own
+//    clock starts with the drawing's (data-hero-run on the drawing's load) — the SVG's animation starts when it loads,
+//    so they cannot part (review of #323: on a slow link the lines drew late over blank paper);
+//  - not on a slow link: no photo within 2.5 s and the intro is dropped, the hero as before it.
+// The photo is looked up on every check: a stored theme swaps its <picture> after hydration. A constant string that
+// reads its drawing from the img's data (CodeQL, #323).
+const HERO_TRACE_SCRIPT = "(function(m){var t=m.querySelector('.direction-hero-trace'),k='rubikon-hero-trace:'+t.getAttribute('data-landscape').split('/').pop(),t0=Date.now(),run=0;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){}if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;m.setAttribute('data-hero-play','');var stop=function(){if(!run)m.removeAttribute('data-hero-play')};(function wait(){var p=m.querySelector('.direction-hero-image');if(Date.now()-t0>2500)return stop();if(!p||!p.complete||!p.naturalWidth)return setTimeout(wait,50);t.onload=function(){if(m.hasAttribute('data-hero-play')){run=1;m.setAttribute('data-hero-run','')}};t.onerror=stop;setTimeout(stop,900);t.src=t.getAttribute(matchMedia('(max-width: 440px)').matches?'data-phone':'data-landscape')})()})(document.currentScript.parentNode)";
+
 type DirectionHeroImageProps = {
   asset: DirectionHeroImageAsset;
 };
@@ -49,9 +62,10 @@ export function DirectionHeroImage({ asset }: Readonly<DirectionHeroImageProps>)
   }, [art.fallbackSrc, theme]);
 
   return (
-    // A new image element cannot retain the previously decoded light bitmap while
-    // its dark source loads. Updating src and data-art-theme on one node could.
-    // With System the browser itself re-selects when the OS theme changes.
+    <>
+    {/* A new image element cannot retain the previously decoded light bitmap while
+        its dark source loads. Updating src and data-art-theme on one node could.
+        With System the browser itself re-selects when the OS theme changes. */}
     <picture key={`${asset.fallbackSrc}-${preference}`}>
       {!theme && <source data-dark="" media={darkMedia(PHONE)} type="image/avif" srcSet={phoneDarkArt.avif} suppressHydrationWarning />}
       {!theme && <source data-dark="" media={darkMedia(PHONE)} type="image/webp" srcSet={phoneDarkArt.webp} suppressHydrationWarning />}
@@ -79,5 +93,30 @@ export function DirectionHeroImage({ asset }: Readonly<DirectionHeroImageProps>)
         style={style}
       />
     </picture>
+    {asset.trace && (
+      <>
+        {/* The veil is the hero's own colour over the photo; the drawing lies on it in an <img> of the photo's size, fit
+            and position, so the browser lays it on the photo as it lays the photo, at every width. Both are hidden until
+            the script below opts the hero into its intro, and neither is keyed by theme: a stored theme's picture swap
+            after hydration does not replay them. The drawing has no src until the photo is in (the script picks the
+            crop by the phone query the photo's <picture> uses). CSS: globals.css «Hero trace». */}
+        <span className="direction-hero-veil" aria-hidden="true" />
+        <span className="direction-hero-scan" aria-hidden="true" />
+        <img
+          className="direction-hero-trace"
+          data-landscape={asset.trace.landscape}
+          data-phone={asset.trace.phoneCrop ?? asset.trace.portrait}
+          alt=""
+          aria-hidden="true"
+          width={1536}
+          height={1024}
+          decoding="async"
+          style={style}
+          suppressHydrationWarning
+        />
+        <script dangerouslySetInnerHTML={{ __html: HERO_TRACE_SCRIPT }} />
+      </>
+    )}
+    </>
   );
 }

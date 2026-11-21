@@ -61,7 +61,8 @@ export default function DirectionsPage() {
   return (
     <main className="inner-page directions-page" id="main-content" data-field="" style={{ '--field-name': '"RUBIKON BUILD · Напрямки"' } as CSSProperties}>
       <ProcessMotion root=".directions-page" />
-      <section className="subhero subhero-media directions-subhero phone-hero">
+      {/* the sequence's script marks the hero for its first slide's drawing before hydration (DirectionsHeroImageSequence) */}
+      <section className="subhero subhero-media directions-subhero phone-hero" suppressHydrationWarning>
         <DirectionsHeroImageSequence />
         <div className="subhero-overlay" />
         <div className="shell subhero-layout phone-hero-content">
