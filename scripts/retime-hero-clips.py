@@ -7,10 +7,14 @@ script bakes the 0.85 slow-down into the files instead (setpts), motion-interpol
 and pads the tail to the exact re-timed duration, so the components can play them at 1.0 with every frame held for
 2 vsyncs and the motion keeps today's tempo.
 
-Encoding matches the shipped clips: H.264 High, CRF 23, preset slow, yuv420p, BT.709, faststart, no audio. Two clips
-use CRF 24: at 30 fps welding-v3 came out at 1.80 MB (over the 1.75 MB budget in tests/unit/home-hero-media.test.ts)
-and about-floor-plan +21 % over the file it replaces; CRF 24 costs them under one VMAF point (97.7 → 96.7, 93.8 → 92.9
-against a lossless render of the same filter chain).
+Encoding: H.264 High, CRF 28, preset slow, yuv420p, BT.709, faststart, no audio. CRF 28 since 21.11 (owner, after an
+A/B page of every clip at CRF 23/24 shipped, 26 and 28: «Давай CRF 28»): the ten clips are 12.46 → 7.10 MB (−43 %)
+for 4–6 VMAF points against a lossless render of the same filter chain, on footage the hero shows under a dark overlay.
+Until then the clips were CRF 23, and CRF 24 for welding and about-floor-plan (SW-01, 15.10).
+
+The two tablet montages (one file each instead of five clips, 601/761 px up to the desktop) are re-encoded at the same
+settings from their best master, without the re-timing: HOME's from the file #108 replaced, /pro-nas's from the file
+#32 shipped (it has no older master). Their edit lists are trimmed like the clips'.
 Sources are read from git history, so a run is reproducible from any checkout of the repository:
 - HOME: the masters from before #108, cut to the frames the -v2 clips kept (the -v2 files are these frames
   re-encoded at CRF 23; starting from them would add a second CRF 23 generation);
@@ -34,24 +38,31 @@ from fractions import Fraction
 OUT_DIR = "public/media/about"
 TEMPO = Fraction(85, 100)
 OUT_FPS = 30
-CRF = 23
+CRF = 28
 INTERPOLATE = "minterpolate=fps=30:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"
 
 HOME_MASTERS = "9f7e703^"
 ABOUT_CLIPS = "69f7c94"
 
-# (output file, git revision, source path, source frames to keep — None keeps them all, CRF)
+# (output file, git revision, source path, source frames to keep — None keeps them all, CRF). New names with every
+# re-encode: /media is cached for 7 days, so a file replaced in place would reach returning visitors a week late.
 CLIPS = [
-    ("straight-line-14377591-v3.mp4", HOME_MASTERS, "public/media/about/straight-line-14377591.mp4", None, CRF),
-    ("blueprint-v3.mp4", HOME_MASTERS, "public/media/about/blueprint.m4v", 80, CRF),
-    ("drilling-29913842-v3.mp4", HOME_MASTERS, "public/media/about/drilling-29913842.m4v", 77, CRF),
-    ("welding-v3.mp4", HOME_MASTERS, "public/media/about/welding.m4v", 77, 24),
-    ("structure-v3.mp4", HOME_MASTERS, "public/media/about/structure.m4v", 77, CRF),
-    ("about-precision-9617516-v2.mp4", ABOUT_CLIPS, "public/media/about/about-precision-9617516.mp4", None, CRF),
-    ("about-floor-plan-8725798-v2.mp4", ABOUT_CLIPS, "public/media/about/about-floor-plan-8725798.mp4", None, 24),
-    ("about-grinder-14488798-v2.mp4", ABOUT_CLIPS, "public/media/about/about-grinder-14488798.mp4", None, CRF),
-    ("about-welding-20507417-v2.mp4", ABOUT_CLIPS, "public/media/about/about-welding-20507417.mp4", None, CRF),
-    ("about-structure-40721-v2.mp4", ABOUT_CLIPS, "public/media/about/about-structure-40721.mp4", None, CRF),
+    ("straight-line-14377591-v4.mp4", HOME_MASTERS, "public/media/about/straight-line-14377591.mp4", None, CRF),
+    ("blueprint-v4.mp4", HOME_MASTERS, "public/media/about/blueprint.m4v", 80, CRF),
+    ("drilling-29913842-v4.mp4", HOME_MASTERS, "public/media/about/drilling-29913842.m4v", 77, CRF),
+    ("welding-v4.mp4", HOME_MASTERS, "public/media/about/welding.m4v", 77, CRF),
+    ("structure-v4.mp4", HOME_MASTERS, "public/media/about/structure.m4v", 77, CRF),
+    ("about-precision-9617516-v3.mp4", ABOUT_CLIPS, "public/media/about/about-precision-9617516.mp4", None, CRF),
+    ("about-floor-plan-8725798-v3.mp4", ABOUT_CLIPS, "public/media/about/about-floor-plan-8725798.mp4", None, CRF),
+    ("about-grinder-14488798-v3.mp4", ABOUT_CLIPS, "public/media/about/about-grinder-14488798.mp4", None, CRF),
+    ("about-welding-20507417-v3.mp4", ABOUT_CLIPS, "public/media/about/about-welding-20507417.mp4", None, CRF),
+    ("about-structure-40721-v3.mp4", ABOUT_CLIPS, "public/media/about/about-structure-40721.mp4", None, CRF),
+]
+
+# (output file, git revision, source path): the tablet montages, re-encoded as they are
+MONTAGES = [
+    ("home-tablet-montage-v3.mp4", HOME_MASTERS, "public/media/about/home-tablet-montage.mp4"),
+    ("about-tablet-montage-v2.mp4", ABOUT_CLIPS, "public/media/about/about-tablet-montage.mp4"),
 ]
 
 
@@ -168,6 +179,25 @@ def retime(clip: tuple[str, str, str, int | None, int], out_dir: str, work_dir: 
     }
 
 
+def reencode(montage: tuple[str, str, str], out_dir: str, work_dir: str) -> dict:
+    output_name, revision, source_path = montage
+    source = os.path.join(work_dir, os.path.basename(source_path))
+    with open(source, "wb") as handle:
+        subprocess.run(["git", "show", f"{revision}:{source_path}"], check=True, stdout=handle)
+    output = os.path.join(out_dir, output_name)
+    subprocess.run(
+        ["ffmpeg", "-y", "-v", "error", "-i", source, "-an",
+         "-c:v", "libx264", "-preset", "slow", "-crf", str(CRF), "-profile:v", "high", "-pix_fmt", "yuv420p",
+         "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
+         "-movflags", "+faststart", "-map_metadata", "-1", output],
+        check=True,
+    )
+    trim_edit_list(output)
+    fps, frames = probe(output)
+    return {"file": output_name, "source": f"{revision}:{source_path}", "crf": CRF, "fps": float(fps), "frames": frames,
+            "bytes": os.path.getsize(output)}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=OUT_DIR, help=f"output directory (default {OUT_DIR})")
@@ -177,6 +207,7 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory() as work_dir, ThreadPoolExecutor(args.jobs) as pool:
         results = list(pool.map(lambda clip: retime(clip, args.out, work_dir), CLIPS))
+        results += list(pool.map(lambda montage: reencode(montage, args.out, work_dir), MONTAGES))
 
     for result in results:
         print(json.dumps(result, ensure_ascii=False))

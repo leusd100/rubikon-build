@@ -16,11 +16,11 @@ const ABOUT_STATIC_SRCSET = '/media/about/about-planning-photo-v1-480w.b6f12476.
 // As on HOME, the 0.85 slow-down is in the files (re-timed to an even 30 fps by scripts/retime-hero-clips.py), so the
 // desktop clips play at 1.0 (OD-S1 option B, 15.10)
 const desktopSources = [
-  '/media/about/about-precision-9617516-v2.mp4',
-  '/media/about/about-floor-plan-8725798-v2.mp4',
-  '/media/about/about-grinder-14488798-v2.mp4',
-  '/media/about/about-welding-20507417-v2.mp4',
-  '/media/about/about-structure-40721-v2.mp4',
+  '/media/about/about-precision-9617516-v3.mp4',
+  '/media/about/about-floor-plan-8725798-v3.mp4',
+  '/media/about/about-grinder-14488798-v3.mp4',
+  '/media/about/about-welding-20507417-v3.mp4',
+  '/media/about/about-structure-40721-v3.mp4',
 ];
 
 const variantConfig = {
@@ -31,7 +31,7 @@ const variantConfig = {
     mobilePoster: ABOUT_STATIC_SRC,
   },
   tablet: {
-    sources: ['/media/about/about-tablet-montage.mp4'],
+    sources: ['/media/about/about-tablet-montage-v2.mp4'],
     poster: '/media/about/about-tablet-poster.webp',
     mobilePoster: '/media/about/about-tablet-poster.webp',
   },
