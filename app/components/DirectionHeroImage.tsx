@@ -20,10 +20,14 @@ const PHONE = '(max-width: 440px)';
 //  - in step: the veil covers the hero at once, the drawing is fetched only when the photo is in, and the veil's own
 //    clock starts with the drawing's (data-hero-run on the drawing's load) — the SVG's animation starts when it loads,
 //    so they cannot part (review of #323: on a slow link the lines drew late over blank paper);
-//  - not on a slow link: no photo within 2.5 s and the intro is dropped, the hero as before it.
+//  - not on a slow link: no photo within 2.5 s and the intro is dropped, the hero as before it;
+//  - not once it is scrolled past: a hero less than half on screen mid-intro ends it, leaving the photo, so the part
+//    of the page the visitor is looking at keeps its frames. Nightly 44891291892 on #323: on /zernoskhovyshcha the
+//    drawing's tip stayed after the pointer left (3 of 8 runs; 8 of 8 passed before #323) while the intro ran in the
+//    last ~150 px of the hero above it. The watch ends with the intro.
 // The photo is looked up on every check: a stored theme swaps its <picture> after hydration. A constant string that
 // reads its drawing from the img's data (CodeQL, #323).
-const HERO_TRACE_SCRIPT = "(function(m){var t=m.querySelector('.direction-hero-trace'),k='rubikon-hero-trace:'+t.getAttribute('data-landscape').split('/').pop(),t0=Date.now(),run=0;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){}if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;m.setAttribute('data-hero-play','');var stop=function(){if(!run)m.removeAttribute('data-hero-play')};(function wait(){var p=m.querySelector('.direction-hero-image');if(Date.now()-t0>2500)return stop();if(!p||!p.complete||!p.naturalWidth)return setTimeout(wait,50);t.onload=function(){if(m.hasAttribute('data-hero-play')){run=1;m.setAttribute('data-hero-run','')}};t.onerror=stop;setTimeout(stop,900);t.src=t.getAttribute(matchMedia('(max-width: 440px)').matches?'data-phone':'data-landscape')})()})(document.currentScript.parentNode)";
+const HERO_TRACE_SCRIPT = "(function(m){var t=m.querySelector('.direction-hero-trace'),k='rubikon-hero-trace:'+t.getAttribute('data-landscape').split('/').pop(),t0=Date.now(),run=0;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){}if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;m.setAttribute('data-hero-play','');var stop=function(){if(!run)m.removeAttribute('data-hero-play')},watch=function(){if(!window.IntersectionObserver)return;var io=new IntersectionObserver(function(e){if(e[0].intersectionRatio>=.5)return;m.removeAttribute('data-hero-run');m.removeAttribute('data-hero-play');io.disconnect()},{threshold:.5});io.observe(m);setTimeout(function(){io.disconnect()},3500)};(function wait(){var p=m.querySelector('.direction-hero-image');if(Date.now()-t0>2500)return stop();if(!p||!p.complete||!p.naturalWidth)return setTimeout(wait,50);t.onload=function(){if(m.hasAttribute('data-hero-play')){run=1;m.setAttribute('data-hero-run','');watch()}};t.onerror=stop;setTimeout(stop,900);t.src=t.getAttribute(matchMedia('(max-width: 440px)').matches?'data-phone':'data-landscape')})()})(document.currentScript.parentNode)";
 
 type DirectionHeroImageProps = {
   asset: DirectionHeroImageAsset;

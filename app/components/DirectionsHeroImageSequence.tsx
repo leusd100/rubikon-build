@@ -33,7 +33,7 @@ const tracesOf = (id: string, photoSrc: string) => directionsSequenceTraces[`${/
 // The first slide draws as the hero's first view: the script runs before the first paint, so the paper covers the hero
 // while its photo comes in (as DirectionHeroImage's). No photo within 2.5 s, or no drawing within .9 s after it: the
 // paper goes and the hero is as before. Its drawings ride on the trace's data-traces, by theme.
-const SEQUENCE_TRACE_SCRIPT = `(function(s){var t=s.querySelector('.dhs-trace'),k='${TRACE_SESSION_KEY}',t0=Date.now(),run=0;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){return}if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;s.setAttribute('data-hero-seq','');s.setAttribute('data-hero-play','');var stop=function(){if(!run)s.removeAttribute('data-hero-play')};(function wait(){var p=s.querySelector('.directions-hero-sequence-image'),c,m;if(Date.now()-t0>2500)return stop();if(!p||!p.complete||!p.naturalWidth)return setTimeout(wait,50);c=p.currentSrc;m=JSON.parse(t.getAttribute('data-traces'))[/-blue-hour-/.test(c)?'dark':'daylight'];t.onload=function(){if(s.hasAttribute('data-hero-play')){run=1;s.setAttribute('data-hero-run','')}};t.onerror=stop;setTimeout(stop,900);t.src=m[/mobile-directions-/.test(c)?'mobile':/-portrait-/.test(c)?'portrait':'landscape']})()})(document.currentScript.parentNode)`;
+const SEQUENCE_TRACE_SCRIPT = `(function(s){var t=s.querySelector('.dhs-trace'),k='${TRACE_SESSION_KEY}',t0=Date.now(),run=0;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){return}if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;s.setAttribute('data-hero-seq','');s.setAttribute('data-hero-play','');var stop=function(){if(!run)s.removeAttribute('data-hero-play')},watch=function(){if(!window.IntersectionObserver)return;var io=new IntersectionObserver(function(e){if(e[0].intersectionRatio>=.5)return;s.removeAttribute('data-hero-run');s.removeAttribute('data-hero-play');s.removeAttribute('data-hero-turn');io.disconnect()},{threshold:.5});io.observe(s);setTimeout(function(){io.disconnect()},3500)};(function wait(){var p=s.querySelector('.directions-hero-sequence-image'),c,m;if(Date.now()-t0>2500)return stop();if(!p||!p.complete||!p.naturalWidth)return setTimeout(wait,50);c=p.currentSrc;m=JSON.parse(t.getAttribute('data-traces'))[/-blue-hour-/.test(c)?'dark':'daylight'];t.onload=function(){if(s.hasAttribute('data-hero-play')){run=1;s.setAttribute('data-hero-run','');watch()}};t.onerror=stop;setTimeout(stop,900);t.src=m[/mobile-directions-/.test(c)?'mobile':/-portrait-/.test(c)?'portrait':'landscape']})()})(document.currentScript.parentNode)`;
 
 /** The slide order follows the five direction records. */
 function directionTitle(id: string) {
@@ -110,6 +110,18 @@ export function DirectionsHeroImageSequence() {
     photo.addEventListener('load', arm, { once: true });
     return () => photo.removeEventListener('load', arm);
   }, [activeIndex, shouldLoadMedia, maxUnlockedIndex, preference]);
+
+  // Out of sight a drawn turn ends where it is, leaving the slide: nobody watches it, and the page below should have the
+  // frames (Nightly 44891291892 on #323; the first slide's script ends its own intro once the hero is less than half on
+  // screen)
+  useEffect(() => {
+    if (isVisible) return;
+    const hero = traceRef.current?.closest<HTMLElement>('.directions-subhero');
+    if (!hero) return;
+    delete hero.dataset.heroRun;
+    delete hero.dataset.heroPlay;
+    delete hero.dataset.heroTurn;
+  }, [isVisible]);
 
   // A turn: the slide going out ends whatever the last one drew; a slide not drawn yet, with its drawing in, draws. Set
   // before the paint that swaps the slides, so the swap is the drawn turn's quick one under the paper.
