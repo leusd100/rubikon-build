@@ -45,6 +45,11 @@ const hero = (page: Page) => page.locator('.directions-subhero');
 const veil = (page: Page) => page.locator('.directions-subhero .dhs-veil');
 const trace = (page: Page) => page.locator('.directions-subhero .dhs-trace');
 const activeSlide = (page: Page) => page.locator('.directions-subhero .directions-hero-sequence-image.is-active');
+// Layout shifts of the drawing's own layers and the slides under them. The hero's words can shift when a font comes in
+// late on CI — that is typography.spec's to hold (Main Regression 44896229264: the copy moved 0.035 at 390 while
+// Fixel loaded, and typography:26 failed in the same run); this file holds what the drawing moves
+const DRAWING = /(^|\s)(dhs-(veil|scan|trace|trace-frame)|directions-hero-sequence-image|sheet-trace|sheet-cover)(\s|$)/;
+const drawingShifts = (page: Page) => page.evaluate((source) => (window as Probe).__shifts!.filter((shift) => shift.from.some((from) => new RegExp(source).test(from))), DRAWING.source);
 const runs = (page: Page) => page.evaluate(() => (window as Probe).__runs!);
 const file = (url: string) => url.split('/').pop() ?? '';
 
@@ -91,7 +96,7 @@ for (const { viewport, scheme, crop } of [
     await expect.poll(() => activeSlide(page).evaluate((el) => getComputedStyle(el).transform), { timeout: 5_000 }).toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
     // the drawing lies exactly as the slide does (a hidden element keeps its box)
     expect(await layout(trace(page))).toEqual(await layout(activeSlide(page)));
-    expect(await page.evaluate(() => (window as Probe).__shifts)).toEqual([]);
+    expect(await drawingShifts(page)).toEqual([]);
   });
 }
 
@@ -116,7 +121,7 @@ test('/napryamky: the next slide draws on its turn, under the paper, with the dr
   expect(await layout(trace(page))).toEqual(await layout(activeSlide(page)));
   // nothing of the drawing's moves anything (the caption's own words narrowing at a turn, «02 / 05 · Зерносховища»,
   // shift it by a hair with or without the drawing — the sequence's, measured 20.11)
-  expect((await page.evaluate(() => (window as Probe).__shifts!)).filter((shift) => shift.from.some((from) => from !== 'dhs-caption'))).toEqual([]);
+  expect(await drawingShifts(page)).toEqual([]);
 });
 
 test('/napryamky: the paper and the lines lie under the hero\'s overlay and copy, over the slides', async ({ page, isMobile }) => {

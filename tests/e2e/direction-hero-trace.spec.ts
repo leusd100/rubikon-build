@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 // on one clock; it ends with the photo alone; nothing moves; a slow link, a seen hero or reduced motion get the photo at
 // once; and the lines read on a dark hero as on a light one.
 
-type Probe = Window & { __traceShifts?: number[]; __traceRun?: { at: number; photoComplete: boolean; drawing: string } };
+type Probe = Window & { __traceShifts?: { value: number; from: string[] }[]; __traceRun?: { at: number; photoComplete: boolean; drawing: string } };
 
 async function open(page: Page, path: string, { waitUntil = 'load' as 'load' | 'domcontentloaded' } = {}) {
   await page.addInitScript(() => {
@@ -14,8 +14,8 @@ async function open(page: Page, path: string, { waitUntil = 'load' as 'load' | '
     const state = window as Probe;
     state.__traceShifts = [];
     new PerformanceObserver((list) => {
-      for (const entry of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) {
-        if (!entry.hadRecentInput) state.__traceShifts!.push(entry.value);
+      for (const entry of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean; sources: { node?: Node }[] })[]) {
+        if (!entry.hadRecentInput) state.__traceShifts!.push({ value: entry.value, from: entry.sources.map((source) => (source.node as Element | undefined)?.className?.toString() ?? '') });
       }
     }).observe({ type: 'layout-shift', buffered: true });
     // what was true the moment the intro's clock started
@@ -34,6 +34,10 @@ async function open(page: Page, path: string, { waitUntil = 'load' as 'load' | '
 }
 
 const media = (page: Page) => page.locator('.service-subhero-media');
+// Layout shifts of the drawing's layers and the photo under them; the hero's words can shift when a font comes in late on
+// CI, which typography.spec holds (Main Regression 44896229264)
+const DRAWING = /(^|\s)(direction-hero-(image|trace|veil|scan)|service-subhero-media)(\s|$)/;
+const drawingShifts = (page: Page) => page.evaluate((source) => (window as Probe).__traceShifts!.filter((shift) => shift.from.some((from) => new RegExp(source).test(from))), DRAWING.source);
 const veil = (page: Page) => page.locator('.service-subhero-media .direction-hero-veil');
 const trace = (page: Page) => page.locator('.service-subhero-media .direction-hero-trace');
 const photo = (page: Page) => page.locator('.service-subhero-media .direction-hero-image');
@@ -73,7 +77,7 @@ for (const { route, viewport, file } of [
     // settled: no zoom left (the animation holds its last frame as the identity matrix)
     await expect.poll(() => photo(page).evaluate((el) => getComputedStyle(el).transform), { timeout: 5_000 }).toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
     expect(await layout(trace(page))).toEqual(await layout(photo(page)));
-    expect(await page.evaluate(() => (window as Probe).__traceShifts)).toEqual([]);
+    expect(await drawingShifts(page)).toEqual([]);
   });
 }
 
