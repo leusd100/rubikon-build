@@ -95,6 +95,24 @@ test('the veil and the lines lie under the hero\'s overlay and copy, as the phot
   expect(order).toEqual(['service-subhero-overlay', 'direction-hero-trace', 'direction-hero-veil', 'direction-hero-image']);
 });
 
+test('a hero that leaves the screen mid-intro ends it and leaves the photo', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'one project is enough');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, '/metalokonstruktsii');
+  await expect(media(page)).toHaveAttribute('data-hero-run', '');
+  // away before the intro's 3 s are up: nothing keeps animating out of sight (Nightly 44891291892 on #323)
+  await page.evaluate(() => window.scrollTo(0, 2400));
+  await expect(media(page)).not.toHaveAttribute('data-hero-run');
+  await expect(media(page)).not.toHaveAttribute('data-hero-play');
+  expect(await page.evaluate(() => document.getAnimations().filter((a) => /^hero-/.test((a as CSSAnimation).animationName)).length)).toBe(0);
+  // back up: the photo, as it would have been at the end, with nothing over it
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(veil(page)).toHaveCSS('display', 'none');
+  await expect(trace(page)).toHaveCSS('display', 'none');
+  await expect(photo(page)).toHaveCSS('transform', 'none');
+  await expect(photo(page)).toBeVisible();
+});
+
 test('it plays once a session per hero: a return shows the photo at once', async ({ page, isMobile }) => {
   test.skip(isMobile, 'one project is enough');
   await page.setViewportSize({ width: 1440, height: 900 });

@@ -1,8 +1,15 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { directionHeroTraces } from '../../app/data/directionHeroTraceManifest';
 import { chooseSeparateWorks, openControlGroup, openThree, scrollToMiniHold } from './configurator.helpers';
 import { nextFrames } from './frames.helpers';
 
+// The configurator's tests are about the configurator: they open /angary as a visitor who has seen the hero's first-view
+// drawing (direction-hero-trace.spec holds the drawing). Its 3 s intro took 5–10 % of the first seconds' frames at CPU ×4
+// (no GPU: 135–168 frames against 168–171 without it), and on CI that was the gate glide's frames (Nightly 44891291892).
+const HERO_SEEN_KEY = `rubikon-hero-trace:${directionHeroTraces.angary.landscape.split('/').pop()}`;
+
 async function openHangarPage(page: Page, dismissCookies = true) {
+  await page.addInitScript((key) => { try { sessionStorage.setItem(key, '1'); } catch { /* storage unavailable: the intro plays */ } }, HERO_SEEN_KEY);
   await page.goto('/angary', { waitUntil: 'load' });
   const essentialCookies = page.getByRole('button', { name: 'Лише необхідні', exact: true });
   await expect(essentialCookies).toBeVisible({ timeout: 10_000 });

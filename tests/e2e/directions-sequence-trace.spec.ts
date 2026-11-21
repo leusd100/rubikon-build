@@ -135,6 +135,21 @@ test('/napryamky: the paper and the lines lie under the hero\'s overlay and copy
   expect(order).toEqual(['subhero-overlay', 'dhs-trace', 'dhs-veil', 'directions-hero-sequence-image']);
 });
 
+test('/napryamky: a hero that leaves the screen mid-drawing ends it and leaves the slide', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'one project is enough');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, '/napryamky');
+  await expect(hero(page)).toHaveAttribute('data-hero-run', '');
+  await page.evaluate(() => window.scrollTo(0, 2400));
+  await expect(hero(page)).not.toHaveAttribute('data-hero-run');
+  await expect(hero(page)).not.toHaveAttribute('data-hero-play');
+  expect(await page.evaluate(() => document.getAnimations().filter((a) => /^hero-/.test((a as CSSAnimation).animationName)).length)).toBe(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(veil(page)).toHaveCSS('display', 'none');
+  await expect(trace(page)).toHaveCSS('display', 'none');
+  await expect(activeSlide(page)).toHaveCSS('transform', 'none');
+});
+
 test('/napryamky plays once a session: a return gets the slides as before, its turns too', async ({ page, isMobile }) => {
   test.skip(isMobile, 'one project is enough');
   test.slow();
