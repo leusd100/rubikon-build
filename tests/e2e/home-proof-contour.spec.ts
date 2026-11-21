@@ -676,9 +676,15 @@ async function recordArrival(page: Page) {
     const drawing = pane.querySelector('.hv2-contour-canvas')!;
     const arrival = { frames: [] as unknown[], on: null as number | null, run: null as number | null, ended: null as number | null, scrolls: [] as number[], shifts: [] as string[][], done: false };
     Object.assign(window, { arrival });
+    // The proof's own shifts: the sweep is this block's, and its promise is that the block moves nothing. Another block's
+    // shift is not this test's to hold — on CI «Приклад каркаса» (.hv2-frame-text, HomeFrameTour) further down the page
+    // shifted now and then while the proof arrived (Main Regression 44894862313, 44746417821, 44745388284, 44707691189:
+    // the one source every time), and it failed this test 4 runs of 8; that block has tests of its own
+    const block = sheet.closest('section') ?? sheet;
     new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        arrival.shifts.push((entry as unknown as { sources: { node?: Node }[] }).sources.map(({ node }) => (node instanceof Element ? node.getAttribute('class') ?? node.nodeName : String(node))));
+        const nodes = (entry as unknown as { sources: { node?: Node }[] }).sources.map(({ node }) => node).filter((node) => node && block.contains(node));
+        if (nodes.length) arrival.shifts.push(nodes.map((node) => (node instanceof Element ? node.getAttribute('class') ?? node.nodeName : String(node))));
       }
     }).observe({ type: 'layout-shift' });
     new MutationObserver(() => {

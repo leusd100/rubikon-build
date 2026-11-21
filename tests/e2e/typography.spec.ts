@@ -42,6 +42,10 @@ test.describe('display face', () => {
           return count;
         }, FIXEL.source);
         expect(marked).toBeGreaterThan(5);
+        // A browser asks for a font subset when layout first draws one of its characters, so a layout after `settle`
+        // can still start one: lay the page out and wait for the fonts once more before asking what drew each glyph
+        // (Main Regression 44896229264, mobile-chromium: a display node was reported as drawn by another face, once)
+        await page.evaluate(async () => { void document.body.getBoundingClientRect(); await document.fonts.ready; });
 
         // CDP reports, per element, the platform fonts that actually drew its glyphs.
         const cdp = await context.newCDPSession(page);
@@ -50,11 +54,21 @@ test.describe('display face', () => {
         const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
         const { nodeIds } = await cdp.send('DOM.querySelectorAll', { nodeId: root.nodeId, selector: '[data-display-audit]' });
         const drawnBy = new Map<string, number>();
+        // which node, with what words and font stack, a face other than Fixel drew — so a failure names its cause
+        const strays: string[] = [];
         for (const nodeId of nodeIds) {
           const { fonts: used } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
           for (const font of used) drawnBy.set(font.familyName, (drawnBy.get(font.familyName) ?? 0) + font.glyphCount);
+          if (used.some((font) => !/^Fixel Display/.test(font.familyName))) {
+            const { node } = await cdp.send('DOM.describeNode', { nodeId });
+            const { computedStyle } = await cdp.send('CSS.getComputedStyleForNode', { nodeId });
+            const family = computedStyle.find((property) => property.name === 'font-family')?.value;
+            const attributes = node.attributes ?? [];
+            const at = attributes.findIndex((value, index) => index % 2 === 0 && value === 'class');
+            strays.push(`${node.localName}${at >= 0 ? `.${attributes[at + 1]}` : ''} [${family}] ${used.map((font) => `${font.familyName}×${font.glyphCount}`).join(', ')}`);
+          }
         }
-        expect([...drawnBy.keys()].filter((family) => !/^Fixel Display/.test(family))).toEqual([]);
+        expect([...drawnBy.keys()].filter((family) => !/^Fixel Display/.test(family)), strays.join(' | ')).toEqual([]);
         expect(fonts.some((url) => /FixelDisplay-Regular-Cyrillic/.test(url))).toBe(true);
         expect(fonts.some((url) => /jost/i.test(url))).toBe(false);
       });
