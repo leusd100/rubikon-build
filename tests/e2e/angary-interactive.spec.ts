@@ -1093,23 +1093,37 @@ test('the gate glides to its new place when the columns\' answer («Так, бе
   const opening = previewSheet(page).locator('path.ft-opening');
   await expect(opening).toHaveCount(1);
   const before = await opening.evaluate((path) => (path as SVGPathElement).getBBox().x);
+  // The glide is a .45 s transition of the path (configurator-sheet.css --hcs-for-glide). It is read on the page's own
+  // clock, not by a count of frames: on a busy CI runner the frames are fewer while the glide takes as long
+  // (Main Regression 44896229264: 4 positions between, against 5 required, on a glide that did travel)
   await opening.evaluate(() => {
-    const samples: number[] = [];
-    (window as unknown as { gateXs: number[] }).gateXs = samples;
-    const read = () => {
-      samples.push((document.querySelector('#configurator path.ft-opening') as SVGPathElement).getBBox().x);
-      if (samples.length < 40) requestAnimationFrame(read);
+    const samples: [number, number][] = [];
+    (window as unknown as { gateXs: [number, number][] }).gateXs = samples;
+    const start = performance.now();
+    let moved = 0;
+    // until .9 s after the gate first moves (twice the glide), whenever the click lands; 5 s at most
+    const read = (now: number) => {
+      const x = (document.querySelector('#configurator path.ft-opening') as SVGPathElement).getBBox().x;
+      if (!moved && samples.length && Math.abs(x - samples[0][1]) > 0.5) moved = now;
+      samples.push([now, x]);
+      if ((moved && now - moved > 900) || now - start > 5000) (window as unknown as { gateDone: boolean }).gateDone = true;
+      else requestAnimationFrame(read);
     };
     requestAnimationFrame(read);
   });
   await page.locator('#hc-step-frame label:has(input[name="hc-supports"][value="not-allowed"])').click();
   await expect(page.locator('input[name="hc-supports"][value="not-allowed"]')).toBeChecked();
-  await expect.poll(() => page.evaluate(() => (window as unknown as { gateXs: number[] }).gateXs.length)).toBe(40);
-  const xs = await page.evaluate(() => (window as unknown as { gateXs: number[] }).gateXs);
-  const after = xs.at(-1)!;
+  await expect.poll(() => page.evaluate(() => (window as unknown as { gateDone?: boolean }).gateDone === true)).toBe(true);
+  const samples = await page.evaluate(() => (window as unknown as { gateXs: [number, number][] }).gateXs);
+  const after = samples.at(-1)![1];
   expect(Math.abs(after - before)).toBeGreaterThan(5);
-  // places between the two: it travelled, not jumped
-  expect(xs.filter((x) => Math.abs(x - before) > 0.5 && Math.abs(x - after) > 0.5).length).toBeGreaterThanOrEqual(5);
+  // it travelled, not jumped: from leaving its place to arriving within half a pixel of the new one takes ~200 ms of the
+  // eased .45 s (the rest is under a pixel) and a jump one frame, ~16 ms; and it is seen on the way at two places at least
+  const left = samples.find(([, x]) => Math.abs(x - before) > 0.5)!;
+  const arrived = samples.find(([, x]) => Math.abs(x - after) <= 0.5)!;
+  expect(arrived[0] - left[0]).toBeGreaterThan(100);
+  const between = new Set(samples.filter(([, x]) => Math.abs(x - before) > 0.5 && Math.abs(x - after) > 0.5).map(([, x]) => Math.round(x)));
+  expect(between.size).toBeGreaterThanOrEqual(2);
   // the answer is said on the frame too: one clear span, «· без колон» after L (10.10, owner)
   const frame = previewSheet(page).locator('.hc-frame');
   await expect(frame.locator('[data-part~="1"] .ft-bubble')).toHaveText(['А', 'Б']);
