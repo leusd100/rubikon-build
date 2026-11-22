@@ -5,7 +5,7 @@
 | Дата | 2026-11-22 |
 | Виконавець | Claude Code |
 | Підстава | Аудит швидкодії 22.11 (DebugBear `110361` + PageSpeed Insights), пункт PP-02; рішення власника 22.11 «PR LiveScene (PP-02)» |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#333](https://github.com/leusd100/rubikon-build/pull/333), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `perf/live-scene-warmup` від `main` `8a1fc7f3` |
 | Коміти | `c6d73e0e` — розігрів у SILENT і шматками + unit · другий коміт — тест еквівалентності за рев'ю, коментар |
 | Змінено | `app/components/LiveScene.tsx` (розігрів: без малювання, шматками по 8 мс, спостереження за блоком — після розігріву); `app/components/liveScenes.ts` (`SILENT` — 2D-контекст без малювання); `tests/unit/live-scenes.test.ts` (розігрів кожної сцени на `SILENT`) |
