@@ -5,7 +5,7 @@
 | Дата | 2026-11-22 |
 | Виконавець | Claude Code |
 | Підстава | DEC-06 «Ремонт аналітики» (APPROVED як напрям, 27.09); специфікація ремонту в приватному control (`measurement/ANALYTICS_REPAIR_SPEC.md`, §3–§5, §8–§9); старт — рішення власника 22.11 («Почати 1B аналітику») |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#329](https://github.com/leusd100/rubikon-build/pull/329), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `fix/analytics-repair` від `main` `e3a41b49` (#328) |
 | Коміти | `23306abd` — перевірка хоста, ключ подання, генератор ключа · `a36e7d1a` — e2e на production-хості через локальний проксі, тест «поза хостом» · `a874a83c` — проксі: свіже з'єднання на запит, WebSocket закрито (рев'ю) |
 | Змінено | `app/lib/analyticsHost.ts` (новий), `AnalyticsConsent.tsx`, `ProjectInquiryForm.tsx` (один аргумент), `app/lib/inquiry/{analytics,submitAttempt,submissionId}.ts`, `app/lib/proofAnalytics.ts`; тести: `tests/e2e/production-host.helpers.ts` (новий), 7 e2e-специфікацій, 5 unit-файлів |
