@@ -4,9 +4,12 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHoverStep } from './useHoverStep';
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+// One query for the page, read on every render of every tour (useSyncExternalStore's getSnapshot)
+let reducedMotionQuery: MediaQueryList | null = null;
+const reducedMotion = () => (reducedMotionQuery ??= window.matchMedia(REDUCED_MOTION));
 
 function watchReducedMotion(onChange: () => void) {
-  const query = window.matchMedia(REDUCED_MOTION);
+  const query = reducedMotion();
   query.addEventListener('change', onChange);
   return () => query.removeEventListener('change', onChange);
 }
@@ -63,9 +66,10 @@ export function useDrawingTour(
   // Read while rendering, not set by an effect after the first paint: HOME's tour mounts lazily, as the visitor nears it,
   // and on a slow machine its first frame was painted without the control («Показати по черзі», 44 px) — the step text
   // under it then dropped 62 px as the control came in, a layout shift on screen (CI, Linux: home-proof-contour.spec.ts:2173,
-  // six Main Regression and Nightly runs from 07.11 to 22.11; reproduced 4 of 6 in the CI image). On the server, and while
-  // a server-rendered tour hydrates, motion is false, as before; the client's value follows before that first paint.
-  const motion = useSyncExternalStore(watchReducedMotion, () => !window.matchMedia(REDUCED_MOTION).matches, () => false);
+  // six Main Regression and Nightly runs from 07.11 to 22.11; reproduced 4 of 6 in the CI image). A tour mounted on the
+  // client (HOME's) has its value in its first commit. On the server, and while a server-rendered tour hydrates
+  // (DirectionNode, PracticeSteps, /angary), motion is false, and the client's value follows after hydration, as before.
+  const motion = useSyncExternalStore(watchReducedMotion, () => !reducedMotion().matches, () => false);
   /** An automatic run is still to come (none after the last round, a choice or a pause) — for wording that promises one */
   const [pending, setPending] = useState(true);
   /** How long the shown step holds — a number, so a new `durations` array on every render does not restart the step */
@@ -81,7 +85,7 @@ export function useDrawingTour(
 
   // reduced motion switched on mid-tour stops it (the control that pauses it goes away with motion)
   useEffect(() => watchReducedMotion(() => {
-    if (window.matchMedia(REDUCED_MOTION).matches) setTouring(false);
+    if (reducedMotion().matches) setTouring(false);
   }), []);
 
   useEffect(() => {
