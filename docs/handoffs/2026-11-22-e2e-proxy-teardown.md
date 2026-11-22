@@ -5,7 +5,7 @@
 | Дата | 2026-11-22 |
 | Виконавець | Claude Code |
 | Підстава | Main Regression [45005067648](https://github.com/leusd100/rubikon-build/actions/runs/45005067648) на `65053eeb` (#330) червоний: `consent.spec.ts:71` «flaky» (CI валить пройдене з повтору — `failOnFlakyTests`); програма робіт, крок 1A |
-| PR | Draft. **Merge — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#331](https://github.com/leusd100/rubikon-build/pull/331), Draft. **Merge — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `test/e2e-proxy-teardown` від `main` `65053eeb` |
 | Змінено | `tests/e2e/production-host.helpers.ts` |
 | Не змінено | Код сайту, інші тести, `playwright.config.ts`, workflows |
