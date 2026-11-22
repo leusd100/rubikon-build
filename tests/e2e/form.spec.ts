@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { deliveryModel } from '../../app/data/deliveryModel';
+import { PRODUCTION_ORIGIN, serveProductionHostLocally } from './production-host.helpers';
 import { setTurnstileMode, solveTurnstile, stubTurnstile, turnstileLog } from './turnstile.helpers';
 
 // The consent banner is client-only, so seeing either button proves hydration is complete.
@@ -865,6 +866,9 @@ test.describe('Turnstile on a phone, where the form starts folded', () => {
 });
 
 test.describe('generate_lead with Turnstile', () => {
+  test.use({ baseURL: PRODUCTION_ORIGIN });
+  test.beforeEach(async ({ context }, testInfo) => { await serveProductionHostLocally(context, testInfo); });
+
   test('fires once for one saved lead and never for a verification, API, rate-limit or network failure', async ({ page }) => {
     const responses: Array<() => Parameters<import('@playwright/test').Route['fulfill']>[0] | 'abort'> = [
       () => ({ status: 403, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'verification' }) }),
@@ -1060,124 +1064,131 @@ test.describe('«Запит надіслано» after a saved request', () => {
 });
 
 
-test('lost acknowledgement retries the same lead and counts its first confirmed success once', async ({ page }) => {
-  const ids: string[] = [];
-  await page.route('**/api/leads', async (route) => {
-    ids.push(route.request().postDataJSON().submissionId);
-    if (ids.length === 1) return route.abort('failed');
-    return route.fulfill({ json: { ok: true, id: 42, isNew: false } });
-  });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
-  await fillInquiryFields(page);
-  const conversions = () => page.evaluate(() => window.dataLayer.filter(
-    (entry) => entry[0] === 'event' && entry[1] === 'generate_lead',
-  ).length);
-  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
-  expect(await conversions()).toBe(0);
-  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
-  expect(ids).toHaveLength(2);
-  expect(ids[0]).toBe(ids[1]);
-  expect(await conversions()).toBe(1);
-});
+// generate_lead and the retry key on the production host: the tag and its events run only there (DEC-06,
+// production-host.helpers.ts); the rest of this file stays on the local origin, where no event is ever queued.
+test.describe('on the production host', () => {
+  test.use({ baseURL: PRODUCTION_ORIGIN });
+  test.beforeEach(async ({ context }, testInfo) => { await serveProductionHostLocally(context, testInfo); });
 
-test('a stalled lead request times out, preserving fields and the retry ID', async ({ page }) => {
-  // Accelerate only the production 20s lead deadline; leave Turnstile's own deadline intact.
-  await page.addInitScript(() => {
-    const timeout = AbortSignal.timeout.bind(AbortSignal);
-    AbortSignal.timeout = (ms: number) => timeout(ms === 20_000 ? 200 : ms);
+  test('lost acknowledgement retries the same lead and counts its first confirmed success once', async ({ page }) => {
+    const ids: string[] = [];
+    await page.route('**/api/leads', async (route) => {
+      ids.push(route.request().postDataJSON().submissionId);
+      if (ids.length === 1) return route.abort('failed');
+      return route.fulfill({ json: { ok: true, id: 42, isNew: false } });
+    });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+    await fillInquiryFields(page);
+    const conversions = () => page.evaluate(() => window.dataLayer.filter(
+      (entry) => entry[0] === 'event' && entry[1] === 'generate_lead',
+    ).length);
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    expect(await conversions()).toBe(0);
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).toBe(ids[1]);
+    expect(await conversions()).toBe(1);
   });
-  const ids: string[] = [];
-  await page.route('**/api/leads', async (route) => {
-    ids.push(route.request().postDataJSON().submissionId);
-    if (ids.length === 1) return;
-    await route.fulfill({ json: { ok: true, id: 42, isNew: true } });
+
+  test('a stalled lead request times out, preserving fields and the retry ID', async ({ page }) => {
+    // Accelerate only the production 20s lead deadline; leave Turnstile's own deadline intact.
+    await page.addInitScript(() => {
+      const timeout = AbortSignal.timeout.bind(AbortSignal);
+      AbortSignal.timeout = (ms: number) => timeout(ms === 20_000 ? 200 : ms);
+    });
+    const ids: string[] = [];
+    await page.route('**/api/leads', async (route) => {
+      ids.push(route.request().postDataJSON().submissionId);
+      if (ids.length === 1) return;
+      await route.fulfill({ json: { ok: true, id: 42, isNew: true } });
+    });
+    await page.goto('/');
+    await fillValidInquiry(page);
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    await expect(page.getByLabel(/Ваше ім’я/)).toHaveValue('Іван Петренко');
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).toBe(ids[1]);
   });
-  await page.goto('/');
-  await fillValidInquiry(page);
-  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
-  await expect(page.getByLabel(/Ваше ім’я/)).toHaveValue('Іван Петренко');
-  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
-  expect(ids).toHaveLength(2);
-  expect(ids[0]).toBe(ids[1]);
-});
 
-test('editing after a lost acknowledgement sends a distinct payload with a new ID', async ({ page }) => {
-  const saved = new Map<string, Record<string, unknown>>();
-  const ids: string[] = [];
-  await page.route('**/api/leads', async (route) => {
-    const payload = route.request().postDataJSON();
-    ids.push(payload.submissionId);
-    if (!saved.has(payload.submissionId)) saved.set(payload.submissionId, payload);
-    if (ids.length === 1) return route.abort('failed');
-    return route.fulfill({ json: { ok: true, id: saved.size, isNew: true } });
+  test('editing after a lost acknowledgement sends a distinct payload with a new ID', async ({ page }) => {
+    const saved = new Map<string, Record<string, unknown>>();
+    const ids: string[] = [];
+    await page.route('**/api/leads', async (route) => {
+      const payload = route.request().postDataJSON();
+      ids.push(payload.submissionId);
+      if (!saved.has(payload.submissionId)) saved.set(payload.submissionId, payload);
+      if (ids.length === 1) return route.abort('failed');
+      return route.fulfill({ json: { ok: true, id: saved.size, isNew: true } });
+    });
+    await page.goto('/');
+    await fillValidInquiry(page);
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(page.locator('.inquiry-status')).toContainText('Якщо зміните дані, надішлемо окремий запит');
+    await page.locator('form.inquiry-form').getByLabel(/Телефон/).fill('+380681234567');
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+    expect(ids[0]).not.toBe(ids[1]);
+    expect(saved.get(ids[0])?.phone).toBe('+380671234567');
+    expect(saved.get(ids[1])?.phone).toBe('+380681234567');
   });
-  await page.goto('/');
-  await fillValidInquiry(page);
-  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-  await expect(page.locator('.inquiry-status')).toContainText('Якщо зміните дані, надішлемо окремий запит');
-  await page.locator('form.inquiry-form').getByLabel(/Телефон/).fill('+380681234567');
-  await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
-  expect(ids[0]).not.toBe(ids[1]);
-  expect(saved.get(ids[0])?.phone).toBe('+380671234567');
-  expect(saved.get(ids[1])?.phone).toBe('+380681234567');
-});
 
-test('a changed retry keeps its new ID if that attempt also fails', async ({ page }) => {
-  const ids: string[] = [];
-  await page.route('**/api/leads', async (route) => {
-    ids.push(route.request().postDataJSON().submissionId);
-    if (ids.length < 3) return route.abort('failed');
-    return route.fulfill({ json: { ok: true, id: 42, isNew: true } });
+  test('a changed retry keeps its new ID if that attempt also fails', async ({ page }) => {
+    const ids: string[] = [];
+    await page.route('**/api/leads', async (route) => {
+      ids.push(route.request().postDataJSON().submissionId);
+      if (ids.length < 3) return route.abort('failed');
+      return route.fulfill({ json: { ok: true, id: 42, isNew: true } });
+    });
+    await page.goto('/');
+    await fillValidInquiry(page);
+    const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+    await submit.click();
+    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    await page.getByLabel('Коротко про завдання', { exact: true }).fill('Інший обсяг робіт');
+    await submit.click();
+    await expect.poll(() => ids.length).toBe(2);
+    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    await submit.click();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+    expect(ids[0]).not.toBe(ids[1]);
+    expect(ids[1]).toBe(ids[2]);
   });
-  await page.goto('/');
-  await fillValidInquiry(page);
-  const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
-  await submit.click();
-  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
-  await page.getByLabel('Коротко про завдання', { exact: true }).fill('Інший обсяг робіт');
-  await submit.click();
-  await expect.poll(() => ids.length).toBe(2);
-  await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
-  await submit.click();
-  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
-  expect(ids[0]).not.toBe(ids[1]);
-  expect(ids[1]).toBe(ids[2]);
-});
 
-test('accepted lead queues its conversion without gtag and repeated acknowledgement stays deduplicated', async ({ page }) => {
-  await page.route('**/api/leads', route => route.fulfill({ json: { ok: true, id: 42, isNew: false } }));
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
-  await fillInquiryFields(page);
-  await page.evaluate(() => { window.gtag = undefined; });
-  const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
-  await submit.click();
-  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
-  await sendAnother(page);
-  await submit.click();
-  await expect(page.getByRole('heading', { name: 'Запит надіслано' })).toBeVisible();
-  await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
-});
+  test('accepted lead queues its conversion without gtag and repeated acknowledgement stays deduplicated', async ({ page }) => {
+    await page.route('**/api/leads', route => route.fulfill({ json: { ok: true, id: 42, isNew: false } }));
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+    await fillInquiryFields(page);
+    await page.evaluate(() => { window.gtag = undefined; });
+    const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+    await submit.click();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+    await sendAnother(page);
+    await submit.click();
+    await expect(page.getByRole('heading', { name: 'Запит надіслано' })).toBeVisible();
+    await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
+  });
 
-test('a broken analytics queue cannot prevent saving or rotate retry behavior incorrectly', async ({ page }) => {
-  await page.route('**/api/leads', route => route.fulfill({ json: { ok: true, id: 42, isNew: false } }));
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
-  await fillInquiryFields(page);
-  await page.evaluate(() => { Object.freeze(window.dataLayer); });
-  const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
-  await submit.click();
-  await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
-  await page.evaluate(() => { window.dataLayer = []; });
-  await sendAnother(page);
-  await submit.click();
-  await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
+  test('a broken analytics queue cannot prevent saving or rotate retry behavior incorrectly', async ({ page }) => {
+    await page.route('**/api/leads', route => route.fulfill({ json: { ok: true, id: 42, isNew: false } }));
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
+    await fillInquiryFields(page);
+    await page.evaluate(() => { Object.freeze(window.dataLayer); });
+    const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+    await submit.click();
+    await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
+    await page.evaluate(() => { window.dataLayer = []; });
+    await sendAnother(page);
+    await submit.click();
+    await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
+  });
 });
 
 // Owner, 03.10: the form card is a drawing sheet on every page with #inquiry — square corners, no floating shadow, a

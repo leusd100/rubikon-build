@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { company } from '../../app/data/company';
+import { PRODUCTION_ORIGIN, serveProductionHostLocally } from './production-host.helpers';
 
 // Sprint 1 · first contact: one-tap call in the phone header, the number in the phone menu, a quiet «Зателефонувати»
 // under every inner hero, no «engineer» role in the copy, a compact cookie banner whose two choices stay equal, and
@@ -148,7 +149,9 @@ test.describe('phone', () => {
     await expect(banner.getByRole('link', { name: 'Докладніше про конфіденційність' })).toBeVisible();
   });
 
-  test('each phone tap is one contact_click with method phone', async ({ context, page }) => {
+  test('each phone tap is one contact_click with method phone', async ({ context, page }, testInfo) => {
+    // contact_click is counted only on the production host (DEC-06): the local build, served as rubikonbuild.com
+    await serveProductionHostLocally(context, testInfo);
     // Analytics is granted, so the page asks for gtag.js: every Google request is answered here, none leaves the test.
     // A '**/googletagmanager.com/**' glob never matched www.googletagmanager.com.
     await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
@@ -159,7 +162,7 @@ test.describe('phone', () => {
         if (event.target instanceof Element && event.target.closest('a[href^="tel:"]')) event.preventDefault();
       }, true);
     });
-    await page.goto('/metalokonstruktsii', { waitUntil: 'load' });
+    await page.goto(`${PRODUCTION_ORIGIN}/metalokonstruktsii`, { waitUntil: 'load' });
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.rubikonAnalyticsConfigured ?? '')).not.toBe('');
     const contactClicks = () => page.evaluate(() => (window.dataLayer ?? [])
       .map((entry) => Array.from(entry as ArrayLike<unknown>))

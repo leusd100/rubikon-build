@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { company, companyContactLinks } from '../../app/data/company';
+import { PRODUCTION_ORIGIN, serveProductionHostLocally } from './production-host.helpers';
 
 // Phase 2 «UX і конверсія» (R-UX-06 §05, §06, §08, top-15 items 1 and 8). Both rules are owner decisions still PROPOSED:
 // - DEC-41: one action language. Copper is the call on every hero at every width, as HOME's; the page's own next step
@@ -201,11 +202,13 @@ test.describe('DEC-46 · the closing block', () => {
 
   test('a tap on the call or a channel is still counted once, with its method', async ({ context, page }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop-chromium', 'the test sets its own windows');
+    // contact_click is counted only on the production host (DEC-06): the local build, served as rubikonbuild.com
+    await serveProductionHostLocally(context, testInfo);
     // Analytics is granted, so the page asks for gtag.js: every Google request is answered here, none leaves the test
     await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
     await answerCookies(page, 'granted');
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/metalokonstruktsii', { waitUntil: 'load' });
+    await page.goto(`${PRODUCTION_ORIGIN}/metalokonstruktsii`, { waitUntil: 'load' });
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.rubikonAnalyticsConfigured ?? '')).not.toBe('');
     // Leave the page where it is: the count is taken on the way, then the link's own navigation is cancelled
     await page.evaluate(() => window.addEventListener('click', (event) => event.preventDefault()));
