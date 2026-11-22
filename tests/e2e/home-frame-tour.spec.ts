@@ -19,6 +19,42 @@ test('the tour is not fetched on the first screen and plays by itself as it come
   expect(isMobile || (await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 1).toBe(true);
 });
 
+// The tour comes in with its control, not a frame later: the control (44 px) came in after the tour's first paint and the
+// step's words under it dropped 62 px, a layout shift on screen (CI, Linux, 22.11: home-proof-contour.spec.ts:2173). And
+// the control's words change as it plays by itself («Показати по черзі» → «Зупинити показ»): its icon stays put.
+// Neither depends on a slow machine: the tour's insertion is read in the very mutation batch that puts it in the page.
+test('the tour comes in with its control in place, and the control\'s icon stays put as the tour starts', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the same component; the desktop row is the one measured');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => {
+    const seen: { control: boolean | null } = { control: null };
+    Object.assign(window, { tourArrival: seen });
+    new MutationObserver((records) => {
+      if (seen.control !== null) return;
+      for (const record of records) for (const node of record.addedNodes) {
+        const tour = node instanceof Element ? (node.matches('.hv2-frame-tour') ? node : node.querySelector('.hv2-frame-tour')) : null;
+        if (tour) { seen.control = Boolean(tour.querySelector('.hv2-frame-side > .dn-control')); return; }
+      }
+    }).observe(document, { childList: true, subtree: true });
+  });
+  await page.goto('/', { waitUntil: 'load' });
+  await page.locator('.hv2-frame-slot').scrollIntoViewIfNeeded();
+  const tour = page.locator('.hv2-frame-tour');
+  await expect(tour).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { tourArrival: { control: boolean | null } }).tourArrival.control), 'the control was in the tour as it came in').toBe(true);
+
+  const icon = page.locator('.hv2-frame-side .dn-control-icon');
+  const left = () => icon.evaluate((element) => element.getBoundingClientRect().left);
+  const label = page.locator('.hv2-frame-side .dn-control-label');
+  // Both words, however the timing falls: playing by itself, then paused by the control
+  await expect(tour).toHaveAttribute('data-touring', 'true', { timeout: 6000 });
+  await expect(label).toHaveText('Зупинити показ');
+  const playing = await left();
+  await page.locator('.hv2-frame-side .dn-control').click();
+  await expect(label).toHaveText('Показати по черзі');
+  expect(Math.abs((await left()) - playing), 'the icon did not move with its words').toBeLessThanOrEqual(0.5);
+});
+
 test('with reduced motion the tour stands still and a step switches at once', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/', { waitUntil: 'load' });
