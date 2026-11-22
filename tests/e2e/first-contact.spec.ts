@@ -48,7 +48,10 @@ test.describe('phone', () => {
       await expect(call).toHaveClass(/\bbutton-primary\b/);
       await expect(call).toHaveAttribute('href', TEL);
       await expect(call).toHaveAccessibleName(`Зателефонувати, ${company.phone.display}`);
-      await expect(call).toContainText(company.phone.display);
+      // the label and the number as two words, as the name has them: run together, axe's label-in-name (WCAG 2.5.3) failed
+      // on every call button (DebugBear 22.11)
+      await expect(call).toContainText(`Зателефонувати ${company.phone.display}`);
+      await expect(page.locator('a.conversation-call')).toContainText(`Зателефонувати ${company.phone.display}`);
       await expect(write).toHaveAttribute('href', '#inquiry');
       await expect(write).toContainText('Написати або залишити запит');
       // Nobody is routed through the /angary brief before they can talk to the company.
@@ -85,7 +88,7 @@ test.describe('phone', () => {
       await expect(call).toHaveAttribute('href', TEL);
       await expect(call).toHaveClass(/\bbutton-primary\b/);
       await expect(call).toHaveAccessibleName(`Зателефонувати, ${company.phone.display}`);
-      await expect(call).toContainText(company.phone.display);
+      await expect(call).toContainText(`Зателефонувати ${company.phone.display}`);
       await expect(hero.locator('a.hero-call')).toHaveCount(0);
       const next = hero.locator('a.button:not(.hero-call-lead)').first();
       await expect(next).not.toHaveClass(/\bbutton-primary\b/);

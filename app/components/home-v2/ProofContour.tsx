@@ -667,7 +667,9 @@ export function ProofContour({ photo }: Readonly<{ photo: HomeProofCase['photo']
             {...(block ? peekOn(item.id) : {})}
           >
             {block ? <i className="hv2-contour-node-letter">{item.letter}</i> : item.letter}
-            {block && <span className="hv2-contour-node-word" aria-hidden="true">{item.title}</span>}
+            {/* The space keeps «А» and «Ферма на стіні» two words of the visible label, as the name has them (axe
+                label-content-name-mismatch, WCAG 2.5.3, 22.11); the flex button lays out no whitespace */}
+            {block && <>{' '}<span className="hv2-contour-node-word" aria-hidden="true">{item.title}</span></>}
           </button>
         ))}
       </fieldset>
