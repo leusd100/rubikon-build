@@ -8,7 +8,7 @@ const DESKTOP = '(min-width: 1181px)';
 /** After a long frame the particles carry on instead of jumping */
 const LONGEST_STEP = 1 / 20;
 const WARM_UP_STEPS = 240;
-/** One slice of the warm-up, in wall time whatever the CPU: well under the 50 ms of a long task (one step costs < 1 ms) */
+/** One slice of the warm-up, in wall time whatever the CPU: well under the 50 ms of a long task (a step is usually well under 1 ms) */
 const WARM_UP_SLICE_MS = 8;
 
 /**

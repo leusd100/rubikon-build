@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SCENES, SILENT, type Inks } from '../../app/components/liveScenes';
 
 // The physics of the live scenes (app/components/liveScenes.ts), drawn into a stub: the rendering itself is checked in
@@ -65,6 +65,36 @@ describe('the live scenes', () => {
       });
     }
   }
+
+  // LiveScene warms a scene up on SILENT instead of its canvas (22.11): what the first frames draw must not change. The random
+  // generator is module state, so each side loads the module afresh.
+  it('a warm-up on the silent context leaves every scene to draw exactly what a drawn warm-up did', async () => {
+    const recorder = (log: string[]) => new Proxy({} as Record<string, unknown>, {
+      set(_target, key, value) { log.push(`${String(key)}=${String(value)}`); return true; },
+      get(_target, key) {
+        return (...args: unknown[]) => {
+          log.push(`${String(key)}(${args.join(',')})`);
+          return key === 'createRadialGradient' ? { addColorStop: (...stop: unknown[]) => log.push(`stop(${stop.join(',')})`) } : undefined;
+        };
+      },
+    }) as unknown as CanvasRenderingContext2D;
+    const firstFrames = async (silentWarmUp: boolean) => {
+      vi.resetModules();
+      const fresh = await import('../../app/components/liveScenes');
+      const logs: Record<string, string[]> = {};
+      for (const [selector, { make }] of Object.entries(fresh.SCENES)) {
+        const scene = make(), log: string[] = [], discarded: string[] = [];
+        let time = 0;
+        for (let i = 0; i < 240; i++) scene.step(silentWarmUp ? fresh.SILENT : recorder(discarded), 1 / 30, time += 1 / 30, INKS[1]);
+        for (let i = 0; i < 30; i++) scene.step(recorder(log), STEP, time += STEP, INKS[1]);
+        logs[selector] = log;
+      }
+      return logs;
+    };
+    const drawn = await firstFrames(false), silent = await firstFrames(true);
+    expect(Object.keys(silent)).toHaveLength(8);
+    for (const selector of Object.keys(drawn)) expect(silent[selector], selector).toEqual(drawn[selector]);
+  });
 
   it('the scenes that redraw the whole picture say which layer they replace', () => {
     const replaced = Object.values(SCENES).map(({ replaces }) => replaces).filter(Boolean);
