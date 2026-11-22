@@ -7,10 +7,10 @@ name: PageSpeed Monitor
 #   - after each deploy of main: https://rubikonbuild.com/, mobile + desktop (6 PSI calls); waits for Cloudflare's
 #     "Workers Builds: rubikon-build" check on that exact commit, so PSI measures the code that was just merged, not the
 #     previous deploy;
-#   - daily, one page per template (PSI_DAILY_PAGES, 24 PSI calls): DebugBear watched 10 pages on both form factors
-#     daily until its subscription ended on 27.10.2026 (docs/performance/debugbear-2026-10-27/), and this is now the
-#     only production signal for the pages after HOME. HOME on both form factors, the rest on mobile, where the scores
-#     are lowest and moved most (DebugBear's desktop medians held 0.89–1.00, single runs no lower than 0.85).
+#   - daily, one page per template (PSI_DAILY_PAGES, 24 PSI calls): PSI's own view of the pages after HOME, next to
+#     DebugBear (project 110361 since 22.11.2026: the 10 routes on both form factors every 12 h; the first project's
+#     history to 27.10.2026 is in docs/performance/debugbear-2026-10-27/). HOME on both form factors, the rest on mobile,
+#     where the scores are lowest and moved most (DebugBear's desktop medians held 0.89–1.00 to 27.10).
 #     /polityka-konfidentsiinosti, text only at 0.97–1.00, is left out. It also shows drift no deploy caused
 #     (Cloudflare features, PSI/Lighthouse updates);
 #   - manually, optionally for another https:// URL (e.g. a Workers preview).

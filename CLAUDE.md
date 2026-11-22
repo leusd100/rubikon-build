@@ -68,6 +68,8 @@ pnpm test:lighthouse             # бюджети Nightly; локальний в
 - Порт 4173 зайнятий → Playwright падає навмисно (`reuseExistingServer: false`); не обходь, звільни порт.
 - Хмарна сесія: SessionStart-хук ставить залежності й вказує Playwright на передвстановлений Chromium (`PLAYWRIGHT_BROWSERS_PATH`).
 - Візуальні еталони в хмарі можуть розходитися з CI-контейнером — авторитет лише CI.
-- Продуктивність: RUM і CrUX немає (замало трафіку); історія — `docs/performance/debugbear-2026-10-27/`; production —
-  `pagespeed-monitor.yml`; відхилені perf-гіпотези — у скілі `/perf-lab`, не повторюй їх.
+- Продуктивність: CrUX порожній (замало трафіку); польові Web Vitals є лише в Cloudflare Web Analytics (маяк вставляє край
+  Cloudflare, не код сайту; експорт — у власника). Production — DebugBear `110361` (з 22.11, 10 маршрутів × 2 пристрої) і
+  `pagespeed-monitor.yml`; історія до 27.10 — `docs/performance/debugbear-2026-10-27/`; відхилені perf-гіпотези — у скілі
+  `/perf-lab`, не повторюй їх.
 - Рішення (DEC-*), реєстр PDO-* і чекпойнт живуть у приватному `rubikon-control`; тут лише посилання. Оновлення туди — лише пропозицією в handoff.
