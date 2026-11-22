@@ -13,6 +13,9 @@ import type { BrowserContext, TestInfo } from '@playwright/test';
  */
 export const PRODUCTION_ORIGIN = 'https://rubikonbuild.com';
 
+/** What Playwright says when the context a route belongs to is being closed under it, as a test ends */
+const TEARDOWN = /Test ended|has been disposed|has been closed|Target page, context or browser has been closed/;
+
 /** The local test server this run's project points at (playwright.config.ts), not the overridden test baseURL. */
 export function localOrigin(testInfo: TestInfo): string {
   const configured = testInfo.project.use.baseURL;
@@ -32,13 +35,22 @@ export async function serveProductionHostLocally(context: BrowserContext, testIn
     // up», server.helpers.ts). `Connection: close` keeps every proxied request on a connection of its own, and a reset on
     // a fresh connection still fails the test. Not maxRetries: it would replay a POST. Chromium hands a route no Cookie
     // header, so the site's own cookies do not reach the server here; no server code reads them.
-    const response = await route.fetch({
-      url: `${local}${url.pathname}${url.search}`,
-      maxRedirects: 0,
-      headers: { ...request.headers(), connection: 'close' },
-    });
-    const headers = response.headers();
-    if (headers.location?.startsWith(local)) headers.location = PRODUCTION_ORIGIN + headers.location.slice(local.length);
-    await route.fulfill({ response, headers });
+    try {
+      const response = await route.fetch({
+        url: `${local}${url.pathname}${url.search}`,
+        maxRedirects: 0,
+        headers: { ...request.headers(), connection: 'close' },
+      });
+      const headers = response.headers();
+      if (headers.location?.startsWith(local)) headers.location = PRODUCTION_ORIGIN + headers.location.slice(local.length);
+      await route.fulfill({ response, headers });
+    } catch (error) {
+      // A request still on its way as the test ends (a film's stream, a late chunk): closing the context disposes the
+      // fetched response, and fulfil threw «Fetch response has been disposed» into a test that had passed (Main Regression
+      // 45005067648, 22.11, consent.spec.ts:71). Only that teardown is let go; anything else — a reset, a refused
+      // connection — still fails the test.
+      if (TEARDOWN.test(String(error))) return;
+      throw error;
+    }
   });
 }
