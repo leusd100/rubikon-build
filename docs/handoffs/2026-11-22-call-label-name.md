@@ -5,7 +5,7 @@
 | Дата | 2026-11-22 |
 | Виконавець | Claude Code |
 | Підстава | Аудит швидкодії 22.11 (DebugBear `110361`, Lighthouse 13.5): `label-content-name-mismatch` на 18 з 20 сторінок; рішення власника 22.11 «PP-13 + docs PR» |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#335](https://github.com/leusd100/rubikon-build/pull/335), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `fix/call-label-name` від `main` `5371c780` |
 | Коміти | `bb8341f6` — пробіл між підписом і номером / літерою й назвою + e2e · другий коміт — за рев'ю: тест кнопок вузлів, окремий тест блоку розмови, коментар |
 | Змінено | `HomeV2Hero.tsx`, `SiteChrome.tsx` (`HeroCallButton`, `HeroCallLink`), `ConversationSection.tsx` — `{' '}` між `<small>Зателефонувати</small>` і `<strong>{номер}</strong>`; `home-v2/ProofContour.tsx` — `{' '}` між літерою й назвою вузла в «Вузли крупно»; `tests/e2e/first-contact.spec.ts`, `tests/e2e/home-proof-contour.spec.ts` |
