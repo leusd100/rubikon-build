@@ -8,6 +8,17 @@ export type Inks = { ink: string; copper: string; dark: boolean };
 export type Scene = { still?: [string, string]; step: (c: CanvasRenderingContext2D, dt: number, time: number, inks: Inks) => void };
 type Bit = { x: number; y: number; vx: number; vy: number; age: number; life: number; size: number; hit?: boolean };
 
+const noop = () => {};
+/**
+ * A 2D context that draws nothing, for LiveScene's warm-up: exactly the calls and properties the scenes below use (a scene that
+ * needs another one fails tests/unit/live-scenes.test.ts, not a visitor's page).
+ */
+export const SILENT = {
+  globalAlpha: 1, strokeStyle: '', fillStyle: '', lineWidth: 1,
+  beginPath: noop, moveTo: noop, lineTo: noop, closePath: noop, stroke: noop, fill: noop, fillRect: noop,
+  createRadialGradient: () => ({ addColorStop: noop }),
+} as unknown as CanvasRenderingContext2D;
+
 // Decoration, so a plain linear generator: nothing here is a secret
 let seed = 9;
 const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };

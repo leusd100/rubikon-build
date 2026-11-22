@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SCENES, type Inks } from '../../app/components/liveScenes';
+import { SCENES, SILENT, type Inks } from '../../app/components/liveScenes';
 
 // The physics of the live scenes (app/components/liveScenes.ts), drawn into a stub: the rendering itself is checked in
 // tests/e2e/page-sheets.spec.ts. What can only go wrong here is a scene that stops drawing or that piles up particles for as
@@ -45,6 +45,16 @@ describe('the live scenes', () => {
           expect(settled).toBeGreaterThan(0);
           expect(end).toBeLessThanOrEqual(Math.max(settled * 1.5, 2));
           expect(end).toBeLessThan(2000);
+        });
+
+        it('warms up on the silent context (LiveScene) and draws as usual after it', () => {
+          const scene = make(), { context, drawn } = stubContext();
+          let time = 0;
+          expect(() => {
+            for (let i = 0; i < 240; i++) scene.step(SILENT, 1 / 30, time += 1 / 30, inks);
+          }).not.toThrow();
+          for (let i = 0; i < 60; i++) scene.step(context, STEP, time += STEP, inks);
+          expect(drawn.strokes + drawn.fills).toBeGreaterThan(0);
         });
 
         it('keeps every alpha it asks for within what a canvas takes', () => {
