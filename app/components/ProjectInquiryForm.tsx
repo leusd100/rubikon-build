@@ -208,6 +208,8 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
   // After a saved request: what went out, shown in place of the filled form (08.10, audit F155)
   const [sentPanel, setSentPanel] = useState<SentRequest | null>(null);
   const sentPanelRef = useRef<HTMLElement>(null);
+  const statusRef = useRef<HTMLParagraphElement>(null);
+  const revealError = useRef(false);
   // set by a saved submit, taken by the effect that brings the panel into view: the panel comes back by itself too (a
   // configuration changed and changed back), and that must not move the page
   const revealSent = useRef(false);
@@ -347,6 +349,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     if (!saved) {
       setStatus(verificationFailed ? VERIFICATION_FAILED_MESSAGE : SAVE_FAILED_MESSAGE);
       setStatusAction('error');
+      revealError.current = true;
       return;
     }
 
@@ -379,6 +382,19 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
     const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     panel.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
   }, [sentPanel, shownSent]);
+
+  // A failed save or check says so under the button, with the number to call — and on every page with the form, at 390
+  // and 1440 alike, that line landed wholly below the window when the visitor had scrolled just far enough to press the
+  // button (22.11, 1C: its top 73 px below a 844 px window). The button only came back, as if nothing had happened. The
+  // line comes into view, only as far as needed; the focus stays on the button, for the retry the message asks for.
+  useEffect(() => {
+    if (!revealError.current) return;
+    revealError.current = false;
+    const line = statusRef.current;
+    if (!line || statusAction !== 'error') return;
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    line.scrollIntoView({ block: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
+  }, [status, statusAction]);
 
   return (
     <form ref={formRef} className="inquiry-form" aria-label="Короткий запит" method="post" onSubmit={(event) => void handleSubmit(event)}>
@@ -437,7 +453,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
                   name={enabledFieldName(jsReady, 'phone')}
                   type="tel"
                   inputMode="tel"
-                  pattern="\+380[0-9]{9}"
+                  pattern="\+380[1-9][0-9]{8}"
                   // room for a number as people write it, «+38 (067) 123-45-67»: 13 cut the last digit off the usual
                   // «0XX…» typed after the prefix, and the field held a valid-looking wrong number (PDO-01)
                   maxLength={20}
@@ -636,7 +652,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
 
       </div>
 
-      <p className={`inquiry-status${shownStatus ? ' is-visible' : ''}${statusAction === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
+      <p ref={statusRef} className={`inquiry-status${shownStatus ? ' is-visible' : ''}${statusAction === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
         {status === VERIFICATION_FAILED_MESSAGE ? (
           <>{VERIFICATION_FAILED_MESSAGE.slice(0, -company.phone.display.length)}<a href={companyContactLinks.phone}>{company.phone.display}</a></>
         ) : <span key={shownStatus}>{shownStatus}</span>}

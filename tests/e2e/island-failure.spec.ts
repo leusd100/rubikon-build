@@ -42,3 +42,28 @@ for (const island of [
     expect(errors).toEqual([]);
   });
 }
+
+// The HOME frame tour gives way to nothing (IslandBoundary fallback={null}): its room and label fold, and the block opens
+// on the real object. Without that, «Приклад каркаса» stood over an empty panel (22.11, 1C).
+for (const failure of ['404', 'dropped connection'] as const) {
+  test(`/: a missing home-frame-tour chunk (${failure}) folds the example's room and label, and leaves the page`, async ({ page }) => {
+    let blocked = 0;
+    await page.route(/\/_next\/static\/chunks\/FrameTourIsland-[^/]+\.js$/, (route) => {
+      blocked++;
+      return failure === '404' ? route.fulfill({ status: 404, body: 'Not found' }) : route.abort('connectionreset');
+    });
+    let loads = 0;
+    page.on('load', () => { loads++; });
+    await page.goto('/', { waitUntil: 'load' });
+
+    await expect(page.locator('[data-island-fallback="home-frame-tour"]')).toHaveCount(1);
+    expect(blocked, 'the tour chunk was asked for').toBeGreaterThan(0);
+    await expect(page.locator('.hv2-frame-room')).toBeHidden();
+    await expect(page.getByText('Приклад каркаса', { exact: true })).toBeHidden();
+    // the real object and the way on are still there
+    await expect(page.locator('#real-object')).toHaveCount(1);
+    await expect(page.locator('#inquiry form')).toHaveCount(1);
+    await page.waitForTimeout(1500);
+    expect(loads, 'the page did not reload itself').toBe(1);
+  });
+}

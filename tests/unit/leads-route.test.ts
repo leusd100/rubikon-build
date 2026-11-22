@@ -77,6 +77,7 @@ class FakeD1Statement {
       const id = this.database.nextLeadId;
       this.database.nextLeadId += 1;
       this.database.leads.set(submissionId, id);
+      this.database.lastLeadPhone = String(this.bindings[2]);
       this.database.lastLeadDetails = String(this.bindings[5]);
       if (this.database.insertFailure === 'after') throw new Error('D1 response lost');
       return { meta: { changes: 1, last_row_id: id } };
@@ -109,6 +110,7 @@ class FakeD1Database {
   rateReservations = 0;
   lastRateRowId = 0;
   nextLeadId = 1;
+  lastLeadPhone = '';
   lastLeadDetails = '';
 
   prepare(query: string) {
@@ -245,6 +247,23 @@ describe('POST /api/leads', () => {
     expect(await responseBody(response)).toMatchObject({ ok: true });
     expect(timeout).toHaveBeenCalledWith(5_000);
     expect(database.notificationFailures).toHaveLength(1);
+  });
+
+  // A national number never starts with 0: «+380067123456» is «067 123 456» typed after the field's «+380», a digit short
+  // (22.11, 1C). It was saved as valid and nobody could call it back.
+  it.each(['+380067123456', '+380000000000'])('rejects %s, a number whose national part starts with 0, before touching D1', async (phone) => {
+    const response = await POST(leadRequest(validPayload({ phone })));
+    expect(response.status).toBe(400);
+    expect(await responseBody(response)).toEqual({ ok: false, error: 'validation', fields: ['phone'] });
+    expect(database.preparedQueries).toEqual([]);
+  });
+
+  it('stores a number written with spaces, brackets or the national 0 as +380XXXXXXXXX, as the field would', async () => {
+    for (const [index, phone] of ['+38 (067) 123-45-67', '067 123 45 67', '+3800671234567'].entries()) {
+      const response = await POST(leadRequest(validPayload({ submissionId: `written-${index}`, phone })));
+      expect(response.status, phone).toBe(200);
+      expect(database.lastLeadPhone, phone).toBe('+380671234567');
+    }
   });
 
   it('rejects invalid required fields before touching D1', async () => {
