@@ -22,9 +22,21 @@ export function localOrigin(testInfo: TestInfo): string {
 
 export async function serveProductionHostLocally(context: BrowserContext, testInfo: TestInfo) {
   const local = localOrigin(testInfo);
+  // A dev build's HMR socket (and any other socket) would be opened to the real host: no route intercepts a WebSocket
+  await context.routeWebSocket((url) => url.origin === PRODUCTION_ORIGIN.replace(/^http/, 'ws'), (socket) => socket.close());
   await context.route((url) => url.origin === PRODUCTION_ORIGIN, async (route) => {
-    const url = new URL(route.request().url());
-    const response = await route.fetch({ url: `${local}${url.pathname}${url.search}`, maxRedirects: 0 });
+    const request = route.request();
+    const url = new URL(request.url());
+    // route.fetch goes through Playwright's one process-wide keep-alive pool, and Node closes a socket idle for 6 s: a
+    // request sent on it in that moment dies with ECONNRESET (seen 22.11 on a stylesheet; the same cause as «socket hang
+    // up», server.helpers.ts). `Connection: close` keeps every proxied request on a connection of its own, and a reset on
+    // a fresh connection still fails the test. Not maxRetries: it would replay a POST. Chromium hands a route no Cookie
+    // header, so the site's own cookies do not reach the server here; no server code reads them.
+    const response = await route.fetch({
+      url: `${local}${url.pathname}${url.search}`,
+      maxRedirects: 0,
+      headers: { ...request.headers(), connection: 'close' },
+    });
     const headers = response.headers();
     if (headers.location?.startsWith(local)) headers.location = PRODUCTION_ORIGIN + headers.location.slice(local.length);
     await route.fulfill({ response, headers });
