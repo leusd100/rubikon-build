@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { queueProofEvent } from '../../app/lib/proofAnalytics';
 
 afterEach(() => vi.unstubAllGlobals());
-function browser(granted = true, dataLayer?: unknown[]) {
-  const target = { dataLayer, localStorage: { getItem: () => JSON.stringify({
+function browser(granted = true, dataLayer?: unknown[], hostname = 'rubikonbuild.com') {
+  const target = { dataLayer, location: { hostname }, localStorage: { getItem: () => JSON.stringify({
     analytics: granted ? 'granted' : 'denied', advertising: 'denied',
   }) } };
   vi.stubGlobal('window', target);
@@ -28,6 +28,11 @@ describe('HOME proof block analytics (proof_interaction)', () => {
   it('queues nothing without analytics consent', () => {
     const target = browser(false);
     expect(queueProofEvent('brief_click')).toBe(false);
+    expect(target.dataLayer).toBeUndefined();
+  });
+  it('queues nothing off the production host, even with consent', () => {
+    const target = browser(true, undefined, '127.0.0.1');
+    expect(queueProofEvent('tour_start')).toBe(false);
     expect(target.dataLayer).toBeUndefined();
   });
   it('never throws: a queue that rejects the event reports false', () => {

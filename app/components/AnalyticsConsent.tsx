@@ -8,7 +8,6 @@ import { ensureAttributionCaptured } from '../lib/attribution';
 import {
   CONSENT_STORAGE_KEY,
   LEGACY_ANALYTICS_STORAGE_KEY,
-  hasAnalyticsConsent,
   readConsentState,
   updateGoogleConsent,
   writeConsentState,
@@ -16,6 +15,7 @@ import {
   type ConsentState,
 } from '../lib/consent';
 import { clearConsentPending } from '../lib/consentStorage';
+import { canMeasureAnalytics, isProductionAnalyticsHost } from '../lib/analyticsHost';
 
 const settingsEvent = 'rubikon:cookie-settings';
 const measurementId = 'G-WYRXJV71WG';
@@ -24,6 +24,9 @@ const DENY_ALL_STATE: ConsentState = { analytics: 'denied', advertising: 'denied
 const GRANT_ALL_STATE: ConsentState = { analytics: 'granted', advertising: 'granted' };
 
 function loadAnalytics() {
+  // Off the canonical host the production tag is neither loaded nor configured, whatever was granted (DEC-06,
+  // app/lib/analyticsHost.ts). The consent choice itself is still stored and applied.
+  if (!isProductionAnalyticsHost()) return;
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || queueGoogleCommand;
 
@@ -203,7 +206,7 @@ export default function AnalyticsConsent() {
   }, [showBanner]);
 
   useEffect(() => {
-    if (state?.analytics !== 'granted' || !hasAnalyticsConsent()) return;
+    if (state?.analytics !== 'granted' || !canMeasureAnalytics()) return;
 
     // The initial page view is sent by gtag('config'). Track only later
     // client-side route changes so Next.js navigation is not undercounted.
@@ -225,7 +228,7 @@ export default function AnalyticsConsent() {
     if (state?.analytics !== 'granted') return;
 
     const trackContact = (event: MouseEvent) => {
-      if (!hasAnalyticsConsent()) return;
+      if (!canMeasureAnalytics()) return;
       const target = event.target as Element | null;
       const contact = target?.closest<HTMLElement>('[data-contact-method], a[href^="tel:"]');
       if (!contact) return;

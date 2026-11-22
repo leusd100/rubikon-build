@@ -1,5 +1,5 @@
-import { hasAnalyticsConsent } from '../consent';
-import { queueInquiryAnalyticsEvent } from './analytics';
+import { canMeasureAnalytics } from '../analyticsHost';
+import { queueInquiryAnalyticsEvent, type InquiryEventParameters } from './analytics';
 import { createSubmissionId } from './submissionId';
 
 /** The last submit of this lead lifecycle: its idempotency key and the business payload it carried. */
@@ -19,16 +19,21 @@ export function attemptSubmissionId(last: SubmitAttempt | null, signature: strin
  * Count a saved lead once per mounted form, including a duplicate acknowledgement after a lost
  * response. Server identity also protects against repeated acknowledgements; isNew=false alone
  * cannot distinguish a lost response from an already-counted lead.
+ *
+ * The event names the lead by `submissionId`, the key the request carried and D1 stored as `leads.submission_id`, so an
+ * observed GA4 lead joins exactly one stored row (ANALYTICS_REPAIR_SPEC §5). A random per-lead key: no person, phone or
+ * GA client id.
  */
 export function acknowledgeSavedLead(
   leadId: number | undefined,
+  submissionId: string,
   acknowledged: Set<number>,
-  parameters: { contact_method: string; project_direction: string },
+  parameters: InquiryEventParameters,
 ): void {
   const firstAcknowledgement = typeof leadId === 'number' && leadId > 0 && !acknowledged.has(leadId);
   if (!firstAcknowledgement) return;
-  const consentGranted = hasAnalyticsConsent();
-  const queued = consentGranted && queueInquiryAnalyticsEvent('generate_lead', parameters);
-  // No retroactive event after denial; eligible events are deduplicated only once queued.
-  if (!consentGranted || queued) acknowledged.add(leadId);
+  const measurable = canMeasureAnalytics();
+  const queued = measurable && queueInquiryAnalyticsEvent('generate_lead', { ...parameters, lead_submission_id: submissionId });
+  // No retroactive event after denial or off the production host; eligible events are deduplicated only once queued.
+  if (!measurable || queued) acknowledged.add(leadId);
 }
