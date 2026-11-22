@@ -2679,8 +2679,9 @@ test('«Вузли крупно»: five letters, each with its word, in the titl
   await expect(row).toHaveAccessibleName('Вузли крупно');
   const letters = row.getByRole('button');
   // each letter with its node's name in plain words (audit 08.10: bare letters were chosen blind; R-UX-06 §07: the same
-  // name as its panel's, not a draughtsman's word) — and the button says the term after it
-  await expect(letters).toHaveText(NODES.map((node) => new RegExp(`^${node.letter}\\s*${node.title}$`)));
+  // name as its panel's, not a draughtsman's word) — and the button says the term after it. Letter and name two words of
+  // the visible text, as the name has them: run together («АФерма на стіні») axe's label-content-name-mismatch failed (22.11)
+  await expect(letters).toHaveText(NODES.map((node) => new RegExp(`^${node.letter}\\s+${node.title}$`)));
   for (const [index, node] of NODES.entries()) {
     const letter = letters.nth(index);
     await expect(letter).toHaveAccessibleName(nodeLabel(node));
