@@ -5,7 +5,7 @@
 | Дата | 2026-11-22 |
 | Виконавець | Claude Code |
 | Підстава | Програма робіт, Фаза 1C (рішення власника 22.11 «Далі 1C за планом»); беклог звірки 21.11: B-04, B-05, B-06 (PDO-01 залишок, PDO-65 частина «прокрутка», CC-02 тур HOME) |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#330](https://github.com/leusd100/rubikon-build/pull/330), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `fix/inquiry-path-resilience` від `main` `a8b7a9c2` (#329) |
 | Коміти | `37e24753` — три виправлення й тести · `b3341b0c` — дрібниці рев'ю (обрізання номера, відступ під шапку, тести ледачого туру) |
 | Змінено | `ProjectInquiryForm.tsx` (прокрутка рядка помилки, pattern поля), `app/api/leads/route.ts` (правило номера, нормалізація), `app/lib/inquiry/phone.ts` (docstring), `app/home-v2.css` (згортання кімнати туру), `app/globals.css` (`scroll-margin-top` рядка статусу); тести `form.spec.ts`, `island-failure.spec.ts`, `leads-route.test.ts` |
