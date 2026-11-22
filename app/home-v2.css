@@ -1221,6 +1221,10 @@ main[data-home="v2"] .hv2-frame-steps button[aria-pressed="true"] i { color: var
 main[data-home="v2"] .hv2-frame-text { flex: none; height: 6lh; overflow-y: auto; color: var(--hv2-text-2); font-size: 15px; line-height: 1.55; }
 main[data-home="v2"] .hv2-frame-text p { margin: 0; }
 main[data-home="v2"] .hv2-frame-side > .dn-control, main[data-home="v2"] .hv2-frame-side > :not(ol, .hv2-frame-text) { flex: none; min-height: 44px; }
+/* The control's words change as the tour starts by itself («Показати по черзі» → «Зупинити показ», 127 → 111 px at 11 px,
+   Linux and macOS alike): room for the longer, so the icon after them stays put — it moved, a layout shift as the tour
+   played (CI, 22.11: home-proof-contour.spec.ts:2173). The same room as /angary's frame (.hc-frame-play) and the sheets' */
+main[data-home="v2"] .hv2-frame-side .dn-control-label { min-width: 12em; text-align: start; }
 main[data-home="v2"] .hv2-frame-brief { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 20px; }
 main[data-home="v2"] .hv2-frame-brief a { margin-left: auto; }
 

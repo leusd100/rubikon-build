@@ -1,7 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useHoverStep } from './useHoverStep';
+
+const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+
+function watchReducedMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
 
 // The step tour shared by /pro-nas practice (PracticeSteps), a direction page's node (DirectionNode) and /angary's frame
 // (FrameTour). It measures the picture for the camera, follows the reduced-motion preference, plays when the picture is
@@ -52,7 +60,12 @@ export function useDrawingTour(
   const [touring, setTouring] = useState(false);
   const [run, setRun] = useState(0);
   const [size, setSize] = useState<StageSize | null>(null);
-  const [motion, setMotion] = useState(false);
+  // Read while rendering, not set by an effect after the first paint: HOME's tour mounts lazily, as the visitor nears it,
+  // and on a slow machine its first frame was painted without the control («Показати по черзі», 44 px) — the step text
+  // under it then dropped 62 px as the control came in, a layout shift on screen (CI, Linux: home-proof-contour.spec.ts:2173,
+  // six Main Regression and Nightly runs from 07.11 to 22.11; reproduced 4 of 6 in the CI image). On the server, and while
+  // a server-rendered tour hydrates, motion is false, as before; the client's value follows before that first paint.
+  const motion = useSyncExternalStore(watchReducedMotion, () => !window.matchMedia(REDUCED_MOTION).matches, () => false);
   /** An automatic run is still to come (none after the last round, a choice or a pause) — for wording that promises one */
   const [pending, setPending] = useState(true);
   /** How long the shown step holds — a number, so a new `durations` array on every render does not restart the step */
@@ -66,17 +79,10 @@ export function useDrawingTour(
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    // reduced motion switched on mid-tour stops it (the control that pauses it goes away with motion)
-    const update = () => {
-      setMotion(!query.matches);
-      if (query.matches) setTouring(false);
-    };
-    update();
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
+  // reduced motion switched on mid-tour stops it (the control that pauses it goes away with motion)
+  useEffect(() => watchReducedMotion(() => {
+    if (window.matchMedia(REDUCED_MOTION).matches) setTouring(false);
+  }), []);
 
   useEffect(() => {
     shown.current = step;
