@@ -8,6 +8,24 @@ describe('submission id lifecycle', () => {
     vi.unstubAllGlobals();
   });
 
+  it('builds a version-4 UUID from secure random bytes when randomUUID is missing (plain http)', () => {
+    vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => bytes.fill(0xff) });
+    expect(createSubmissionId()).toBe('ffffffff-ffff-4fff-bfff-ffffffffffff');
+    vi.unstubAllGlobals();
+  });
+
+  it('gives two keys from real random bytes the UUID v4 shape and different values', () => {
+    const real = globalThis.crypto;
+    vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => real.getRandomValues(bytes) });
+    const first = createSubmissionId();
+    vi.unstubAllGlobals();
+    vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => real.getRandomValues(bytes) });
+    const second = createSubmissionId();
+    vi.unstubAllGlobals();
+    expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(second).not.toBe(first);
+  });
+
   it('keeps fallback ids unique without a pseudorandom generator', () => {
     vi.stubGlobal('crypto', undefined);
     vi.spyOn(Date, 'now').mockReturnValue(123);

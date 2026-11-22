@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { PRODUCTION_ORIGIN, serveProductionHostLocally } from './production-host.helpers';
 import { stubTurnstile } from './turnstile.helpers';
 
 // GA4 is "analytics only": gtag.js loads after Analytics consent and must measure through the core
@@ -24,6 +25,11 @@ const TAG_DIAGNOSTICS = /^img-src https:\/\/www\.googletagmanager\.com\/(?:td|a)
 // reproduced against a dead-end sink). So DNS is closed to every host but the app's; the real gtag.js still arrives
 // through route.fetch, which Playwright makes outside the browser
 test.use({ launchOptions: { args: ['--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1 , EXCLUDE localhost'] } });
+
+// The production tag runs only where location.hostname is rubikonbuild.com (DEC-06): every page here is the local build
+// served under that origin (production-host.helpers.ts), answered by Playwright, so DNS stays closed
+test.use({ baseURL: PRODUCTION_ORIGIN });
+test.beforeEach(async ({ context }, testInfo) => { await serveProductionHostLocally(context, testInfo); });
 
 type GoogleRequest = { host: string; path: string; type: string; events: string[] };
 

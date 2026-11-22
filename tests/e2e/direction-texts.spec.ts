@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { company } from '../../app/data/company';
+import { PRODUCTION_ORIGIN, serveProductionHostLocally } from './production-host.helpers';
 
 // W2-04 · direction texts and the form's hint (owner 24.10: PDO-33 A, PDO-66, PDO-67, PDO-31 A′) — every line in words
 // the site already says. Tests that only read deny the optional cookies; the one that counts a contact_click grants
@@ -58,14 +59,16 @@ test.describe('direction texts (W2-04)', () => {
     expect(faqData).toContain('Хто закуповує метал?');
   });
 
-  test('the comment\'s hint says where drawings go, by links that count as contacts (PDO-31 A′)', async ({ page }) => {
+  test('the comment\'s hint says where drawings go, by links that count as contacts (PDO-31 A′)', async ({ page, context }, testInfo) => {
+    // contact_click is counted only on the production host (DEC-06): the local build, served as rubikonbuild.com
+    await serveProductionHostLocally(context, testInfo);
     // the links would leave the page: their default is held back, the tracking listener still sees the click
     await page.addInitScript(() => {
       document.addEventListener('click', (event) => {
         if (event.target instanceof Element && event.target.closest('#inquiry-comment-hint a')) event.preventDefault();
       }, true);
     });
-    await open(page, '/metalokonstruktsii', 1440, 'granted');
+    await open(page, `${PRODUCTION_ORIGIN}/metalokonstruktsii`, 1440, 'granted');
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.rubikonAnalyticsConfigured ?? '')).not.toBe('');
     const hint = page.locator('#inquiry-comment-hint');
     await expect(hint).toHaveText(`Креслення можна надіслати на ${company.email} або в Telegram.`);

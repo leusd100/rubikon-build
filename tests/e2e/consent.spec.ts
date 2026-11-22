@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { PRODUCTION_ORIGIN, serveProductionHostLocally } from './production-host.helpers';
 
 const CONSENT_KEY = 'rubikon-consent-state';
 const LEGACY_KEY = 'rubikon-analytics-consent';
@@ -16,6 +17,11 @@ test.beforeEach(async ({ context }) => {
 });
 
 test.describe('cookie consent banner', () => {
+  // The banner's choices load or keep out the production tag only on the production host (DEC-06), so each case here —
+  // «loads», «never loads» — is checked where it could happen: the local build served as rubikonbuild.com
+  test.use({ baseURL: PRODUCTION_ORIGIN });
+  test.beforeEach(async ({ context }, testInfo) => { await serveProductionHostLocally(context, testInfo); });
+
   test('"Лише необхідні" denies both categories and never loads GA4', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' });
 
@@ -141,9 +147,12 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 
   });
 }
 
-test('advertising identifiers require consent and revocation reaches an already-open tab', async ({ page, context }) => {
+test('advertising identifiers require consent and revocation reaches an already-open tab', async ({ page, context }, testInfo) => {
+  // On the production host, where a contact is counted (DEC-06): «no contact_click after revocation» would hold
+  // vacuously on the local origin
+  await serveProductionHostLocally(context, testInfo);
   await context.route(/^https:\/\/[^/]*(?:google|doubleclick)[^/]*\//, (route) => route.fulfill({ status: 200, body: '' }));
-  await page.goto('/?gclid=consent-regression-only');
+  await page.goto(`${PRODUCTION_ORIGIN}/?gclid=consent-regression-only`);
   const storedIds = (target: Page) => target.evaluate(() => {
     const raw = sessionStorage.getItem('rubikon-attribution');
     return raw ? JSON.parse(raw).clickIds.gclid : null;
@@ -152,7 +161,7 @@ test('advertising identifiers require consent and revocation reaches an already-
   await page.getByRole('button', { name: 'Прийняти все', exact: true }).click();
   await expect.poll(() => storedIds(page)).toBe('consent-regression-only');
   const other = await context.newPage();
-  await other.goto('/?gclid=second-tab-regression-only');
+  await other.goto(`${PRODUCTION_ORIGIN}/?gclid=second-tab-regression-only`);
   await expect.poll(() => storedIds(other)).toBe('second-tab-regression-only');
   await page.getByRole('button', { name: 'Налаштування cookie', exact: true }).click();
   await page.getByRole('button', { name: 'Лише необхідні', exact: true }).click();

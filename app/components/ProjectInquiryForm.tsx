@@ -350,7 +350,7 @@ export default function ProjectInquiryForm({ defaultDirection = '', cooperationO
       return;
     }
 
-    acknowledgeSavedLead(savedLeadId, acknowledgedLeadIds.current, inquiryEventParameters(contactMethod, direction));
+    acknowledgeSavedLead(savedLeadId, requestId, acknowledgedLeadIds.current, inquiryEventParameters(contactMethod, direction));
 
     // Retries before success keep the same key. A confirmed save completes that lifecycle, so the
     // next explicit submit on this mounted page is a genuinely new lead with a fresh key.
