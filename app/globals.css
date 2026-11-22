@@ -1945,6 +1945,9 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
    the header, as the attached brief lands; not interactive, so no ring — but a keyboard user sees where the focus went, as on
    the brief (F135) */
 @media (max-width: 760px) { .inquiry-sent { scroll-margin-top: 93px; } }
+/* The error line is brought into view by script too (1C, 22.11): never under the header, from wherever the visitor scrolled */
+.inquiry-status { scroll-margin-top: 117px; }
+@media (max-width: 760px) { .inquiry-status { scroll-margin-top: 93px; } }
 .inquiry-sent:focus { outline: none; }
 .inquiry-sent:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 .inquiry-sent h3 { margin: 0; color: var(--color-text); font: 700 20px/1.25 var(--font-manrope), sans-serif; }

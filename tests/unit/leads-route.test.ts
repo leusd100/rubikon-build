@@ -258,6 +258,12 @@ describe('POST /api/leads', () => {
     expect(database.preparedQueries).toEqual([]);
   });
 
+  it('rejects a written number with a digit too many, however long it is written', async () => {
+    const response = await POST(leadRequest(validPayload({ phone: '+38 (067) 123-45-67 8' })));
+    expect(response.status).toBe(400);
+    expect(await responseBody(response)).toEqual({ ok: false, error: 'validation', fields: ['phone'] });
+  });
+
   it('stores a number written with spaces, brackets or the national 0 as +380XXXXXXXXX, as the field would', async () => {
     for (const [index, phone] of ['+38 (067) 123-45-67', '067 123 45 67', '+3800671234567'].entries()) {
       const response = await POST(leadRequest(validPayload({ submissionId: `written-${index}`, phone })));

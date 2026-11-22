@@ -67,3 +67,27 @@ for (const failure of ['404', 'dropped connection'] as const) {
     expect(loads, 'the page did not reload itself').toBe(1);
   });
 }
+
+// The tour's own code comes later, as the visitor nears the block (FrameTourIsland's lazy HomeFrameTour): when that chunk
+// is gone, the room folds the same way.
+test('/: a missing lazy HomeFrameTour chunk, asked for near the block, folds the example\'s room and label too', async ({ page }) => {
+  let blocked = 0;
+  await page.route(/\/_next\/static\/chunks\/HomeFrameTour-[^/]+\.js$/, (route) => {
+    blocked++;
+    return route.fulfill({ status: 404, body: 'Not found' });
+  });
+  await page.goto('/', { waitUntil: 'load' });
+  await page.locator('.hv2-frame-brief').scrollIntoViewIfNeeded();
+  await expect.poll(() => blocked, 'the lazy tour chunk was asked for').toBeGreaterThan(0);
+  await expect(page.locator('[data-island-fallback="home-frame-tour"]')).toHaveCount(1);
+  await expect(page.locator('.hv2-frame-room')).toBeHidden();
+  await expect(page.locator('#real-object')).toHaveCount(1);
+});
+
+test('/: with its chunks in place the home-frame-tour shows its room and label, and no fallback', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'load' });
+  await page.locator('.hv2-frame-brief').scrollIntoViewIfNeeded();
+  await expect(page.locator('.hv2-frame-room')).toBeVisible();
+  await expect(page.locator('.hv2-frame-label')).toBeVisible();
+  await expect(page.locator('[data-island-fallback="home-frame-tour"]')).toHaveCount(0);
+});
