@@ -185,7 +185,9 @@ export function HeroCallButton({ phoneOnly = false }: Readonly<{ phoneOnly?: boo
   return (
     <a className={`button button-primary hero-call-primary hero-call-lead${phoneOnly ? ' hero-call-phone-only' : ''}`} href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
       <Phone aria-hidden="true" />
-      <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
+      {/* The space keeps label and number two words of the visible text, as the name has them (axe
+          label-content-name-mismatch, WCAG 2.5.3, 22.11; so on every call button); the grid lays out no whitespace */}
+      <span><small>Зателефонувати</small>{' '}<strong>{company.phone.display}</strong></span>
     </a>
   );
 }
@@ -195,7 +197,7 @@ export function HeroCallLink() {
   return (
     <a className="hero-call" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
       <Phone aria-hidden="true" />
-      <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
+      <span><small>Зателефонувати</small>{' '}<strong>{company.phone.display}</strong></span>
     </a>
   );
 }

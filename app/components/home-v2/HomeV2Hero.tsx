@@ -44,7 +44,7 @@ export function HomeV2Hero() {
           <div className="hero-actions" data-hero-actions>
             <a className="button button-primary hero-call-primary" href={companyContactLinks.phone} aria-label={`Зателефонувати, ${company.phone.display}`}>
               <Phone aria-hidden="true" />
-              <span><small>Зателефонувати</small><strong>{company.phone.display}</strong></span>
+              <span><small>Зателефонувати</small>{' '}<strong>{company.phone.display}</strong></span>
             </a>
             <a className="button button-hero-secondary" href="#inquiry" data-open-inquiry="">
               <span className="hv2-inquiry-phone">Обговорити задачу</span>

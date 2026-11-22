@@ -48,7 +48,9 @@ test.describe('phone', () => {
       await expect(call).toHaveClass(/\bbutton-primary\b/);
       await expect(call).toHaveAttribute('href', TEL);
       await expect(call).toHaveAccessibleName(`Зателефонувати, ${company.phone.display}`);
-      await expect(call).toContainText(company.phone.display);
+      // the label and the number as two words, as the name has them: run together, axe's label-in-name (WCAG 2.5.3) failed
+      // on every call button (DebugBear 22.11)
+      await expect(call).toContainText(`Зателефонувати ${company.phone.display}`);
       await expect(write).toHaveAttribute('href', '#inquiry');
       await expect(write).toContainText('Написати або залишити запит');
       // Nobody is routed through the /angary brief before they can talk to the company.
@@ -59,6 +61,15 @@ test.describe('phone', () => {
       expect(callBox!.y + callBox!.height, 'the whole call button is on the first screen').toBeLessThanOrEqual(viewport.height);
     });
   }
+
+  // The closing block's call, as the heroes': label and number two words of its visible text (axe label-in-name, 22.11)
+  test('/: the closing call reads its label and number as two words', async ({ page }) => {
+    await answerCookies(page, 'denied');
+    await page.goto('/', { waitUntil: 'load' });
+    const call = page.locator('a.conversation-call');
+    await expect(call).toHaveAccessibleName(`Зателефонувати, ${company.phone.display}`);
+    await expect(call).toContainText(`Зателефонувати ${company.phone.display}`);
+  });
 
   // On a first visit the compact cookie banner also sits at the bottom. From 390×844 the call stays
   // above it; at 360×800 the banner (27% of the screen) still covers it until answered — a known
@@ -85,7 +96,7 @@ test.describe('phone', () => {
       await expect(call).toHaveAttribute('href', TEL);
       await expect(call).toHaveClass(/\bbutton-primary\b/);
       await expect(call).toHaveAccessibleName(`Зателефонувати, ${company.phone.display}`);
-      await expect(call).toContainText(company.phone.display);
+      await expect(call).toContainText(`Зателефонувати ${company.phone.display}`);
       await expect(hero.locator('a.hero-call')).toHaveCount(0);
       const next = hero.locator('a.button:not(.hero-call-lead)').first();
       await expect(next).not.toHaveClass(/\bbutton-primary\b/);
