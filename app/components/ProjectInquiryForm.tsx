@@ -73,7 +73,9 @@ function ukrainianValidity(key: FieldKey, messages: FieldMessages, report: (key:
 const NAME_MESSAGES: FieldMessages = { missing: 'Вкажіть, як до вас звертатися.', format: 'Ім’я — щонайменше 2 літери.' };
 const PHONE_MESSAGES: FieldMessages = {
   missing: 'Вкажіть номер телефону.',
-  format: 'Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.',
+  // «перша не 0» (owner, 22.11): «067 123 456» after the prefix is 9 digits too, and «9 цифр» alone told such a visitor
+  // they had typed it right
+  format: 'Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.',
   empty: (value) => value.replace(/\s/g, '') === '+380',
 };
 const DIRECTION_MESSAGES: FieldMessages = { missing: 'Оберіть напрям робіт або «Ще не визначено».' };

@@ -517,7 +517,7 @@ test.describe('validation messages', () => {
     expect(await message(/Ваше ім’я/)).toBe('Ім’я — щонайменше 2 літери.');
     await form.getByLabel(/Телефон/).fill('+38067');
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-    expect(await message(/Телефон/)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    expect(await message(/Телефон/)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
 
     await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
     await form.getByLabel(/Телефон/).fill('+380671234567');
@@ -603,8 +603,8 @@ test.describe('phone number as people type it', () => {
 
     await expect(phone).toBeFocused();
     await expect(phone).toHaveValue('+380067123456');
-    expect(await phone.evaluate((field) => (field as HTMLInputElement).validationMessage)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
-    await expect(page.locator('#inquiry-phone-error')).toHaveText('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    expect(await phone.evaluate((field) => (field as HTMLInputElement).validationMessage)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
+    await expect(page.locator('#inquiry-phone-error')).toHaveText('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
     expect((await turnstileLog(page)).executes).toBe(0);
     expect(phones).toHaveLength(0);
   });
@@ -619,8 +619,8 @@ test.describe('phone number as people type it', () => {
 
     await expect(phone).toBeFocused();
     await expect(phone).toHaveValue('+3806712345678');
-    expect(await phone.evaluate((field) => (field as HTMLInputElement).validationMessage)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
-    await expect(page.locator('#inquiry-phone-error')).toHaveText('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    expect(await phone.evaluate((field) => (field as HTMLInputElement).validationMessage)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
+    await expect(page.locator('#inquiry-phone-error')).toHaveText('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
     expect((await turnstileLog(page)).executes).toBe(0);
     expect(phones).toHaveLength(0);
   });
