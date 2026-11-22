@@ -517,7 +517,7 @@ test.describe('validation messages', () => {
     expect(await message(/Ваше ім’я/)).toBe('Ім’я — щонайменше 2 літери.');
     await form.getByLabel(/Телефон/).fill('+38067');
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-    expect(await message(/Телефон/)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    expect(await message(/Телефон/)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
 
     await form.getByLabel(/Ваше ім’я/).fill('Іван Петренко');
     await form.getByLabel(/Телефон/).fill('+380671234567');
@@ -590,6 +590,25 @@ test.describe('phone number as people type it', () => {
     expect(phones).toHaveLength(3);
   });
 
+  // «067 123 456» typed after the «+380», a digit short, read «+380067123456»: 9 digits after +380, so the field and the
+  // server took it, and a lead nobody could call back was saved with «Дякуємо!» (22.11, 1C). A national number never
+  // starts with 0, so nothing can be restored from it: the field names the format, nothing is sent.
+  test('a digit short after the trunk 0 is not taken as a number: the field names the format, nothing is sent', async ({ page }) => {
+    const phones = await captureLeads(page);
+    await page.goto('/', { waitUntil: 'load' });
+    await fillValidInquiry(page);
+    const phone = await enterPhone(page, '067123456');
+
+    await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
+
+    await expect(phone).toBeFocused();
+    await expect(phone).toHaveValue('+380067123456');
+    expect(await phone.evaluate((field) => (field as HTMLInputElement).validationMessage)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
+    await expect(page.locator('#inquiry-phone-error')).toHaveText('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
+    expect((await turnstileLog(page)).executes).toBe(0);
+    expect(phones).toHaveLength(0);
+  });
+
   test('a digit too many is not cut off into a valid-looking number: the field names the format, nothing is sent', async ({ page }) => {
     const phones = await captureLeads(page);
     await page.goto('/', { waitUntil: 'load' });
@@ -600,8 +619,8 @@ test.describe('phone number as people type it', () => {
 
     await expect(phone).toBeFocused();
     await expect(phone).toHaveValue('+3806712345678');
-    expect(await phone.evaluate((field) => (field as HTMLInputElement).validationMessage)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
-    await expect(page.locator('#inquiry-phone-error')).toHaveText('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр.');
+    expect(await phone.evaluate((field) => (field as HTMLInputElement).validationMessage)).toBe('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
+    await expect(page.locator('#inquiry-phone-error')).toHaveText('Номер у форматі +380XXXXXXXXX: після +380 — 9 цифр, перша не 0.');
     expect((await turnstileLog(page)).executes).toBe(0);
     expect(phones).toHaveLength(0);
   });
@@ -1188,6 +1207,57 @@ test.describe('on the production host', () => {
     await sendAnother(page);
     await submit.click();
     await expect.poll(() => leadEvents(page, 'generate_lead')).toBe(1);
+  });
+});
+
+// A failed save or check is said under the button, with the number to call. Pressed by a visitor who had scrolled just
+// far enough to see the button, that line landed wholly below the window on every page with the form, at 390 and 1440
+// (22.11, 1C: 73 px below a 844 px window): the button came back as if nothing had happened. It comes into view now.
+test.describe('a failed send is seen where the button was pressed', () => {
+  const PAGES = ['/', '/napryamky', '/angary', '/zernoskhovyshcha', '/metalokonstruktsii', '/betonni-roboty', '/pokrivelni-roboty', '/pro-nas', '/yak-pratsyuiemo'];
+  const inWindow = (page: Page, selector: string) => page.locator(selector).evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    // `nearest` brings it flush with the window's bottom edge: a fraction of a pixel over is still in the window
+    return box.height > 0 && box.top >= 0 && box.bottom <= window.innerHeight + 1;
+  });
+
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+    test(`at ${viewport.width} px the save error and its call are in the window on every page with the form`, async ({ page }) => {
+      test.setTimeout(90_000);
+      await page.setViewportSize(viewport);
+      await page.route('**/api/leads', (route) => route.fulfill({ status: 500, json: { ok: false, error: 'server' } }));
+      for (const path of PAGES) {
+        await page.goto(path, { waitUntil: 'load' });
+        if (path === PAGES[0]) await acceptOnlyEssentialCookies(page);
+        const toggle = page.locator('#inquiry .conversation-form-toggle');
+        if (await toggle.isVisible()) await toggle.click();
+        await fillInquiryFields(page);
+        const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+        // just far enough to see the button, at the window's bottom edge
+        await submit.evaluate((button) => button.scrollIntoView({ block: 'end', behavior: 'instant' }));
+        await submit.click();
+        await expect(page.locator('.inquiry-status.is-error'), path).toContainText(SAVE_FAILED);
+        await expect.poll(() => inWindow(page, '.inquiry-status'), `${path}: the error line in the window`).toBe(true);
+        await expect.poll(() => inWindow(page, '.inquiry-status-actions a[href^="tel:"]'), `${path}: its call in the window`).toBe(true);
+        // the focus stays on the button, for the retry the message asks for
+        await expect(submit, path).toBeFocused();
+      }
+    });
+  }
+
+  test('a failed check comes into view the same way, with its call', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/', { waitUntil: 'load' });
+    await acceptOnlyEssentialCookies(page);
+    const toggle = page.locator('#inquiry .conversation-form-toggle');
+    if (await toggle.isVisible()) await toggle.click();
+    await fillInquiryFields(page);
+    await setTurnstileMode(page, 'error');
+    const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
+    await submit.evaluate((button) => button.scrollIntoView({ block: 'end', behavior: 'instant' }));
+    await submit.click();
+    await expect(page.locator('.inquiry-status.is-error')).toContainText(VERIFICATION_FAILED.slice(0, 30));
+    await expect.poll(() => inWindow(page, '.inquiry-status a[href^="tel:"]')).toBe(true);
   });
 });
 

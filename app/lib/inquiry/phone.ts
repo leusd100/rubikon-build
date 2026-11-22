@@ -8,7 +8,7 @@ const WRITTEN_NUMBER = /^[\d\s()+.-]+$/;
 const UA_DIGITS = /^(?:380(?:0|380)?|0)([1-9]\d{8})$/;
 
 /**
- * The inquiry's phone as the field and the lead API take it, +380 and 9 digits (`\+380[0-9]{9}`), when what the visitor
+ * The inquiry's phone as the field and the lead API take it, +380 and 9 digits, the first not 0 (`\+380[1-9][0-9]{8}`), when what the visitor
  * typed or pasted unambiguously is a Ukrainian number; anything else is returned as it is, for the field's own check to
  * name. The field starts with «+380»: the number's usual «0XX…» typed after it read «+3800XX…», the field's 13
  * characters cut its last digit, and a wrong number passed as valid (review 18.10, PDO-01).

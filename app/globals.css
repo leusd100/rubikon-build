@@ -780,7 +780,8 @@ body:has(main:is([data-home="v2"], .about-page)) {
 .inquiry-submit-note { margin: 10px 0 0; color: var(--color-text-muted); font-size: 13px; line-height: 1.5; text-align: center; }
 .inquiry-noscript { margin: 10px 0 0; padding: 10px 12px; color: var(--color-text); background: color-mix(in srgb, var(--color-accent) 9%, transparent); border-left: 3px solid var(--color-accent); font-size: 13px; line-height: 1.5; }
 .inquiry-noscript a { color: var(--color-accent-strong); font-weight: 800; }
-.inquiry-status { margin: 0; padding: 16px clamp(24px, 2.5vw, 36px); color: var(--color-status-text); background: var(--color-success-surface); border-left: 3px solid var(--color-success); font-size: 15px; line-height: 1.55; }
+/* scroll-margin-top: the error line is brought into view by script (1C, 22.11), never under the header — 93 px on a phone, below */
+.inquiry-status { margin: 0; padding: 16px clamp(24px, 2.5vw, 36px); color: var(--color-status-text); background: var(--color-success-surface); border-left: 3px solid var(--color-success); font-size: 15px; line-height: 1.55; scroll-margin-top: 117px; }
 /* Empty, the status is on the page for a screen reader — only out of sight — so what it says next is announced (08.10,
    audit F157: hidden with display:none until its first words, it was often not read out) */
 .inquiry-status:not(.is-visible) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; border: 0; white-space: nowrap; }
@@ -1945,6 +1946,8 @@ a.route-service:focus-visible { color: var(--color-dark-text); --color-accent-st
    the header, as the attached brief lands; not interactive, so no ring — but a keyboard user sees where the focus went, as on
    the brief (F135) */
 @media (max-width: 760px) { .inquiry-sent { scroll-margin-top: 93px; } }
+/* The error line's room under the phone header (its rule above; 1C, 22.11) */
+@media (max-width: 760px) { .inquiry-status { scroll-margin-top: 93px; } }
 .inquiry-sent:focus { outline: none; }
 .inquiry-sent:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 4px; }
 .inquiry-sent h3 { margin: 0; color: var(--color-text); font: 700 20px/1.25 var(--font-manrope), sans-serif; }

@@ -1665,6 +1665,9 @@ main[data-home="v2"] .hv2-frame-slot[data-armed] { height: var(--hv2-frame-slot)
   main[data-home="v2"] .hv2-frame-slot { height: var(--hv2-frame-slot); }
   main[data-home="v2"] .hv2-frame-label { display: block; }
 }
+/* The tour's code failed to load (CC-02, IslandBoundary): its room folds with the label, and the block opens on the real
+   object, as EngineeringSignature.tsx intends. It kept «Приклад каркаса» over an empty panel (22.11, 1C) */
+main[data-home="v2"] .hv2-frame-room:has(> [data-island-fallback]) { display: none; }
 
 /* ── The camera on a node (07.11, owner: «Давай також реалізуємо ідеї» — useNodeCamera; this lifts ui-system §6.9's
    freeze on the node's opening for it) ──────────────────────────────────────────────────────────────────────────────

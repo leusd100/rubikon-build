@@ -11,6 +11,7 @@ import {
 } from '../../lib/inquiry/attachment';
 import { validateGrainPlannerState } from '../../lib/planner/grain';
 import { verifyTurnstileToken } from '../../lib/inquiry/turnstileVerify';
+import { normalizeUaPhone } from '../../lib/inquiry/phone';
 
 // Bindings expected on the Worker (created via the Cloudflare Dashboard, not wrangler.jsonc
 // in this project — see the Lead Architecture Spec for how each one is provisioned):
@@ -31,7 +32,10 @@ const workerEnv = env as unknown as Env;
 
 const CONTACT_METHODS: ReadonlySet<string> = new Set(['Дзвінок', 'Telegram', 'WhatsApp', 'Viber']);
 const DIRECTION_ALLOWLIST: readonly string[] = inquiryDirectionOptions;
-const PHONE_PATTERN = /^\+380\d{9}$/;
+// +380 and the 9-digit national number, which never starts with 0 (that 0 is the trunk prefix). `\d{9}` took
+// «+380067123456» — «067 123 456» typed after the field's «+380», a digit short — and saved a lead nobody could call
+// back (22.11, 1C). The same rule as the field's pattern (ProjectInquiryForm.tsx).
+const PHONE_PATTERN = /^\+380[1-9]\d{8}$/;
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW = '-10 minutes';
 
@@ -133,7 +137,9 @@ function clipContact(body: LeadPayload) {
   return {
     submissionId: clip(body.submissionId, 100),
     name: clip(body.name, 80),
-    phone: clip(body.phone, 20),
+    // the client tidies the number before sending; a direct caller's «+38 067 …» is tidied the same way here
+    // Clipped wide, then tidied: clipped to 20 first, «+38 (067) 123-45-67 8» lost its extra digit and passed (review 22.11)
+    phone: normalizeUaPhone(clip(body.phone, 40)),
     contactMethod: clip(body.contactMethod, 20),
     direction: clip(body.direction, 100),
     consentAt: clip(body.consentAt, 40),
