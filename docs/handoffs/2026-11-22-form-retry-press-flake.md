@@ -5,9 +5,9 @@
 | Дата | 2026-11-22 |
 | Виконавець | Claude Code |
 | Підстава | Локальний прогін набору inquiry 22.11: `form.spec.ts:1160` («on the production host › a changed retry keeps its new ID if that attempt also fails») упав 1 раз із 7 — рядок 1174 `expect.poll(() => ids.length).toBe(2)`, Received 1 після 5 с |
-| PR | Draft (посилання — у PR). **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#336](https://github.com/leusd100/rubikon-build/pull/336), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `test/retry-new-id-poll` від `main` `718e94de` |
-| Коміти | `e199de04` — очікування стану в чотирьох тестах «on the production host» · наступний — цей handoff |
+| Коміти | `e199de04` — очікування стану в чотирьох тестах «on the production host» · `f60b156b` і далі — цей handoff |
 | Змінено | `tests/e2e/form.spec.ts`: помічник `failedSendSettled` (рядок помилки почав виїжджати у вікно + `pageAtRest`) перед кожним повторним натисканням у чотирьох тестах describe «on the production host»; у тесті зі зміною телефону — ще `pageAtRest` після введення номера |
 | Не змінено | Код застосунку (`ProjectInquiryForm.tsx`, CSS), решта тестів, `playwright.config.ts`, еталони, бюджети, залежності. Жодної перевірки не прибрано: «Не вдалося» тепер перевіряється на `.inquiry-status.is-error` (суворіше) |
 
