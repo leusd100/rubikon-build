@@ -8,6 +8,8 @@ const DESKTOP = '(min-width: 1181px)';
 /** After a long frame the particles carry on instead of jumping */
 const LONGEST_STEP = 1 / 20;
 const WARM_UP_STEPS = 240;
+/** One slice of the warm-up, in wall time whatever the CPU: well under the 50 ms of a long task (a step is usually well under 1 ms) */
+const WARM_UP_SLICE_MS = 8;
 
 /**
  * Wakes the still scene of a paper block (page-materials.css) once the block comes up: liveScenes.ts is fetched only on a page
@@ -19,7 +21,7 @@ export function LiveScene() {
     if (!window.matchMedia(DESKTOP).matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let stop = () => {};
     let cancelled = false;
-    void import('./liveScenes').then(({ SCENES }) => {
+    void import('./liveScenes').then(({ SCENES, SILENT }) => {
       if (cancelled) return;
       const found = Object.entries(SCENES).find(([selector]) => document.querySelector(selector));
       if (!found) return;
@@ -42,12 +44,7 @@ export function LiveScene() {
         const dark = r + g + b < 380;
         return dark ? { ink: '#F5F2EB', copper: '#C98A5E', dark } : { ink: '#25282A', copper: '#A0522A', dark };
       };
-      let frame = 0, last = 0, count = 0, time = 0, colours = inks();
-      // it comes up already running, not from an empty sky
-      for (let i = 0; i < WARM_UP_STEPS; i++) {
-        time += 1 / 30;
-        scene.step(context, 1 / 30, time, colours);
-      }
+      let frame = 0, last = 0, count = 0, time = 0, colours = inks(), warmed = 0, slice = 0;
       const tick = (now: number) => {
         const dt = Math.min(LONGEST_STEP, (now - last) / 1000 || 0);
         last = now;
@@ -74,8 +71,23 @@ export function LiveScene() {
         frame = requestAnimationFrame(tick);
       // a block right after the hero starts exactly at the fold, and touching the edge counts as in view
       }, { rootMargin: '0px 0px -2px 0px' });
-      observer.observe(canvas);
+      // It comes up already running, not from an empty sky. The warm-up only moves the particles: drawn into the canvas, which
+      // the first frame clears anyway, it was one task of 136–711 ms on a desktop right after hydration (DebugBear 22.11; PSI
+      // /pro-nas 491–1299 ms; 216 000 strokes there). So it draws into nothing, in slices short of a long task, and the block
+      // is watched once it is done. Same steps and random numbers; until then the block keeps its still picture.
+      const warmUp = () => {
+        const until = performance.now() + WARM_UP_SLICE_MS;
+        while (warmed < WARM_UP_STEPS && performance.now() < until) {
+          time += 1 / 30;
+          scene.step(SILENT, 1 / 30, time, colours);
+          warmed += 1;
+        }
+        if (warmed < WARM_UP_STEPS) slice = window.setTimeout(warmUp, 0);
+        else observer.observe(canvas);
+      };
+      warmUp();
       stop = () => {
+        window.clearTimeout(slice);
         observer.disconnect();
         cancelAnimationFrame(frame);
         canvas.remove();
