@@ -5,7 +5,7 @@
 | Дата | 2026-11-22 |
 | Виконавець | Claude Code |
 | Підстава | Програма робіт, крок 1A. Main Regression [45005067648](https://github.com/leusd100/rubikon-build/actions/runs/45005067648) на `65053eeb`: «flaky» `home-proof-contour.spec.ts:2173`, шостий раз з 07.11. Рішення власника 22.11 «Так, у Docker» |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#332](https://github.com/leusd100/rubikon-build/pull/332), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `fix/home-frame-text-shift` від `main` `65053eeb` |
 | Змінено | `app/components/useDrawingTour.ts` (`motion` під час рендеру, один `MediaQueryList`), `app/home-v2.css` (місце під довший підпис кнопки туру), `tests/e2e/home-frame-tour.spec.ts` (новий тест) |
 | Не змінено | Тексти, еталони, бюджети, залежності; наявні тести |
