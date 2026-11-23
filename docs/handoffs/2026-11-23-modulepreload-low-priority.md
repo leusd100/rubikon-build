@@ -5,7 +5,7 @@
 | Дата | 2026-11-23 |
 | Виконавець | Claude Code |
 | Підстава | Аудит швидкодії 22.11, PP-03; DebugBear Experiments 92312697 (E-03a) і 92313150 (E-03c) з OK Дмитра на кредити; рішення власника 23.11 «Так, готуй PR» |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#337](https://github.com/leusd100/rubikon-build/pull/337), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `perf/modulepreload-low-priority` від `main` `718e94de` |
 | Коміти | `74690c5d` — перезапис у `worker.ts` + unit · `1ada08b1` — за рев'ю: у байтах, одним кроком потоку |
 | Змінено | `worker.ts` (HTML-відповідь vinext → `withLowPriorityModulePreloads`); новий `worker/modulepreload-priority.ts`; `tests/unit/modulepreload-priority.test.ts` |
