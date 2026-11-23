@@ -1089,6 +1089,27 @@ test.describe('on the production host', () => {
   test.use({ baseURL: PRODUCTION_ORIGIN });
   test.beforeEach(async ({ context }, testInfo) => { await serveProductionHostLocally(context, testInfo); });
 
+  /**
+   * Until a failed send's error line has come into the window and the page has stopped: the line comes into view with a
+   * smooth scroll (1C, 22.11), and its text is there before that scroll ends. A press while the page still moves fails
+   * Playwright's stability check, and its retries scroll the button with `scrollIntoView({ block: 'end' | 'center' |
+   * 'start' })` — smooth here as well (`scroll-behavior`): begun just before the press point is taken and still running
+   * as the press is made. The press went down on the button and came up on the comment field 221 px above it; Playwright
+   * checks the target on the way down only, so the click "succeeded", the browser made no submit and the retry never
+   * reached /api/leads (22.11: «Received 1» once in 7 suite runs of the change-retry test). With every press held 150 ms
+   * the four tests below lost a press in 33 of 40 runs, none of 40 with these waits; under CPU load, unheld, the
+   * phone-edit test lost its press 2 of 10 times.
+   */
+  async function failedSendSettled(page: Page) {
+    const line = page.locator('.inquiry-status.is-error');
+    await expect(line).toContainText('Не вдалося');
+    // Its scroll has begun once the line's top is in the window: it usually appears below the window, under the button
+    // just pressed at the window's foot (already in view, nothing moves and both waits pass at once). Only begun — whether all of it gets there is 1C's own test, below; here the press
+    // needs the page still, which the rest check gives once the scroll is under way.
+    await expect.poll(() => line.evaluate((element) => element.getBoundingClientRect().top < window.innerHeight)).toBe(true);
+    await pageAtRest(page);
+  }
+
   test('lost acknowledgement retries the same lead and counts its first confirmed success once', async ({ page }) => {
     const ids: string[] = [];
     await page.route('**/api/leads', async (route) => {
@@ -1103,7 +1124,7 @@ test.describe('on the production host', () => {
       (entry) => entry[0] === 'event' && entry[1] === 'generate_lead',
     ).length);
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    await failedSendSettled(page);
     expect(await conversions()).toBe(0);
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
     await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
@@ -1127,7 +1148,7 @@ test.describe('on the production host', () => {
     await page.goto('/');
     await fillValidInquiry(page);
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
-    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    await failedSendSettled(page);
     await expect(page.getByLabel(/Ваше ім’я/)).toHaveValue('Іван Петренко');
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
     await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
@@ -1149,7 +1170,11 @@ test.describe('on the production host', () => {
     await fillValidInquiry(page);
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
     await expect(page.locator('.inquiry-status')).toContainText('Якщо зміните дані, надішлемо окремий запит');
+    await failedSendSettled(page);
     await page.locator('form.inquiry-form').getByLabel(/Телефон/).fill('+380681234567');
+    // the focused phone field is scrolled clear of the header (its scroll-margin-top), smoothly too, and a press during
+    // that scroll is lost the same way (4 of 10 runs with the press held 150 ms, before this wait)
+    await pageAtRest(page);
     await page.getByRole('button', { name: 'Надіслати запит', exact: true }).click();
     await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
     expect(ids[0]).not.toBe(ids[1]);
@@ -1168,11 +1193,11 @@ test.describe('on the production host', () => {
     await fillValidInquiry(page);
     const submit = page.getByRole('button', { name: 'Надіслати запит', exact: true });
     await submit.click();
-    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    await failedSendSettled(page);
     await page.getByLabel('Коротко про завдання', { exact: true }).fill('Інший обсяг робіт');
     await submit.click();
     await expect.poll(() => ids.length).toBe(2);
-    await expect(page.locator('.inquiry-status')).toContainText('Не вдалося');
+    await failedSendSettled(page);
     await submit.click();
     await expect(page.locator('.inquiry-status')).toContainText('Дякуємо');
     expect(ids[0]).not.toBe(ids[1]);
