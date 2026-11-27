@@ -33,7 +33,12 @@ const tracesOf = (id: string, photoSrc: string) => directionsSequenceTraces[`${/
 // The first slide draws as the hero's first view: the script runs before the first paint, so the paper covers the hero
 // while its photo comes in (as DirectionHeroImage's). No photo within 2.5 s, or no drawing within .9 s after it: the
 // paper goes and the hero is as before. Its drawings ride on the trace's data-traces, by theme.
-const SEQUENCE_TRACE_SCRIPT = `(function(s){var t=s.querySelector('.dhs-trace'),k='${TRACE_SESSION_KEY}',t0=Date.now(),run=0;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){return}if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;s.setAttribute('data-hero-seq','');s.setAttribute('data-hero-play','');var stop=function(){if(!run)s.removeAttribute('data-hero-play')},watch=function(){if(!window.IntersectionObserver)return;var io=new IntersectionObserver(function(e){if(e[0].intersectionRatio>=.5)return;s.removeAttribute('data-hero-run');s.removeAttribute('data-hero-play');s.removeAttribute('data-hero-turn');io.disconnect()},{threshold:.5});io.observe(s);setTimeout(function(){io.disconnect()},3500)};(function wait(){var p=s.querySelector('.directions-hero-sequence-image'),c,m;if(Date.now()-t0>2500)return stop();if(!p||!p.complete||!p.naturalWidth)return setTimeout(wait,50);c=p.currentSrc;m=JSON.parse(t.getAttribute('data-traces'))[/-blue-hour-/.test(c)?'dark':'daylight'];t.onload=function(){if(s.hasAttribute('data-hero-play')){run=1;s.setAttribute('data-hero-run','');watch()}};t.onerror=stop;setTimeout(stop,900);t.src=m[/mobile-directions-/.test(c)?'mobile':/-portrait-/.test(c)?'portrait':'landscape']})()})(document.currentScript.parentNode)`;
+// The drawing (~2 KB over the wire) asks for high priority: an image is low by default, and since the page's module preloads went low too
+// (#337) it waited behind ~50 chunks, past the .9 s, on DebugBear's Mobile profile — the intro gave up, and a later turn's
+// zoomed drawing became the LCP at ~10.6 s in 5 of 8 runs (23–27.11; Experiment 92626876: LCP 12 657 → 5 395 ms, intro
+// plays). DirectionHeroImage's script is left as it is: there its LCP is the hero's text, and a playing intro would make
+// the zoomed drawing the LCP instead (an owner's call, not a fix).
+const SEQUENCE_TRACE_SCRIPT = `(function(s){var t=s.querySelector('.dhs-trace'),k='${TRACE_SESSION_KEY}',t0=Date.now(),run=0;try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){return}if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;s.setAttribute('data-hero-seq','');s.setAttribute('data-hero-play','');var stop=function(){if(!run)s.removeAttribute('data-hero-play')},watch=function(){if(!window.IntersectionObserver)return;var io=new IntersectionObserver(function(e){if(e[0].intersectionRatio>=.5)return;s.removeAttribute('data-hero-run');s.removeAttribute('data-hero-play');s.removeAttribute('data-hero-turn');io.disconnect()},{threshold:.5});io.observe(s);setTimeout(function(){io.disconnect()},3500)};(function wait(){var p=s.querySelector('.directions-hero-sequence-image'),c,m;if(Date.now()-t0>2500)return stop();if(!p||!p.complete||!p.naturalWidth)return setTimeout(wait,50);c=p.currentSrc;m=JSON.parse(t.getAttribute('data-traces'))[/-blue-hour-/.test(c)?'dark':'daylight'];t.onload=function(){if(s.hasAttribute('data-hero-play')){run=1;s.setAttribute('data-hero-run','');watch()}};t.onerror=stop;t.fetchPriority='high';setTimeout(stop,900);t.src=m[/mobile-directions-/.test(c)?'mobile':/-portrait-/.test(c)?'portrait':'landscape']})()})(document.currentScript.parentNode)`;
 
 /** The slide order follows the five direction records. */
 function directionTitle(id: string) {
@@ -227,7 +232,7 @@ export function DirectionsHeroImageSequence() {
       {/* In a span as each slide is in its picture: a direct child of the hero would take .subhero-media > img's
           position and lie off the slide */}
       <span className="dhs-trace-frame">
-        {/* eslint-disable-next-line @next/next/no-img-element -- a 10–15 KB SVG drawing set by script, never the LCP */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- an SVG drawing (10–15 KB, ~2 KB over the wire) set by script */}
         <img
           ref={traceRef}
           className="dhs-trace"
