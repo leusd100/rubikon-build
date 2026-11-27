@@ -88,6 +88,8 @@ for (const { viewport, scheme, crop } of [
     expect(file(first.drawing), 'the drawing had loaded when the intro started').toMatch(drawingOf(first.photo));
     expect(file(first.drawing)).toMatch(crop);
     expect(first.turn).toBe(false);
+    // the first view's drawing is asked for at high priority, not behind the page's low module preloads (Experiment 92626876)
+    expect(await trace(page).evaluate((el: HTMLImageElement) => el.fetchPriority)).toBe('high');
     // the photo and its drawing settle on one clock
     expect(await settleStarts(trace(page))).toEqual(await settleStarts(activeSlide(page)));
 
