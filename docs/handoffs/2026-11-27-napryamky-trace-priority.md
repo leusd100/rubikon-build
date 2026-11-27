@@ -5,7 +5,7 @@
 | Дата | 2026-11-27 |
 | Виконавець | Claude Code |
 | Підстава | Чекпойнт швидкодії 27.11 (DebugBear `110361`, 8 планових прогонів після #337): `/napryamky` mobile LCP 2,5 / 10,6 с; DebugBear Experiment 92626876 з OK Дмитра; рішення власника 27.11 «Так, готуй PR» |
-| PR | Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
+| PR | [#338](https://github.com/leusd100/rubikon-build/pull/338), Draft. **Merge і production deploy — лише з окремого OK Дмитра** (DEC-30) |
 | Гілка / base | `fix/napryamky-trace-priority` від `main` `14fcdd8b` |
 | Коміти | `c612922a` — `fetchPriority='high'` + e2e · другий коміт — коментарі за рев'ю, handoff |
 | Змінено | `app/components/DirectionsHeroImageSequence.tsx` (вбудований `SEQUENCE_TRACE_SCRIPT`: `t.fetchPriority='high'` перед `t.src`; коментарі); `tests/e2e/directions-sequence-trace.spec.ts` (одна перевірка) |
