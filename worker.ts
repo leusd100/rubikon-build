@@ -2,6 +2,7 @@ import vinextWorker from 'vinext/server/app-router-entry';
 import videoByteLengths from 'virtual:rubikon-video-byte-lengths';
 import { withVideoByteRange } from './worker/video-range';
 import { withLowPriorityModulePreloads } from './worker/modulepreload-priority';
+import { withHeroThemeSources } from './worker/hero-theme-sources';
 import {
   isImmutableAssetPathname,
   withImmutableCacheControl,
@@ -29,7 +30,7 @@ const worker = {
       !env?.ASSETS ||
       !isImmutableAssetPathname(pathname)
     ) {
-      return withLowPriorityModulePreloads(await vinextWorker.fetch(request, env, ctx));
+      return withHeroThemeSources(request, withLowPriorityModulePreloads(await vinextWorker.fetch(request, env, ctx)));
     }
 
     const response = await env.ASSETS.fetch(request);
