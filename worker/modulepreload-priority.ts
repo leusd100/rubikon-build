@@ -10,26 +10,14 @@
 // 23.11) and would re-encode bytes (a BOM, invalid UTF-8). The match is ASCII and UTF-8 never repeats an ASCII byte inside
 // a multi-byte letter, so bytes are matched as they are; only a possible start of a match is held back between chunks.
 
+import { NOTHING, join, matchesAt } from './bytes';
+
 const encoder = new TextEncoder();
 const PRELOAD = encoder.encode('<link rel="modulepreload" href="');
 /** Where the attribute goes: right after `rel="modulepreload"` */
 const AFTER_REL = '<link rel="modulepreload"'.length;
 const LOW_PRIORITY = encoder.encode(' fetchpriority="low"');
 const OPEN = PRELOAD[0];
-const NOTHING = new Uint8Array(0);
-
-function matchesAt(bytes: Uint8Array, at: number, length: number) {
-  for (let i = 1; i < length; i += 1) if (bytes[at + i] !== PRELOAD[i]) return false;
-  return true;
-}
-
-function join(parts: Uint8Array[]) {
-  if (parts.length === 1) return parts[0];
-  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
-  let at = 0;
-  for (const part of parts) { out.set(part, at); at += part.length; }
-  return out;
-}
 
 /** Rewrites every module preload in a byte stream of HTML, also when a chunk boundary splits one */
 export function lowPriorityModulePreloadStream(): TransformStream<Uint8Array, Uint8Array> {
@@ -44,10 +32,10 @@ export function lowPriorityModulePreloadStream(): TransformStream<Uint8Array, Ui
         const left = bytes.length - at;
         if (left < PRELOAD.length) {
           // a possible start of a preload cut off by the chunk's end waits for the next chunk
-          if (matchesAt(bytes, at, left)) { pending = bytes.slice(at); break; }
+          if (matchesAt(bytes, at, PRELOAD, left)) { pending = bytes.slice(at); break; }
           continue;
         }
-        if (!matchesAt(bytes, at, PRELOAD.length)) continue;
+        if (!matchesAt(bytes, at, PRELOAD, PRELOAD.length)) continue;
         parts.push(bytes.subarray(from, at + AFTER_REL), LOW_PRIORITY);
         from = at + AFTER_REL;
         at += PRELOAD.length - 1;

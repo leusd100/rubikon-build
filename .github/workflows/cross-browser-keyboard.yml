@@ -2,8 +2,9 @@ name: Cross-browser keyboard
 
 # The keyboard's checks (tests/e2e/responsive-a11y-phase1.spec.ts) in Firefox and WebKit, the engines the other
 # suites never open: the menu closing as the focus leaves it, and no focus left under the fixed header or a sticky
-# panel (FocusClearance). Informational: it is not part of PR Gate. Playwright's WebKit is Safari's engine, not Safari,
-# and neither run stands for a physical iPhone or iPad.
+# panel (FocusClearance). WebKit also checks that a stored theme fetches one hero (tests/e2e/hero-theme-webkit.spec.ts):
+# its preload scanner is what fetched two (28.11). Informational: it is not part of PR Gate. Playwright's WebKit is
+# Safari's engine, not Safari, and neither run stands for a physical iPhone or iPad.
 on:
   pull_request:
     branches: [main]
@@ -14,6 +15,12 @@ on:
       - app/components/SiteChrome.tsx
       - app/layout.tsx
       - tests/e2e/responsive-a11y-phase1.spec.ts
+      - tests/e2e/hero-theme-webkit.spec.ts
+      - worker/hero-theme-sources.ts
+      - app/lib/heroThemeSources.ts
+      - app/lib/theme.ts
+      - app/components/DirectionHeroImage.tsx
+      - app/components/DirectionsHeroImageSequence.tsx
       - playwright.config.ts
       - .github/workflows/cross-browser-keyboard.yml
   workflow_dispatch:
@@ -46,7 +53,8 @@ jobs:
       - name: Install ${{ matrix.browser }} and its system dependencies
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - name: Run the keyboard checks
-        run: pnpm exec playwright test --project=${{ matrix.browser }} tests/e2e/responsive-a11y-phase1.spec.ts
+        # each project's testMatch (playwright.config.ts) names its specs: the keyboard in both, the hero in WebKit
+        run: pnpm exec playwright test --project=${{ matrix.browser }}
       - name: Upload diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

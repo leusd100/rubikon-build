@@ -102,9 +102,10 @@ export default defineConfig({
       testMatch: /responsive-a11y-phase1\.spec\.ts/,
       use: { ...devices['Desktop Firefox'], viewport: { width: 1440, height: 900 } },
     },
+    // and the stored theme's single hero download, which only WebKit's preload scanner broke (hero-theme-webkit.spec.ts)
     {
       name: 'webkit',
-      testMatch: /responsive-a11y-phase1\.spec\.ts/,
+      testMatch: /responsive-a11y-phase1\.spec\.ts|hero-theme-webkit\.spec\.ts/,
       use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } },
     },
   ],
